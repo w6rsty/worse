@@ -33,7 +33,7 @@ namespace worse
                                              &infoCmdPool,
                                              nullptr,
                                              &cmdPool));
-            m_rhiResource = RHIResource{cmdPool, RHIResourceType::Queue};
+            m_rhiResource = RHIResource{cmdPool, RHIResourceType::CommandPool};
             RHIDevice::setResourceName(m_rhiResource, name);
         }
 

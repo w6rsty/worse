@@ -1,4 +1,4 @@
-set(MODULE_NAME Core)
+set(MODULE_NAME Engine)
 add_library(${MODULE_NAME} STATIC)
 
 file(GLOB_RECURSE ${MODULE_NAME}_PUBLIC_HEADERS
@@ -22,5 +22,7 @@ target_include_directories(${MODULE_NAME}
 )
 
 target_link_libraries(${MODULE_NAME} PRIVATE
-    SDL
+    Core
+    Renderer
+    RHI
 )

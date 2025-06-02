@@ -46,7 +46,7 @@ namespace worse
         case RHIResourceType::DescriptorSet:       return "DescriptorSet";
         case RHIResourceType::DescriptorSetLayout: return "DescriptorSetLayout";
         case RHIResourceType::CommandList:         return "CommandList";
-        case RHIResourceType::CommandPool:         return "ComamndPool";
+        case RHIResourceType::CommandPool:         return "CommandPool";
         case RHIResourceType::Swapchain:           return "Swapchain";
         case RHIResourceType::Surface:             return "Surface";
         case RHIResourceType::Max:                 WS_ASSERT(false); return "Invalid";

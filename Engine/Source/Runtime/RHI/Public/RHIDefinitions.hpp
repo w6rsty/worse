@@ -100,20 +100,20 @@ namespace worse
     };
 
     constexpr VkObjectType vulkanObjectType[] = {
-        VK_OBJECT_TYPE_FENCE,
-        VK_OBJECT_TYPE_SEMAPHORE,
-        VK_OBJECT_TYPE_QUEUE,
-        VK_OBJECT_TYPE_BUFFER,
-        VK_OBJECT_TYPE_IMAGE,
-        VK_OBJECT_TYPE_IMAGE_VIEW,
-        VK_OBJECT_TYPE_SAMPLER,
-        VK_OBJECT_TYPE_SHADER_MODULE,
-        VK_OBJECT_TYPE_PIPELINE,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        VK_OBJECT_TYPE_DESCRIPTOR_SET,
-        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-        VK_OBJECT_TYPE_COMMAND_BUFFER,
-        VK_OBJECT_TYPE_COMMAND_POOL,
+        VK_OBJECT_TYPE_FENCE,                 // Fence
+        VK_OBJECT_TYPE_SEMAPHORE,             // Semaphore
+        VK_OBJECT_TYPE_QUEUE,                 // Queue
+        VK_OBJECT_TYPE_BUFFER,                // Buffer
+        VK_OBJECT_TYPE_IMAGE,                 // Image
+        VK_OBJECT_TYPE_IMAGE_VIEW,            // ImageView
+        VK_OBJECT_TYPE_SAMPLER,               // Sampler
+        VK_OBJECT_TYPE_SHADER_MODULE,         // Shader
+        VK_OBJECT_TYPE_PIPELINE,              // Pipeline
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,       // PipelineLayout
+        VK_OBJECT_TYPE_DESCRIPTOR_SET,        // DescriptorSet
+        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, // DescriptorSetLayout
+        VK_OBJECT_TYPE_COMMAND_BUFFER,        // CommandList
+        VK_OBJECT_TYPE_COMMAND_POOL,          // CommandPool
     };
 
     constexpr VkFormat vulkanFormat[] = {VK_FORMAT_R8_UNORM,

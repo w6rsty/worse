@@ -55,12 +55,12 @@ namespace worse
         static void onEventMouse(void* event);
         static void onEventGamepad(void* event);
 
+        using KeyMap = std::array<bool, k_keyCodeCount>;
+        static KeyMap& GetKeyMap();
+
     public:
         static void initialize();
         static void tick();
-
-        using KeyMap = std::array<bool, k_keyCodeCount>;
-        static KeyMap& GetKeyMap();
 
         // Keyboard
         // up, down, pressed
