@@ -1,0 +1,284 @@
+#include "Input/Input.hpp"
+#include "Definitions.hpp"
+#include "Input/Controller.hpp"
+
+#include "SDL3/SDL_events.h"
+
+#include <cstdlib>
+
+namespace worse
+{
+    namespace
+    {
+        std::shared_ptr<Controller> s_controller = nullptr;
+        math::Vector2 s_thumbStickLeft{0.0f, 0.0f};
+        math::Vector2 s_thumbStickRight{0.0f, 0.0f};
+        float s_triggerLeft{0.0f};
+        float s_triggerRight{0.0f};
+
+        std::vector<ControllerDescriptor> fetchInfos()
+        {
+            std::vector<ControllerDescriptor> controllerDescriptors;
+            int numGamepads             = 0;
+            SDL_JoystickID* joystickIDs = SDL_GetGamepads(&numGamepads);
+            controllerDescriptors.reserve(numGamepads);
+
+            for (int i = 0; i < numGamepads; ++i)
+            {
+                SDL_Gamepad* gamepad = SDL_OpenGamepad(joystickIDs[i]);
+
+                ControllerDescriptor cd = {};
+                cd.joystickID           = joystickIDs[i];
+
+                char guidStr[33];
+                SDL_GUIDToString(SDL_GetGamepadGUIDForID(joystickIDs[i]),
+                                 guidStr,
+                                 sizeof(guidStr));
+
+                cd.guid = std::string(guidStr);
+                cd.name = SDL_GetGamepadName(gamepad);
+                SDL_PowerState _powerState =
+                    SDL_GetGamepadPowerInfo(gamepad, &cd.powerPercentage);
+                switch (SDL_GetGamepadType(gamepad))
+                {
+                case SDL_GAMEPAD_TYPE_XBOX360:
+                case SDL_GAMEPAD_TYPE_XBOXONE:
+                    cd.type = ControllerType::Xbox;
+                    break;
+                case SDL_GAMEPAD_TYPE_PS3:
+                case SDL_GAMEPAD_TYPE_PS4:
+                case SDL_GAMEPAD_TYPE_PS5:
+                    cd.type = ControllerType::PlayStation;
+                    break;
+                default:
+                    cd.type = ControllerType::Common;
+                    break;
+                }
+
+                SDL_GamepadConnected(gamepad);
+
+                SDL_CloseGamepad(gamepad);
+
+                controllerDescriptors.push_back(cd);
+            }
+
+            return controllerDescriptors;
+        }
+
+        std::optional<ControllerDescriptor> findAvailable()
+        {
+            auto controllerDescriptors = fetchInfos();
+            if (controllerDescriptors.empty())
+            {
+                return std::nullopt;
+            }
+
+            // remove the currently connected controller if it exists
+            if (s_controller)
+            {
+                auto it = std::remove_if(controllerDescriptors.begin(),
+                                         controllerDescriptors.end(),
+                                         [](ControllerDescriptor const& cd)
+                                         {
+                                             return *s_controller == cd;
+                                         });
+                controllerDescriptors.erase(it, controllerDescriptors.end());
+            }
+
+            if (controllerDescriptors.empty())
+            {
+                return std::nullopt;
+            }
+
+            return {controllerDescriptors[0]};
+        }
+
+        // TODO: Support individual dead zones for each axis
+        float analogValue(SDL_Gamepad* gamepad, SDL_GamepadAxis const axis)
+        {
+            float normalized = 0.0f;
+
+            static const std::int16_t k_defaultThumbStickDeadZone = 8000;
+            static const std::int16_t k_defaultTriggerDeadZone    = 0;
+
+            // For thumbsticks, value ranging from -32768 (up/left) to
+            // 32767 (down/right). Triggers range from 0 when released
+            // to 32767 when fully pressed, and never return a negative
+            // value.
+
+            switch (axis)
+            {
+            case SDL_GAMEPAD_AXIS_LEFTX:
+            case SDL_GAMEPAD_AXIS_LEFTY:
+            case SDL_GAMEPAD_AXIS_RIGHTX:
+            case SDL_GAMEPAD_AXIS_RIGHTY:
+            {
+                std::int16_t value = SDL_GetGamepadAxis(gamepad, axis);
+                if (std::abs(value) < k_defaultThumbStickDeadZone)
+                {
+                    value = 0.0f;
+                }
+                else
+                {
+                    value -= (value > 0) ? k_defaultThumbStickDeadZone
+                                         : -k_defaultThumbStickDeadZone;
+                }
+
+                float const range_negative = 32768.0f;
+                float const range_positive = 32767.0f;
+                float const range =
+                    (value < 0) ? range_negative : range_positive;
+                normalized = static_cast<float>(value) /
+                             (range - k_defaultThumbStickDeadZone);
+                break;
+            }
+            case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
+            case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
+            {
+                std::int16_t value = SDL_GetGamepadAxis(gamepad, axis);
+                if (value < k_defaultTriggerDeadZone)
+                {
+                    value = 0.0f;
+                }
+                else
+                {
+                    value -= k_defaultTriggerDeadZone;
+                }
+                float const range = 32767.0f - k_defaultTriggerDeadZone;
+                normalized        = static_cast<float>(value) / range;
+                break;
+            }
+            default:
+                WS_ASSERT_MSG(false, "Invalid axis");
+                break;
+            }
+
+            return normalized;
+        }
+    } // namespace
+
+    void Input::pollGamepad()
+    {
+        if (!s_controller)
+        {
+            return;
+        }
+
+        // clang-format off
+
+        SDL_Gamepad* gamepad =
+            static_cast<SDL_Gamepad*>(s_controller->getHandleSDL());
+
+        // axis analog keys
+        s_thumbStickLeft.x  = analogValue(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
+        s_thumbStickLeft.y  = analogValue(gamepad, SDL_GAMEPAD_AXIS_LEFTY);
+        s_thumbStickRight.x = analogValue(gamepad, SDL_GAMEPAD_AXIS_RIGHTX);
+        s_thumbStickRight.y = analogValue(gamepad, SDL_GAMEPAD_AXIS_RIGHTY);
+        s_triggerLeft       = analogValue(gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+        s_triggerRight      = analogValue(gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+        KeyMap& keyMap = GetKeyMap();
+        keyMap[static_cast<std::size_t>(KeyCode::DPadUp)]        = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_UP);
+        keyMap[static_cast<std::size_t>(KeyCode::DPadDown)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+        keyMap[static_cast<std::size_t>(KeyCode::DPadLeft)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+        keyMap[static_cast<std::size_t>(KeyCode::DPadRight)]     = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+        keyMap[static_cast<std::size_t>(KeyCode::ButtonNorth)]   = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_NORTH);
+        keyMap[static_cast<std::size_t>(KeyCode::ButtonSouth)]   = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_SOUTH);
+        keyMap[static_cast<std::size_t>(KeyCode::ButtonWest)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_WEST);
+        keyMap[static_cast<std::size_t>(KeyCode::ButtonEast)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_EAST);
+        keyMap[static_cast<std::size_t>(KeyCode::Back)]          = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_BACK);
+        keyMap[static_cast<std::size_t>(KeyCode::Start)]         = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_START);
+        keyMap[static_cast<std::size_t>(KeyCode::Guide)]         = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_GUIDE);
+        keyMap[static_cast<std::size_t>(KeyCode::Touchpad)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_TOUCHPAD);
+        keyMap[static_cast<std::size_t>(KeyCode::LeftStick)]     = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK);
+        keyMap[static_cast<std::size_t>(KeyCode::RightStick)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+        keyMap[static_cast<std::size_t>(KeyCode::LeftShoulder)]  = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+        keyMap[static_cast<std::size_t>(KeyCode::RightShoulder)] = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+        keyMap[static_cast<std::size_t>(KeyCode::Misc)]          = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_MISC1);
+        // clang-format on
+    }
+
+    void Input::onEventGamepad(void* event)
+    {
+        SDL_Event* sdlEvent = static_cast<SDL_Event*>(event);
+
+        if ((sdlEvent->type == SDL_EVENT_JOYSTICK_ADDED) ||
+            (sdlEvent->type == SDL_EVENT_GAMEPAD_ADDED))
+        {
+            if (!s_controller)
+            {
+                if (auto cd = findAvailable(); cd.has_value())
+                {
+                    s_controller = std::make_shared<Controller>(cd.value());
+                }
+            }
+        }
+
+        if ((sdlEvent->type == SDL_EVENT_JOYSTICK_REMOVED) ||
+            (sdlEvent->type == SDL_EVENT_GAMEPAD_REMOVED))
+        {
+            if (s_controller)
+            {
+                if (s_controller->getJoystickID() == sdlEvent->gdevice.which)
+                {
+                    s_controller.reset();
+                }
+            }
+
+            // try to find a new controller
+            if (auto cd = findAvailable(); cd.has_value())
+            {
+                s_controller = std::make_shared<Controller>(cd.value());
+            }
+        }
+
+        if (sdlEvent->type == SDL_EVENT_QUIT)
+        {
+            if (s_controller)
+            {
+                s_controller.reset();
+            }
+        }
+    }
+
+    bool Input::isGamepadConnected()
+    {
+        return (s_controller != nullptr) && s_controller->isConnected();
+    }
+
+    math::Vector2 const& Input::getThumbStickLeft()
+    {
+        return s_thumbStickLeft;
+    }
+
+    math::Vector2 const& Input::getThumbStickRight()
+    {
+        return s_thumbStickRight;
+    }
+
+    float Input::getThumbStickLeftDistance()
+    {
+        return s_thumbStickLeft.length();
+    }
+
+    float Input::getThumbStickRightDistance()
+    {
+        return s_thumbStickRight.length();
+    }
+
+    float Input::getTriggerLeft()
+    {
+        return s_triggerLeft;
+    }
+
+    float Input::getTriggerRight()
+    {
+        return s_triggerRight;
+    }
+
+    Controller* Input::getConnectedController()
+    {
+        return s_controller.get();
+    }
+
+} // namespace worse

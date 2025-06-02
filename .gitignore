@@ -1,0 +1,11 @@
+.cache/
+.vscode/
+
+# build and cmake fetch directories
+Engine/Build/
+
+# clangd database
+compile_commands.json
+
+# macOS
+.DS_Store

@@ -1,0 +1,43 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "default-debug",
+            "displayName": "Ninja Debug",
+            "description": "Debug build with Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/Engine/Build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "default-release",
+            "displayName": "Ninja Release",
+            "description": "Release build with Ninja",
+            "inherits": "default-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "xcode-debug",
+            "displayName": "Xcode Debug",
+            "description": "Debug build with Xcode",
+            "inherits": "default-debug",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/Engine/Build/Xcode/${presetName}"
+        },
+        {
+            "name": "xcode-release",
+            "displayName": "Xcode Release",
+            "description": "Release build with Xcode",
+            "inherits": "xcode-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ]
+}
