@@ -9,14 +9,13 @@
 namespace worse
 {
 
-    class RHISwapchain
+    class RHISwapchain : public RHIResource
     {
     public:
         RHISwapchain() = default;
         RHISwapchain(void* sdlWindow, std::uint32_t const width,
                      std::uint32_t const height,
-                     RHIPresentMode const presentMode,
-                     std::uint32_t const bufferCount, char const* name);
+                     RHIPresentMode const presentMode, std::string_view name);
         ~RHISwapchain();
 
         void resize(std::uint32_t width, std::uint32_t height);
@@ -26,7 +25,7 @@ namespace worse
         void acquireNextImage();
         void present(RHICommandList* cmdList);
 
-        RHIResource getCurrentImage() const;
+        RHINativeHandle getCurrentImage() const;
         RHISyncPrimitive* getImageAcquireSemaphore() const;
 
     private:
@@ -36,7 +35,6 @@ namespace worse
     private:
         static inline constexpr std::uint32_t s_bufferCount = 2;
 
-        std::uint32_t m_bufferCount  = 0;
         std::uint32_t m_width        = 0;
         std::uint32_t m_height       = 0;
         RHIFormat m_format           = RHIFormat::Max;
@@ -48,10 +46,10 @@ namespace worse
         std::array<std::shared_ptr<RHISyncPrimitive>, s_bufferCount * 2>
             m_imageAcquireSemaphores;
 
-        RHIResource m_rhiSwapchain;
-        RHIResource m_rhiSurface;
-        std::array<RHIResource, s_bufferCount> m_rhiImages;
-        std::array<RHIResource, s_bufferCount> m_rhiImageViews;
+        RHINativeHandle m_swapchain;
+        RHINativeHandle m_surface;
+        std::array<RHINativeHandle, s_bufferCount> m_images;
+        std::array<RHINativeHandle, s_bufferCount> m_imageViews;
     };
 
 } // namespace worse

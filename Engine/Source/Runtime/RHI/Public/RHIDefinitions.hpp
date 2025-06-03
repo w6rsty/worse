@@ -22,6 +22,28 @@ namespace worse
         Null,
     };
 
+    enum class RHINativeHandleType
+    {
+        Fence,
+        Semaphore,
+        Queue,
+        Buffer,
+        Image,
+        ImageView,
+        Sampler,
+        Shader,
+        Pipeline,
+        PipelineLayout,
+        DescriptorSet,
+        DescriptorSetLayout,
+        CommandList,
+        CommandPool,
+
+        Swapchain,
+        Surface,
+        Max,
+    };
+
     enum class RHIQueueType
     {
         Graphics,
@@ -65,6 +87,7 @@ namespace worse
         R32G32B32Float,
         // Rgba
         R8G8B8A8Unorm,
+        B8R8G8A8Unorm,
         R10G10B10A2Unorm,
         R16G16B16A16Unorm,
         R16G16B16A16Snorm,
@@ -74,8 +97,6 @@ namespace worse
         D16Unorm,
         D32Float,
         D32FloatS8X24Uint,
-        // Surface
-        B8R8G8A8Unorm,
 
         Max
     };
@@ -99,45 +120,79 @@ namespace worse
         Max,
     };
 
-    constexpr VkObjectType vulkanObjectType[] = {
-        VK_OBJECT_TYPE_FENCE,                 // Fence
-        VK_OBJECT_TYPE_SEMAPHORE,             // Semaphore
-        VK_OBJECT_TYPE_QUEUE,                 // Queue
-        VK_OBJECT_TYPE_BUFFER,                // Buffer
-        VK_OBJECT_TYPE_IMAGE,                 // Image
-        VK_OBJECT_TYPE_IMAGE_VIEW,            // ImageView
-        VK_OBJECT_TYPE_SAMPLER,               // Sampler
-        VK_OBJECT_TYPE_SHADER_MODULE,         // Shader
-        VK_OBJECT_TYPE_PIPELINE,              // Pipeline
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,       // PipelineLayout
-        VK_OBJECT_TYPE_DESCRIPTOR_SET,        // DescriptorSet
-        VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, // DescriptorSetLayout
-        VK_OBJECT_TYPE_COMMAND_BUFFER,        // CommandList
-        VK_OBJECT_TYPE_COMMAND_POOL,          // CommandPool
-    };
+    constexpr VkObjectType vulkanObjectType(RHINativeHandleType const type)
+    {
+        switch (type)
+        {
+            // clang-format off
+        case RHINativeHandleType::Fence:               return VK_OBJECT_TYPE_FENCE;
+        case RHINativeHandleType::Semaphore:           return VK_OBJECT_TYPE_SEMAPHORE;
+        case RHINativeHandleType::Queue:               return VK_OBJECT_TYPE_QUEUE;
+        case RHINativeHandleType::Buffer:              return VK_OBJECT_TYPE_BUFFER;
+        case RHINativeHandleType::Image:               return VK_OBJECT_TYPE_IMAGE;
+        case RHINativeHandleType::ImageView:           return VK_OBJECT_TYPE_IMAGE_VIEW;
+        case RHINativeHandleType::Sampler:             return VK_OBJECT_TYPE_SAMPLER;
+        case RHINativeHandleType::Shader:              return VK_OBJECT_TYPE_SHADER_MODULE;
+        case RHINativeHandleType::Pipeline:            return VK_OBJECT_TYPE_PIPELINE;
+        case RHINativeHandleType::PipelineLayout:      return VK_OBJECT_TYPE_PIPELINE_LAYOUT;
+        case RHINativeHandleType::DescriptorSet:       return VK_OBJECT_TYPE_DESCRIPTOR_SET;
+        case RHINativeHandleType::DescriptorSetLayout: return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
+        case RHINativeHandleType::CommandList:         return VK_OBJECT_TYPE_COMMAND_BUFFER;
+        case RHINativeHandleType::CommandPool:         return VK_OBJECT_TYPE_COMMAND_POOL;
+        case RHINativeHandleType::Swapchain:           return VK_OBJECT_TYPE_SWAPCHAIN_KHR;
+        case RHINativeHandleType::Surface:             return VK_OBJECT_TYPE_SURFACE_KHR;
+        default:                                       return VK_OBJECT_TYPE_UNKNOWN;
+            // clang-format on
+        }
+    }
 
-    constexpr VkFormat vulkanFormat[] = {VK_FORMAT_R8_UNORM,
-                                         VK_FORMAT_R8_UINT,
-                                         VK_FORMAT_R16_UNORM,
-                                         VK_FORMAT_R16_UINT,
-                                         VK_FORMAT_R16_SFLOAT,
-                                         VK_FORMAT_R32_UINT,
-                                         VK_FORMAT_R32_SFLOAT,
-                                         VK_FORMAT_R8G8_UNORM,
-                                         VK_FORMAT_R16G16_SFLOAT,
-                                         VK_FORMAT_R32G32_SFLOAT,
-                                         VK_FORMAT_B10G11R11_UFLOAT_PACK32,
-                                         VK_FORMAT_R32G32B32_SFLOAT,
-                                         VK_FORMAT_R8G8B8A8_UNORM,
-                                         VK_FORMAT_A2B10G10R10_UNORM_PACK32,
-                                         VK_FORMAT_R16G16B16A16_UNORM,
-                                         VK_FORMAT_R16G16B16A16_SNORM,
-                                         VK_FORMAT_R16G16B16A16_SFLOAT,
-                                         VK_FORMAT_R32G32B32A32_SFLOAT,
-                                         VK_FORMAT_D16_UNORM,
-                                         VK_FORMAT_D32_SFLOAT,
-                                         VK_FORMAT_D32_SFLOAT_S8_UINT,
-                                         VK_FORMAT_B8G8R8A8_UNORM};
+    constexpr VkImageAspectFlags vulkanImageAspectFlags(RHIFormat const format)
+    {
+        switch (format)
+        {
+        case RHIFormat::D16Unorm:
+        case RHIFormat::D32Float:
+            return VK_IMAGE_ASPECT_DEPTH_BIT;
+        case RHIFormat::D32FloatS8X24Uint:
+            return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        default:
+            return VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+    }
+
+    constexpr std::string rhiFormatToString(RHIFormat const format)
+    {
+        switch (format)
+        {
+            // clang-format off
+#define WS_RHI_FORMAT_CASE(name) case RHIFormat::name: return #name
+        WS_RHI_FORMAT_CASE(R8Unorm);
+        WS_RHI_FORMAT_CASE(R8Uint);
+        WS_RHI_FORMAT_CASE(R16Unorm);
+        WS_RHI_FORMAT_CASE(R16Uint);
+        WS_RHI_FORMAT_CASE(R16Float);
+        WS_RHI_FORMAT_CASE(R32Uint);
+        WS_RHI_FORMAT_CASE(R32Float);
+        WS_RHI_FORMAT_CASE(R8G8Unorm);
+        WS_RHI_FORMAT_CASE(R16G16Float);
+        WS_RHI_FORMAT_CASE(R32G32Float);
+        WS_RHI_FORMAT_CASE(R11G11B10Float);
+        WS_RHI_FORMAT_CASE(R32G32B32Float);
+        WS_RHI_FORMAT_CASE(R8G8B8A8Unorm);
+        WS_RHI_FORMAT_CASE(R10G10B10A2Unorm);
+        WS_RHI_FORMAT_CASE(R16G16B16A16Unorm);
+        WS_RHI_FORMAT_CASE(R16G16B16A16Snorm);
+        WS_RHI_FORMAT_CASE(R16G16B16A16Float);
+        WS_RHI_FORMAT_CASE(R32G32B32A32Float);
+        WS_RHI_FORMAT_CASE(D16Unorm);
+        WS_RHI_FORMAT_CASE(D32Float);
+        WS_RHI_FORMAT_CASE(D32FloatS8X24Uint);
+        WS_RHI_FORMAT_CASE(B8R8G8A8Unorm);
+        WS_RHI_FORMAT_CASE(Max);
+#undef WS_RHI_FORMAT_CASE
+            break;
+        }
+    }
 
     struct RHIContext
     {

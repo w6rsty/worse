@@ -30,17 +30,18 @@ namespace worse
         bool isDepth              = false;
     };
 
-    class RHICommandList
+    class RHICommandList : public RHIResource
     {
     public:
-        RHICommandList(RHIQueue* queue, RHIResource cmdPool, char const* name);
+        RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool,
+                       std::string_view name);
         ~RHICommandList();
 
         void begin();
         void submit(RHISyncPrimitive* semaphoreWait);
         void waitForExecution();
 
-        void insertBarrier(RHIResource image, RHIFormat const format,
+        void insertBarrier(RHINativeHandle image, RHIFormat const format,
                            std::uint32_t const mipIndex,
                            std::uint32_t const mipRange,
                            std::uint32_t const arrayLength,
@@ -55,8 +56,8 @@ namespace worse
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteTimelineSemaphore;
 
         std::atomic<RHICommandListState> m_state = RHICommandListState::Idle;
-        RHIQueue* m_queue                        = nullptr;
-        RHIResource m_cmdList                    = {};
+        RHIQueue* m_submissionQueue              = nullptr;
+        RHINativeHandle m_handle;
     };
 
 } // namespace worse

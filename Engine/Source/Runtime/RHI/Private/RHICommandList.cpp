@@ -25,7 +25,7 @@ namespace worse
 
     RHIQueue* RHICommandList::getQueue() const
     {
-        return m_queue;
+        return m_submissionQueue;
     }
 
 } // namespace worse

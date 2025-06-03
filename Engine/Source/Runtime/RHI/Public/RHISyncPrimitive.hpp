@@ -9,10 +9,10 @@ namespace worse
     // Forward declaration to avoid circular include
     class RHICommandList;
 
-    class RHISyncPrimitive
+    class RHISyncPrimitive : public RHIResource
     {
     public:
-        RHISyncPrimitive(RHISyncPrimitiveType const type, char const* name);
+        RHISyncPrimitive(RHISyncPrimitiveType const type, std::string_view name);
         ~RHISyncPrimitive();
 
         void wait(std::uint64_t const timeoutNs);
@@ -21,17 +21,17 @@ namespace worse
         void reset();
 
         std::uint64_t getNextSignalValue();
-        RHIResource getRHIResource() const;
-        void setCmdList(RHICommandList* cmdList);
-        RHICommandList* getCmdList() const;
+        RHINativeHandle getRHIResource() const;
+        void setBelongingCmdList(RHICommandList* cmdList);
+        RHICommandList* getBelongingCmdList() const;
 
         bool hasBeenWaitedFor = false;
 
     private:
-        RHICommandList* m_cmdList   = nullptr;
         RHISyncPrimitiveType m_type = RHISyncPrimitiveType::Max;
-        std::uint64_t m_value       = 0;
-        RHIResource m_rhiResource;
+        std::uint64_t m_value       = 0; // timeline counter
+        RHINativeHandle m_handle;
+        RHICommandList* m_belongingCmdList = nullptr;
     };
 
 } // namespace worse

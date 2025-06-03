@@ -150,20 +150,19 @@ namespace worse
 
         void detect()
         {
-            featureSynchronization2.sType =
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+            // clang-format off
+            featureSynchronization2.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
             featureSynchronization2.synchronization2 = VK_TRUE;
             featureSynchronization2.pNext            = nullptr;
 
-            featureDynamicRendering.sType =
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+            featureDynamicRendering.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
             featureDynamicRendering.dynamicRendering = VK_TRUE;
             featureDynamicRendering.pNext            = &featureSynchronization2;
 
-            featureTimelineSemaphore.sType =
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+            featureTimelineSemaphore.sType             = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
             featureTimelineSemaphore.timelineSemaphore = VK_TRUE;
-            featureTimelineSemaphore.pNext = &featureDynamicRendering;
+            featureTimelineSemaphore.pNext             = &featureDynamicRendering;
+            // clang-format on
 
             featureChain = &featureTimelineSemaphore;
         }
@@ -171,9 +170,9 @@ namespace worse
 
     namespace queues
     {
-        RHIResource graphics = {};
-        RHIResource compute  = {};
-        RHIResource transfer = {};
+        RHINativeHandle graphics = {};
+        RHINativeHandle compute  = {};
+        RHINativeHandle transfer = {};
 
         std::uint32_t indexGraphics{std::numeric_limits<std::uint32_t>::max()};
         std::uint32_t indexCompute{std::numeric_limits<std::uint32_t>::max()};
@@ -309,7 +308,7 @@ namespace worse
     namespace
     {
         std::mutex mtxDeletionQueue;
-        std::unordered_map<RHIResourceType, std::vector<RHIResource>>
+        std::unordered_map<RHINativeHandleType, std::vector<RHINativeHandle>>
             deletionQueue;
     } // namespace
 
@@ -317,24 +316,23 @@ namespace worse
     {
         // instance
         {
-            VkApplicationInfo infoApp{};
-            infoApp.sType      = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-            infoApp.apiVersion = config::version;
+            VkApplicationInfo infoApp = {};
+            infoApp.sType             = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+            infoApp.apiVersion        = config::version;
 
-            VkInstanceCreateInfo infoInst{};
-            infoInst.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-            infoInst.pNext = &debugMessenger::info;
-            infoInst.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-            infoInst.pApplicationInfo = &infoApp;
-            infoInst.enabledLayerCount =
-                config::isValidationLayerEnabled ? 1u : 0u;
-            infoInst.ppEnabledLayerNames = &validation::name;
+            // clang-format off
+            VkInstanceCreateInfo infoInst    = {};
+            infoInst.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+            infoInst.pNext                   = &debugMessenger::info;
+            infoInst.flags                   = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+            infoInst.pApplicationInfo        = &infoApp;
+            infoInst.enabledLayerCount       = config::isValidationLayerEnabled ? 1u : 0u;
+            infoInst.ppEnabledLayerNames     = &validation::name;
 
-            std::vector<char const*> extensionsInst =
-                extensions::getExtensionsInstance();
-            infoInst.enabledExtensionCount =
-                static_cast<std::uint32_t>(extensionsInst.size());
+            std::vector<char const*> extensionsInst = extensions::getExtensionsInstance();
+            infoInst.enabledExtensionCount   = static_cast<std::uint32_t>(extensionsInst.size());
             infoInst.ppEnabledExtensionNames = extensionsInst.data();
+            // clang-format on
 
             WS_ASSERT_VK(
                 vkCreateInstance(&infoInst, nullptr, &RHIContext::instance));
@@ -364,30 +362,30 @@ namespace worse
                 float queuePriority{1.0f};
                 for (auto const& index : queueFamilyIndices)
                 {
-                    VkDeviceQueueCreateInfo infoQueue{};
-                    infoQueue.sType =
-                        VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                    // clang-format off
+                    VkDeviceQueueCreateInfo infoQueue = {};
+                    infoQueue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
                     infoQueue.queueFamilyIndex = index;
                     infoQueue.queueCount       = 1;
                     infoQueue.pQueuePriorities = &queuePriority;
+                    // clang-format on
                     queueInfos.emplace_back(infoQueue);
                 };
             }
 
             deviceFeatures::detect();
 
-            VkDeviceCreateInfo infoDevice{};
-            infoDevice.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            infoDevice.pNext = deviceFeatures::featureChain;
-            infoDevice.queueCreateInfoCount =
-                static_cast<std::uint32_t>(queueInfos.size());
-            infoDevice.pQueueCreateInfos = queueInfos.data();
+            // clang-format off
+            VkDeviceCreateInfo infoDevice      = {};
+            infoDevice.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+            infoDevice.pNext                   = deviceFeatures::featureChain;
+            infoDevice.queueCreateInfoCount    = static_cast<std::uint32_t>(queueInfos.size());
+            infoDevice.pQueueCreateInfos       = queueInfos.data();
 
-            std::vector<char const*> extensionsDevice =
-                extensions::getExtensionsDevice();
-            infoDevice.enabledExtensionCount =
-                static_cast<std::uint32_t>(extensionsDevice.size());
+            std::vector<char const*> extensionsDevice = extensions::getExtensionsDevice();
+            infoDevice.enabledExtensionCount   = static_cast<std::uint32_t>(extensionsDevice.size());
             infoDevice.ppEnabledExtensionNames = extensionsDevice.data();
+            // clang-format on
 
             WS_ASSERT_VK(vkCreateDevice(RHIContext::physicalDevice,
                                         &infoDevice,
@@ -403,7 +401,7 @@ namespace worse
                 vkGetPhysicalDeviceProperties(RHIContext::physicalDevice,
                                               &physicalDeviceProperties);
                 // clang-format off
-                WS_LOG_INFO("Vulkan", "{}.{}.{}", 
+                WS_LOG_INFO("RHI Backend", "Vulkan {}.{}.{}", 
                     std::to_string(VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion)),
                     std::to_string(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion)),
                     std::to_string(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion)));
@@ -418,21 +416,24 @@ namespace worse
                              queues::indexGraphics,
                              0,
                              &queue);
-            queues::graphics = RHIResource{queue, RHIResourceType::Queue};
+            queues::graphics =
+                RHINativeHandle{queue, RHINativeHandleType::Queue};
             RHIDevice::setResourceName(queues::graphics, "graphics");
 
             vkGetDeviceQueue(RHIContext::device,
                              queues::indexCompute,
                              0,
                              &queue);
-            queues::compute = RHIResource{queue, RHIResourceType::Queue};
+            queues::compute =
+                RHINativeHandle{queue, RHINativeHandleType::Queue};
             RHIDevice::setResourceName(queues::compute, "compute");
 
             vkGetDeviceQueue(RHIContext::device,
                              queues::indexTransfer,
                              0,
                              &queue);
-            queues::transfer = RHIResource{queue, RHIResourceType::Queue};
+            queues::transfer =
+                RHINativeHandle{queue, RHINativeHandleType::Queue};
             RHIDevice::setResourceName(queues::transfer, "transfer");
 
             queues::regular[static_cast<std::size_t>(RHIQueueType::Graphics)] =
@@ -515,7 +516,7 @@ namespace worse
         return nullptr;
     }
 
-    RHIResource RHIDevice::getQueueRHIResource(RHIQueueType const type)
+    RHINativeHandle RHIDevice::getQueueRHIResource(RHIQueueType const type)
     {
         if (type == RHIQueueType::Graphics)
         {
@@ -530,10 +531,10 @@ namespace worse
             return queues::transfer;
         }
 
-        return RHIResource{};
+        return RHINativeHandle{};
     }
 
-    void RHIDevice::deletionQueueAdd(RHIResource const& resource)
+    void RHIDevice::deletionQueueAdd(RHINativeHandle const& resource)
     {
         if (!resource)
         {
@@ -552,18 +553,13 @@ namespace worse
         {
             for (auto& resource : resources)
             {
-                // WS_LOG_DEBUG("RHI",
-                //              "Releasing resource: {} 0x{:x}",
-                //              rhiResourceTypeToString(resource.getType()),
-                //              resource.asValue<std::uint64_t>());
-
                 // clang-format off
                 switch (type)
                 {
-                case RHIResourceType::Image:     vkDestroyImage(RHIContext::device, resource.asValue<VkImage>(), nullptr);         break;
-                case RHIResourceType::ImageView: vkDestroyImageView(RHIContext::device, resource.asValue<VkImageView>(), nullptr); break;
-                case RHIResourceType::Fence:     vkDestroyFence(RHIContext::device, resource.asValue<VkFence>(), nullptr);         break;
-                case RHIResourceType::Semaphore: vkDestroySemaphore(RHIContext::device, resource.asValue<VkSemaphore>(), nullptr); break;
+                case RHINativeHandleType::Image:     vkDestroyImage(RHIContext::device, resource.asValue<VkImage>(), nullptr);         break;
+                case RHINativeHandleType::ImageView: vkDestroyImageView(RHIContext::device, resource.asValue<VkImageView>(), nullptr); break;
+                case RHINativeHandleType::Fence:     vkDestroyFence(RHIContext::device, resource.asValue<VkFence>(), nullptr);         break;
+                case RHINativeHandleType::Semaphore: vkDestroySemaphore(RHIContext::device, resource.asValue<VkSemaphore>(), nullptr); break;
                 default:
                     // TODO
                     WS_ASSERT(false);
@@ -576,20 +572,21 @@ namespace worse
         deletionQueue.clear();
     }
 
-    void RHIDevice::setResourceName(RHIResource const& resource,
-                                    char const* name)
+    void RHIDevice::setResourceName(RHINativeHandle const& resource,
+                                    std::string_view name)
     {
         if (!config::isValidationLayerEnabled)
         {
             return;
         }
 
+        // clang-format off
         VkDebugUtilsObjectNameInfoEXT info{};
-        info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        info.objectType =
-            vulkanObjectType[static_cast<std::size_t>(resource.getType())];
+        info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        info.objectType   = vulkanObjectType(resource.getType());
         info.objectHandle = resource.asValue<std::uint64_t>();
-        info.pObjectName  = name;
+        info.pObjectName  = name.data();
+        // clang-format on
 
         WS_ASSERT_VK(vkSetDebugUtilsObjectNameEXT(RHIContext::device, &info));
     }

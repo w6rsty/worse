@@ -12,10 +12,10 @@ namespace worse
 
     class RHICommandList;
 
-    class RHIQueue
+    class RHIQueue : public RHIResource
     {
     public:
-        RHIQueue(RHIQueueType type, char const* name);
+        RHIQueue(RHIQueueType type, std::string_view name);
         ~RHIQueue();
 
         void wait();
@@ -23,7 +23,7 @@ namespace worse
                     RHISyncPrimitive* semaphoreWait,
                     RHISyncPrimitive* semaphoreSignal,
                     RHISyncPrimitive* semaphoreTimeline);
-        void present(RHIResource swapchain, std::uint32_t const imageIndex,
+        void present(RHINativeHandle swapchain, std::uint32_t const imageIndex,
                      RHISyncPrimitive* semaphoreWait);
         RHICommandList* nextCommandList();
         RHIQueueType getType() const;
@@ -32,7 +32,7 @@ namespace worse
         std::array<std::shared_ptr<RHICommandList>, 2> m_cmdLists = {nullptr};
         std::atomic<std::uint32_t> m_index                        = 0;
         RHIQueueType m_type = RHIQueueType::Max;
-        RHIResource m_rhiResource;
+        RHINativeHandle m_handle; // command pool
     };
 
 } // namespace worse

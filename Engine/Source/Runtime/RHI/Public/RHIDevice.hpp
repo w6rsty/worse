@@ -17,12 +17,12 @@ namespace worse
         static void queueWaitAll();
         static std::uint32_t getQueueIndex(RHIQueueType const type);
         static RHIQueue* getQueue(RHIQueueType const type);
-        static RHIResource getQueueRHIResource(RHIQueueType const type);
+        static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
 
-        static void deletionQueueAdd(RHIResource const& resource);
+        static void deletionQueueAdd(RHINativeHandle const& resource);
         static void deletionQueueFlush();
 
-        static void setResourceName(RHIResource const& resource,
-                                    char const* name);
+        static void setResourceName(RHINativeHandle const& resource,
+                                    std::string_view name);
     };
 }; // namespace worse

@@ -7,19 +7,19 @@ namespace worse
         return ++m_value;
     }
 
-    RHIResource RHISyncPrimitive::getRHIResource() const
+    RHINativeHandle RHISyncPrimitive::getRHIResource() const
     {
-        return m_rhiResource;
+        return m_handle;
     }
 
-    void RHISyncPrimitive::setCmdList(RHICommandList* cmdList)
+    void RHISyncPrimitive::setBelongingCmdList(RHICommandList* cmdList)
     {
-        m_cmdList = cmdList;
+        m_belongingCmdList = cmdList;
     }
 
-    RHICommandList* RHISyncPrimitive::getCmdList() const
+    RHICommandList* RHISyncPrimitive::getBelongingCmdList() const
     {
-        return m_cmdList;
+        return m_belongingCmdList;
     }
 
 } // namespace worse

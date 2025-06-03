@@ -8,17 +8,6 @@
 
 using namespace worse;
 
-struct Color
-{
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-};
-
-constexpr Color k_health{0, 255, 0};
-constexpr Color k_injured{255, 255, 0};
-constexpr Color k_dying{255, 0, 0};
-
 int main()
 {
     bool mouseVisible = true;
@@ -32,14 +21,6 @@ int main()
         if (Input::isKeyDown(KeyCode::Escape))
         {
             Window::close();
-        }
-
-        if (Input::getThumbStickLeftDistance() > 0.0f)
-        {
-            if (Input::isGamepadConnected())
-            {
-                Input::getConnectedController()->vibrate(0.5f, 0.5f, 100);
-            }
         }
 
         if (Input::getThumbStickRightDistance() > 0.0f)

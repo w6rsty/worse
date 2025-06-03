@@ -1,80 +1,34 @@
 #pragma once
-#include "Definitions.hpp"
+#include "RHIDefinitions.hpp"
 
+#include <string>
+#include <string_view>
 #include <type_traits>
 
 namespace worse
 {
-    enum class RHIResourceType
-    {
-        Fence,
-        Semaphore,
-        Queue,
-        Buffer,
-        Image,
-        ImageView,
-        Sampler,
-        Shader,
-        Pipeline,
-        PipelineLayout,
-        DescriptorSet,
-        DescriptorSetLayout,
-        CommandList,
-        CommandPool,
 
-        Swapchain,
-        Surface,
-        Max,
-    };
-
-    static constexpr char const*
-    rhiResourceTypeToString(RHIResourceType const type)
-    {
-        switch (type)
-        {
-            // clang-format off
-        case RHIResourceType::Fence:               return "Fence";
-        case RHIResourceType::Semaphore:           return "Semaphore";
-        case RHIResourceType::Queue:               return "Queue";
-        case RHIResourceType::Buffer:              return "Buffer";
-        case RHIResourceType::Image:               return "Image";
-        case RHIResourceType::ImageView:           return "ImageView";
-        case RHIResourceType::Sampler:             return "Sampler";
-        case RHIResourceType::Shader:              return "Shader";
-        case RHIResourceType::Pipeline:            return "Pipeline";
-        case RHIResourceType::PipelineLayout:      return "PipelineLayout";
-        case RHIResourceType::DescriptorSet:       return "DescriptorSet";
-        case RHIResourceType::DescriptorSetLayout: return "DescriptorSetLayout";
-        case RHIResourceType::CommandList:         return "CommandList";
-        case RHIResourceType::CommandPool:         return "CommandPool";
-        case RHIResourceType::Swapchain:           return "Swapchain";
-        case RHIResourceType::Surface:             return "Surface";
-        case RHIResourceType::Max:                 WS_ASSERT(false); return "Invalid";
-            // clang-format on
-        }
-    }
-
-    class RHIResource
+    class RHINativeHandle
     {
     public:
-        RHIResource() = default;
+        RHINativeHandle() = default;
 
         template <typename T>
-        RHIResource(T* handle, RHIResourceType type)
+        RHINativeHandle(T* handle, RHINativeHandleType type)
             : m_handle(static_cast<void*>(handle)), m_type(type)
         {
         }
 
-        RHIResource(RHIResource const&)            = default;
-        RHIResource& operator=(RHIResource const&) = default;
+        RHINativeHandle(RHINativeHandle const&)            = default;
+        RHINativeHandle& operator=(RHINativeHandle const&) = default;
 
-        RHIResource(RHIResource&& other)
+        RHINativeHandle(RHINativeHandle&& other)
             : m_handle(other.m_handle), m_type(other.m_type)
         {
             other.reset();
         }
 
-        RHIResource& operator=(RHIResource&& other)
+        RHINativeHandle& operator=(RHINativeHandle&& other)
         {
             if (&other == this)
             {
@@ -88,11 +42,6 @@ namespace worse
             return *this;
         }
 
-        template <typename T> T* asPtr() const
-        {
-            return static_cast<std::remove_cvref_t<T>*>(m_handle);
-        }
-
         template <typename T> T asValue() const
         {
             using Type = std::remove_cvref_t<T>;
@@ -100,7 +49,7 @@ namespace worse
             return reinterpret_cast<Type>(m_handle);
         }
 
-        RHIResourceType getType() const
+        RHINativeHandleType getType() const
         {
             return m_type;
         }
@@ -108,7 +57,7 @@ namespace worse
         void reset()
         {
             m_handle = nullptr;
-            m_type   = RHIResourceType::Max;
+            m_type   = RHINativeHandleType::Max;
         }
 
         bool isValid() const
@@ -122,8 +71,25 @@ namespace worse
         }
 
     protected:
-        void* m_handle         = nullptr;
-        RHIResourceType m_type = RHIResourceType::Max;
+        void* m_handle             = nullptr;
+        RHINativeHandleType m_type = RHINativeHandleType::Max;
+    };
+
+    // Base class for all RHI resources
+    class RHIResource
+    {
+    public:
+        RHIResource(std::string_view name = "") : m_name(name)
+        {
+        }
+
+        std::string getName() const
+        {
+            return m_name;
+        }
+
+    protected:
+        std::string m_name;
     };
 
 } // namespace worse

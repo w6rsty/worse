@@ -18,23 +18,28 @@ namespace worse
         }
     } // namespace
 
-    RHIQueue::RHIQueue(RHIQueueType type, char const* name) : m_type(type)
+    RHIQueue::RHIQueue(RHIQueueType type, std::string_view name)
+        : RHIResource(name)
     {
+        m_type = type;
         // command pool
         {
-            VkCommandPoolCreateInfo infoCmdPool{};
-            infoCmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-            infoCmdPool.queueFamilyIndex = RHIDevice::getQueueIndex(type);
-            infoCmdPool.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
-                                VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            // clang-format off
+            VkCommandPoolCreateInfo infoCmdPool = {};
+            infoCmdPool.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            infoCmdPool.queueFamilyIndex        = RHIDevice::getQueueIndex(type);
+            infoCmdPool.flags                   = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
+                                                  VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            // clang-format on
 
             VkCommandPool cmdPool = VK_NULL_HANDLE;
             WS_ASSERT_VK(vkCreateCommandPool(RHIContext::device,
                                              &infoCmdPool,
                                              nullptr,
                                              &cmdPool));
-            m_rhiResource = RHIResource{cmdPool, RHIResourceType::CommandPool};
-            RHIDevice::setResourceName(m_rhiResource, name);
+            m_handle =
+                RHINativeHandle{cmdPool, RHINativeHandleType::CommandPool};
+            RHIDevice::setResourceName(m_handle, name);
         }
 
         // command lists
@@ -45,7 +50,7 @@ namespace worse
             {
                 m_cmdLists[i] = std::make_shared<RHICommandList>(
                     this,
-                    m_rhiResource,
+                    m_handle,
                     std::format("cmd_list_{}", i).c_str());
             }
         }
@@ -63,7 +68,7 @@ namespace worse
         }
 
         vkDestroyCommandPool(RHIContext::device,
-                             m_rhiResource.asValue<VkCommandPool>(),
+                             m_handle.asValue<VkCommandPool>(),
                              nullptr);
     }
 
@@ -128,7 +133,7 @@ namespace worse
             nullptr));
     }
 
-    void RHIQueue::present(RHIResource swapchain,
+    void RHIQueue::present(RHINativeHandle swapchain,
                            std::uint32_t const imageIndex,
                            RHISyncPrimitive* semaphoreWait)
     {
