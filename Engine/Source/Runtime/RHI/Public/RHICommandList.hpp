@@ -1,6 +1,8 @@
 #pragma once
-#include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
+#include "RHIViewport.hpp"
+#include "Math/Rectangle.hpp"
+#include "Pipeline/RHIPipelineState.hpp"
 
 #include <cstdint>
 #include <atomic>
@@ -10,6 +12,7 @@ namespace worse
 
     class RHIQueue;
     class RHISyncPrimitive;
+    class RHISwapchain;
 
     enum class RHICommandListState
     {
@@ -41,23 +44,49 @@ namespace worse
         void submit(RHISyncPrimitive* semaphoreWait);
         void waitForExecution();
 
+        void renderPassBegin();
+        void renderPassEnd();
+
+        void draw(std::uint32_t const vertexCount,
+                  std::uint32_t const vertexOffset = 0);
+        void drawIndexed(std::uint32_t const indexCount,
+                         std::uint32_t const indexOffset   = 0,
+                         std::uint32_t const vertexOffset  = 0,
+                         std::uint32_t const instanceIndex = 0,
+                         std::uint32_t const instanceCount = 1);
+
+        void dipatch(std::uint32_t const x, std::uint32_t const y,
+                     std::uint32_t const z = 1);
+
+        // bind pipeline specific resources, must pass in a valid pso
+        void setPipelineState(RHIPipelineState const& pso);
+
+        void setViewport(RHIViewport const& viewport);
+        void setScissor(math::Rectangle const& scissor);
+
         void insertBarrier(RHINativeHandle image, RHIFormat const format,
-                           std::uint32_t const mipIndex,
-                           std::uint32_t const mipRange,
-                           std::uint32_t const arrayLength,
                            RHIImageLayout const layoutNew);
+
+        void blit(RHITexture* source, RHITexture* destination);
+        void blit(RHITexture* source, RHISwapchain* destination);
 
         RHISyncPrimitive* getRenderingCompleteSemaphore();
         RHICommandListState getState() const;
         RHIQueue* getQueue() const;
 
+        // TODO: move to other place
+        static RHIImageLayout getImageLayout(RHINativeHandle image);
+
     private:
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteBinaySemaphore;
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteTimelineSemaphore;
 
+        RHIPipelineState m_pso;
         std::atomic<RHICommandListState> m_state = RHICommandListState::Idle;
         RHIQueue* m_submissionQueue              = nullptr;
         RHINativeHandle m_handle;
+
+        bool m_isRenderPassActive = false;
     };
 
 } // namespace worse

@@ -67,7 +67,7 @@ namespace worse
                 break;
             }
             default:
-                // Ohter events are delegated to the EventBus
+                // Other events are delegated to the EventBus
                 break;
             }
 
@@ -167,45 +167,6 @@ namespace worse
         SDL_GetWindowPosition(s_window, &x, &y);
         return {x, y};
     }
-
-    // std::optional<ControllerDescriptor> Window::findAvailableController()
-    // {
-    //     auto controllerDescriptors = controller::fetchInfos();
-    //     if (controllerDescriptors.empty())
-    //     {
-    //         return std::nullopt;
-    //     }
-
-    //     // remove the currently connected controller if it exists
-    //     if (isControllerConnected())
-    //     {
-    //         auto it = std::remove_if(controllerDescriptors.begin(),
-    //                                  controllerDescriptors.end(),
-    //                                  [](ControllerDescriptor const& cd)
-    //                                  {
-    //                                      return *controller::s_controller ==
-    //                                      cd;
-    //                                  });
-    //         controllerDescriptors.erase(it, controllerDescriptors.end());
-    //     }
-
-    //     if (controllerDescriptors.empty())
-    //     {
-    //         return std::nullopt;
-    //     }
-
-    //     return {controllerDescriptors[0]};
-    // }
-
-    // bool Window::isControllerConnected()
-    // {
-    //     return controller::s_controller != nullptr;
-    // }
-
-    // Controller* Window::getConnectedController()
-    // {
-    //     return controller::s_controller.get();
-    // }
 
     void* Window::getHandleSDL()
     {

@@ -5,7 +5,6 @@ namespace worse
 
     struct RHIViewport
     {
-        RHIViewport() = default;
         RHIViewport(
             float const x = 0.0f, float const y = 0.0f,
             float const width = 0.0f, float const height = 0.0f,

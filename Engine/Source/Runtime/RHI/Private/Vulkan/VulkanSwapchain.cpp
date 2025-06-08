@@ -1,3 +1,4 @@
+#include "RHIResource.hpp"
 #include "Window.hpp"
 #include "Log.hpp"
 #include "Event.hpp"
@@ -187,13 +188,11 @@ namespace worse
 
     RHISwapchain::~RHISwapchain()
     {
-        for (auto& imageView : m_imageViews)
+        for (RHINativeHandle& imageView : m_rtvs)
         {
-            if (imageView)
-            {
-                RHIDevice::deletionQueueAdd(imageView);
-                imageView.reset();
-            }
+
+            RHIDevice::deletionQueueAdd(imageView);
+            imageView = {};
         }
 
         if (m_swapchain)
@@ -224,10 +223,7 @@ namespace worse
         // recreate swapchain
         create();
 
-        WS_LOG_INFO("Swapchain",
-                    "Resized swapchain to {}x{}",
-                    m_width,
-                    m_height);
+        WS_LOG_INFO("Swapchain", "Resized to {}x{}", m_width, m_height);
     }
 
     void RHISwapchain::resizeFitWindow()
@@ -264,7 +260,7 @@ namespace worse
                 RHIContext::device,
                 m_swapchain.asValue<VkSwapchainKHR>(),
                 16'000'000, // 16 ms,
-                semaphoreSignal->getRHIResource().asValue<VkSemaphore>(),
+                semaphoreSignal->getHandle().asValue<VkSemaphore>(),
                 VK_NULL_HANDLE,
                 &m_imageIndex);
 
@@ -306,16 +302,6 @@ namespace worse
         }
     }
 
-    RHINativeHandle RHISwapchain::getCurrentImage() const
-    {
-        return m_images[m_imageIndex];
-    }
-
-    RHISyncPrimitive* RHISwapchain::getImageAcquireSemaphore() const
-    {
-        return m_imageAcquireSemaphores[m_imageIndex].get();
-    }
-
     void RHISwapchain::create()
     {
         WS_ASSERT(m_sdlWindow != nullptr);
@@ -326,8 +312,7 @@ namespace worse
 
         if ((cap.currentExtent.width == 0) || (cap.currentExtent.height == 0))
         {
-            WS_LOG_WARN("Swapchain",
-                        "Window is minimized, skipping swapchain creation");
+            WS_LOG_WARN("Swapchain", "Window is minimized, skipping creation");
             return;
         }
 
@@ -354,7 +339,7 @@ namespace worse
             infoSwapchain.imageExtent              = {m_width, m_height};
             infoSwapchain.imageArrayLayers         = 1;
             infoSwapchain.imageUsage               = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                                                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+                                                     VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             infoSwapchain.imageSharingMode         = VK_SHARING_MODE_EXCLUSIVE;
             infoSwapchain.preTransform             = cap.currentTransform;
             infoSwapchain.compositeAlpha           = getCompositeAlpha(m_surface.asValue<VkSurfaceKHR>());
@@ -395,8 +380,8 @@ namespace worse
                  i < static_cast<std::uint32_t>(swapchainImages.size());
                  ++i)
             {
-                m_images[i] = RHINativeHandle{swapchainImages[i],
-                                              RHINativeHandleType::Image};
+                m_rts[i] = RHINativeHandle{swapchainImages[i],
+                                           RHINativeHandleType::Image};
             }
         }
 
@@ -405,15 +390,15 @@ namespace worse
             for (std::uint32_t i = 0; i < s_bufferCount; ++i)
             {
                 // destroy old one
-                if (m_imageViews[i])
+                if (m_rtvs[i])
                 {
-                    RHIDevice::deletionQueueAdd(m_imageViews[i]);
+                    RHIDevice::deletionQueueAdd(m_rtvs[i]);
                 }
 
                 // clang-format off
                 VkImageViewCreateInfo infoIV = {};
                 infoIV.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                infoIV.image                 = m_images[i].asValue<VkImage>();
+                infoIV.image                 = m_rts[i].asValue<VkImage>();
                 infoIV.viewType              = VK_IMAGE_VIEW_TYPE_2D;
                 infoIV.format                = surfaceFormat.format;
                 infoIV.subresourceRange      = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
@@ -425,7 +410,7 @@ namespace worse
                                                &infoIV,
                                                nullptr,
                                                &imageView));
-                m_imageViews[i] =
+                m_rtvs[i] =
                     RHINativeHandle{imageView, RHINativeHandleType::ImageView};
             }
         }
@@ -445,8 +430,8 @@ namespace worse
                 std::format("image_acquire_{}", i).c_str());
         }
 
-        WS_LOG_INFO("Creation",
-                    "Swapchain (Size: {}x{}, Format: {}, VSync: {})",
+        WS_LOG_INFO("Swapchain",
+                    "Created (Size: {}x{}, Format: {}, VSync: {})",
                     m_width,
                     m_height,
                     rhiFormatToString(m_format),

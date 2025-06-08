@@ -126,13 +126,8 @@ namespace worse
 
     RHISyncPrimitive::~RHISyncPrimitive()
     {
-        if (!m_handle)
-        {
-            return;
-        }
-
         RHIDevice::deletionQueueAdd(m_handle);
-        m_handle.reset();
+        m_handle = {};
     }
 
     void RHISyncPrimitive::wait(std::uint64_t const timeoutNs)

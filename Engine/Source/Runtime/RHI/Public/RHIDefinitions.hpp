@@ -1,5 +1,6 @@
 #pragma once
 #include "Definitions.hpp"
+#include "Types.hpp"
 
 #define WS_RHI_BACKEND_VULKAN
 
@@ -16,6 +17,23 @@
 
 namespace worse
 {
+    // fwd
+    class RHIDevice;
+    class RHIQueue;
+    class RHIViewport;
+    class RHICommandList;
+    class RHISwapchain;
+    class RHISyncPrimitive;
+    class RHIShader;
+    class RHIPipeline;
+    class RHIPipelineState;
+    class RHIRasterizerState;
+    class RHIDepthStencilState;
+    class RHIBlendState;
+    class RHITexture;
+    struct RHIDescriptor;
+    class RHIDescriptorSetLayout;
+
     enum class RHIBackendType
     {
         Vulkan,
@@ -24,6 +42,7 @@ namespace worse
 
     enum class RHINativeHandleType
     {
+        DontCare,
         Fence,
         Semaphore,
         Queue,
@@ -51,6 +70,8 @@ namespace worse
         Transfer,
         Max,
     };
+    constexpr std::size_t k_rhiQueueTypeCount =
+        static_cast<std::size_t>(RHIQueueType::Max);
 
     enum class RHISyncPrimitiveType
     {
@@ -101,10 +122,20 @@ namespace worse
         Max
     };
 
+    enum class RHITextureType
+    {
+        Texture2D,
+        Texture2DArray,
+        Texture3D,
+        TextureCube,
+        Max
+    };
+
     enum class RHIImageLayout
     {
+        Undefined,
         General,
-        Attacement,
+        ColorAttachment,
         ShaderRead,
         TransferSource,
         TransferDestination,
@@ -112,13 +143,218 @@ namespace worse
         Max,
     };
 
+    enum class RHIFilter
+    {
+        Nearest,
+        Linear,
+    };
+
     enum class RHIShaderType
     {
         Vertex,
-        Fragment,
+        Pixel,
         Compute,
         Max,
     };
+    constexpr std::size_t k_rhiShaderTypeCount =
+        static_cast<std::size_t>(RHIShaderType::Max);
+
+    enum class RHIPipelineType
+    {
+        Graphics,
+        Compute,
+    };
+
+    WS_DEFINE_FLAGS(RHIShaderStage, std::uint32_t);
+    // clang-format off
+    struct RHIShaderStageFlagBits
+    {
+        static constexpr RHIShaderStageFlags None   {0x00000000};
+        static constexpr RHIShaderStageFlags Vertex {0x00000001};
+        static constexpr RHIShaderStageFlags Pixel  {0x00000010};
+        static constexpr RHIShaderStageFlags Compute{0x00000020};
+        static constexpr RHIShaderStageFlags All    {0x7FFFFFFF};
+    };
+    constexpr RHIShaderStageFlags RHIComputePipelineShaderCombination  = RHIShaderStageFlagBits::Compute;
+    constexpr RHIShaderStageFlags RHIGraphicsPipelineShaderCombination = RHIShaderStageFlagBits::Vertex | RHIShaderStageFlagBits::Pixel;
+    // clang-format on
+
+    // conver RHI shader type to RHI shader stage flags
+    constexpr RHIShaderStageFlags rhiShaderStageFlags(RHIShaderType const type)
+    {
+        switch (type)
+        {
+            // clang-format off
+        case RHIShaderType::Vertex:   return RHIShaderStageFlagBits::Vertex;
+        case RHIShaderType::Pixel:    return RHIShaderStageFlagBits::Pixel;
+        case RHIShaderType::Compute:  return RHIShaderStageFlagBits::Compute;
+        default:                      return RHIShaderStageFlagBits::All;
+            // clang-format on
+        }
+    }
+
+    // convert RHI shader type to singoe vulkan shader stage flags
+    constexpr VkShaderStageFlags
+    vulkanShaderStageFlags(RHIShaderType const type)
+    {
+        switch (type)
+        {
+            // clang-format off
+        case RHIShaderType::Vertex:   return VK_SHADER_STAGE_VERTEX_BIT;
+        case RHIShaderType::Pixel:    return VK_SHADER_STAGE_FRAGMENT_BIT;
+        case RHIShaderType::Compute:  return VK_SHADER_STAGE_COMPUTE_BIT;
+        default:                      return VK_SHADER_STAGE_ALL;
+            // clang-format on
+        }
+    }
+
+    // convert RHI shader stage flags to vulkan shader stage flags
+    constexpr VkShaderStageFlags
+    vulkanShaderStageFlags(RHIShaderStageFlags const stageFlags)
+    {
+        VkShaderStageFlags flags = 0;
+        if (stageFlags & RHIShaderStageFlagBits::Vertex)
+        {
+            flags |= VK_SHADER_STAGE_VERTEX_BIT;
+        }
+        if (stageFlags & RHIShaderStageFlagBits::Pixel)
+        {
+            flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
+        if (stageFlags & RHIShaderStageFlagBits::Compute)
+        {
+            flags |= VK_SHADER_STAGE_COMPUTE_BIT;
+        }
+        return flags;
+    }
+
+    enum class RHIPolygonMode
+    {
+        Solid,
+        Wirefame,
+    };
+
+    enum class RHICullMode
+    {
+        None,
+        Front,
+        Back,
+    };
+
+    enum class RHIFrontFace
+    {
+        CW,
+        CCW,
+    };
+
+    enum class RHIPrimitiveTopology
+    {
+        PointList,
+        LineList,
+        Trianglelist,
+    };
+
+    enum class RHICompareOperation
+    {
+        Never,
+        Less,
+        Equal,
+        LessEqual,
+        Greater,
+        NotEqual,
+        GreaterEqual,
+        Always
+    };
+
+    enum class RHIStencilOperation
+    {
+        Keep,
+        Zero,
+        Replace,
+        IncrementAndClamp,
+        DecrementAndClamp,
+        Invert,
+        IncrementAndWrap,
+        DecrementAndWrap
+    };
+
+    enum class RHIBlendFactor
+    {
+        Zero,
+        One,
+        SrcColor,
+        OneMinusSrcColor,
+        SrcAlpha,
+        OneMinusSrcAlpha,
+        DstColor,
+        OneMinusDstColor,
+        DstAlpha,
+        OneMinusDstAlpha,
+        ConstantColor,
+        OneMinusConstantColor,
+        ConstantAlpha,
+        OneMinusConstantAlpha,
+        SrcAlphaSaturate,
+    };
+
+    enum class RHIBlendOperation
+    {
+        Add,
+        Subtract,
+        ReverseSubtract,
+        Min,
+        Max,
+    };
+
+    enum class RHIDescriptorType
+    {
+        Image,
+        TextureStorage,
+        PushConstantBuffer,
+        ConstantBuffer,
+        StructuredBuffer,
+        Max
+    };
+
+    constexpr VkDescriptorType
+    vulkanDescriptorType(RHIDescriptorType const type)
+    {
+        switch (type)
+        {
+            // clang-format off
+        case RHIDescriptorType::Image:            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case RHIDescriptorType::TextureStorage:   return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case RHIDescriptorType::ConstantBuffer:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        case RHIDescriptorType::StructuredBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        default: WS_ASSERT(false);                return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    constexpr std::string
+    rhiDescriptorTypeToString(RHIDescriptorType const type)
+    {
+        switch (type)
+        {
+            // clang-format off
+        case RHIDescriptorType::Image:              return "Image";
+        case RHIDescriptorType::TextureStorage:     return "TextureStorage";
+        case RHIDescriptorType::PushConstantBuffer: return "PushConstantBuffer";
+        case RHIDescriptorType::ConstantBuffer:     return "ConstantBuffer";
+        case RHIDescriptorType::StructuredBuffer:   return "StructuredBuffer";
+        default:                                    return "Unknown";
+            // clang-format on
+        }
+    }
+
+    enum class RHIBindlessResourceType
+    {
+        MaterialTexture,
+        // ....
+        Max
+    };
+    constexpr std::size_t k_rhiBindlessResourceCount =
+        static_cast<std::size_t>(RHIBindlessResourceType::Max);
 
     constexpr VkObjectType vulkanObjectType(RHINativeHandleType const type)
     {
@@ -146,6 +382,70 @@ namespace worse
         }
     }
 
+    constexpr VkFormat vulkanFormat(RHIFormat const format)
+    {
+        switch (format)
+        {
+            // clang-format off
+        case RHIFormat::R8Unorm:           return VK_FORMAT_R8_UNORM;
+        case RHIFormat::R8Uint:            return VK_FORMAT_R8_UINT;
+        case RHIFormat::R16Unorm:          return VK_FORMAT_R16_UNORM;
+        case RHIFormat::R16Uint:           return VK_FORMAT_R16_UINT;
+        case RHIFormat::R16Float:          return VK_FORMAT_R16_SFLOAT;
+        case RHIFormat::R32Uint:           return VK_FORMAT_R32_UINT;
+        case RHIFormat::R32Float:          return VK_FORMAT_R32_SFLOAT;
+        case RHIFormat::R8G8Unorm:         return VK_FORMAT_R8G8_UNORM;
+        case RHIFormat::R16G16Float:       return VK_FORMAT_R16G16_SFLOAT;
+        case RHIFormat::R32G32Float:       return VK_FORMAT_R32G32_SFLOAT;
+        case RHIFormat::R11G11B10Float:    return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
+        case RHIFormat::R32G32B32Float:    return VK_FORMAT_R32G32B32_SFLOAT;
+        case RHIFormat::R8G8B8A8Unorm:     return VK_FORMAT_R8G8B8A8_UNORM;
+        case RHIFormat::B8R8G8A8Unorm:     return VK_FORMAT_B8G8R8A8_UNORM;
+        case RHIFormat::R10G10B10A2Unorm:  return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
+        case RHIFormat::R16G16B16A16Unorm: return VK_FORMAT_R16G16B16A16_UNORM;
+        case RHIFormat::R16G16B16A16Snorm: return VK_FORMAT_R16G16B16A16_SNORM;
+        case RHIFormat::R16G16B16A16Float: return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case RHIFormat::R32G32B32A32Float: return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case RHIFormat::D16Unorm:          return VK_FORMAT_D16_UNORM;
+        case RHIFormat::D32Float:          return VK_FORMAT_D32_SFLOAT;
+        case RHIFormat::D32FloatS8X24Uint: return VK_FORMAT_D32_SFLOAT_S8_UINT;
+        default:                           return VK_FORMAT_UNDEFINED;
+            // clang-format on
+        }
+    }
+
+    constexpr VkImageType vulkanImageType(RHITextureType const type)
+    {
+        switch (type)
+        {
+            // clang-format off
+        case RHITextureType::Texture2D:      return VK_IMAGE_TYPE_2D;
+        case RHITextureType::Texture2DArray: return VK_IMAGE_TYPE_2D;
+        case RHITextureType::Texture3D:      return VK_IMAGE_TYPE_3D;
+        case RHITextureType::TextureCube:    return VK_IMAGE_TYPE_2D;
+        default:                             return VK_IMAGE_TYPE_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    // Notice that RHIImageLayout::Max -> VK_IMAGE_LAYOUT_UNDEFINED
+    constexpr VkImageLayout vulkanImageLayout(RHIImageLayout const layout)
+    {
+        switch (layout)
+        {
+            // clang-format off
+        case RHIImageLayout::Undefined:           return VK_IMAGE_LAYOUT_UNDEFINED;
+        case RHIImageLayout::General:             return VK_IMAGE_LAYOUT_GENERAL;
+        case RHIImageLayout::ColorAttachment:     return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case RHIImageLayout::ShaderRead:          return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case RHIImageLayout::TransferSource:      return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case RHIImageLayout::TransferDestination: return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case RHIImageLayout::PresentSource:       return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        case RHIImageLayout::Max:                 return VK_IMAGE_LAYOUT_UNDEFINED;
+            // clang-format on
+        }
+    }
+
     constexpr VkImageAspectFlags vulkanImageAspectFlags(RHIFormat const format)
     {
         switch (format)
@@ -157,6 +457,132 @@ namespace worse
             return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         default:
             return VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+    }
+
+    constexpr VkPolygonMode vulkanPolygonMode(RHIPolygonMode const mode)
+    {
+        switch (mode)
+        {
+            // clang-format off
+        case RHIPolygonMode::Solid:      return VK_POLYGON_MODE_FILL;
+        case RHIPolygonMode::Wirefame:  return VK_POLYGON_MODE_LINE;
+        default:                        return VK_POLYGON_MODE_FILL;
+            // clang-format on
+        }
+    }
+    constexpr VkCullModeFlags vulkanCullModeFlags(RHICullMode const mode)
+    {
+        switch (mode)
+        {
+            // clang-format off
+        case RHICullMode::None:  return VK_CULL_MODE_NONE;
+        case RHICullMode::Front: return VK_CULL_MODE_FRONT_BIT;
+        case RHICullMode::Back:  return VK_CULL_MODE_BACK_BIT;
+        default:                 return VK_CULL_MODE_NONE;
+            // clang-format on
+        }
+    }
+
+    constexpr VkFrontFace vulkanFrontFace(RHIFrontFace const frontFace)
+    {
+        switch (frontFace)
+        {
+            // clang-format off
+        case RHIFrontFace::CW:  return VK_FRONT_FACE_CLOCKWISE;
+        case RHIFrontFace::CCW: return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        default:                return VK_FRONT_FACE_CLOCKWISE;
+            // clang-format on
+        }
+    }
+
+    constexpr VkPrimitiveTopology
+    vulkanPrimitiveTopology(RHIPrimitiveTopology const topology)
+    {
+        switch (topology)
+        {
+            // clang-format off
+        case RHIPrimitiveTopology::PointList:   return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case RHIPrimitiveTopology::LineList:    return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case RHIPrimitiveTopology::Trianglelist: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        default:                                return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    constexpr VkCompareOp vulkanCompareOp(RHICompareOperation const op)
+    {
+        switch (op)
+        {
+            // clang-format off
+        case RHICompareOperation::Never:        return VK_COMPARE_OP_NEVER;
+        case RHICompareOperation::Less:         return VK_COMPARE_OP_LESS;
+        case RHICompareOperation::Equal:        return VK_COMPARE_OP_EQUAL;
+        case RHICompareOperation::LessEqual:    return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case RHICompareOperation::Greater:      return VK_COMPARE_OP_GREATER;
+        case RHICompareOperation::NotEqual:     return VK_COMPARE_OP_NOT_EQUAL;
+        case RHICompareOperation::GreaterEqual: return VK_COMPARE_OP_GREATER_OR_EQUAL;
+        case RHICompareOperation::Always:       return VK_COMPARE_OP_ALWAYS;
+        default:                                return VK_COMPARE_OP_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    constexpr VkStencilOp vulkanStencilOp(RHIStencilOperation const op)
+    {
+        switch (op)
+        {
+            // clang-format off
+        case RHIStencilOperation::Keep:              return VK_STENCIL_OP_KEEP;
+        case RHIStencilOperation::Zero:              return VK_STENCIL_OP_ZERO;
+        case RHIStencilOperation::Replace:           return VK_STENCIL_OP_REPLACE;
+        case RHIStencilOperation::IncrementAndClamp: return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case RHIStencilOperation::DecrementAndClamp: return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case RHIStencilOperation::Invert:            return VK_STENCIL_OP_INVERT;
+        case RHIStencilOperation::IncrementAndWrap:  return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case RHIStencilOperation::DecrementAndWrap:  return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+        default:                                     return VK_STENCIL_OP_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    constexpr VkBlendFactor vulkanBlendFactor(RHIBlendFactor const factor)
+    {
+        switch (factor)
+        {
+            // clang-format off
+        case RHIBlendFactor::Zero:                  return VK_BLEND_FACTOR_ZERO;
+        case RHIBlendFactor::One:                   return VK_BLEND_FACTOR_ONE;
+        case RHIBlendFactor::SrcColor:              return VK_BLEND_FACTOR_SRC_COLOR;
+        case RHIBlendFactor::OneMinusSrcColor:      return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case RHIBlendFactor::SrcAlpha:              return VK_BLEND_FACTOR_SRC_ALPHA;
+        case RHIBlendFactor::OneMinusSrcAlpha:      return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case RHIBlendFactor::DstColor:              return VK_BLEND_FACTOR_DST_COLOR;
+        case RHIBlendFactor::OneMinusDstColor:      return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case RHIBlendFactor::DstAlpha:              return VK_BLEND_FACTOR_DST_ALPHA;
+        case RHIBlendFactor::OneMinusDstAlpha:      return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        case RHIBlendFactor::ConstantColor:         return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case RHIBlendFactor::OneMinusConstantColor: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+        case RHIBlendFactor::ConstantAlpha:         return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+        case RHIBlendFactor::OneMinusConstantAlpha: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+        case RHIBlendFactor::SrcAlphaSaturate:      return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        default:                                    return VK_BLEND_FACTOR_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    constexpr VkBlendOp vulkanBlendOp(RHIBlendOperation const op)
+    {
+        switch (op)
+        {
+            // clang-format off
+        case RHIBlendOperation::Add:             return VK_BLEND_OP_ADD;
+        case RHIBlendOperation::Subtract:        return VK_BLEND_OP_SUBTRACT;
+        case RHIBlendOperation::ReverseSubtract: return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case RHIBlendOperation::Min:             return VK_BLEND_OP_MIN;
+        case RHIBlendOperation::Max:             return VK_BLEND_OP_MAX;
+        default:                                 return VK_BLEND_OP_MAX_ENUM;
+            // clang-format on
         }
     }
 
@@ -204,5 +630,11 @@ namespace worse
 
         static inline RHIBackendType backendType = RHIBackendType::Null;
     };
+
+
+    namespace RHIConfig
+    {
+        constexpr std::size_t MAX_RENDER_TARGET = 8;
+    }
 
 } // namespace worse

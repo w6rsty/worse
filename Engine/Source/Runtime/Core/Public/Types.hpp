@@ -83,20 +83,27 @@ namespace worse
             return Flags{static_cast<ValueType>(value ^ rhs.value)};
         }
 
-        [[nodiscard]] constexpr auto operator<=>(Flags const& rhs) const = default;
+        [[nodiscard]] constexpr auto
+        operator<=>(Flags const& rhs) const = default;
 
         [[nodiscard]] explicit operator bool() const
         {
             return value != 0;
         }
+
+        [[nodiscard]] operator ValueType() const
+        {
+            return value;
+        }
     };
 
-#define WS_DEFINE_FLAGS(name, base)                                                                \
-    struct name                                                                                    \
-    {                                                                                              \
-        static_assert(std::is_integral_v<base>, "Flags base type must be integral");               \
-        using ValueType = base;                                                                    \
-    };                                                                                             \
+#define WS_DEFINE_FLAGS(name, base)                                            \
+    struct name                                                                \
+    {                                                                          \
+        static_assert(std::is_integral_v<base>,                                \
+                      "Flags base type must be integral");                     \
+        using ValueType = base;                                                \
+    };                                                                         \
     using name##Flags = Flags<name>;
 
     /// Helper function to iterate over each flag bit.

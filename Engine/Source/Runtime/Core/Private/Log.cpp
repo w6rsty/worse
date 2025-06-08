@@ -1,6 +1,6 @@
 #include "Log.hpp"
 
-namespace worse::log
+namespace worse
 {
 
     bool RingBuffer::push(Message const& msg) noexcept
@@ -81,15 +81,7 @@ namespace worse::log
 
     Logger::~Logger()
     {
-        m_workerExitSem.release();
-
-        // ensure worker is waked up to enter stop state
-        m_messageAvailableSem.release();
-
-        if (m_worker.joinable())
-        {
-            m_worker.join();
-        }
+        waitShutdown();
     }
 
     void Logger::formatOutput(Message const& msg, char* line, std::size_t size)
@@ -128,21 +120,19 @@ namespace worse::log
 
     void Logger::initialize()
     {
-        if (s_instance != nullptr)
+        if (!s_instance)
         {
-            return;
+            s_instance = new Logger();
         }
-        s_instance = new Logger();
     }
 
     void Logger::shutdown()
     {
-        if (s_instance == nullptr)
+        if (s_instance)
         {
-            return;
+            delete s_instance;
+            s_instance = nullptr;
         }
-        delete s_instance;
-        s_instance = nullptr;
     }
 
     Logger* Logger::instance()
@@ -155,4 +145,18 @@ namespace worse::log
         std::fflush(stdout);
     }
 
-} // namespace worse::log
+    void Logger::waitShutdown()
+    {
+        // ask worker to exit
+        m_workerExitSem.release();
+
+        // ensure worker is waked up to enter stop state
+        m_messageAvailableSem.release();
+
+        if (m_worker.joinable())
+        {
+            m_worker.join();
+        }
+    }
+
+} // namespace worse

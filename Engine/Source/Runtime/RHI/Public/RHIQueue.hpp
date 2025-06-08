@@ -1,5 +1,4 @@
 #pragma once
-#include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
 #include "RHISyncPrimitive.hpp"
 

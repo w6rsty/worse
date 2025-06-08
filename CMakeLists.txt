@@ -6,6 +6,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Debug flags for better debugging experience
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0 -DDEBUG")
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+
 # Generate clangd database (When using Ninja and Makefile)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -30,6 +39,6 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 # Download directory for third-party libraries
-set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Build/ThirdParty)
+set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR})
 
 add_subdirectory(Engine/Source)

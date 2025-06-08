@@ -7,7 +7,7 @@ namespace worse
         return ++m_value;
     }
 
-    RHINativeHandle RHISyncPrimitive::getRHIResource() const
+    RHINativeHandle RHISyncPrimitive::getHandle() const
     {
         return m_handle;
     }

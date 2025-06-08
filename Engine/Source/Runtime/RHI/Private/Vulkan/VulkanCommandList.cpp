@@ -1,9 +1,53 @@
-#include "RHICommandList.hpp"
+#include "Math/Rectangle.hpp"
 #include "RHIQueue.hpp"
+#include "RHIDevice.hpp"
+#include "RHITexture.hpp"
+#include "RHISwapchain.hpp"
+#include "RHICommandList.hpp"
 #include "RHISyncPrimitive.hpp"
+#include "Pipeline/RHIPipeline.hpp"
+#include "Pipeline/RHIPipelineState.hpp"
+
+#include <mutex>
+#include <unordered_map>
 
 namespace worse
 {
+    namespace map
+    {
+        std::mutex mtxImageLayoutMap;
+        std::unordered_map<std::uint64_t, RHIImageLayout> imageLayoutMap;
+
+        void setImageLayout(RHINativeHandle image, RHIImageLayout layout)
+        {
+            WS_ASSERT(image);
+            std::lock_guard lock{mtxImageLayoutMap};
+            imageLayoutMap[image.asValue()] = layout;
+        }
+
+        RHIImageLayout getImageLayout(RHINativeHandle image)
+        {
+            WS_ASSERT(image);
+            std::lock_guard lock{mtxImageLayoutMap};
+            auto it = imageLayoutMap.find(image.asValue());
+            if (it == imageLayoutMap.end())
+            {
+                // if image has not been set, return RHIImageLayout::Max which
+                // indicates the image is fist time used as it will be treated
+                // as VK_IMAGE_LAYOUT_UNDEFINED
+                return RHIImageLayout::Max;
+            }
+
+            return it->second;
+        }
+
+        void removeImageLayout(RHINativeHandle image)
+        {
+            WS_ASSERT(image);
+            std::lock_guard lock{mtxImageLayoutMap};
+            imageLayoutMap.erase(image.asValue());
+        }
+    } // namespace map
 
     RHICommandList::RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool,
                                    std::string_view name)
@@ -16,10 +60,10 @@ namespace worse
         {
             // clang-format off
             VkCommandBufferAllocateInfo infoAloc = {};
-            infoAloc.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            infoAloc.commandPool                 = cmdPool.asValue<VkCommandPool>();
-            infoAloc.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            infoAloc.commandBufferCount          = 1;
+            infoAloc.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            infoAloc.commandPool        = cmdPool.asValue<VkCommandPool>();
+            infoAloc.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            infoAloc.commandBufferCount = 1;
             // clang-format on
 
             VkCommandBuffer cmdBuffer = VK_NULL_HANDLE;
@@ -91,28 +135,192 @@ namespace worse
         m_state = RHICommandListState::Submitted;
     }
 
+    void RHICommandList::renderPassBegin()
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        renderPassEnd();
+
+        RHISwapchain* swapchain      = m_pso.renderTargetSwapchain;
+        VkClearColorValue clearColor = {m_pso.clearColor.r,
+                                        m_pso.clearColor.g,
+                                        m_pso.clearColor.b,
+                                        m_pso.clearColor.a};
+
+        std::vector<VkRenderingAttachmentInfo> colorAttachments;
+        for (RHITexture* texture : m_pso.renderTargetColorTextures)
+        {
+            if (!texture)
+            {
+                break;
+            }
+
+            insertBarrier(texture->getImage(),
+                          texture->getFormat(),
+                          RHIImageLayout::ColorAttachment);
+
+            // clang-format off
+            VkRenderingAttachmentInfo colorAttachment = {};
+            colorAttachment.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            colorAttachment.imageView        = texture->getRtv().asValue<VkImageView>();
+            colorAttachment.imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            colorAttachment.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            colorAttachment.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;
+            colorAttachment.clearValue.color = clearColor;
+            // clang-format on
+
+            colorAttachments.push_back(colorAttachment);
+        }
+
+        // clang-format off
+        VkRenderingInfo infoRender = {};
+        infoRender.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        infoRender.renderArea           = {m_pso.scissor.x, m_pso.scissor.y, m_pso.scissor.width, m_pso.scissor.height};
+        infoRender.layerCount           = 1;
+        infoRender.colorAttachmentCount = static_cast<std::uint32_t>(colorAttachments.size());
+        infoRender.pColorAttachments    = colorAttachments.data();
+        // clang-format on
+
+        vkCmdBeginRenderingKHR(m_handle.asValue<VkCommandBuffer>(),
+                               &infoRender);
+
+        m_isRenderPassActive = true;
+    }
+
+    void RHICommandList::renderPassEnd()
+    {
+        if (!m_isRenderPassActive)
+        {
+            return;
+        }
+
+        vkCmdEndRenderingKHR(m_handle.asValue<VkCommandBuffer>());
+
+        m_isRenderPassActive = false;
+    }
+
+    void RHICommandList::draw(std::uint32_t const vertexCount,
+                              std::uint32_t const vertexOffset)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        vkCmdDraw(m_handle.asValue<VkCommandBuffer>(),
+                  vertexCount,
+                  1, // instance count
+                  vertexOffset,
+                  0); // first instance
+    }
+
+    void RHICommandList::drawIndexed(std::uint32_t const indexCount,
+                                     std::uint32_t const indexOffset,
+                                     std::uint32_t const vertexOffset,
+                                     std::uint32_t const instanceIndex,
+                                     std::uint32_t const instanceCount)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        vkCmdDrawIndexed(m_handle.asValue<VkCommandBuffer>(),
+                         indexCount,
+                         instanceCount,
+                         indexOffset,
+                         vertexOffset,
+                         instanceIndex);
+    }
+
+    void RHICommandList::setPipelineState(RHIPipelineState const& pso)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(pso.isValidated());
+
+        if (pso.getHash() == m_pso.getHash())
+        {
+            return;
+        }
+
+        m_pso = pso;
+
+        RHIPipeline* pipeline;
+        RHIDescriptorSetLayout* descriptorSetLayout;
+        RHIDevice::getOrCreatePipeline(pso, pipeline, descriptorSetLayout);
+
+        renderPassBegin();
+
+        VkPipelineBindPoint bindPoint = (pso.type == RHIPipelineType::Graphics)
+                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                            : VK_PIPELINE_BIND_POINT_COMPUTE;
+        vkCmdBindPipeline(m_handle.asValue<VkCommandBuffer>(),
+                          bindPoint,
+                          pipeline->getHandle().asValue<VkPipeline>());
+
+        setScissor(pso.scissor);
+        setViewport(pso.viewport);
+
+        draw(3, 0);
+    }
+
+    void RHICommandList::dipatch(std::uint32_t const x, std::uint32_t const y,
+                                 std::uint32_t const z)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        vkCmdDispatch(m_handle.asValue<VkCommandBuffer>(), x, y, z);
+    }
+
+    void RHICommandList::setViewport(RHIViewport const& viewport)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        VkViewport vkViewport = {};
+        vkViewport.x          = viewport.x;
+        vkViewport.y          = viewport.y;
+        vkViewport.width      = viewport.width;
+        vkViewport.height     = viewport.height;
+        vkViewport.minDepth   = viewport.depthMin;
+        vkViewport.maxDepth   = viewport.depthMax;
+
+        vkCmdSetViewport(m_handle.asValue<VkCommandBuffer>(),
+                         0,
+                         1,
+                         &vkViewport);
+    }
+
+    void RHICommandList::setScissor(math::Rectangle const& scissor)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        VkRect2D vkScissor      = {};
+        vkScissor.offset.x      = scissor.x;
+        vkScissor.offset.y      = scissor.y;
+        vkScissor.extent.width  = scissor.width;
+        vkScissor.extent.height = scissor.height;
+
+        vkCmdSetScissor(m_handle.asValue<VkCommandBuffer>(), 0, 1, &vkScissor);
+    }
+
     void RHICommandList::insertBarrier(RHINativeHandle image,
                                        RHIFormat const format,
-                                       std::uint32_t const mipIndex,
-                                       std::uint32_t const mipRange,
-                                       std::uint32_t const arrayLength,
                                        RHIImageLayout const layoutNew)
     {
+        WS_ASSERT(image);
+        RHIImageLayout currentLayout = getImageLayout(image);
+        if (currentLayout == layoutNew)
+        {
+            return;
+        }
+
         // clang-format off
-        VkImageMemoryBarrier2KHR imageBarrier        = {};
-        imageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR;
-        imageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
-        imageBarrier.srcAccessMask                   = VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
-        imageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
-        imageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT_KHR | VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
-        imageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageBarrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        VkImageMemoryBarrier2 imageBarrier = {};
+        imageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+        imageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        imageBarrier.srcAccessMask                   = VK_ACCESS_2_MEMORY_WRITE_BIT;
+        imageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        imageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+        imageBarrier.oldLayout                       = vulkanImageLayout(currentLayout);
+        imageBarrier.newLayout                       = vulkanImageLayout(layoutNew);
         imageBarrier.image                           = image.asValue<VkImage>();
-        imageBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        imageBarrier.subresourceRange.baseMipLevel   = mipIndex;
-        imageBarrier.subresourceRange.levelCount     = mipRange;
+        imageBarrier.subresourceRange.aspectMask     = vulkanImageAspectFlags(format);
+        imageBarrier.subresourceRange.baseMipLevel   = 0;
+        imageBarrier.subresourceRange.levelCount     = 1;
         imageBarrier.subresourceRange.baseArrayLayer = 0;
-        imageBarrier.subresourceRange.layerCount     = arrayLength;
+        imageBarrier.subresourceRange.layerCount     = 1;
         // clang-format on
 
         // clang-format off
@@ -123,6 +331,137 @@ namespace worse
         // clang-format on
         vkCmdPipelineBarrier2KHR(m_handle.asValue<VkCommandBuffer>(),
                                  &infoDependency);
+        map::setImageLayout(image, layoutNew);
+    }
+
+    void RHICommandList::blit(RHITexture* source, RHITexture* destination)
+    {
+        RHIImageLayout sourceInitialLayout      = source->getImageLayout();
+        RHIImageLayout destinationInitialLayout = destination->getImageLayout();
+
+        insertBarrier(source->getImage(),
+                      source->getFormat(),
+                      RHIImageLayout::TransferSource);
+        insertBarrier(destination->getImage(),
+                      destination->getFormat(),
+                      RHIImageLayout::TransferDestination);
+
+        RHIFilter filter = (source->getWidth() == destination->getWidth() &&
+                            source->getHeight() == destination->getHeight())
+                               ? RHIFilter::Nearest
+                               : RHIFilter::Linear;
+
+        // clang-format off
+        VkOffset3D srcOffset = {};
+        srcOffset.x          = static_cast<std::int32_t>(source->getWidth());
+        srcOffset.y          = static_cast<std::int32_t>(source->getHeight());
+        srcOffset.z          = 1;
+        VkOffset3D dstOffset = {};
+        dstOffset.x          = static_cast<std::int32_t>(destination->getWidth());
+        dstOffset.y          = static_cast<std::int32_t>(destination->getHeight());
+        dstOffset.z          = 1;
+
+        VkImageBlit2 region = {};
+        region.sType                         = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+        region.srcOffsets[0]                 = {0, 0, 0};
+        region.srcOffsets[1]                 = srcOffset;
+        region.srcSubresource.mipLevel       = 0;
+        region.srcSubresource.layerCount     = 1;
+        region.srcSubresource.baseArrayLayer = 0;
+        region.srcSubresource.aspectMask     = vulkanImageAspectFlags(source->getFormat());
+        region.dstOffsets[0]                 = {0, 0, 0};
+        region.dstOffsets[1]                 = dstOffset;
+        region.dstSubresource.mipLevel       = 0;
+        region.dstSubresource.layerCount     = 1;
+        region.dstSubresource.baseArrayLayer = 0;
+        region.dstSubresource.aspectMask     = vulkanImageAspectFlags(destination->getFormat());
+
+        VkBlitImageInfo2 info = {};
+        info.sType          = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+        info.srcImage       = source->getImage().asValue<VkImage>();
+        info.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        info.dstImage       = destination->getImage().asValue<VkImage>();
+        info.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        info.regionCount    = 1;
+        info.pRegions       = &region;
+        info.filter         = filter == RHIFilter::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+        // clang-format on
+
+        vkCmdBlitImage2KHR(m_handle.asValue<VkCommandBuffer>(), &info);
+
+        // restore layout
+        insertBarrier(source->getImage(),
+                      source->getFormat(),
+                      sourceInitialLayout);
+        insertBarrier(destination->getImage(),
+                      destination->getFormat(),
+                      destinationInitialLayout);
+    }
+
+    void RHICommandList::blit(RHITexture* source, RHISwapchain* destination)
+    {
+        RHIImageLayout initialLayout = source->getImageLayout();
+
+        insertBarrier(source->getImage(),
+                      source->getFormat(),
+                      RHIImageLayout::TransferSource);
+        insertBarrier(destination->getCurrentRt(),
+                      destination->getFormat(),
+                      RHIImageLayout::TransferDestination);
+
+        RHIFilter filter = (source->getWidth() == destination->getWidth() &&
+                            source->getHeight() == destination->getHeight())
+                               ? RHIFilter::Nearest
+                               : RHIFilter::Linear;
+
+        // clang-format off
+        VkOffset3D srcOffset = {};
+        srcOffset.x          = static_cast<std::int32_t>(source->getWidth());
+        srcOffset.y          = static_cast<std::int32_t>(source->getHeight());
+        srcOffset.z          = 1;
+        VkOffset3D dstOffset = {};
+        dstOffset.x          = static_cast<std::int32_t>(destination->getWidth());
+        dstOffset.y          = static_cast<std::int32_t>(destination->getHeight());
+        dstOffset.z          = 1;
+        
+        VkImageBlit2 region  = {};
+        region.sType                         = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+        region.srcOffsets[0]                 = {0, 0, 0};
+        region.srcOffsets[1]                 = srcOffset;
+        region.srcSubresource.mipLevel       = 0;
+        region.srcSubresource.layerCount     = 1;
+        region.srcSubresource.baseArrayLayer = 0;
+        region.srcSubresource.aspectMask     = vulkanImageAspectFlags(source->getFormat());
+        region.dstOffsets[0]                 = {0, 0, 0};
+        region.dstOffsets[1]                 = dstOffset;
+        region.dstSubresource.mipLevel       = 0;
+        region.dstSubresource.layerCount     = 1;
+        region.dstSubresource.baseArrayLayer = 0;
+        region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+
+        VkBlitImageInfo2 info = {};
+        info.sType          = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+        info.srcImage       = source->getImage().asValue<VkImage>();
+        info.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        info.dstImage       = destination->getCurrentRt().asValue<VkImage>();
+        info.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        info.regionCount    = 1;
+        info.pRegions       = &region;
+        info.filter         = filter == RHIFilter::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+        // clang-format on
+
+        vkCmdBlitImage2KHR(m_handle.asValue<VkCommandBuffer>(), &info);
+
+        // restore layout
+        insertBarrier(source->getImage(), source->getFormat(), initialLayout);
+        insertBarrier(destination->getCurrentRt(),
+                      destination->getFormat(),
+                      RHIImageLayout::PresentSource);
+    }
+
+    RHIImageLayout RHICommandList::getImageLayout(RHINativeHandle image)
+    {
+        return map::getImageLayout(image);
     }
 
 } // namespace worse

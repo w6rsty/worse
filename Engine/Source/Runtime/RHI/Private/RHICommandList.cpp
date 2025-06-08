@@ -12,7 +12,7 @@ namespace worse
         m_renderingCompleteTimelineSemaphore->wait(timeoutNs);
         m_state = RHICommandListState::Idle;
     }
-
+    
     RHISyncPrimitive* RHICommandList::getRenderingCompleteSemaphore()
     {
         return m_renderingCompleteBinaySemaphore.get();

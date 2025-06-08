@@ -9,6 +9,7 @@ namespace worse
     if (!(expression))                                                         \
     {                                                                          \
         WS_LOG_ERROR("Assertion failed", #expression);                         \
+        ::worse::Logger::instance()->waitShutdown();                           \
         assert(expression);                                                    \
     }
 
@@ -17,7 +18,10 @@ namespace worse
     {                                                                          \
         WS_LOG_ERROR("Assertion failed", #expression);                         \
         WS_LOG_ERROR("Message", message);                                      \
+        ::worse::Logger::instance()->waitShutdown();                           \
         assert(expression && message);                                         \
     }
+
+#define UNIMPLEMENTED() WS_ASSERT_MSG(false, "Unimplemented code")
 
 } // namespace worse

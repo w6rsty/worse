@@ -9,8 +9,7 @@ namespace worse
 
     namespace
     {
-        std::array<std::mutex, static_cast<std::size_t>(RHIQueueType::Max)>
-            mtxes;
+        std::array<std::mutex, k_rhiQueueTypeCount> mtxes;
 
         std::mutex const& getMutex(RHIQueueType const type)
         {
@@ -91,7 +90,7 @@ namespace worse
         VkSemaphoreSubmitInfo semaphoresWait[1] = {};
         {
             semaphoresWait[0].sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-            semaphoresWait[0].semaphore = semaphoreWait ? semaphoreWait->getRHIResource().asValue<VkSemaphore>() : nullptr;
+            semaphoresWait[0].semaphore = semaphoreWait ? semaphoreWait->getHandle().asValue<VkSemaphore>() : nullptr;
             semaphoresWait[0].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
             semaphoresWait[0].value     = 0;
         }
@@ -100,13 +99,13 @@ namespace worse
         {
             // binary
             semaphoresSignal[0].sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-            semaphoresSignal[0].semaphore = semaphoreSignal->getRHIResource().asValue<VkSemaphore>();
+            semaphoresSignal[0].semaphore = semaphoreSignal->getHandle().asValue<VkSemaphore>();
             semaphoresSignal[0].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
             semaphoresSignal[0].value     = 0;
 
             // timeline
             semaphoresSignal[1].sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-            semaphoresSignal[1].semaphore = semaphoreTimeline->getRHIResource().asValue<VkSemaphore>();
+            semaphoresSignal[1].semaphore = semaphoreTimeline->getHandle().asValue<VkSemaphore>();
             semaphoresSignal[1].stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
             semaphoresSignal[1].value     = semaphoreTimeline->getNextSignalValue();
         }
@@ -140,8 +139,7 @@ namespace worse
         // TODO: lock
 
         VkSemaphore semaphoresWait[1] = {};
-        semaphoresWait[0] =
-            semaphoreWait->getRHIResource().asValue<VkSemaphore>();
+        semaphoresWait[0] = semaphoreWait->getHandle().asValue<VkSemaphore>();
 
         VkSwapchainKHR vkSwapchain = swapchain.asValue<VkSwapchainKHR>();
 

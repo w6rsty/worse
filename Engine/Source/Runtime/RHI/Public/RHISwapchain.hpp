@@ -1,7 +1,6 @@
 #pragma once
-#include "RHIDefinitions.hpp"
-#include "RHICommandList.hpp"
 #include "RHIResource.hpp"
+#include "RHICommandList.hpp"
 #include "RHISyncPrimitive.hpp"
 
 #include <cstdint>
@@ -25,8 +24,14 @@ namespace worse
         void acquireNextImage();
         void present(RHICommandList* cmdList);
 
-        RHINativeHandle getCurrentImage() const;
-        RHISyncPrimitive* getImageAcquireSemaphore() const;
+        // clang-format off
+        std::uint32_t getWidth() const                     { return m_width; }
+        std::uint32_t getHeight() const                    { return m_height; }
+        RHIFormat getFormat() const                        { return m_format; }
+        RHINativeHandle getCurrentRt() const               { return m_rts[m_imageIndex]; }
+        RHINativeHandle getCurrentRtv() const              { return m_rtvs[m_imageIndex]; }
+        RHISyncPrimitive* getImageAcquireSemaphore() const { return m_imageAcquireSemaphores[m_imageIndex].get(); }
+        // clang-format on
 
     private:
         // create or recreate
@@ -48,8 +53,10 @@ namespace worse
 
         RHINativeHandle m_swapchain;
         RHINativeHandle m_surface;
-        std::array<RHINativeHandle, s_bufferCount> m_images;
-        std::array<RHINativeHandle, s_bufferCount> m_imageViews;
+        // render targets
+        std::array<RHINativeHandle, s_bufferCount> m_rts;
+        // render target views
+        std::array<RHINativeHandle, s_bufferCount> m_rtvs;
     };
 
 } // namespace worse

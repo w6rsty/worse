@@ -49,6 +49,11 @@ namespace worse
             return reinterpret_cast<Type>(m_handle);
         }
 
+        std::uint64_t asValue() const
+        {
+            return asValue<std::uint64_t>();
+        }
+
         RHINativeHandleType getType() const
         {
             return m_type;

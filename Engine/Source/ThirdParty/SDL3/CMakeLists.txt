@@ -30,6 +30,13 @@ if(NOT SDL3_FOUND)
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG ${SDL_VERSION}
     )
+
+    set(SDL_SHARED OFF CACHE BOOL "Build shared library" FORCE)
+    set(SDL_STATIC ON CACHE BOOL "Build static library" FORCE)
+    set(SDL_TEST OFF CACHE BOOL "Build test programs" FORCE)
+    set(SDL_DISABLE_INSTALL ON CACHE BOOL "Disable installation" FORCE)
+    set(SDL_ASSERTIONS disabled CACHE STRING "Enable internal sanity checks" FORCE)
+
     FetchContent_MakeAvailable(SDL3)
 endif()
 

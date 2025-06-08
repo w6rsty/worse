@@ -36,7 +36,7 @@ int main()
             WS_LOG_INFO("Sandbox", "Button North pressed");
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+       std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
     Engine::shutdown();

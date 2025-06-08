@@ -9,7 +9,7 @@
 #include <thread>
 #include <semaphore>
 
-namespace worse::log
+namespace worse
 {
 
     enum class Level : std::uint8_t
@@ -35,7 +35,7 @@ namespace worse::log
     constexpr char const* k_ansiReset = "\x1b[0m";
 
 #ifndef WS_LOG_ACTIVE_LEVEL
-#define WS_LOG_ACTIVE_LEVEL ::worse::log::Level::Trace // compile time filter
+#define WS_LOG_ACTIVE_LEVEL ::worse::Level::Trace // compile time filter
 #endif
 
     struct Message
@@ -76,14 +76,21 @@ namespace worse::log
     public:
         static void initialize();
         static void shutdown();
-
         static Logger* instance();
+
         static void flush();
+        // Reject new message, wait for all messages to be processed, and exit
+        void waitShutdown();
 
         template <Level L, class... Args>
         void log(char const* target, std::format_string<Args...> fmt,
                  Args&&... args)
         {
+            if (!m_running)
+            {
+                return;
+            }
+
             if constexpr (static_cast<int>(L) <
                           static_cast<int>(WS_LOG_ACTIVE_LEVEL))
             {
@@ -126,13 +133,13 @@ namespace worse::log
         std::atomic<bool> m_running{true};
     };
 
-} // namespace worse::log
+} // namespace worse
 
 // clang-format off
-#define WS_LOG_TRACE(target, fmt, ...) ::worse::log::Logger::instance()->log<::worse::log::Level::Trace>(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_DEBUG(target, fmt, ...) ::worse::log::Logger::instance()->log<::worse::log::Level::Debug>(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_INFO(target,  fmt, ...) ::worse::log::Logger::instance()->log<::worse::log::Level::Info >(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_WARN(target,  fmt, ...) ::worse::log::Logger::instance()->log<::worse::log::Level::Warn >(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_ERROR(target, fmt, ...) ::worse::log::Logger::instance()->log<::worse::log::Level::Error>(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_FATAL(target, fmt, ...) ::worse::log::Logger::instance()->log<::worse::log::Level::Fatal>(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_TRACE(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Trace>(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_DEBUG(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Debug>(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_INFO(target,  fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Info >(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_WARN(target,  fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Warn >(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_ERROR(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Error>(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_FATAL(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Fatal>(target, fmt __VA_OPT__(,) __VA_ARGS__)
 // clang-format on
