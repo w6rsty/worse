@@ -32,6 +32,12 @@ namespace worse
                        : RHIImageLayout::Max;
     }
 
+    void RHITexture::convertImageLayout(RHICommandList* cmdList,
+                                        RHIImageLayout layout)
+    {
+        cmdList->insertBarrier(m_image, m_format, layout);
+    }
+
     bool RHITexture::isFormatDepth() const
     {
         return (m_format == RHIFormat::D16Unorm) ||

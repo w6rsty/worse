@@ -140,7 +140,6 @@ namespace worse
         WS_ASSERT(m_state == RHICommandListState::Recording);
         renderPassEnd();
 
-        RHISwapchain* swapchain      = m_pso.renderTargetSwapchain;
         VkClearColorValue clearColor = {m_pso.clearColor.r,
                                         m_pso.clearColor.g,
                                         m_pso.clearColor.b,
@@ -154,6 +153,7 @@ namespace worse
                 break;
             }
 
+            texture->convertImageLayout(this, RHIImageLayout::ColorAttachment);
             insertBarrier(texture->getImage(),
                           texture->getFormat(),
                           RHIImageLayout::ColorAttachment);
@@ -162,7 +162,7 @@ namespace worse
             VkRenderingAttachmentInfo colorAttachment = {};
             colorAttachment.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachment.imageView        = texture->getRtv().asValue<VkImageView>();
-            colorAttachment.imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            colorAttachment.imageLayout      = vulkanImageLayout(texture->getImageLayout());
             colorAttachment.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
             colorAttachment.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;
             colorAttachment.clearValue.color = clearColor;
@@ -183,6 +183,8 @@ namespace worse
         vkCmdBeginRenderingKHR(m_handle.asValue<VkCommandBuffer>(),
                                &infoRender);
 
+        setViewport(m_pso.viewport);
+
         m_isRenderPassActive = true;
     }
 
@@ -202,6 +204,7 @@ namespace worse
                               std::uint32_t const vertexOffset)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(m_isRenderPassActive);
 
         vkCmdDraw(m_handle.asValue<VkCommandBuffer>(),
                   vertexCount,
@@ -228,7 +231,6 @@ namespace worse
     void RHICommandList::setPipelineState(RHIPipelineState const& pso)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
-        WS_ASSERT(pso.isValidated());
 
         if (pso.getHash() == m_pso.getHash())
         {
@@ -251,9 +253,11 @@ namespace worse
                           pipeline->getHandle().asValue<VkPipeline>());
 
         setScissor(pso.scissor);
-        setViewport(pso.viewport);
+    }
 
-        draw(3, 0);
+    void RHICommandList::clearPipelineState()
+    {
+        m_pso = {};
     }
 
     void RHICommandList::dipatch(std::uint32_t const x, std::uint32_t const y,
@@ -299,6 +303,7 @@ namespace worse
                                        RHIFormat const format,
                                        RHIImageLayout const layoutNew)
     {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(image);
         RHIImageLayout currentLayout = getImageLayout(image);
         if (currentLayout == layoutNew)
@@ -336,22 +341,20 @@ namespace worse
 
     void RHICommandList::blit(RHITexture* source, RHITexture* destination)
     {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        // clang-format off
         RHIImageLayout sourceInitialLayout      = source->getImageLayout();
         RHIImageLayout destinationInitialLayout = destination->getImageLayout();
 
-        insertBarrier(source->getImage(),
-                      source->getFormat(),
-                      RHIImageLayout::TransferSource);
-        insertBarrier(destination->getImage(),
-                      destination->getFormat(),
-                      RHIImageLayout::TransferDestination);
+        source->convertImageLayout(this, RHIImageLayout::TransferSource);
+        destination->convertImageLayout(this, RHIImageLayout::TransferDestination);
 
         RHIFilter filter = (source->getWidth() == destination->getWidth() &&
                             source->getHeight() == destination->getHeight())
                                ? RHIFilter::Nearest
                                : RHIFilter::Linear;
 
-        // clang-format off
         VkOffset3D srcOffset = {};
         srcOffset.x          = static_cast<std::int32_t>(source->getWidth());
         srcOffset.y          = static_cast<std::int32_t>(source->getHeight());
@@ -390,21 +393,17 @@ namespace worse
         vkCmdBlitImage2KHR(m_handle.asValue<VkCommandBuffer>(), &info);
 
         // restore layout
-        insertBarrier(source->getImage(),
-                      source->getFormat(),
-                      sourceInitialLayout);
-        insertBarrier(destination->getImage(),
-                      destination->getFormat(),
-                      destinationInitialLayout);
+        source->convertImageLayout(this, sourceInitialLayout);
+        destination->convertImageLayout(this, destinationInitialLayout);
     }
 
     void RHICommandList::blit(RHITexture* source, RHISwapchain* destination)
     {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
         RHIImageLayout initialLayout = source->getImageLayout();
 
-        insertBarrier(source->getImage(),
-                      source->getFormat(),
-                      RHIImageLayout::TransferSource);
+        source->convertImageLayout(this, RHIImageLayout::TransferSource);
         insertBarrier(destination->getCurrentRt(),
                       destination->getFormat(),
                       RHIImageLayout::TransferDestination);
@@ -453,7 +452,98 @@ namespace worse
         vkCmdBlitImage2KHR(m_handle.asValue<VkCommandBuffer>(), &info);
 
         // restore layout
-        insertBarrier(source->getImage(), source->getFormat(), initialLayout);
+        source->convertImageLayout(this, initialLayout);
+        insertBarrier(destination->getCurrentRt(),
+                      destination->getFormat(),
+                      RHIImageLayout::PresentSource);
+    }
+
+    void RHICommandList::copy(RHITexture* source, RHITexture* destination)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT((source->getWidth() == destination->getWidth()) &&
+                  (source->getHeight() == destination->getHeight()) &&
+                  (source->getFormat() == destination->getFormat()));
+
+        RHIImageLayout sourceInitialLayout      = source->getImageLayout();
+        RHIImageLayout destinationInitialLayout = destination->getImageLayout();
+
+        // clang-format off
+        source->convertImageLayout(this, RHIImageLayout::TransferSource);
+        destination->convertImageLayout(this, RHIImageLayout::TransferDestination);
+
+        VkImageCopy2 region = {};
+        region.sType                         = VK_STRUCTURE_TYPE_IMAGE_COPY_2;
+        region.srcOffset                     = {0, 0, 0};
+        region.srcSubresource.mipLevel       = 0;
+        region.srcSubresource.layerCount     = 1;
+        region.srcSubresource.baseArrayLayer = 0;
+        region.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.dstOffset                     = {0, 0, 0};
+        region.dstSubresource.mipLevel       = 0;
+        region.dstSubresource.layerCount     = 1;
+        region.dstSubresource.baseArrayLayer = 0;
+        region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.extent                        = {source->getWidth(), source->getHeight(), 1};
+
+        VkCopyImageInfo2 info = {};
+        info.sType          = VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2;
+        info.srcImage       = source->getImage().asValue<VkImage>();
+        info.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        info.dstImage       = destination->getImage().asValue<VkImage>();
+        info.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        info.regionCount    = 1;
+        info.pRegions       = &region;
+        // clang-format on
+
+        vkCmdCopyImage2KHR(m_handle.asValue<VkCommandBuffer>(), &info);
+
+        // restore layout
+        source->convertImageLayout(this, sourceInitialLayout);
+        destination->convertImageLayout(this, destinationInitialLayout);
+    }
+
+    void RHICommandList::copy(RHITexture* source, RHISwapchain* destination)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT((source->getWidth() == destination->getWidth()) &&
+                  (source->getHeight() == destination->getHeight()) &&
+                  (source->getFormat() == destination->getFormat()));
+
+        RHIImageLayout sourceInitialLayout = source->getImageLayout();
+
+        source->convertImageLayout(this, RHIImageLayout::TransferSource);
+        insertBarrier(destination->getCurrentRt(),
+                      destination->getFormat(),
+                      RHIImageLayout::TransferDestination);
+
+        VkImageCopy2 region                  = {};
+        region.sType                         = VK_STRUCTURE_TYPE_IMAGE_COPY_2;
+        region.srcOffset                     = {0, 0, 0};
+        region.srcSubresource.mipLevel       = 0;
+        region.srcSubresource.layerCount     = 1;
+        region.srcSubresource.baseArrayLayer = 0;
+        region.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.dstOffset                     = {0, 0, 0};
+        region.dstSubresource.mipLevel       = 0;
+        region.dstSubresource.layerCount     = 1;
+        region.dstSubresource.baseArrayLayer = 0;
+        region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.extent = {source->getWidth(), source->getHeight(), 1};
+
+        VkCopyImageInfo2 info = {};
+        info.sType            = VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2;
+        info.srcImage         = source->getImage().asValue<VkImage>();
+        info.srcImageLayout   = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        info.dstImage         = destination->getCurrentRt().asValue<VkImage>();
+        info.dstImageLayout   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        info.regionCount      = 1;
+        info.pRegions         = &region;
+
+        vkCmdCopyImage2KHR(m_handle.asValue<VkCommandBuffer>(), &info);
+
+        // restore
+        source->convertImageLayout(this, sourceInitialLayout);
         insertBarrier(destination->getCurrentRt(),
                       destination->getFormat(),
                       RHIImageLayout::PresentSource);

@@ -1,7 +1,6 @@
 #include "Math/Hash.hpp"
 #include "RHIShader.hpp"
 #include "RHITexture.hpp"
-#include "RHISwapchain.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
@@ -17,12 +16,7 @@ namespace worse
             std::uint32_t width  = 0;
             std::uint32_t height = 0;
 
-            if (pso.renderTargetSwapchain)
-            {
-                width  = pso.renderTargetSwapchain->getWidth();
-                height = pso.renderTargetSwapchain->getHeight();
-            }
-            else if (pso.renderTargetColorTextures[0])
+            if (pso.renderTargetColorTextures[0])
             {
                 width  = pso.renderTargetColorTextures[0]->getWidth();
                 height = pso.renderTargetColorTextures[0]->getHeight();
@@ -58,8 +52,7 @@ namespace worse
 
                 bool hasRenderTarget = (pso.renderTargetColorTextures[0] != nullptr) || pso.renderTargetDepthTexture;
 
-                bool hasBackBuffer = pso.renderTargetSwapchain != nullptr;
-                WS_ASSERT_MSG(hasRenderTarget || hasBackBuffer, "Pipeline has no render target");
+                WS_ASSERT_MSG(hasRenderTarget, "Pipeline has no render target");
 
                 bool hasMandatoryState = (pso.rasterizerState != nullptr) && (pso.depthStencilState != nullptr) && (pso.blendState != nullptr);
                 WS_ASSERT_MSG(hasMandatoryState, "Graphics Pipeline miss mandatory states");
@@ -105,6 +98,7 @@ namespace worse
 
         m_hash = computeHash(*this);
 
+        // if not valid, assertion will be triggered before
         m_validated = true;
     }
 

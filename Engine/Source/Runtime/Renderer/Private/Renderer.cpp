@@ -108,7 +108,6 @@ namespace worse
             testPso.type                                                     = RHIPipelineType::Graphics;
             testPso.shaders[static_cast<std::size_t>(RHIShaderType::Vertex)] = Renderer::getShader(RendererShader::QuadV);
             testPso.shaders[static_cast<std::size_t>(RHIShaderType::Pixel)]  = Renderer::getShader(RendererShader::QuadP);
-            testPso.renderTargetSwapchain = swapchain.get();
             testPso.rasterizerState   = Renderer::getRasterizerState(RendererRasterizerState::Solid);
             testPso.depthStencilState = Renderer::getDepthStencilState(RendererDepthStencilState::Off);
             testPso.blendState        = Renderer::getBlendState(RendererBlendState::Off);
@@ -120,8 +119,9 @@ namespace worse
             testPso.finalize();
 
             m_cmdList->setPipelineState(testPso);
-
+            m_cmdList->draw(3);
             m_cmdList->renderPassEnd();
+            m_cmdList->clearPipelineState();
 
             m_cmdList->blit(frameRender, frameOutput);
         }

@@ -1,7 +1,7 @@
 #pragma once
+#include "Math/Rectangle.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
-#include "Math/Rectangle.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <cstdint>
@@ -58,8 +58,12 @@ namespace worse
         void dipatch(std::uint32_t const x, std::uint32_t const y,
                      std::uint32_t const z = 1);
 
-        // bind pipeline specific resources, must pass in a valid pso
+        // bind pipeline specific resources and begin render pass make sure pso
+        // has been called `finalize()`
         void setPipelineState(RHIPipelineState const& pso);
+        // must call this at the end of the render operation if only has one pso
+        // in reneder loop, otherwise the activation of next pass will fail
+        void clearPipelineState();
 
         void setViewport(RHIViewport const& viewport);
         void setScissor(math::Rectangle const& scissor);
@@ -69,6 +73,9 @@ namespace worse
 
         void blit(RHITexture* source, RHITexture* destination);
         void blit(RHITexture* source, RHISwapchain* destination);
+
+        void copy(RHITexture* source, RHITexture* destination);
+        void copy(RHITexture* source, RHISwapchain* destination);
 
         RHISyncPrimitive* getRenderingCompleteSemaphore();
         RHICommandListState getState() const;
