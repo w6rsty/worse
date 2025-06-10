@@ -1,10 +1,10 @@
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
-#include "RHITexture.hpp"
 #include "Pipeline/RHIPipeline.hpp"
+#include "Pipeline/RHIBlendState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
-#include "Pipeline/RHIBlendState.hpp"
+#include "Descriptor/RHITexture.hpp"
 
 #include <vector>
 
@@ -155,12 +155,20 @@ namespace worse
             infoRendering.depthAttachmentFormat   = depthFormat;
             infoRendering.stencilAttachmentFormat = stencilFormat;
 
+            std::vector<VkVertexInputBindingDescription> vertexInputBindings;
+            std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
+            // get vertex info from verte shader
+            if (RHIShader* vertexShader = m_state.shaders[static_cast<std::size_t>(RHIShaderType::Vertex)])
+            {
+
+            }
+
             VkPipelineVertexInputStateCreateInfo vertexInputState = {};
             vertexInputState.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-            vertexInputState.vertexBindingDescriptionCount   = 0;
-            vertexInputState.pVertexBindingDescriptions      = nullptr;
-            vertexInputState.vertexAttributeDescriptionCount = 0;
-            vertexInputState.pVertexAttributeDescriptions    = nullptr;
+            vertexInputState.vertexBindingDescriptionCount   = static_cast<std::uint32_t>(vertexInputBindings.size());
+            vertexInputState.pVertexBindingDescriptions      = vertexInputBindings.data();
+            vertexInputState.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(vertexInputAttributes.size());
+            vertexInputState.pVertexAttributeDescriptions    = vertexInputAttributes.data();
 
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
             inputAssemblyState.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

@@ -9,8 +9,6 @@
 namespace worse
 {
 
-    class RHICommandList;
-
     class RHIQueue : public RHIResource
     {
     public:

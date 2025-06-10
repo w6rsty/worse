@@ -1,14 +1,14 @@
 #include "Math/Rectangle.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
-#include "RHIBuffer.hpp"
-#include "RHITexture.hpp"
 #include "RHISwapchain.hpp"
 #include "RHICommandList.hpp"
-#include "RHIDescriptorSet.hpp"
 #include "RHISyncPrimitive.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "Descriptor/RHIBuffer.hpp"
+#include "Descriptor/RHITexture.hpp"
+#include "Descriptor/RHIDescriptorSet.hpp"
 
 #include <mutex>
 #include <unordered_map>
@@ -414,6 +414,7 @@ namespace worse
     void RHICommandList::blit(RHITexture* source, RHITexture* destination)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(source != destination);
 
         // clang-format off
         RHIImageLayout sourceInitialLayout      = source->getImageLayout();

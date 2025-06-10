@@ -1,9 +1,9 @@
 #include "Math/Hash.hpp"
-#include "RHIBuffer.hpp"
 #include "RHIDevice.hpp"
-#include "RHIDescriptor.hpp"
-#include "RHIDescriptorSet.hpp"
-#include "RHIDescriptorSetLayout.hpp"
+#include "Descriptor/RHIBuffer.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
+#include "Descriptor/RHIDescriptorSet.hpp"
+#include "Descriptor/RHIDescriptorSetLayout.hpp"
 
 namespace worse
 {

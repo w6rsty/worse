@@ -1,6 +1,6 @@
-#include "RHIBuffer.hpp"
-#include "RHICommandList.hpp"
 #include "RHIDevice.hpp"
+#include "RHICommandList.hpp"
+#include "Descriptor/RHIBuffer.hpp"
 
 namespace worse
 {
@@ -151,13 +151,6 @@ namespace worse
 
         m_gpuData = m_mappable ? RHIDevice::memoryGetMappedBufferData(m_handle)
                                : nullptr;
-
-        WS_LOG_DEBUG("RHIBuffer",
-                     "Created {}, size: {}, gpuData: 0x{:x}",
-                     m_name,
-                     m_size,
-                     m_mappable ? reinterpret_cast<std::uintptr_t>(m_gpuData)
-                                : 0);
     }
 
     void RHIBuffer::nativeDestroy()

@@ -1,16 +1,17 @@
+#include "DXCompiler.hpp" // Do not move
 #include "Log.hpp"
 #include "Math/Hash.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
-#include "RHIBuffer.hpp"
-#include "RHITexture.hpp"
-#include "RHIDescriptor.hpp"
-#include "RHIDescriptorSet.hpp"
 #include "RHICommandList.hpp"
-#include "RHIDescriptorSetLayout.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "Descriptor/RHIBuffer.hpp"
+#include "Descriptor/RHITexture.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
+#include "Descriptor/RHIDescriptorSet.hpp"
+#include "Descriptor/RHIDescriptorSetLayout.hpp"
 
 #include "SDL3/SDL_vulkan.h"
 #include "vk_mem_alloc.h"
@@ -834,6 +835,8 @@ namespace worse
 
         vma::create();
         descriptor::createPool();
+
+        DXCompiler::initialize();
     }
 
     void RHIDevice::destroy()
@@ -849,6 +852,7 @@ namespace worse
 
         RHIDevice::deletionQueueFlush();
 
+        DXCompiler::shutdown();
         vma::destroy();
 
         vkDestroyDevice(RHIContext::device, nullptr);

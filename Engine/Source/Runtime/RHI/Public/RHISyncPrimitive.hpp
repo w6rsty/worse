@@ -5,8 +5,6 @@
 
 namespace worse
 {
-    // Forward declaration to avoid circular include
-    class RHICommandList;
 
     class RHISyncPrimitive : public RHIResource
     {

@@ -1,7 +1,7 @@
-#include "RHIBuffer.hpp"
-#include "RHITexture.hpp"
-#include "RHIDescriptor.hpp"
-#include "RHIDescriptorSet.hpp"
+#include "Descriptor/RHIBuffer.hpp"
+#include "Descriptor/RHITexture.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
+#include "Descriptor/RHIDescriptorSet.hpp"
 
 #include <vector>
 

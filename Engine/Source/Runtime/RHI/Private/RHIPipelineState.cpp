@@ -1,10 +1,10 @@
 #include "Math/Hash.hpp"
 #include "RHIShader.hpp"
-#include "RHITexture.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
 #include "Pipeline/RHIBlendState.hpp"
+#include "Descriptor/RHITexture.hpp"
 
 namespace worse
 {
@@ -105,6 +105,100 @@ namespace worse
     RHIShader const* RHIPipelineState::getShader(RHIShaderType const type) const
     {
         return shaders[static_cast<std::size_t>(type)];
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setName(std::string const& name)
+    {
+
+        m_pso.name = name;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setType(RHIPipelineType type)
+    {
+        m_pso.type = type;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setPrimitiveTopology(RHIPrimitiveTopology topology)
+    {
+        m_pso.primitiveTopology = topology;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setRasterizerState(RHIRasterizerState* state)
+    {
+        m_pso.rasterizerState = state;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setDepthStencilState(RHIDepthStencilState* state)
+    {
+        m_pso.depthStencilState = state;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setBlendState(RHIBlendState* state)
+    {
+        m_pso.blendState = state;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::addShader(RHIShader* shader)
+    {
+        m_pso.shaders[static_cast<std::size_t>(shader->getShaderType())] =
+            shader;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setRenderTargetColorTexture(std::size_t index,
+                                                         RHITexture* texture)
+    {
+        m_pso.renderTargetColorTextures[index] = texture;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setRenderTargetDepthTexture(RHITexture* texture)
+    {
+        m_pso.renderTargetDepthTexture = texture;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setScissor(math::Rectangle const& scissor)
+    {
+        m_pso.scissor = scissor;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setViewport(RHIViewport const& viewport)
+    {
+        m_pso.viewport = viewport;
+        return *this;
+    }
+
+    RHIPipelineStateBuilder&
+    RHIPipelineStateBuilder::setClearColor(Color const& color)
+    {
+        m_pso.clearColor = color;
+        return *this;
+    }
+
+    RHIPipelineState RHIPipelineStateBuilder::build()
+    {
+        m_pso.finalize();
+
+        return std::move(m_pso);
     }
 
 } // namespace worse

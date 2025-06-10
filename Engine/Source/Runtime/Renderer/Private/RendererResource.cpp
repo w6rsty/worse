@@ -1,10 +1,10 @@
 #include "Math/Vector2.hpp"
-#include "RHITexture.hpp"
 #include "Renderer.hpp"
 #include "RHIShader.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIBlendState.hpp"
+#include "Descriptor/RHITexture.hpp"
 
 #include <filesystem>
 #include <memory>

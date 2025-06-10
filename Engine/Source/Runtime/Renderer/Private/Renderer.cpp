@@ -1,15 +1,14 @@
-#include "DXCompiler.hpp" // Do not move
 #include "Math/Vector2.hpp"
 #include "Profiling/Stopwatch.hpp"
-#include "RHICommandList.hpp"
 #include "Window.hpp"
 #include "Renderer.hpp"
+#include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
 #include "RHIViewport.hpp"
 #include "RHISwapchain.hpp"
-#include "RHIQueue.hpp"
-#include "RHIBuffer.hpp"
+#include "RHICommandList.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "Descriptor/RHIBuffer.hpp"
 
 #include <memory>
 
@@ -37,12 +36,13 @@ namespace worse
 
         FrameConstantData frameConstantData            = {};
         std::shared_ptr<RHIBuffer> frameConstantBuffer = nullptr;
+
+        RHIPipelineState testPso;
     } // namespace
 
     void Renderer::initialize()
     {
         RHIDevice::initialize();
-        DXCompiler::initialize();
 
         // resolution
         {
@@ -87,6 +87,25 @@ namespace worse
                                             true,
                                             "frameConstantBuffer");
         }
+
+        // clang-format off
+        RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
+
+        testPso = RHIPipelineStateBuilder()
+            .setName("testPSO")
+            .setType(RHIPipelineType::Graphics)
+            .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
+            .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+            .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
+            .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+            .addShader(Renderer::getShader(RendererShader::QuadV))
+            .addShader(Renderer::getShader(RendererShader::QuadP))
+            .setRenderTargetColorTexture(0, frameOutput)
+            .setScissor({0, 0, 800, 600})
+            .setViewport(Renderer::getViewport())
+            .setClearColor(Color::Black())
+            .build();
+        // clang-format on
     }
 
     void Renderer::shutdown()
@@ -99,7 +118,6 @@ namespace worse
             swapchain.reset();
         }
 
-        DXCompiler::shutdown();
         RHIDevice::destroy();
 
         WS_LOG_DEBUG("Renderer", "Finished {} frame", s_frameCount);
@@ -133,31 +151,13 @@ namespace worse
         }
 
         {
-            // clang-format off
-            RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
-            RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
-
-            RHIPipelineState testPso;
-            testPso.name                                                     = "testPSO";
-            testPso.type                                                     = RHIPipelineType::Graphics;
-            testPso.shaders[static_cast<std::size_t>(RHIShaderType::Vertex)] = Renderer::getShader(RendererShader::QuadV);
-            testPso.shaders[static_cast<std::size_t>(RHIShaderType::Pixel)]  = Renderer::getShader(RendererShader::QuadP);
-            testPso.rasterizerState   = Renderer::getRasterizerState(RendererRasterizerState::Solid);
-            testPso.depthStencilState = Renderer::getDepthStencilState(RendererDepthStencilState::Off);
-            testPso.blendState        = Renderer::getBlendState(RendererBlendState::Off);
-            testPso.scissor           = {0, 0, 800, 600};
-            testPso.viewport          = Renderer::getViewport();
-            testPso.clearColor        = Color::Black();
-            testPso.renderTargetColorTextures[0] = frameRender;
-            // clang-format on
-            testPso.finalize();
+            RHITexture* frameOutput =
+                Renderer::getRenderTarget(RendererTarget::Output);
 
             m_cmdList->setPipelineState(testPso, frameConstantBuffer.get());
             m_cmdList->draw(6);
             m_cmdList->renderPassEnd();
             m_cmdList->clearPipelineState();
-
-            m_cmdList->blit(frameRender, frameOutput);
         }
 
         blitToBackBuffer(m_cmdList);

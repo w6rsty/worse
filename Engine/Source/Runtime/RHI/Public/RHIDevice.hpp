@@ -4,7 +4,6 @@
 
 namespace worse
 {
-    class RHIQueue;
 
     class RHIDevice : public NonCopyable, public NonMovable
     {

@@ -2,18 +2,14 @@
 #include "Math/Rectangle.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
-#include "RHIDescriptorSetLayout.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "Descriptor/RHIDescriptorSetLayout.hpp"
 
 #include <cstdint>
 #include <atomic>
 
 namespace worse
 {
-
-    class RHIQueue;
-    class RHISyncPrimitive;
-    class RHISwapchain;
 
     enum class RHICommandListState
     {

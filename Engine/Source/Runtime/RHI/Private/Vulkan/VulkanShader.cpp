@@ -50,7 +50,7 @@ namespace worse
                 if ((descriptorType == RHIDescriptorType::PushConstantBuffer) ||
                     (descriptorType == RHIDescriptorType::ConstantBuffer))
                 {
-                    descriptor.size = hlsl.get_declared_struct_size(spirvType);
+                    descriptor.size = static_cast<std::uint32_t>(hlsl.get_declared_struct_size(spirvType));
                 }
                 descriptor.isArray     = spirvType.array.size() > 0;
                 descriptor.arrayLength = descriptor.isArray ? spirvType.array[0] : 0;

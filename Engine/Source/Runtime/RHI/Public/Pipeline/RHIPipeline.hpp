@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIResource.hpp"
 #include "RHIPipelineState.hpp"
-#include "RHIDescriptorSetLayout.hpp"
+#include "Descriptor/RHIDescriptorSetLayout.hpp"
 
 namespace worse
 {

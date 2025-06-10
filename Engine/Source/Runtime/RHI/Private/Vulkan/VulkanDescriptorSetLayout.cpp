@@ -1,6 +1,6 @@
 #include "RHIDevice.hpp"
-#include "RHIDescriptor.hpp"
-#include "RHIDescriptorSetLayout.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
+#include "Descriptor/RHIDescriptorSetLayout.hpp"
 
 namespace worse
 {
@@ -63,10 +63,6 @@ namespace worse
                                                  &layout));
         m_handle = RHINativeHandle{layout, RHINativeHandleType::DescriptorSetLayout};
         RHIDevice::setResourceName(m_handle, m_name);
-        WS_LOG_DEBUG(
-            "RHIDescriptorSetLayout",
-            "Created descriptor set layout with {} bindings",
-            descriptors.size());
         // clang-format on
     }
 

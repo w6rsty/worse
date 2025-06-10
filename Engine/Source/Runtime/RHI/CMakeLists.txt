@@ -21,11 +21,19 @@ target_include_directories(${MODULE_NAME}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Public>
 )
 
-target_link_libraries(${MODULE_NAME} PUBLIC
-    Core
-    GPUOpen::VulkanMemoryAllocator
-    Vulkan-Headers
-    volk_headers
-    DXC
-    spirv-cross-hlsl
+target_link_libraries(${MODULE_NAME}
+    PRIVATE
+        GPUOpen::VulkanMemoryAllocator
+        Vulkan-Headers
+        DXC
+        spirv-cross-hlsl
+    PUBLIC
+        Core
+        volk_headers
+)
+
+# Disable nullability completeness warnings for Clang and AppleClang
+target_compile_options(${MODULE_NAME} PRIVATE
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-nullability-completeness>
+    $<$<CXX_COMPILER_ID:AppleClang>:-Wno-nullability-completeness>
 )

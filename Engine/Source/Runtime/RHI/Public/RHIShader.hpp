@@ -1,6 +1,6 @@
 #pragma once
 #include "RHIResource.hpp"
-#include "RHIDescriptor.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
 
 #include <string>
 #include <filesystem>

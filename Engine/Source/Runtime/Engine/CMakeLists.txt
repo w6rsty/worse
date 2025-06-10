@@ -21,8 +21,11 @@ target_include_directories(${MODULE_NAME}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Public>
 )
 
-target_link_libraries(${MODULE_NAME} PRIVATE
-    Core
-    Renderer
-    RHI
+
+target_link_libraries(${MODULE_NAME}
+    PUBLIC
+        Core
+    PRIVATE
+        Renderer
+        RHI
 )
