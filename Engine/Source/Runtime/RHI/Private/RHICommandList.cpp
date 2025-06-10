@@ -12,20 +12,5 @@ namespace worse
         m_renderingCompleteTimelineSemaphore->wait(timeoutNs);
         m_state = RHICommandListState::Idle;
     }
-    
-    RHISyncPrimitive* RHICommandList::getRenderingCompleteSemaphore()
-    {
-        return m_renderingCompleteBinaySemaphore.get();
-    }
-
-    RHICommandListState RHICommandList::getState() const
-    {
-        return m_state;
-    }
-
-    RHIQueue* RHICommandList::getQueue() const
-    {
-        return m_submissionQueue;
-    }
 
 } // namespace worse

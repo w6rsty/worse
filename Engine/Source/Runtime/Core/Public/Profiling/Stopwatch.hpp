@@ -7,12 +7,15 @@ namespace worse::profiling
     class Stopwatch
     {
     public:
+        using TimePoint =
+            std::chrono::time_point<std::chrono::high_resolution_clock>;
+
         Stopwatch()
         {
-            start();
+            reset();
         }
 
-        void start()
+        void reset()
         {
             m_start = std::chrono::high_resolution_clock::now();
         }
@@ -20,7 +23,8 @@ namespace worse::profiling
         float elapsedMs() const
         {
             auto end = std::chrono::high_resolution_clock::now();
-            return std::chrono::duration<float, std::milli>(end - m_start).count();
+            return std::chrono::duration<float, std::milli>(end - m_start)
+                .count();
         }
 
         float elapsedSec() const
@@ -30,7 +34,7 @@ namespace worse::profiling
         }
 
     private:
-        std::chrono::time_point<std::chrono::high_resolution_clock> m_start;
+        TimePoint m_start;
     };
 
 } // namespace worse::profiling

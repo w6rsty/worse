@@ -1,6 +1,6 @@
 #pragma once
-#include "RHIResource.hpp"
 #include "Types.hpp"
+#include "RHIResource.hpp"
 
 #include <cstdint>
 
@@ -28,16 +28,10 @@ namespace worse
 
     public:
         RHITexture() = default;
-        // clang-format off
-        RHITexture(
-            RHITextureType const type,
-            std::uint32_t const width,
-            std::uint32_t const height,
-            std::uint32_t const depth,
-            RHIFormat const format,
-            RHITextureUsageFlags const usage,
-            std::string const& name);
-        // clang-format on
+        RHITexture(RHITextureType const type, std::uint32_t const width,
+                   std::uint32_t const height, std::uint32_t const depth,
+                   RHIFormat const format, RHITextureUsageFlags const usage,
+                   std::string const& name);
         ~RHITexture();
 
         RHIImageLayout getImageLayout() const;
@@ -55,19 +49,20 @@ namespace worse
         RHITextureUsageFlags getUsage() const { return m_usage; }
         RHINativeHandle getRtv() const        { return m_rtv; }
         RHINativeHandle getImage() const      { return m_image; }
+        // RHIDevice::memoryTextureCreate set this handle
         void setHandle(RHINativeHandle handle) { m_image = handle; }
         // clang-format on
 
     private:
-        RHITextureType m_type;
-        std::uint32_t m_width;
-        std::uint32_t m_height;
-        std::uint32_t m_depth;
-        RHIFormat m_format;
+        RHITextureType m_type  = RHITextureType::Max;
+        std::uint32_t m_width  = 0;
+        std::uint32_t m_height = 0;
+        std::uint32_t m_depth  = 1;
+        RHIFormat m_format     = RHIFormat::Max;
         RHITextureUsageFlags m_usage;
 
-        RHINativeHandle m_rtv;
-        RHINativeHandle m_image;
+        RHINativeHandle m_rtv   = {};
+        RHINativeHandle m_image = {};
     };
 
 } // namespace worse

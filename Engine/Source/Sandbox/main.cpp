@@ -4,8 +4,6 @@
 #include "Input/Controller.hpp"
 #include "Log.hpp"
 
-#include <thread>
-
 using namespace worse;
 
 int main()
@@ -35,8 +33,6 @@ int main()
         {
             WS_LOG_INFO("Sandbox", "Button North pressed");
         }
-
-       std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
     Engine::shutdown();

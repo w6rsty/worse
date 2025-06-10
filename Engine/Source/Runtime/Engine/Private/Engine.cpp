@@ -13,22 +13,19 @@ namespace worse
 #ifdef WS_RHI_BACKEND_VULKAN
         if (volkInitialize() != VK_SUCCESS)
         {
-            WS_LOG_FATAL("RHI", "System does not support Vulkan");
             return;
         }
 #endif
+        profiling::Stopwatch sw;
         {
-            profiling::Stopwatch sw;
             Logger::initialize();
+            WS_LOG_INFO("Engine", "Initializing...");
             Window::initialize();
 
             Input::initialize();
             Renderer::initialize();
-
-            WS_LOG_INFO("Engine",
-                        "Initialization took {:.1f}ms",
-                        sw.elapsedMs());
         }
+        WS_LOG_INFO("Engine", "Initialization took {:.1f}ms", sw.elapsedMs());
     }
 
     void Engine::shutdown()

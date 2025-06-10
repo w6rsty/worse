@@ -2,6 +2,7 @@
 #include "Math/Rectangle.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
+#include "RHIDescriptorSetLayout.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <cstdint>
@@ -60,7 +61,7 @@ namespace worse
 
         // bind pipeline specific resources and begin render pass make sure pso
         // has been called `finalize()`
-        void setPipelineState(RHIPipelineState const& pso);
+        void setPipelineState(RHIPipelineState const& pso, RHIBuffer* buffer);
         // must call this at the end of the render operation if only has one pso
         // in reneder loop, otherwise the activation of next pass will fail
         void clearPipelineState();
@@ -77,9 +78,17 @@ namespace worse
         void copy(RHITexture* source, RHITexture* destination);
         void copy(RHITexture* source, RHISwapchain* destination);
 
-        RHISyncPrimitive* getRenderingCompleteSemaphore();
-        RHICommandListState getState() const;
-        RHIQueue* getQueue() const;
+        void setContantBuffer(RHIBuffer* buffer, std::uint32_t slot);
+
+        void updateBuffer(RHIBuffer* buffer, std::uint32_t const offset,
+                          std::uint32_t const size, void const* data);
+
+        // clang-format off
+        RHISyncPrimitive* getRenderingCompleteSemaphore() { return m_renderingCompleteBinaySemaphore.get(); }
+        RHICommandListState getState() const              { return m_state; }
+        RHIQueue* getQueue() const                        { return m_submissionQueue; }
+        RHINativeHandle getHandle() const                 { return m_handle; }
+        // clang-format on
 
         // TODO: move to other place
         static RHIImageLayout getImageLayout(RHINativeHandle image);
@@ -89,6 +98,9 @@ namespace worse
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteTimelineSemaphore;
 
         RHIPipelineState m_pso;
+        RHIPipeline* m_pipeline                       = nullptr;
+        RHIDescriptorSetLayout* m_descriptorSetLayout = nullptr;
+
         std::atomic<RHICommandListState> m_state = RHICommandListState::Idle;
         RHIQueue* m_submissionQueue              = nullptr;
         RHINativeHandle m_handle;

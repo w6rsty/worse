@@ -31,7 +31,9 @@ namespace worse
     class RHIDepthStencilState;
     class RHIBlendState;
     class RHITexture;
-    struct RHIDescriptor;
+    class RHIBuffer;
+    class RHIDescriptor;
+    class RHIDescriptorSet;
     class RHIDescriptorSetLayout;
 
     enum class RHIBackendType
@@ -350,6 +352,8 @@ namespace worse
     enum class RHIBindlessResourceType
     {
         MaterialTexture,
+        Material,
+        Light,
         // ....
         Max
     };
@@ -635,6 +639,13 @@ namespace worse
     namespace RHIConfig
     {
         constexpr std::size_t MAX_RENDER_TARGET = 8;
+        constexpr std::size_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
+        constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB
+
+        constexpr std::size_t HLSL_REGISTER_SHIFT_T = 100;
+        constexpr std::size_t HLSL_REGISTER_SHIFT_B = 200;
+        constexpr std::size_t HLSL_REGISTER_SHIFT_S = 300;
+        constexpr std::size_t HLSL_REGISTER_SHIFT_U = 400;
     }
 
 } // namespace worse

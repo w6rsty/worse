@@ -81,6 +81,20 @@ namespace worse
         }
 
         wArguments.push_back(L"-spirv");
+        wArguments.push_back(L"-fspv-target-env=vulkan1.2");
+
+        // preserve all bindings and interface, even when not used
+        wArguments.push_back(L"-fspv-preserve-bindings");
+        wArguments.push_back(L"-fspv-preserve-interface");
+
+        // avoid register number conflicts
+        // clang-format off
+        wArguments.push_back(L"-fvk-t-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_T)); wArguments.push_back(L"all");
+        wArguments.push_back(L"-fvk-b-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_B)); wArguments.push_back(L"all");
+        wArguments.push_back(L"-fvk-s-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_S)); wArguments.push_back(L"all");
+        wArguments.push_back(L"-fvk-u-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_U)); wArguments.push_back(L"all");
+        // clang-format on
+
         std::string filepath   = m_path.string();
         std::wstring wFilepath = std::wstring(filepath.begin(), filepath.end());
         wArguments.push_back(wFilepath);

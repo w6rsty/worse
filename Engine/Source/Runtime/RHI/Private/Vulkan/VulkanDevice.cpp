@@ -3,8 +3,10 @@
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
+#include "RHIBuffer.hpp"
 #include "RHITexture.hpp"
 #include "RHIDescriptor.hpp"
+#include "RHIDescriptorSet.hpp"
 #include "RHICommandList.hpp"
 #include "RHIDescriptorSetLayout.hpp"
 #include "Pipeline/RHIPipeline.hpp"
@@ -168,6 +170,7 @@ namespace worse
             featureDescriptorIndexing.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
             featureDescriptorIndexing.runtimeDescriptorArray                    = VK_TRUE;
             featureDescriptorIndexing.descriptorBindingVariableDescriptorCount  = VK_TRUE;
+            featureDescriptorIndexing.descriptorBindingPartiallyBound           = VK_TRUE;
             featureDescriptorIndexing.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
             featureDescriptorIndexing.pNext                                     = nullptr;
 
@@ -310,12 +313,12 @@ namespace worse
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
         std::mutex mtxPipelines;
-        std::unordered_map<std::uint64_t, std::shared_ptr<RHIPipeline>>
-            pipelines;
-        std::unordered_map<std::uint64_t, std::shared_ptr<RHIDescriptorSetLayout>>
-            descriptorSetLayouts;
-        std::unordered_map<std::uint64_t, std::vector<RHIDescriptor>>
-            piplineDescriptorCombinations;
+        std::unordered_map<std::uint64_t, std::shared_ptr<RHIPipeline>> pipelines;
+        // dynamic descriptor sets
+        std::unordered_map<std::uint64_t, RHIDescriptorSet> descriptorSets;
+        // dynamic descriptor set layouts
+        std::unordered_map<std::uint64_t, std::shared_ptr<RHIDescriptorSetLayout>> descriptorSetLayouts;
+        std::unordered_map<std::uint64_t, std::vector<RHIDescriptor>> piplineDescriptorCombinations;
         // clang-format on
 
         void createPool()
@@ -443,15 +446,178 @@ namespace worse
         void release()
         {
             pipelines.clear();
+            descriptorSets.clear();
             descriptorSetLayouts.clear();
             piplineDescriptorCombinations.clear();
         }
 
         namespace bindless
         {
-            std::array<RHINativeHandle, k_rhiBindlessResourceCount>
-                descriptorSetLayouts;
-        }
+            std::array<RHINativeHandle, k_rhiBindlessResourceCount> sets;
+            std::array<RHINativeHandle, k_rhiBindlessResourceCount> layouts;
+
+            // create bindless descriptor set layout
+            // run once
+            void createLayout(RHIBindlessResourceType const type,
+                              std::uint32_t const count,
+                              std::uint32_t const binding,
+                              std::string_view name)
+            {
+                // clang-format off
+                VkDescriptorSetLayoutBinding layoutBinding = {};
+                layoutBinding.binding         = binding;
+                layoutBinding.descriptorCount = count;
+                layoutBinding.descriptorType  = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+                layoutBinding.stageFlags      = VK_SHADER_STAGE_ALL;
+
+                switch (type)
+                {
+                case RHIBindlessResourceType::MaterialTexture:
+                    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+                    break;
+                case RHIBindlessResourceType::Material:
+                case RHIBindlessResourceType::Light:
+                    layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    break;
+                default:
+                    UNIMPLEMENTED();
+                    break;
+                }
+
+                VkDescriptorBindingFlags flags =
+                    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+                    VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT;
+
+                VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags = {};
+                bindingFlags.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+                bindingFlags.bindingCount  = 1;
+                bindingFlags.pBindingFlags = &flags;
+
+                VkDescriptorSetLayoutCreateInfo infoLayout = {};
+                infoLayout.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                infoLayout.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+                infoLayout.pNext        = &bindingFlags;
+                infoLayout.bindingCount = 1;
+                infoLayout.pBindings    = &layoutBinding;
+
+                VkDescriptorSetLayout vkSetLayout = VK_NULL_HANDLE;
+                WS_ASSERT_VK(vkCreateDescriptorSetLayout(RHIContext::device,
+                                                         &infoLayout,
+                                                         nullptr,
+                                                         &vkSetLayout));
+                layouts[static_cast<std::size_t>(type)] = RHINativeHandle{vkSetLayout, RHINativeHandleType::DescriptorSetLayout};
+                RHIDevice::setResourceName(layouts[static_cast<std::size_t>(type)], name);
+                // clang-format on
+            }
+
+            // allocate bindless set from global pool
+            // run once
+            void allocateSet(RHIBindlessResourceType const type,
+                             std::uint32_t const count, std::string_view name)
+            {
+                // clang-format off
+                VkDescriptorSetVariableDescriptorCountAllocateInfo variableCountInfo = {};
+                variableCountInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
+                variableCountInfo.descriptorSetCount = 1;
+                variableCountInfo.pDescriptorCounts  = &count;
+
+                VkDescriptorSetLayout vkSetLayout = layouts[static_cast<std::size_t>(type)].asValue<VkDescriptorSetLayout>();
+
+                VkDescriptorSetAllocateInfo infoAlloc = {};
+                infoAlloc.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                infoAlloc.pNext              = &variableCountInfo;
+                infoAlloc.descriptorPool     = descriptor::descriptorPool;
+                infoAlloc.descriptorSetCount = 1;
+                infoAlloc.pSetLayouts        = &vkSetLayout;
+
+                VkDescriptorSet vkSet = VK_NULL_HANDLE;
+                WS_ASSERT_VK(vkAllocateDescriptorSets(RHIContext::device,
+                                                       &infoAlloc,
+                                                       &vkSet));
+                sets[static_cast<std::size_t>(type)] = RHINativeHandle{vkSet, RHINativeHandleType::DescriptorSet};
+                RHIDevice::setResourceName(sets[static_cast<std::size_t>(type)], name);
+                // clang-format on
+            }
+
+            void updateSet(RHIBindlessResourceType const type,
+                           std::uint32_t const slot, std::uint32_t const count,
+                           void* data, std::string_view name)
+            {
+                // when compiing HLSL to SPIR-V, all the register are place in
+                // the same register space by default. this will cause
+                // conflicting bindings in vulkan, so we manually specify offset
+                // for different types
+                std::int32_t binding = 0;
+                switch (type)
+                {
+                case RHIBindlessResourceType::MaterialTexture:
+                case RHIBindlessResourceType::Material:
+                case RHIBindlessResourceType::Light:
+                    binding = RHIConfig::HLSL_REGISTER_SHIFT_T + slot;
+                    break;
+                default:
+                    binding = RHIConfig::HLSL_REGISTER_SHIFT_S + slot;
+                    break;
+                }
+
+                // create at first use
+                if (!layouts[static_cast<std::size_t>(type)])
+                {
+                    createLayout(type, count, binding, name);
+                    allocateSet(type, count, name);
+                }
+
+                if (type == RHIBindlessResourceType::MaterialTexture)
+                {
+                    // clang-format off
+                    std::vector<VkDescriptorImageInfo> imageInfos(count);
+                    for (std::uint32_t i = 0; i < count; ++i)
+                    {
+                        RHITexture* texture = static_cast<RHITexture*>(data);
+                        // TODO: use default texture if nullptr
+                        WS_ASSERT(texture);
+
+                        imageInfos[i].imageView = texture->getRtv().asValue<VkImageView>();
+                        imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    }
+
+                    VkWriteDescriptorSet writeSet = {};
+                    writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                    writeSet.dstSet          = sets[static_cast<std::size_t>(type)].asValue<VkDescriptorSet>();
+                    writeSet.dstBinding      = binding;
+                    writeSet.dstArrayElement = 0;
+                    writeSet.descriptorCount = count;
+                    writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+                    writeSet.pImageInfo      = imageInfos.data();
+
+                    vkUpdateDescriptorSets(RHIContext::device, 1, &writeSet, 0, nullptr);
+                    // clang-format on
+                }
+                else if ((type == RHIBindlessResourceType::Material) ||
+                         (type == RHIBindlessResourceType::Light))
+                {
+                    RHIBuffer* buffer = static_cast<RHIBuffer*>(data);
+
+                    VkDescriptorBufferInfo bufferInfo = {};
+                    bufferInfo.buffer = buffer->getHandle().asValue<VkBuffer>();
+                    bufferInfo.offset = 0;
+                    bufferInfo.range  = buffer->getSize();
+
+                    // clang-format off
+                    VkWriteDescriptorSet writeSet = {};
+                    writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                    writeSet.dstSet          = sets[static_cast<std::size_t>(type)].asValue<VkDescriptorSet>();
+                    writeSet.dstBinding      = binding;
+                    writeSet.dstArrayElement = 0;
+                    writeSet.descriptorCount = count;
+                    writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    writeSet.pBufferInfo     = &bufferInfo;
+
+                    vkUpdateDescriptorSets(RHIContext::device, 1, &writeSet, 0, nullptr);
+                    // clang-format on
+                }
+            }
+        } // namespace bindless
     } // namespace descriptor
 
     namespace vma
@@ -511,6 +677,7 @@ namespace worse
                                 AllocationData{allocation, handle});
         }
 
+        // thread safe
         AllocationData* getAllocation(RHINativeHandle handle)
         {
             WS_ASSERT(handle);
@@ -526,6 +693,7 @@ namespace worse
             }
         }
 
+        // thread safe
         void removeAllocation(RHINativeHandle handle)
         {
             WS_ASSERT(handle);
@@ -757,11 +925,44 @@ namespace worse
         return RHINativeHandle{};
     }
 
+    // allocate generic set from global pool
+    RHINativeHandle
+    RHIDevice::allocateDescriptorSet(RHIDescriptorSetLayout const& layout)
+    {
+        // clang-format off
+        VkDescriptorSetLayout vkLayout = layout.getHandle().asValue<VkDescriptorSetLayout>();
+
+        VkDescriptorSetAllocateInfo infoAlloc = {};
+        infoAlloc.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        infoAlloc.descriptorPool     = descriptor::descriptorPool;
+        infoAlloc.descriptorSetCount = 1;
+        infoAlloc.pSetLayouts        = &vkLayout;
+
+        VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+        WS_ASSERT_VK(vkAllocateDescriptorSets(RHIContext::device,
+                                              &infoAlloc,
+                                              &descriptorSet));
+        RHINativeHandle handle{descriptorSet, RHINativeHandleType::DescriptorSet};
+        // clang-format on
+        return handle;
+    }
+
+    std::unordered_map<std::uint64_t, RHIDescriptorSet>&
+    RHIDevice::getDescriptorSets()
+    {
+        return descriptor::descriptorSets;
+    }
+
+    RHINativeHandle
+    RHIDevice::getBindlessDescriptorSet(RHIBindlessResourceType const type)
+    {
+        return descriptor::bindless::sets[static_cast<std::size_t>(type)];
+    }
+
     RHINativeHandle RHIDevice::getBindlessDescriptorSetLayout(
         RHIBindlessResourceType const type)
     {
-        return descriptor::bindless::descriptorSetLayouts
-            [static_cast<std::size_t>(type)];
+        return descriptor::bindless::layouts[static_cast<std::size_t>(type)];
     }
 
     void
@@ -862,6 +1063,100 @@ namespace worse
         }
     }
 
+    void RHIDevice::memoryBufferCreate(RHINativeHandle& buffer,
+                                       std::uint32_t size,
+                                       std::uint32_t bufferUsage,
+                                       std::uint32_t memoryProperty,
+                                       void const* data, std::string_view name)
+    {
+        // clang-format off
+        VkBufferCreateInfo infoBuffer = {};
+        infoBuffer.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        infoBuffer.size        = size;
+        infoBuffer.usage       = bufferUsage;
+        infoBuffer.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VmaAllocationCreateInfo infoAllocCreate = {};
+        infoAllocCreate.usage         = VMA_MEMORY_USAGE_AUTO;
+        infoAllocCreate.requiredFlags = memoryProperty;
+
+        bool mappable = (memoryProperty & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0;
+        if (mappable)
+        {
+            infoAllocCreate.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        }
+
+        VmaAllocationInfo infoAlloc = {};
+        VmaAllocation allocation    = VK_NULL_HANDLE;
+
+        VkBuffer vkBuffer = VK_NULL_HANDLE;
+        VkResult result   = vmaCreateBuffer(vma::allocator,
+                                          &infoBuffer,
+                                          &infoAllocCreate,
+                                          &vkBuffer,
+                                          &allocation,
+                                          &infoAlloc);
+        if ((result == VK_ERROR_OUT_OF_DEVICE_MEMORY) ||
+            (result == VK_ERROR_OUT_OF_HOST_MEMORY))
+        {
+            WS_LOG_ERROR("Vulkan", "Allocation out of memory");
+        }
+        WS_ASSERT_VK(result);
+
+        buffer = RHINativeHandle{vkBuffer, RHINativeHandleType::Buffer};
+        vmaSetAllocationName(vma::allocator,
+                             allocation,
+                             name.data());
+        RHIDevice::setResourceName(buffer, name);
+
+        if (data)
+        {
+            WS_ASSERT(mappable);
+
+            void* mappedData = nullptr;
+            // get mapped data pointer
+            WS_ASSERT_VK(vmaMapMemory(vma::allocator, allocation, &mappedData));
+
+            
+            std::memcpy(mappedData, data, size);
+            WS_ASSERT_VK(vmaFlushAllocation(vma::allocator,
+                                            allocation,
+                                            0,
+                                            size));
+            vmaUnmapMemory(vma::allocator, allocation);
+        }
+
+        vma::saveAllocation(allocation, buffer);
+        // clang-format on
+    }
+
+    void RHIDevice::memoryBufferDestroy(RHINativeHandle handle)
+    {
+        vma::AllocationData* data = vma::getAllocation(handle);
+        if (data)
+        {
+            {
+                std::lock_guard guard{vma::mtxAllocator};
+                vmaDestroyBuffer(vma::allocator,
+                                 handle.asValue<VkBuffer>(),
+                                 data->allocation);
+            }
+            vma::removeAllocation(handle);
+        }
+    }
+
+    void* RHIDevice::memoryGetMappedBufferData(RHINativeHandle handle)
+    {
+        vma::AllocationData* data = vma::getAllocation(handle);
+        if (data && data->allocation)
+        {
+            VmaAllocationInfo allocInfo;
+            vmaGetAllocationInfo(vma::allocator, data->allocation, &allocInfo);
+            return allocInfo.pMappedData;
+        }
+        return nullptr;
+    }
+
     void RHIDevice::deletionQueueAdd(RHINativeHandle const& resource)
     {
         if (!resource)
@@ -892,6 +1187,7 @@ namespace worse
                 case RHINativeHandleType::Pipeline:            vkDestroyPipeline(RHIContext::device, handle.asValue<VkPipeline>(), nullptr);                       break;
                 case RHINativeHandleType::PipelineLayout:      vkDestroyPipelineLayout(RHIContext::device, handle.asValue<VkPipelineLayout>(), nullptr);           break;
                 case RHINativeHandleType::DescriptorSetLayout: vkDestroyDescriptorSetLayout(RHIContext::device, handle.asValue<VkDescriptorSetLayout>(), nullptr); break;
+                case RHINativeHandleType::Buffer:              RHIDevice::memoryBufferDestroy(handle);                                                             break;
                 default:
                     // TODO
                     WS_LOG_ERROR("RHI", "Unhandled handle type {}", 
@@ -908,7 +1204,7 @@ namespace worse
         deletionQueue.clear();
     }
 
-    RHICommandList* RHIDevice::CmdImmediateBegin(RHIQueueType const type)
+    RHICommandList* RHIDevice::cmdImmediateBegin(RHIQueueType const type)
     {
         std::lock_guard guard{queues::mtxImmediateCmd};
         // wait
@@ -923,7 +1219,7 @@ namespace worse
         return cmdList;
     }
 
-    void RHIDevice::CmdImmediateSubmit(RHICommandList* cmdList)
+    void RHIDevice::cmdImmediateSubmit(RHICommandList* cmdList)
     {
         cmdList->submit(nullptr);
         cmdList->waitForExecution();

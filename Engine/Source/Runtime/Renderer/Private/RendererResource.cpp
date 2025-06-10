@@ -1,11 +1,10 @@
 #include "Math/Vector2.hpp"
-#include "Pipeline/RHIDepthStencilState.hpp"
-#include "Pipeline/RHIRasterizerState.hpp"
-#include "Pipeline/RHIBlendState.hpp"
-#include "RHIDefinitions.hpp"
 #include "RHITexture.hpp"
 #include "Renderer.hpp"
 #include "RHIShader.hpp"
+#include "Pipeline/RHIDepthStencilState.hpp"
+#include "Pipeline/RHIRasterizerState.hpp"
+#include "Pipeline/RHIBlendState.hpp"
 
 #include <filesystem>
 #include <memory>

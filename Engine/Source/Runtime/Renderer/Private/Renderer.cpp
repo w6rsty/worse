@@ -1,18 +1,26 @@
 #include "DXCompiler.hpp" // Do not move
-#include "RHIDefinitions.hpp"
-#include "Renderer.hpp"
+#include "Math/Vector2.hpp"
+#include "Profiling/Stopwatch.hpp"
+#include "RHICommandList.hpp"
 #include "Window.hpp"
+#include "Renderer.hpp"
 #include "RHIDevice.hpp"
 #include "RHIViewport.hpp"
 #include "RHISwapchain.hpp"
 #include "RHIQueue.hpp"
-#include "Math/Vector2.hpp"
+#include "RHIBuffer.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <memory>
 
 namespace worse
 {
+    struct alignas(16) FrameConstantData
+    {
+        float deltaTime;
+        float time;
+    };
+
     namespace config
     {
         bool enableVsync = true;
@@ -26,6 +34,9 @@ namespace worse
 
         std::shared_ptr<RHISwapchain> swapchain = nullptr;
         RHICommandList* m_cmdList               = nullptr;
+
+        FrameConstantData frameConstantData            = {};
+        std::shared_ptr<RHIBuffer> frameConstantBuffer = nullptr;
     } // namespace
 
     void Renderer::initialize()
@@ -66,6 +77,15 @@ namespace worse
             Renderer::createBlendStates();
             Renderer::createRendererTarget();
             Renderer::createShaders();
+
+            frameConstantData.time = 0.0;
+            frameConstantBuffer =
+                std::make_shared<RHIBuffer>(RHIBufferType::Constant,
+                                            sizeof(FrameConstantData),
+                                            1,
+                                            &frameConstantData,
+                                            true,
+                                            "frameConstantBuffer");
         }
     }
 
@@ -74,6 +94,7 @@ namespace worse
         RHIDevice::queueWaitAll();
 
         {
+            frameConstantBuffer.reset();
             destroyResources();
             swapchain.reset();
         }
@@ -98,6 +119,19 @@ namespace worse
             RHIDevice::deletionQueueFlush();
         }
 
+        // update buffers
+        {
+            static profiling::Stopwatch frameTimer;
+            frameConstantData.deltaTime = frameTimer.elapsedSec();
+            frameConstantData.time += frameConstantData.deltaTime;
+            frameTimer.reset();
+
+            m_cmdList->updateBuffer(frameConstantBuffer.get(),
+                                    0,
+                                    sizeof(FrameConstantData),
+                                    &frameConstantData);
+        }
+
         {
             // clang-format off
             RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
@@ -118,8 +152,8 @@ namespace worse
             // clang-format on
             testPso.finalize();
 
-            m_cmdList->setPipelineState(testPso);
-            m_cmdList->draw(3);
+            m_cmdList->setPipelineState(testPso, frameConstantBuffer.get());
+            m_cmdList->draw(6);
             m_cmdList->renderPassEnd();
             m_cmdList->clearPipelineState();
 
@@ -172,6 +206,11 @@ namespace worse
     RHIViewport const& Renderer::getViewport()
     {
         return viewport;
+    }
+
+    void Renderer::setFrameConstantData(RHICommandList* cmdList)
+    {
+        cmdList->setContantBuffer(frameConstantBuffer.get(), 0);
     }
 
     math::Vector2 Renderer::getResolutionRender()

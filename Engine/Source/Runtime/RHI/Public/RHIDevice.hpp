@@ -1,6 +1,5 @@
 #pragma once
 #include "Types.hpp"
-#include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
 
 namespace worse
@@ -15,11 +14,21 @@ namespace worse
 
         // wait graphics and compute queues
         static void queueWaitAll();
-        static std::uint32_t getQueueIndex(RHIQueueType const type);
-        static RHIQueue* getQueue(RHIQueueType const type);
-        static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
+        [[nodiscard]] static std::uint32_t
+        getQueueIndex(RHIQueueType const type);
+        [[nodiscard]] static RHIQueue* getQueue(RHIQueueType const type);
+        [[nodiscard]] static RHINativeHandle
+        getQueueRHIResource(RHIQueueType const type);
 
-        static RHINativeHandle
+        [[nodiscard]] static RHINativeHandle
+        allocateDescriptorSet(RHIDescriptorSetLayout const& layout);
+        // dynamic descriptor sets
+        [[nodiscard]] static std::unordered_map<std::uint64_t,
+                                                RHIDescriptorSet>&
+        getDescriptorSets();
+        [[nodiscard]] static RHINativeHandle
+        getBindlessDescriptorSet(RHIBindlessResourceType const type);
+        [[nodiscard]] static RHINativeHandle
         getBindlessDescriptorSetLayout(RHIBindlessResourceType const type);
 
         // use pso hash to get pipeline and descriptor set layout from cache
@@ -30,12 +39,20 @@ namespace worse
 
         static void memoryTextureCreate(RHITexture* texture);
         static void memoryTextureDestroy(RHINativeHandle handle);
+        static void memoryBufferCreate(RHINativeHandle& buffer,
+                                       std::uint32_t size,
+                                       std::uint32_t bufferUsage,
+                                       std::uint32_t memoryProperty,
+                                       void const* data, std::string_view name);
+        static void memoryBufferDestroy(RHINativeHandle handle);
+        static void* memoryGetMappedBufferData(RHINativeHandle handle);
 
         static void deletionQueueAdd(RHINativeHandle const& resource);
         static void deletionQueueFlush();
 
-        static RHICommandList* CmdImmediateBegin(RHIQueueType const type);
-        static void CmdImmediateSubmit(RHICommandList* cmdList);
+        [[nodiscard]] static RHICommandList*
+        cmdImmediateBegin(RHIQueueType const type);
+        static void cmdImmediateSubmit(RHICommandList* cmdList);
 
         static void setResourceName(RHINativeHandle const& resource,
                                     std::string_view name);

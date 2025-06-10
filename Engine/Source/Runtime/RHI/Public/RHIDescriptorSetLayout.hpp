@@ -19,11 +19,14 @@ namespace worse
                                std::string_view name);
         ~RHIDescriptorSetLayout();
 
+        void setConstantBuffer(RHIBuffer* buffer, std::uint32_t slot);
         void clearData();
+        RHIDescriptorSet* getDescriptorSet() const;
 
         // clang-format off
-        std::uint64_t getHash() const     { return m_hash; }
-        RHINativeHandle getHandle() const { return m_handle; }
+        std::vector<RHIDescriptor> const& getDescriptors() const { return m_descriptors; }
+        std::uint64_t getHash() const                            { return m_hash; }
+        RHINativeHandle getHandle() const                        { return m_handle; }
         // clang-format on
 
     private:

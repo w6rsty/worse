@@ -1,6 +1,9 @@
-#include "RHIDescriptorSetLayout.hpp"
-#include "RHIDescriptor.hpp"
 #include "Math/Hash.hpp"
+#include "RHIBuffer.hpp"
+#include "RHIDevice.hpp"
+#include "RHIDescriptor.hpp"
+#include "RHIDescriptorSet.hpp"
+#include "RHIDescriptorSetLayout.hpp"
 
 namespace worse
 {
@@ -29,9 +32,54 @@ namespace worse
         nativeDestroy();
     }
 
+    void RHIDescriptorSetLayout::setConstantBuffer(RHIBuffer* buffer,
+                                                   std::uint32_t slot)
+    {
+        for (RHIDescriptor& descriptor : m_descriptors)
+        {
+            if (descriptor.slot == (slot + RHIConfig::HLSL_REGISTER_SHIFT_B))
+            {
+                descriptor.data.buffer   = buffer;
+                descriptor.range         = buffer->getStride();
+                descriptor.dynamicOffset = buffer->getOffset();
+                return;
+            }
+        }
+    }
+
     void RHIDescriptorSetLayout::clearData()
     {
         UNIMPLEMENTED();
+    }
+
+    RHIDescriptorSet* RHIDescriptorSetLayout::getDescriptorSet() const
+    {
+        // integrate data factors
+        std::uint64_t hash = m_hash;
+        for (RHIDescriptor const& descriptor : m_descriptors)
+        {
+            hash = math::hashCombine(
+                hash,
+                reinterpret_cast<std::uint64_t>(descriptor.data.raw));
+        }
+
+        auto& descriptorSets            = RHIDevice::getDescriptorSets();
+        RHIDescriptorSet* descriptorSet = nullptr;
+
+        auto const it = descriptorSets.find(hash);
+        if (it == descriptorSets.end())
+        {
+            descriptorSets[hash] =
+                RHIDescriptorSet{*this, m_descriptors, m_name};
+            descriptorSet = &descriptorSets[hash];
+        }
+        else
+        {
+            descriptorSet = &it->second;
+        }
+        WS_ASSERT(descriptorSet);
+
+        return descriptorSet;
     }
 
 } // namespace worse

@@ -1,9 +1,11 @@
 #include "Math/Rectangle.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
+#include "RHIBuffer.hpp"
 #include "RHITexture.hpp"
 #include "RHISwapchain.hpp"
 #include "RHICommandList.hpp"
+#include "RHIDescriptorSet.hpp"
 #include "RHISyncPrimitive.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
@@ -48,6 +50,67 @@ namespace worse
             imageLayoutMap.erase(image.asValue());
         }
     } // namespace map
+
+    namespace descriptorSet
+    {
+        void setDynamic(RHINativeHandle cmdBuffer, RHIPipelineState const& pso,
+                        RHINativeHandle pipelineLayout,
+                        RHIDescriptorSetLayout const& descriptorSetLayout)
+        {
+            // get a descriptor set from pipeline descriptor set layout
+            RHIDescriptorSet* descriptorSet =
+                descriptorSetLayout.getDescriptorSet();
+            VkDescriptorSet vkSet =
+                descriptorSet->getHandle().asValue<VkDescriptorSet>();
+
+            std::array<std::uint32_t, 1> dynamicOffsets{0};
+
+            VkPipelineBindPoint bindPoint =
+                (pso.type == RHIPipelineType::Graphics)
+                    ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                    : VK_PIPELINE_BIND_POINT_COMPUTE;
+
+            vkCmdBindDescriptorSets(
+                cmdBuffer.asValue<VkCommandBuffer>(),
+                bindPoint,
+                pipelineLayout.asValue<VkPipelineLayout>(),
+                0,
+                1,
+                &vkSet,
+                static_cast<std::uint32_t>(dynamicOffsets.size()),
+                dynamicOffsets.data());
+        }
+
+        // bind all bindless descriptor sets
+        void setBindless(RHINativeHandle cmdBuffer, RHIPipelineState const& pso,
+                         RHINativeHandle pipelineLayout)
+        {
+            std::array<VkDescriptorSet, k_rhiBindlessResourceCount>
+                bindlessSets;
+
+            for (std::size_t i = 0; i < k_rhiBindlessResourceCount; ++i)
+            {
+                bindlessSets[i] = RHIDevice::getBindlessDescriptorSet(
+                                      static_cast<RHIBindlessResourceType>(i))
+                                      .asValue<VkDescriptorSet>();
+            }
+
+            VkPipelineBindPoint bindPoint =
+                (pso.type == RHIPipelineType::Graphics)
+                    ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                    : VK_PIPELINE_BIND_POINT_COMPUTE;
+
+            vkCmdBindDescriptorSets(
+                cmdBuffer.asValue<VkCommandBuffer>(),
+                bindPoint,
+                pipelineLayout.asValue<VkPipelineLayout>(),
+                1, // skip dynamic sets
+                static_cast<std::uint32_t>(bindlessSets.size()),
+                bindlessSets.data(),
+                0,
+                nullptr);
+        }
+    } // namespace descriptorSet
 
     RHICommandList::RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool,
                                    std::string_view name)
@@ -204,7 +267,6 @@ namespace worse
                               std::uint32_t const vertexOffset)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
-        WS_ASSERT(m_isRenderPassActive);
 
         vkCmdDraw(m_handle.asValue<VkCommandBuffer>(),
                   vertexCount,
@@ -228,9 +290,11 @@ namespace worse
                          instanceIndex);
     }
 
-    void RHICommandList::setPipelineState(RHIPipelineState const& pso)
+    void RHICommandList::setPipelineState(RHIPipelineState const& pso,
+                                          RHIBuffer* buffer)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(pso.isValidated());
 
         if (pso.getHash() == m_pso.getHash())
         {
@@ -239,9 +303,7 @@ namespace worse
 
         m_pso = pso;
 
-        RHIPipeline* pipeline;
-        RHIDescriptorSetLayout* descriptorSetLayout;
-        RHIDevice::getOrCreatePipeline(pso, pipeline, descriptorSetLayout);
+        RHIDevice::getOrCreatePipeline(pso, m_pipeline, m_descriptorSetLayout);
 
         renderPassBegin();
 
@@ -250,9 +312,19 @@ namespace worse
                                             : VK_PIPELINE_BIND_POINT_COMPUTE;
         vkCmdBindPipeline(m_handle.asValue<VkCommandBuffer>(),
                           bindPoint,
-                          pipeline->getHandle().asValue<VkPipeline>());
+                          m_pipeline->getHandle().asValue<VkPipeline>());
 
         setScissor(pso.scissor);
+
+        // bind pipeline specific resources
+        {
+            // clang-format off
+            // descriptorSet::setBindless(m_handle, pso, m_pipeline->getLayout());
+            // dereference m_descriptorSetLayout is safe here
+            setContantBuffer(buffer, 0);
+            descriptorSet::setDynamic(m_handle, pso, m_pipeline->getLayout(), *m_descriptorSetLayout);
+            // clang-format on
+        }
     }
 
     void RHICommandList::clearPipelineState()
@@ -547,6 +619,86 @@ namespace worse
         insertBarrier(destination->getCurrentRt(),
                       destination->getFormat(),
                       RHIImageLayout::PresentSource);
+    }
+
+    void RHICommandList::setContantBuffer(RHIBuffer* buffer, std::uint32_t slot)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        if (!m_descriptorSetLayout)
+        {
+            WS_LOG_WARN("RHICommandList",
+                        "Cannot set constant buffer out of render pass");
+            return;
+        }
+
+        m_descriptorSetLayout->setConstantBuffer(buffer, slot);
+    }
+
+    void RHICommandList::updateBuffer(RHIBuffer* buffer,
+                                      std::uint32_t const offset,
+                                      std::uint32_t const size,
+                                      void const* data)
+    {
+        bool synchronizeUpdate = true;
+        synchronizeUpdate &= (offset % 4 == 0);
+        synchronizeUpdate &= (size % 4 == 0);
+        synchronizeUpdate &= (size <= RHIConfig::MAX_BUFFER_UPDATE_SIZE);
+
+        if (synchronizeUpdate)
+        {
+            vkCmdUpdateBuffer(m_handle.asValue<VkCommandBuffer>(),
+                              buffer->getHandle().asValue<VkBuffer>(),
+                              offset,
+                              size,
+                              data);
+            VkBufferMemoryBarrier2 barrier = {};
+            barrier.sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+            barrier.srcStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            barrier.dstStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            barrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.buffer = buffer->getHandle().asValue<VkBuffer>();
+            barrier.offset = offset;
+            barrier.size   = size;
+
+            switch (buffer->getType())
+            {
+            case RHIBufferType::Vertex:
+            case RHIBufferType::Instance:
+                barrier.dstAccessMask |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
+                break;
+            case RHIBufferType::Index:
+                barrier.dstAccessMask |= VK_ACCESS_2_INDEX_READ_BIT;
+                break;
+            case RHIBufferType::Storage:
+                barrier.dstAccessMask |= VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
+                break;
+            case RHIBufferType::Constant:
+                barrier.dstAccessMask |=
+                    VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_UNIFORM_READ_BIT;
+                break;
+            default:
+                WS_LOG_ERROR("RHICommandList", "Unknown buffer type");
+                break;
+            }
+
+            VkDependencyInfo dependencyInfo = {};
+            dependencyInfo.sType            = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+            dependencyInfo.bufferMemoryBarrierCount = 1;
+            dependencyInfo.pBufferMemoryBarriers    = &barrier;
+
+            vkCmdPipelineBarrier2KHR(m_handle.asValue<VkCommandBuffer>(),
+                                     &dependencyInfo);
+        }
+        else
+        {
+            void* mappedData =
+                static_cast<std::byte*>(buffer->getMappedData()) + offset;
+            std::memcpy(mappedData, data, size);
+        }
     }
 
     RHIImageLayout RHICommandList::getImageLayout(RHINativeHandle image)

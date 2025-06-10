@@ -93,12 +93,12 @@ namespace worse
             }
 
             if (RHICommandList* cmdList =
-                    RHIDevice::CmdImmediateBegin(RHIQueueType::Graphics))
+                    RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
             {
 
                 cmdList->insertBarrier(m_image, m_format, layout);
 
-                RHIDevice::CmdImmediateSubmit(cmdList);
+                RHIDevice::cmdImmediateSubmit(cmdList);
             }
         }
 

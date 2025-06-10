@@ -59,20 +59,33 @@ namespace worse
         std::array<VkDescriptorSetLayout, k_rhiBindlessResourceCount + 1> descriptorSetLayouts;
         {
             // common descriptors
-            // descriptorSetLayouts[0] = descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>();
+            descriptorSetLayouts[0] = descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>();
 
             // bindless descriptors
             for (std::size_t i = 0; i < k_rhiBindlessResourceCount; ++i)
             {
-                // descriptorSetLayouts[i + 1] = RHIDevice::getBindlessDescriptorSetLayout();
+                descriptorSetLayouts[i + 1] =
+                    RHIDevice::getBindlessDescriptorSetLayout(
+                        static_cast<RHIBindlessResourceType>(i)
+                    ).asValue<VkDescriptorSetLayout>();
             }
         }
-
 
         // push constant
         std::vector<VkPushConstantRange> pushConstantRanges;
         {
+            for (RHIDescriptor const& descriptor : descriptorSetLayout.getDescriptors())
+            {
+                if (descriptor.type == RHIDescriptorType::PushConstantBuffer)
+                {
+                    VkPushConstantRange pushConstantRange = {};
+                    pushConstantRange.stageFlags = vulkanShaderStageFlags(descriptor.stageFlags);
+                    pushConstantRange.offset     = 0;
+                    pushConstantRange.size       = descriptor.size;
 
+                    pushConstantRanges.push_back(pushConstantRange);
+                }
+            }
         }
 
         // pipeline layout
@@ -80,9 +93,8 @@ namespace worse
             VkPipelineLayoutCreateInfo infoPipelineLayout = {};
             infoPipelineLayout.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             // infoPipelineLayout.setLayoutCount         = static_cast<std::uint32_t>(descriptorSetLayouts.size());
-            // infoPipelineLayout.pSetLayouts            = descriptorSetLayouts.data();
-            infoPipelineLayout.setLayoutCount         = 0;
-            infoPipelineLayout.pSetLayouts            = nullptr;
+            infoPipelineLayout.setLayoutCount         = 1;
+            infoPipelineLayout.pSetLayouts            = descriptorSetLayouts.data();
             infoPipelineLayout.pushConstantRangeCount = static_cast<std::uint32_t>(pushConstantRanges.size());
             infoPipelineLayout.pPushConstantRanges    = pushConstantRanges.data();
 
