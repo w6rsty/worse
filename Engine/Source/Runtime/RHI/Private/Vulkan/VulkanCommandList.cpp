@@ -411,7 +411,8 @@ namespace worse
         map::setImageLayout(image, layoutNew);
     }
 
-    void RHICommandList::blit(RHITexture* source, RHITexture* destination)
+    void RHICommandList::blit(RHITexture const* source,
+                              RHITexture const* destination)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(source != destination);
@@ -470,7 +471,8 @@ namespace worse
         destination->convertImageLayout(this, destinationInitialLayout);
     }
 
-    void RHICommandList::blit(RHITexture* source, RHISwapchain* destination)
+    void RHICommandList::blit(RHITexture const* source,
+                              RHISwapchain const* destination)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
 
@@ -531,7 +533,8 @@ namespace worse
                       RHIImageLayout::PresentSource);
     }
 
-    void RHICommandList::copy(RHITexture* source, RHITexture* destination)
+    void RHICommandList::copy(RHITexture const* source,
+                              RHITexture const* destination)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT((source->getWidth() == destination->getWidth()) &&
@@ -576,7 +579,8 @@ namespace worse
         destination->convertImageLayout(this, destinationInitialLayout);
     }
 
-    void RHICommandList::copy(RHITexture* source, RHISwapchain* destination)
+    void RHICommandList::copy(RHITexture const* source,
+                              RHISwapchain const* destination)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT((source->getWidth() == destination->getWidth()) &&
@@ -622,7 +626,37 @@ namespace worse
                       RHIImageLayout::PresentSource);
     }
 
-    void RHICommandList::setContantBuffer(RHIBuffer* buffer, std::uint32_t slot)
+    void RHICommandList::setBufferVertex(RHIBuffer* buffer)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        VkBuffer vertexBuffer = buffer->getHandle().asValue<VkBuffer>();
+        VkDeviceSize offset   = 0;
+
+        vkCmdBindVertexBuffers(m_handle.asValue<VkCommandBuffer>(),
+                               0,
+                               1,
+                               &vertexBuffer,
+                               &offset);
+    }
+
+    void RHICommandList::setBufferIndex(RHIBuffer* buffer)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        VkBuffer indexBuffer  = buffer->getHandle().asValue<VkBuffer>();
+        VkDeviceSize offset   = 0;
+        VkIndexType indexType = (buffer->getStride() == sizeof(std::uint16_t))
+                                    ? VK_INDEX_TYPE_UINT16
+                                    : VK_INDEX_TYPE_UINT32;
+        vkCmdBindIndexBuffer(m_handle.asValue<VkCommandBuffer>(),
+                             indexBuffer,
+                             offset,
+                             indexType);
+    }
+
+    void RHICommandList::setContantBuffer(RHIBuffer* buffer,
+                                          std::uint32_t const slot)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
 
@@ -634,6 +668,20 @@ namespace worse
         }
 
         m_descriptorSetLayout->setConstantBuffer(buffer, slot);
+    }
+
+    void RHICommandList::setBuffer(RHIBuffer* buffer, std::uint32_t const slot)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        if (!m_descriptorSetLayout)
+        {
+            WS_LOG_WARN("RHICommandList",
+                        "Cannot set buffer out of render pass");
+            return;
+        }
+
+        m_descriptorSetLayout->setBuffer(buffer, slot);
     }
 
     void RHICommandList::updateBuffer(RHIBuffer* buffer,

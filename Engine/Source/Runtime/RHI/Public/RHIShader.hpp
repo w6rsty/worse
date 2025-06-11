@@ -1,5 +1,6 @@
 #pragma once
 #include "RHIResource.hpp"
+#include "RHIVertex.hpp"
 #include "Descriptor/RHIDescriptor.hpp"
 
 #include <string>
@@ -28,13 +29,16 @@ namespace worse
         ~RHIShader();
 
         void compile(std::filesystem::path const& filepath,
-                     RHIShaderType const shaderType);
+                     RHIShaderType const shaderType,
+                     RHIVertexType const vertexType = RHIVertexType::None);
 
         // clang-format off
         std::string_view getEntryPoint() const;
         std::vector<RHIDescriptor> const& getDescriptors() const { return m_descriptors; }
         RHIShaderCompilationState getState() const               { return m_state; }
         RHIShaderType getShaderType() const                      { return m_shaderType; }
+        RHIVertexType getVertexType() const                      { return m_vertexType; }
+        RHIInputLayout const& getInputLayout() const             { return m_inputLayout; }
         RHINativeHandle getHandle() const                        { return m_shaderModule; }
         // clang-format on
 
@@ -45,7 +49,10 @@ namespace worse
         std::vector<RHIDescriptor> m_descriptors;
         RHIShaderCompilationState m_state = RHIShaderCompilationState::Idle;
         RHIShaderType m_shaderType        = RHIShaderType::Max;
-        RHINativeHandle m_shaderModule    = {};
+        RHIVertexType m_vertexType        = RHIVertexType::None;
+        RHIInputLayout m_inputLayout;
+
+        RHINativeHandle m_shaderModule = {};
     };
 
 } // namespace worse

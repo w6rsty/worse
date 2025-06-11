@@ -33,7 +33,7 @@ namespace worse
     }
 
     void RHITexture::convertImageLayout(RHICommandList* cmdList,
-                                        RHIImageLayout layout)
+                                        RHIImageLayout const layout) const
     {
         cmdList->insertBarrier(m_image, m_format, layout);
     }

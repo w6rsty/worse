@@ -21,13 +21,17 @@ namespace worse
     }
 
     void RHIShader::compile(std::filesystem::path const& filepath,
-                            RHIShaderType const shaderType)
+                            RHIShaderType const shaderType,
+                            RHIVertexType const vertexType)
     {
         m_source.clear();
         m_descriptors.clear();
+        m_inputLayout = {};
 
-        m_path       = filepath;
-        m_shaderType = shaderType;
+        m_path        = filepath;
+        m_shaderType  = shaderType;
+        m_vertexType  = vertexType;
+        m_inputLayout = RHIInputLayout(m_vertexType);
 
         m_source = FileSystem::readFile(filepath);
         if (m_source.empty())

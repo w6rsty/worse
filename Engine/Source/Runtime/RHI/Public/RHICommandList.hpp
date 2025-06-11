@@ -65,16 +65,21 @@ namespace worse
         void setViewport(RHIViewport const& viewport);
         void setScissor(math::Rectangle const& scissor);
 
-        void insertBarrier(RHINativeHandle image, RHIFormat const format,
+        void insertBarrier(RHINativeHandle const image, RHIFormat const format,
                            RHIImageLayout const layoutNew);
 
-        void blit(RHITexture* source, RHITexture* destination);
-        void blit(RHITexture* source, RHISwapchain* destination);
+        void blit(RHITexture const* source, RHITexture const* destination);
+        void blit(RHITexture const* source, RHISwapchain const* destination);
 
-        void copy(RHITexture* source, RHITexture* destination);
-        void copy(RHITexture* source, RHISwapchain* destination);
+        void copy(RHITexture const* source, RHITexture const* destination);
+        void copy(RHITexture const* source, RHISwapchain const* destination);
 
-        void setContantBuffer(RHIBuffer* buffer, std::uint32_t slot);
+        void setBufferVertex(RHIBuffer* buffer);
+        void setBufferIndex(RHIBuffer* buffer);
+        // need to update descriptor set
+        void setContantBuffer(RHIBuffer* buffer, std::uint32_t const slot);
+        // need to update descriptor set
+        void setBuffer(RHIBuffer* buffer, std::uint32_t const slot);
 
         void updateBuffer(RHIBuffer* buffer, std::uint32_t const offset,
                           std::uint32_t const size, void const* data);

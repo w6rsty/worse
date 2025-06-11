@@ -11,7 +11,7 @@ cbuffer BufferFrame : register(b0)
 
 struct VertexInput
 {
-    uint vertexID : SV_VertexID;
+    float4 position : POSITION;
 };
 
 struct VertexOutput
@@ -23,16 +23,7 @@ VertexOutput main_vs(VertexInput input)
 {
     VertexOutput output;
     
-    float2 positions[6] = {
-        float2(-1.0, -1.0),
-        float2( 1.0, -1.0),
-        float2(-1.0,  1.0),
-        float2(-1.0,  1.0),
-        float2( 1.0, -1.0),
-        float2( 1.0,  1.0)
-    };
-    
-    output.position = float4(positions[input.vertexID], 0.0, 1.0);
+    output.position = float4(input.position.xy, 0.0, 1.0);
 
     return output;
 }
@@ -70,7 +61,7 @@ float noise(float2 st)
            (d - b) * u.x * u.y;
 }
 
-static const int OCTAVES = 4;
+static const int OCTAVES = 8;
 float fbm(float2 st)
 {
     float value     = 0.0;
@@ -107,7 +98,7 @@ float smoothstep(float a, float b, float x)
 float3 Shade(float2 uv, float t)
 {
     // 1) 轮廓 SDF
-    float sdf = sdBox(uv, float2(0.2, 0.1));
+    float sdf = sdBox(uv, float2(0.2, 0.4));
 
     // 2) 边缘扰动
     float edgeNoise = fbm(uv * 5.0 + t) * 0.1;
@@ -128,7 +119,7 @@ float3 Shade(float2 uv, float t)
 
     // 5) 颜色
     float3 baseColor   = float3(0.1, 0.1, 0.1);
-    float3 hotColor    = float3(0.8, 0.8, 0.8);
+    float3 hotColor    = float3(0.8, 0.7, 0.1);
     float3 shadowColor = baseColor + innerPattern * hotColor;
 
     float3 bgColor = float3(0.1, 0.1, 0.1) * (1.0 - length(uv) * 0.5);
@@ -148,7 +139,7 @@ float4 main_ps(VertexOutput pin) : SV_Target
 
     // A) 基础色
     float edgeNoise = fbm(uv * 5.0 + t) * 0.1;
-    float sdf       = sdBox(uv, float2(0.2, 0.1)) - edgeNoise;
+    float sdf       = sdBox(uv, float2(0.2, 0.4)) - edgeNoise;
 
     float3 finalColor = Shade(uv, t);
 

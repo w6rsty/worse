@@ -1,6 +1,7 @@
 #include "DXCompiler.hpp" // Do not move
 #include "Log.hpp"
 #include "Math/Hash.hpp"
+#include "RHIDefinitions.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
@@ -30,8 +31,7 @@ namespace worse
     namespace config
     {
         // require vulkan version
-        std::uint32_t version         = VK_API_VERSION_1_3;
-        bool isValidationLayerEnabled = true;
+        std::uint32_t version = VK_API_VERSION_1_3;
     } // namespace config
 
     namespace validation
@@ -63,7 +63,7 @@ namespace worse
                 extensionsInstance.emplace_back(sdlExtensions[i]);
             }
 
-            if (config::isValidationLayerEnabled)
+            if (RHIConfig::enableValidationLayers)
             {
                 extensionsInstance.emplace_back("VK_EXT_debug_utils");
             }
@@ -724,7 +724,7 @@ namespace worse
             infoInst.pNext                   = &debugMessenger::info;
             infoInst.flags                   = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
             infoInst.pApplicationInfo        = &infoApp;
-            infoInst.enabledLayerCount       = config::isValidationLayerEnabled ? 1u : 0u;
+            infoInst.enabledLayerCount       = RHIConfig::enableValidationLayers ? 1u : 0u;
             infoInst.ppEnabledLayerNames     = &validation::name;
 
             std::vector<char const*> extensionsInst = extensions::getExtensionsInstance();
@@ -737,7 +737,7 @@ namespace worse
 
             volkLoadInstance(RHIContext::instance);
 
-            if (config::isValidationLayerEnabled)
+            if (RHIConfig::enableValidationLayers)
             {
                 debugMessenger::create();
             }
@@ -857,7 +857,7 @@ namespace worse
 
         vkDestroyDevice(RHIContext::device, nullptr);
 
-        if (config::isValidationLayerEnabled)
+        if (RHIConfig::enableValidationLayers)
         {
             debugMessenger::destory();
         }
@@ -1236,7 +1236,7 @@ namespace worse
     void RHIDevice::setResourceName(RHINativeHandle const& resource,
                                     std::string_view name)
     {
-        if (!config::isValidationLayerEnabled)
+        if (!RHIConfig::enableValidationLayers)
         {
             return;
         }

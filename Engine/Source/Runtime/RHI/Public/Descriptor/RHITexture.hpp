@@ -35,7 +35,8 @@ namespace worse
         ~RHITexture();
 
         RHIImageLayout getImageLayout() const;
-        void convertImageLayout(RHICommandList* cmdList, RHIImageLayout layout);
+        void convertImageLayout(RHICommandList* cmdList,
+                                RHIImageLayout const layout) const;
 
         bool isFormatDepth() const;
         bool isFormatStencil() const;

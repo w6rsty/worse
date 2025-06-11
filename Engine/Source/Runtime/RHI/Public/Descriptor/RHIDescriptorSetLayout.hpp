@@ -19,7 +19,10 @@ namespace worse
                                std::string_view name);
         ~RHIDescriptorSetLayout();
 
-        void setConstantBuffer(RHIBuffer* buffer, std::uint32_t slot);
+        // constant buffer
+        void setConstantBuffer(RHIBuffer* buffer, std::uint32_t const slot);
+        // storage buffer
+        void setBuffer(RHIBuffer* buffer, std::uint32_t const slot);
         void clearData();
         RHIDescriptorSet* getDescriptorSet() const;
 

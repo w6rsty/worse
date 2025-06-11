@@ -638,6 +638,9 @@ namespace worse
 
     namespace RHIConfig
     {
+        static bool enableVSync = true;
+        static bool enableValidationLayers = true;
+
         constexpr std::size_t MAX_RENDER_TARGET = 8;
         constexpr std::size_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
         constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB

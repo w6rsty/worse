@@ -7,8 +7,8 @@
 #include "RHIViewport.hpp"
 #include "RHISwapchain.hpp"
 #include "RHICommandList.hpp"
-#include "Pipeline/RHIPipelineState.hpp"
 #include "Descriptor/RHIBuffer.hpp"
+#include "Pipeline/RHIPipelineState.hpp"
 
 #include <memory>
 
@@ -19,11 +19,6 @@ namespace worse
         float deltaTime;
         float time;
     };
-
-    namespace config
-    {
-        bool enableVsync = true;
-    }
 
     namespace
     {
@@ -36,6 +31,9 @@ namespace worse
 
         FrameConstantData frameConstantData            = {};
         std::shared_ptr<RHIBuffer> frameConstantBuffer = nullptr;
+
+        std::shared_ptr<RHIBuffer> testVbo = nullptr;
+        std::shared_ptr<RHIBuffer> testIbo = nullptr;
 
         RHIPipelineState testPso;
     } // namespace
@@ -65,8 +63,8 @@ namespace worse
                 Window::getHandleSDL(),
                 Window::getWidth(),
                 Window::getHeight(),
-                config::enableVsync ? RHIPresentMode::FIFO
-                                    : RHIPresentMode::Immediate,
+                RHIConfig::enableVSync ? RHIPresentMode::FIFO
+                                       : RHIPresentMode::Immediate,
                 "swapchain");
         }
 
@@ -86,6 +84,51 @@ namespace worse
                                             &frameConstantData,
                                             true,
                                             "frameConstantBuffer");
+
+            // Circle 2D mesh generation
+            {
+                constexpr int segments = 32;
+                constexpr float radius = 0.5f;
+
+                std::vector<float> vertices;
+                std::vector<std::uint32_t> indices;
+
+                // Center vertex
+                vertices.push_back(0.0f); // x
+                vertices.push_back(0.0f); // y
+                vertices.push_back(0.0f); // z
+
+                // Generate circle vertices
+                for (int i = 0; i <= segments; ++i)
+                {
+                    float angle = (float)i / segments * 2.0f * 3.14159265359f;
+                    vertices.push_back(radius * std::cos(angle)); // x
+                    vertices.push_back(radius * std::sin(angle)); // y
+                    vertices.push_back(0.0f);                     // z
+                }
+
+                // Generate indices for triangles (fan pattern)
+                for (int i = 0; i < segments; ++i)
+                {
+                    indices.push_back(0);     // center vertex
+                    indices.push_back(i + 1); // current edge vertex
+                    indices.push_back(i + 2); // next edge vertex
+                }
+
+                testVbo = std::make_shared<RHIBuffer>(RHIBufferType::Vertex,
+                                                      sizeof(float) * 3,
+                                                      vertices.size() / 3,
+                                                      vertices.data(),
+                                                      false,
+                                                      "circleVertexBuffer");
+
+                testIbo = std::make_shared<RHIBuffer>(RHIBufferType::Index,
+                                                      sizeof(std::uint32_t),
+                                                      indices.size(),
+                                                      indices.data(),
+                                                      false,
+                                                      "circleIndexBuffer");
+            }
         }
 
         // clang-format off
@@ -114,6 +157,9 @@ namespace worse
 
         {
             frameConstantBuffer.reset();
+            testVbo.reset();
+            testIbo.reset();
+
             destroyResources();
             swapchain.reset();
         }
@@ -155,7 +201,9 @@ namespace worse
                 Renderer::getRenderTarget(RendererTarget::Output);
 
             m_cmdList->setPipelineState(testPso, frameConstantBuffer.get());
-            m_cmdList->draw(6);
+            m_cmdList->setBufferVertex(testVbo.get());
+            m_cmdList->setBufferIndex(testIbo.get());
+            m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
             m_cmdList->renderPassEnd();
             m_cmdList->clearPipelineState();
         }

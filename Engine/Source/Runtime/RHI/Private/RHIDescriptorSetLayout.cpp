@@ -33,11 +33,26 @@ namespace worse
     }
 
     void RHIDescriptorSetLayout::setConstantBuffer(RHIBuffer* buffer,
-                                                   std::uint32_t slot)
+                                                   std::uint32_t const slot)
     {
         for (RHIDescriptor& descriptor : m_descriptors)
         {
             if (descriptor.slot == (slot + RHIConfig::HLSL_REGISTER_SHIFT_B))
+            {
+                descriptor.data.buffer   = buffer;
+                descriptor.range         = buffer->getStride();
+                descriptor.dynamicOffset = buffer->getOffset();
+                return;
+            }
+        }
+    }
+
+    void RHIDescriptorSetLayout::setBuffer(RHIBuffer* buffer,
+                                           std::uint32_t const slot)
+    {
+        for (RHIDescriptor& descriptor : m_descriptors)
+        {
+            if (descriptor.slot == (slot + RHIConfig::HLSL_REGISTER_SHIFT_U))
             {
                 descriptor.data.buffer   = buffer;
                 descriptor.range         = buffer->getStride();

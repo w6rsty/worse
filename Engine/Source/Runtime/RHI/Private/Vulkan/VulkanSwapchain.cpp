@@ -1,8 +1,8 @@
-#include "RHIResource.hpp"
 #include "Window.hpp"
 #include "Log.hpp"
 #include "Event.hpp"
 #include "RHISwapchain.hpp"
+#include "RHIResource.hpp"
 #include "RHIDevice.hpp"
 #include "RHIQueue.hpp"
 

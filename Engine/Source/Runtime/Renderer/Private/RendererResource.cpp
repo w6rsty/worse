@@ -1,6 +1,7 @@
 #include "Math/Vector2.hpp"
 #include "Renderer.hpp"
 #include "RHIShader.hpp"
+#include "RHIVertex.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIBlendState.hpp"
@@ -91,7 +92,7 @@ namespace worse
 
         // clang-format off
         shaders[static_cast<std::size_t>(RendererShader::QuadV)] = std::make_shared<RHIShader>("quard_vertex");
-        shaders[static_cast<std::size_t>(RendererShader::QuadV)]->compile(shaderPath / "quad.hlsl", RHIShaderType::Vertex);
+        shaders[static_cast<std::size_t>(RendererShader::QuadV)]->compile(shaderPath / "quad.hlsl", RHIShaderType::Vertex, RHIVertexType::Pos);
 
 
         shaders[static_cast<std::size_t>(RendererShader::QuadP)] = std::make_shared<RHIShader>("quard_pixel");

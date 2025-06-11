@@ -1,5 +1,6 @@
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
+#include "RHIVertex.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIBlendState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
@@ -160,7 +161,27 @@ namespace worse
             // get vertex info from verte shader
             if (RHIShader* vertexShader = m_state.shaders[static_cast<std::size_t>(RHIShaderType::Vertex)])
             {
+                RHIInputLayout const& inputLayout = vertexShader->getInputLayout();
+                auto attributes = inputLayout.getAttributes();
 
+                if (vertexShader->getVertexType() != RHIVertexType::None)
+                {
+                    vertexInputBindings.push_back(VkVertexInputBindingDescription{
+                        .binding   = 0,
+                        .stride    = inputLayout.getStride(),
+                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+                    });
+
+                    for (RHIVertexAttribute const& attribute : attributes)
+                    {
+                        vertexInputAttributes.push_back(VkVertexInputAttributeDescription{
+                            .location = attribute.location,
+                            .binding  = 0,
+                            .format   = vulkanFormat(attribute.format),
+                            .offset   = attribute.offset,
+                        });
+                    }
+                }
             }
 
             VkPipelineVertexInputStateCreateInfo vertexInputState = {};
