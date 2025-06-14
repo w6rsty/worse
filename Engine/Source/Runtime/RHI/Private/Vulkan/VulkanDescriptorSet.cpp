@@ -1,3 +1,4 @@
+#include "RHIDevice.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHITexture.hpp"
 #include "Descriptor/RHIDescriptor.hpp"
@@ -25,7 +26,8 @@ namespace worse
         for (RHIDescriptor const& descriptor : descriptors)
         {
             // Skip
-            if (descriptor.type == RHIDescriptorType::PushConstantBuffer)
+            if ((descriptor.type == RHIDescriptorType::PushConstantBuffer) ||
+                descriptor.isBindless())
             {
                 continue;
             }
@@ -42,11 +44,16 @@ namespace worse
             if ((descriptor.type == RHIDescriptorType::Image) ||
                 (descriptor.type == RHIDescriptorType::TextureStorage))
             {
-                // For storage images (UAV textures)
-                WS_ASSERT(descriptor.data.texture);
+                RHITexture* texture = descriptor.data.texture;
+                // fallback to placeholder
+                if (!texture)
+                {
+                    texture = RHIDevice::getResourceProvider()->getPlaceholderTexture();
+                }
+                WS_ASSERT(texture);
 
                 VkDescriptorImageInfo imageInfo = {};
-                imageInfo.imageView   = descriptor.data.texture->getRtv().asValue<VkImageView>();
+                imageInfo.imageView   = texture->getRtv().asValue<VkImageView>();
                 imageInfo.imageLayout = vulkanImageLayout(descriptor.layout);
                 imageInfo.sampler     = VK_NULL_HANDLE;
 
@@ -56,7 +63,6 @@ namespace worse
             else if ((descriptor.type == RHIDescriptorType::ConstantBuffer) ||
                      (descriptor.type == RHIDescriptorType::StructuredBuffer))
             {
-                // For storage buffers (structured buffers)
                 WS_ASSERT(descriptor.data.buffer);
 
                 VkDescriptorBufferInfo bufferInfo = {};

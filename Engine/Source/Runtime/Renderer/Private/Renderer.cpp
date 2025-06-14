@@ -1,5 +1,6 @@
-#include "Math/Vector2.hpp"
+#include "Math/Math.hpp"
 #include "Profiling/Stopwatch.hpp"
+#include "RHIVertex.hpp"
 #include "Window.hpp"
 #include "Renderer.hpp"
 #include "RHIQueue.hpp"
@@ -14,10 +15,21 @@
 
 namespace worse
 {
-    struct alignas(16) FrameConstantData
+    struct FrameConstantData
     {
         float deltaTime;
         float time;
+        math::Vector2 padding0; // align to 16 bytes
+
+        math::Vector3 cameraPosition;
+        float cameraNear;
+        math::Vector3 cameraForward;
+        float cameraFar;
+        math::Vector4 padding1; // align to 16 bytes
+
+        math::Matrix4 view;
+        math::Matrix4 projection;
+        math::Matrix4 viewProjection;
     };
 
     namespace
@@ -35,7 +47,46 @@ namespace worse
         std::shared_ptr<RHIBuffer> testVbo = nullptr;
         std::shared_ptr<RHIBuffer> testIbo = nullptr;
 
-        RHIPipelineState testPso;
+        class RendererResourceProvider : public RHIResourceProvider
+        {
+        public:
+            RendererResourceProvider()           = default;
+            ~RendererResourceProvider() override = default;
+
+            std::pair<RHIShader*, RHIShader*>
+            getPlaceholderShader() const override
+            {
+                return {Renderer::getShader(RendererShader::PlaceholderV),
+                        Renderer::getShader(RendererShader::PlaceholderP)};
+            }
+
+            RHITexture* getPlaceholderTexture() const override
+            {
+                return Renderer::getTexture(RendererTexture::Placeholder);
+            }
+
+            RHIBuffer* getFrameConstantBuffer() const override
+            {
+                return frameConstantBuffer.get();
+            }
+
+            EnumArray<RHISamplerType, RHISampler*> getSamplers() const override
+            {
+                EnumArray<RHISamplerType, RHISampler*> samplers;
+                // clang-format off
+                samplers[RHISamplerType::CompareDepth]        = Renderer::getSampler(RHISamplerType::CompareDepth);
+                samplers[RHISamplerType::PointClampBorder]    = Renderer::getSampler(RHISamplerType::PointClampBorder);
+                samplers[RHISamplerType::PointClampEdge]      = Renderer::getSampler(RHISamplerType::PointClampEdge);
+                samplers[RHISamplerType::Wrap]                = Renderer::getSampler(RHISamplerType::Wrap);
+                samplers[RHISamplerType::BilinearClampEdge]   = Renderer::getSampler(RHISamplerType::BilinearClampEdge);
+                samplers[RHISamplerType::BilinearClampBorder] = Renderer::getSampler(RHISamplerType::BilinearClampBorder);
+                samplers[RHISamplerType::BilinearWrap]        = Renderer::getSampler(RHISamplerType::BilinearWrap);
+                samplers[RHISamplerType::TrilinearClamp]      = Renderer::getSampler(RHISamplerType::TrilinearClamp);
+                samplers[RHISamplerType::AnisotropicClamp]    = Renderer::getSampler(RHISamplerType::AnisotropicClamp);
+                // clang-format on
+                return samplers;
+            }
+        } resourceProvider;
     } // namespace
 
     void Renderer::initialize()
@@ -75,6 +126,8 @@ namespace worse
             Renderer::createBlendStates();
             Renderer::createRendererTarget();
             Renderer::createShaders();
+            Renderer::createTextures();
+            Renderer::createSamplers();
 
             frameConstantData.time = 0.0;
             frameConstantBuffer =
@@ -85,70 +138,36 @@ namespace worse
                                             true,
                                             "frameConstantBuffer");
 
-            // Circle 2D mesh generation
-            {
-                constexpr int segments = 32;
-                constexpr float radius = 0.5f;
+            // clang-format off
+            static const std::array<RHIVertexPosUvNrmTan, 4> vertices = {
+                RHIVertexPosUvNrmTan{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, { 1.0f, 0.0f, 0.0f}},
+                RHIVertexPosUvNrmTan{{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
+                RHIVertexPosUvNrmTan{{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, { 1.0f, 0.0f, 0.0f}},
+                RHIVertexPosUvNrmTan{{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}}
+            };
+            static const std::array<std::uint32_t, 6> indices = {
+                0, 1, 2,
+                2, 3, 0
+            };
+            // clang-format on
 
-                std::vector<float> vertices;
-                std::vector<std::uint32_t> indices;
-
-                // Center vertex
-                vertices.push_back(0.0f); // x
-                vertices.push_back(0.0f); // y
-                vertices.push_back(0.0f); // z
-
-                // Generate circle vertices
-                for (int i = 0; i <= segments; ++i)
-                {
-                    float angle = (float)i / segments * 2.0f * 3.14159265359f;
-                    vertices.push_back(radius * std::cos(angle)); // x
-                    vertices.push_back(radius * std::sin(angle)); // y
-                    vertices.push_back(0.0f);                     // z
-                }
-
-                // Generate indices for triangles (fan pattern)
-                for (int i = 0; i < segments; ++i)
-                {
-                    indices.push_back(0);     // center vertex
-                    indices.push_back(i + 1); // current edge vertex
-                    indices.push_back(i + 2); // next edge vertex
-                }
-
-                testVbo = std::make_shared<RHIBuffer>(RHIBufferType::Vertex,
-                                                      sizeof(float) * 3,
-                                                      vertices.size() / 3,
-                                                      vertices.data(),
-                                                      false,
-                                                      "circleVertexBuffer");
-
-                testIbo = std::make_shared<RHIBuffer>(RHIBufferType::Index,
-                                                      sizeof(std::uint32_t),
-                                                      indices.size(),
-                                                      indices.data(),
-                                                      false,
-                                                      "circleIndexBuffer");
-            }
+            testVbo = std::make_shared<RHIBuffer>(RHIBufferType::Vertex,
+                                                  sizeof(RHIVertexPosUvNrmTan),
+                                                  vertices.size(),
+                                                  vertices.data(),
+                                                  true,
+                                                  "testVbo");
+            testIbo = std::make_shared<RHIBuffer>(RHIBufferType::Index,
+                                                  sizeof(std::uint32_t),
+                                                  indices.size(),
+                                                  indices.data(),
+                                                  true,
+                                                  "testIbo");
         }
 
-        // clang-format off
-        RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
+        RHIDevice::setResourceProvider(&resourceProvider);
 
-        testPso = RHIPipelineStateBuilder()
-            .setName("testPSO")
-            .setType(RHIPipelineType::Graphics)
-            .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
-            .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-            .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
-            .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-            .addShader(Renderer::getShader(RendererShader::QuadV))
-            .addShader(Renderer::getShader(RendererShader::QuadP))
-            .setRenderTargetColorTexture(0, frameOutput)
-            .setScissor({0, 0, 800, 600})
-            .setViewport(Renderer::getViewport())
-            .setClearColor(Color::Black())
-            .build();
-        // clang-format on
+        RHIDevice::updateGlobalDescriptorSet();
     }
 
     void Renderer::shutdown()
@@ -183,7 +202,7 @@ namespace worse
             RHIDevice::deletionQueueFlush();
         }
 
-        // update buffers
+        // update frame constant data
         {
             static profiling::Stopwatch frameTimer;
             frameConstantData.deltaTime = frameTimer.elapsedSec();
@@ -196,15 +215,64 @@ namespace worse
                                     &frameConstantData);
         }
 
+        // update bindless data
         {
-            RHITexture* frameOutput =
-                Renderer::getRenderTarget(RendererTarget::Output);
+            // updateBindlessBuffers(m_cmdList);
+        }
 
-            m_cmdList->setPipelineState(testPso, frameConstantBuffer.get());
+        {
+            // clang-format off
+            // RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
+            RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
+
+            static auto testPso = RHIPipelineStateBuilder()
+                .setName("testPSO")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PBRV))
+                .addShader(Renderer::getShader(RendererShader::PBRP))
+                .setRenderTargetColorTexture(0, frameOutput)
+                .setScissor({0, 0, 800, 600})
+                .setViewport(Renderer::getViewport())
+                .setClearColor(Color::Black())
+                .build();
+            // clang-format on
+
+            m_cmdList->setPipelineState(testPso);
             m_cmdList->setBufferVertex(testVbo.get());
             m_cmdList->setBufferIndex(testIbo.get());
             m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
             m_cmdList->renderPassEnd();
+
+            // clang-format off
+            auto viewport = Renderer::getViewport();
+            viewport.width  = viewport.width / 2.0f;
+            viewport.height = viewport.height / 2.0f;
+            static auto leftCorner = RHIPipelineStateBuilder()
+                .setName("leftCorner")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderV))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderP))
+                .setRenderTargetColorTexture(0, frameOutput)
+                .setScissor({0, 0, 400, 300})
+                .setViewport(viewport)
+                .setClearColor(Color::Black())
+                .build();
+            // clang-format on
+
+            m_cmdList->setPipelineState(leftCorner);
+            m_cmdList->setBufferVertex(testVbo.get());
+            m_cmdList->setBufferIndex(testIbo.get());
+            m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
+            m_cmdList->renderPassEnd();
+
             m_cmdList->clearPipelineState();
         }
 
@@ -269,6 +337,11 @@ namespace worse
     math::Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
+    }
+
+    void Renderer::updateBindlessBuffers(RHICommandList* cmdList)
+    {
+        RHIDevice::updateBindlessResources();
     }
 
 } // namespace worse

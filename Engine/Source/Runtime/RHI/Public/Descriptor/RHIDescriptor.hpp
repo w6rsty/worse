@@ -6,7 +6,34 @@
 
 namespace worse
 {
-    struct RHIDescriptorPayload
+
+    namespace GlobalDescriptorSetLayout
+    {
+        enum class GlobalBinding
+        {
+            FrameConstant,
+            SamplerComparison,
+            SamplerRegulars,
+        };
+
+        void createGlobalDescriptorSetLayout();
+        RHINativeHandle getGlobalDescriptorSetLayout();
+    } // namespace GlobalDescriptorSetLayout
+
+    namespace BindlessDescriptorLayout
+    {
+        enum class BindlessBinding
+        {
+            MaterialTextures,
+            MaterialProperties,
+            LightProperties,
+        };
+
+        void createBindlessDescriptorSetLayout();
+        RHINativeHandle getBindlessDescriptorSetLayout();
+    } // namespace BindlessDescriptorLayout
+
+    struct RHIDescriptorResource
     {
         union
         {
@@ -21,13 +48,19 @@ namespace worse
     public:
         // clang-format off
         bool isBindless() const { return isArray && arrayLength == 0; }
+        
+        // HLSL space
+        std::uint32_t getSpace() const { return space; }
+        // HLSL slot
+        std::uint32_t getSlot() const { return slot; }
 
         // descriptor hash factors
+        std::uint32_t space            = 0;
         std::uint32_t slot             = 0;
         RHIShaderStageFlags stageFlags = RHIShaderStageFlagBits::None;
 
         // descriptor set has factors
-        RHIDescriptorPayload data   = {};
+        RHIDescriptorResource data  = {};
         RHIDescriptorType type      = RHIDescriptorType::Max;
         RHIImageLayout layout       = RHIImageLayout::Undefined;
         //  constant buffer and buffer

@@ -1,7 +1,7 @@
 #pragma once
 #include "Types.hpp"
 #include "Event.hpp"
-#include "Math/Vector2.hpp"
+#include "Math/Vector.hpp"
 
 #include <array>
 

@@ -11,24 +11,29 @@ namespace worse
         static void initialize();
         static void destroy();
 
+        // Renderer set this after RHIDevice is initialized
+        static void setResourceProvider(RHIResourceProvider* provider);
+        static RHIResourceProvider* getResourceProvider();
+
+        // clang-format off
+
         // wait graphics and compute queues
         static void queueWaitAll();
-        [[nodiscard]] static std::uint32_t
-        getQueueIndex(RHIQueueType const type);
+        [[nodiscard]] static std::uint32_t getQueueIndex(RHIQueueType const type);
         [[nodiscard]] static RHIQueue* getQueue(RHIQueueType const type);
-        [[nodiscard]] static RHINativeHandle
-        getQueueRHIResource(RHIQueueType const type);
-
-        [[nodiscard]] static RHINativeHandle
-        allocateDescriptorSet(RHIDescriptorSetLayout const& layout);
+        [[nodiscard]] static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
+        [[nodiscard]] static RHINativeHandle allocateDescriptorSet(RHIDescriptorSetLayout const& layout);
         // dynamic descriptor sets
-        [[nodiscard]] static std::unordered_map<std::uint64_t,
-                                                RHIDescriptorSet>&
-        getDescriptorSets();
-        [[nodiscard]] static RHINativeHandle
-        getBindlessDescriptorSet(RHIBindlessResourceType const type);
-        [[nodiscard]] static RHINativeHandle
-        getBindlessDescriptorSetLayout(RHIBindlessResourceType const type);
+        [[nodiscard]] static RHINativeHandle getGlobalDescriptorSetLayout();
+        [[nodiscard]] static RHINativeHandle getGlobalDescriptorSet();
+        [[nodiscard]] static std::unordered_map<std::uint64_t, RHIDescriptorSet>& getDescriptorSets();
+        [[nodiscard]] static RHINativeHandle getBindlessDescriptorSet(RHIBindlessResourceType const type);
+        [[nodiscard]] static RHINativeHandle getBindlessDescriptorSetLayout(RHIBindlessResourceType const type);
+        // update descriptors
+        static void updateGlobalDescriptorSet();
+        static void updateBindlessResources();
+
+        // clang-format on
 
         // use pso hash to get pipeline and descriptor set layout from cache
         // guaranteed to return a valid pipeline and descriptor set layout

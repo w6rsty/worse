@@ -18,6 +18,7 @@
 namespace worse
 {
     // fwd
+    class RHINativeHandle;
     class RHIDevice;
     class RHIQueue;
     class RHIViewport;
@@ -32,6 +33,7 @@ namespace worse
     class RHIBlendState;
     class RHITexture;
     class RHIBuffer;
+    class RHISampler;
     class RHIDescriptor;
     class RHIDescriptorSet;
     class RHIDescriptorSetLayout;
@@ -55,8 +57,9 @@ namespace worse
         Shader,
         Pipeline,
         PipelineLayout,
-        DescriptorSet,
+        DescriptorPool,
         DescriptorSetLayout,
+        DescriptorSet,
         CommandList,
         CommandPool,
 
@@ -149,6 +152,69 @@ namespace worse
     {
         Nearest,
         Linear,
+    };
+
+    constexpr VkFilter vulkanFilter(RHIFilter const filter)
+    {
+        switch (filter)
+        {
+            // clang-format off
+        case RHIFilter::Nearest: return VK_FILTER_NEAREST;
+        case RHIFilter::Linear:  return VK_FILTER_LINEAR;
+            // clang-format on
+        }
+    }
+
+    constexpr VkSamplerMipmapMode
+    vulkanSamplerMipmapMode(RHIFilter const filter)
+    {
+        switch (filter)
+        {
+            // clang-format off
+        case RHIFilter::Nearest: return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        case RHIFilter::Linear:  return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            // clang-format on
+        }
+    }
+
+    enum class RHISamplerAddressMode
+    {
+        Wrap,
+        Mirror,
+        ClampToEdge,
+        ClampToBorder,
+        MirrorClampToEdge,
+        Max
+    };
+
+    constexpr VkSamplerAddressMode
+    vulkanSamplerAddressMode(RHISamplerAddressMode const addressMode)
+    {
+        switch (addressMode)
+        {
+            // clang-format off
+        case RHISamplerAddressMode::Wrap:             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case RHISamplerAddressMode::Mirror:           return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case RHISamplerAddressMode::ClampToEdge:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case RHISamplerAddressMode::ClampToBorder:    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case RHISamplerAddressMode::MirrorClampToEdge:return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+        default:                                      return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
+            // clang-format on
+        }
+    }
+
+    enum class RHISamplerType
+    {
+        CompareDepth,
+        PointClampEdge,
+        PointClampBorder,
+        Wrap,
+        BilinearClampEdge,
+        BilinearClampBorder,
+        BilinearWrap,
+        TrilinearClamp,
+        AnisotropicClamp,
+        Max
     };
 
     enum class RHIShaderType
@@ -354,11 +420,8 @@ namespace worse
         MaterialTexture,
         Material,
         Light,
-        // ....
         Max
     };
-    constexpr std::size_t k_rhiBindlessResourceCount =
-        static_cast<std::size_t>(RHIBindlessResourceType::Max);
 
     constexpr VkObjectType vulkanObjectType(RHINativeHandleType const type)
     {
@@ -375,6 +438,7 @@ namespace worse
         case RHINativeHandleType::Shader:              return VK_OBJECT_TYPE_SHADER_MODULE;
         case RHINativeHandleType::Pipeline:            return VK_OBJECT_TYPE_PIPELINE;
         case RHINativeHandleType::PipelineLayout:      return VK_OBJECT_TYPE_PIPELINE_LAYOUT;
+        case RHINativeHandleType::DescriptorPool:      return VK_OBJECT_TYPE_DESCRIPTOR_POOL;
         case RHINativeHandleType::DescriptorSet:       return VK_OBJECT_TYPE_DESCRIPTOR_SET;
         case RHINativeHandleType::DescriptorSetLayout: return VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT;
         case RHINativeHandleType::CommandList:         return VK_OBJECT_TYPE_COMMAND_BUFFER;
@@ -621,6 +685,7 @@ namespace worse
         WS_RHI_FORMAT_CASE(Max);
 #undef WS_RHI_FORMAT_CASE
             break;
+            // clang-format on
         }
     }
 
@@ -635,20 +700,25 @@ namespace worse
         static inline RHIBackendType backendType = RHIBackendType::Null;
     };
 
-
     namespace RHIConfig
     {
-        static bool enableVSync = true;
+        static bool enableVSync            = true;
         static bool enableValidationLayers = true;
 
-        constexpr std::size_t MAX_RENDER_TARGET = 8;
-        constexpr std::size_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
+        constexpr std::size_t MAX_RENDER_TARGET             = 8;
+        constexpr std::uint32_t MAX_DESCRIPTORS             = 512;
+        constexpr std::uint32_t MAX_DESCRIPTOR_SETS         = 512;
+        constexpr std::uint32_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
         constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB
 
-        constexpr std::size_t HLSL_REGISTER_SHIFT_T = 100;
-        constexpr std::size_t HLSL_REGISTER_SHIFT_B = 200;
-        constexpr std::size_t HLSL_REGISTER_SHIFT_S = 300;
-        constexpr std::size_t HLSL_REGISTER_SHIFT_U = 400;
-    }
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_B = 0;
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_T = 100;
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_S = 200;
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_U = 300;
+
+        constexpr std::uint32_t FRAME_DATA_REGISTER               = 0;
+        constexpr std::uint32_t SAMPLER_COMPARISON_STATE_REGISTER = 1;
+        constexpr std::uint32_t SAMPLER_REGULAR_STATE_REGISTER    = 2;
+    } // namespace RHIConfig
 
 } // namespace worse

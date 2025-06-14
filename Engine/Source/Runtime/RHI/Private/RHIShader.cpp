@@ -1,7 +1,10 @@
 #include "FileSystem.hpp"
+#include "Math/Hash.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
+
+#include <functional>
 
 namespace worse
 {
@@ -40,6 +43,13 @@ namespace worse
                          "Failed to read shader file: {}",
                          filepath.string());
             return;
+        }
+
+        {
+            std::hash<std::string> hasher;
+            m_hash = math::hashCombine(m_hash, hasher(m_path));
+
+            // TODO: hash definitions
         }
 
         // compile

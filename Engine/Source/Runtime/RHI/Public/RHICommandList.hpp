@@ -57,7 +57,7 @@ namespace worse
 
         // bind pipeline specific resources and begin render pass make sure pso
         // has been called `finalize()`
-        void setPipelineState(RHIPipelineState const& pso, RHIBuffer* buffer);
+        void setPipelineState(RHIPipelineState const& pso);
         // must call this at the end of the render operation if only has one pso
         // in reneder loop, otherwise the activation of next pass will fail
         void clearPipelineState();

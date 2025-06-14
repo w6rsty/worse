@@ -37,7 +37,7 @@ namespace worse
     {
         for (RHIDescriptor& descriptor : m_descriptors)
         {
-            if (descriptor.slot == (slot + RHIConfig::HLSL_REGISTER_SHIFT_B))
+            if (descriptor.slot == (slot))
             {
                 descriptor.data.buffer   = buffer;
                 descriptor.range         = buffer->getStride();
@@ -52,7 +52,7 @@ namespace worse
     {
         for (RHIDescriptor& descriptor : m_descriptors)
         {
-            if (descriptor.slot == (slot + RHIConfig::HLSL_REGISTER_SHIFT_U))
+            if (descriptor.slot == (slot))
             {
                 descriptor.data.buffer   = buffer;
                 descriptor.range         = buffer->getStride();

@@ -23,15 +23,16 @@ namespace worse
 
     class RHITexture : public RHIResource
     {
+        friend class RHIDevice;
+
         bool nativeCreate();
-        void nativeDestroy();
 
     public:
         RHITexture() = default;
         RHITexture(RHITextureType const type, std::uint32_t const width,
                    std::uint32_t const height, std::uint32_t const depth,
                    RHIFormat const format, RHITextureUsageFlags const usage,
-                   std::string const& name);
+                   void* data, std::string const& name);
         ~RHITexture();
 
         RHIImageLayout getImageLayout() const;
@@ -42,16 +43,14 @@ namespace worse
         bool isFormatStencil() const;
 
         // clang-format off
-        RHITextureType getType() const        { return m_type; }
-        std::uint32_t getWidth() const        { return m_width; }
-        std::uint32_t getHeight() const       { return m_height; }
-        std::uint32_t getDepth() const        { return m_depth; }
-        RHIFormat getFormat() const           { return m_format; }
-        RHITextureUsageFlags getUsage() const { return m_usage; }
-        RHINativeHandle getRtv() const        { return m_rtv; }
-        RHINativeHandle getImage() const      { return m_image; }
-        // RHIDevice::memoryTextureCreate set this handle
-        void setHandle(RHINativeHandle handle) { m_image = handle; }
+        RHITextureType       getType() const   { return m_type; }
+        std::uint32_t        getWidth() const  { return m_width; }
+        std::uint32_t        getHeight() const { return m_height; }
+        std::uint32_t        getDepth() const  { return m_depth; }
+        RHIFormat            getFormat() const { return m_format; }
+        RHITextureUsageFlags getUsage() const  { return m_usage; }
+        RHINativeHandle      getRtv() const    { return m_rtv; }
+        RHINativeHandle      getImage() const  { return m_image; }
         // clang-format on
 
     private:

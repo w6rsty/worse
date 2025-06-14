@@ -108,13 +108,4 @@ namespace worse
         return true;
     }
 
-    void RHITexture::nativeDestroy()
-    {
-        RHIDevice::deletionQueueAdd(m_rtv);
-        m_rtv = {};
-
-        RHIDevice::deletionQueueAdd(m_image);
-        m_image = {};
-    }
-
 } // namespace worse

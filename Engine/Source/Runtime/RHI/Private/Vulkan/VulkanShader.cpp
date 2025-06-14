@@ -2,6 +2,7 @@
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
 
+#include "spirv_cross/spirv.hpp"
 #include "spirv_cross/spirv_hlsl.hpp"
 
 namespace worse
@@ -41,6 +42,7 @@ namespace worse
                 // clang-format off
                 RHIDescriptor descriptor = {};
                 descriptor.name          = resource.name;
+                descriptor.space         = hlsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
                 descriptor.slot          = hlsl.get_decoration(resource.id, spv::DecorationBinding);
                 descriptor.stageFlags    = shaderStage;
                 descriptor.type          = descriptorType;
@@ -80,20 +82,23 @@ namespace worse
             break;
         }
 
-        wArguments.push_back(L"-spirv");
-        wArguments.push_back(L"-fspv-target-env=vulkan1.2");
-
-        // preserve all bindings and interface, even when not used
-        wArguments.push_back(L"-fspv-preserve-bindings");
-        wArguments.push_back(L"-fspv-preserve-interface");
-
-        // avoid register number conflicts
+        // Static compilation options to avoid repeated construction
         // clang-format off
-        wArguments.push_back(L"-fvk-t-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_T)); wArguments.push_back(L"all");
-        wArguments.push_back(L"-fvk-b-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_B)); wArguments.push_back(L"all");
-        wArguments.push_back(L"-fvk-s-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_S)); wArguments.push_back(L"all");
-        wArguments.push_back(L"-fvk-u-shift"); wArguments.push_back(std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_U)); wArguments.push_back(L"all");
+        static const std::vector<std::wstring> commonOptions = {
+            L"-spirv",
+            L"-fspv-target-env=vulkan1.2",
+            L"-fspv-preserve-bindings",  // disable re-numbering
+            L"-fspv-preserve-interface", // disable optimization that removes unused locations
+            L"-fvk-t-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_T), L"all",
+            L"-fvk-b-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_B), L"all",
+            L"-fvk-s-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_S), L"all",
+            L"-fvk-u-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_U), L"all"
+        };
         // clang-format on
+
+        wArguments.insert(wArguments.end(),
+                          commonOptions.begin(),
+                          commonOptions.end());
 
         std::string filepath   = m_path.string();
         std::wstring wFilepath = std::wstring(filepath.begin(), filepath.end());
@@ -153,18 +158,13 @@ namespace worse
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer,   shaderStage, m_descriptors);
         // clang-format on
 
-        for (auto& descriptor : m_descriptors)
+        for (RHIDescriptor& descriptor : m_descriptors)
         {
-            std::string arr = "";
-            if (descriptor.isArray)
-            {
-                arr = "[" + std::to_string(descriptor.arrayLength) + "]";
-            }
-            WS_LOG_DEBUG("spirv-cross",
-                         "{}{} - {} ",
-                         rhiDescriptorTypeToString(descriptor.type),
-                         arr,
-                         descriptor.name);
+            WS_LOG_DEBUG("SPIRV-Cross",
+                         "{} : register({}, space{}) ",
+                         descriptor.name,
+                         descriptor.slot,
+                         descriptor.space);
         }
     }
 

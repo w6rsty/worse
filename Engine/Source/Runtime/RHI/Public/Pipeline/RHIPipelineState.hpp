@@ -33,7 +33,6 @@ namespace worse
         RHIDepthStencilState* depthStencilState              = nullptr;
         RHIBlendState* blendState                            = nullptr;
         std::array<RHIShader*, k_rhiShaderTypeCount> shaders = {};
-        // RHISwapchain* renderTargetSwapchain = nullptr;
         std::array<RHITexture*, RHIConfig::MAX_RENDER_TARGET> renderTargetColorTextures = {nullptr};
         RHITexture* renderTargetDepthTexture = nullptr;
         // clang-format on

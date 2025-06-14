@@ -57,19 +57,23 @@ namespace worse
         }
 
         // descriptor set layout
-        std::array<VkDescriptorSetLayout, k_rhiBindlessResourceCount + 1> descriptorSetLayouts;
+        constexpr std::size_t bindlessLayoutCount = static_cast<std::size_t>(RHIBindlessResourceType::Max);
+        std::vector<VkDescriptorSetLayout> layouts;
+        layouts.reserve(1 + bindlessLayoutCount + 1);
         {
-            // common descriptors
-            descriptorSetLayouts[0] = descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>();
+            // global
+            layouts.push_back(RHIDevice::getGlobalDescriptorSetLayout().asValue<VkDescriptorSetLayout>());
 
-            // bindless descriptors
-            for (std::size_t i = 0; i < k_rhiBindlessResourceCount; ++i)
-            {
-                descriptorSetLayouts[i + 1] =
-                    RHIDevice::getBindlessDescriptorSetLayout(
-                        static_cast<RHIBindlessResourceType>(i)
-                    ).asValue<VkDescriptorSetLayout>();
-            }
+            // bindless
+            // for (std::size_t i = 0; i < bindlessLayoutCount; ++i)
+            // {
+            //     layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(
+            //         static_cast<RHIBindlessResourceType>(i)
+            //     ).asValue<VkDescriptorSetLayout>());
+            // }
+            
+            // // specific
+            // layouts.push_back(descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>());
         }
 
         // push constant
@@ -93,9 +97,8 @@ namespace worse
         {
             VkPipelineLayoutCreateInfo infoPipelineLayout = {};
             infoPipelineLayout.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            // infoPipelineLayout.setLayoutCount         = static_cast<std::uint32_t>(descriptorSetLayouts.size());
-            infoPipelineLayout.setLayoutCount         = 1;
-            infoPipelineLayout.pSetLayouts            = descriptorSetLayouts.data();
+            infoPipelineLayout.setLayoutCount         = static_cast<std::uint32_t>(layouts.size());
+            infoPipelineLayout.pSetLayouts            = layouts.data();
             infoPipelineLayout.pushConstantRangeCount = static_cast<std::uint32_t>(pushConstantRanges.size());
             infoPipelineLayout.pPushConstantRanges    = pushConstantRanges.data();
 

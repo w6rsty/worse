@@ -10,7 +10,6 @@
 #include "Descriptor/RHITexture.hpp"
 #include "Descriptor/RHIDescriptorSet.hpp"
 
-#include <mutex>
 #include <unordered_map>
 
 namespace worse
@@ -53,11 +52,42 @@ namespace worse
 
     namespace descriptorSet
     {
-        void setDynamic(RHINativeHandle cmdBuffer, RHIPipelineState const& pso,
-                        RHINativeHandle pipelineLayout,
-                        RHIDescriptorSetLayout const& descriptorSetLayout)
+        // bind global descriptor set
+        void bindGlobal(RHINativeHandle cmdBuffer, RHIPipelineState const& pso,
+                        RHINativeHandle pipelineLayout)
+        {
+            // global descriptor set is always available
+            // it is created during device initialization
+            // and never destroyed
+            {
+                VkDescriptorSet vkSet = RHIDevice::getGlobalDescriptorSet()
+                                            .asValue<VkDescriptorSet>();
+
+                VkPipelineBindPoint bindPoint =
+                    (pso.type == RHIPipelineType::Graphics)
+                        ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                        : VK_PIPELINE_BIND_POINT_COMPUTE;
+
+                vkCmdBindDescriptorSets(
+                    cmdBuffer.asValue<VkCommandBuffer>(),
+                    bindPoint,
+                    pipelineLayout.asValue<VkPipelineLayout>(),
+                    0,
+                    1,
+                    &vkSet,
+                    0,
+                    nullptr);
+            }
+        }
+
+        // bind dynamic descriptor set
+        void bindSpecific(RHINativeHandle cmdBuffer,
+                          RHIPipelineState const& pso,
+                          RHINativeHandle pipelineLayout,
+                          RHIDescriptorSetLayout const& descriptorSetLayout)
         {
             // get a descriptor set from pipeline descriptor set layout
+            // create on first call
             RHIDescriptorSet* descriptorSet =
                 descriptorSetLayout.getDescriptorSet();
             VkDescriptorSet vkSet =
@@ -82,13 +112,23 @@ namespace worse
         }
 
         // bind all bindless descriptor sets
-        void setBindless(RHINativeHandle cmdBuffer, RHIPipelineState const& pso,
-                         RHINativeHandle pipelineLayout)
+        void bindBindless(RHINativeHandle cmdBuffer,
+                          RHIPipelineState const& pso,
+                          RHINativeHandle pipelineLayout)
         {
-            std::array<VkDescriptorSet, k_rhiBindlessResourceCount>
-                bindlessSets;
+            EnumArray<RHIBindlessResourceType, VkDescriptorSet> bindlessSets;
 
-            for (std::size_t i = 0; i < k_rhiBindlessResourceCount; ++i)
+            constexpr std::size_t bindlessSetCount =
+                static_cast<std::size_t>(RHIBindlessResourceType::Max);
+
+            for (auto it = bindlessSets.begin_pairs();
+                 it != bindlessSets.end_pairs();
+                 ++it)
+            {
+                auto [type, set] = *it;
+            }
+
+            for (std::size_t i = 0; i < bindlessSetCount; ++i)
             {
                 bindlessSets[i] = RHIDevice::getBindlessDescriptorSet(
                                       static_cast<RHIBindlessResourceType>(i))
@@ -104,7 +144,7 @@ namespace worse
                 cmdBuffer.asValue<VkCommandBuffer>(),
                 bindPoint,
                 pipelineLayout.asValue<VkPipelineLayout>(),
-                1, // skip dynamic sets
+                1,
                 static_cast<std::uint32_t>(bindlessSets.size()),
                 bindlessSets.data(),
                 0,
@@ -290,8 +330,7 @@ namespace worse
                          instanceIndex);
     }
 
-    void RHICommandList::setPipelineState(RHIPipelineState const& pso,
-                                          RHIBuffer* buffer)
+    void RHICommandList::setPipelineState(RHIPipelineState const& pso)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(pso.isValidated());
@@ -307,22 +346,23 @@ namespace worse
 
         renderPassBegin();
 
-        VkPipelineBindPoint bindPoint = (pso.type == RHIPipelineType::Graphics)
-                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                                            : VK_PIPELINE_BIND_POINT_COMPUTE;
         vkCmdBindPipeline(m_handle.asValue<VkCommandBuffer>(),
-                          bindPoint,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
                           m_pipeline->getHandle().asValue<VkPipeline>());
 
         setScissor(pso.scissor);
 
         // bind pipeline specific resources
         {
+            setContantBuffer(
+                RHIDevice::getResourceProvider()->getFrameConstantBuffer(),
+                0);
+
+            descriptorSet::bindGlobal(m_handle, pso, m_pipeline->getLayout());
             // clang-format off
             // descriptorSet::setBindless(m_handle, pso, m_pipeline->getLayout());
             // dereference m_descriptorSetLayout is safe here
-            setContantBuffer(buffer, 0);
-            descriptorSet::setDynamic(m_handle, pso, m_pipeline->getLayout(), *m_descriptorSetLayout);
+            // descriptorSet::setSpecific(m_handle, pso, m_pipeline->getLayout(), *m_descriptorSetLayout);
             // clang-format on
         }
     }

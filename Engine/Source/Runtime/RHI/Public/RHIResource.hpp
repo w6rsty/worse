@@ -97,4 +97,29 @@ namespace worse
         std::string m_name;
     };
 
+    // Renderer use this inteface claas to provide basic RHI resources
+    class RHIResourceProvider
+    {
+    public:
+        virtual ~RHIResourceProvider() = default;
+
+        virtual std::pair<RHIShader*, RHIShader*>
+        getPlaceholderShader() const                                       = 0;
+        virtual RHITexture* getPlaceholderTexture() const                  = 0;
+        virtual RHIBuffer* getFrameConstantBuffer() const                  = 0;
+        virtual EnumArray<RHISamplerType, RHISampler*> getSamplers() const = 0;
+
+        // make sure all resources are ready
+        bool validate()
+        {
+            bool validated = true;
+            validated &= ((getPlaceholderShader().first != nullptr) &&
+                          (getPlaceholderShader().second != nullptr));
+            validated &= (getPlaceholderTexture() != nullptr);
+            validated &= (getFrameConstantBuffer() != nullptr);
+
+            return validated;
+        }
+    };
+
 } // namespace worse

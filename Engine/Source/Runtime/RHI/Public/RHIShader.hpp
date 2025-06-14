@@ -39,6 +39,7 @@ namespace worse
         RHIShaderType getShaderType() const                      { return m_shaderType; }
         RHIVertexType getVertexType() const                      { return m_vertexType; }
         RHIInputLayout const& getInputLayout() const             { return m_inputLayout; }
+        std::uint64_t getHash() const                            { return m_hash; }
         RHINativeHandle getHandle() const                        { return m_shaderModule; }
         // clang-format on
 
@@ -52,6 +53,7 @@ namespace worse
         RHIVertexType m_vertexType        = RHIVertexType::None;
         RHIInputLayout m_inputLayout;
 
+        std::uint64_t m_hash           = 0;
         RHINativeHandle m_shaderModule = {};
     };
 

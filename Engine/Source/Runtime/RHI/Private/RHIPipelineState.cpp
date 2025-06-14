@@ -1,9 +1,9 @@
 #include "Math/Hash.hpp"
 #include "RHIShader.hpp"
+#include "Pipeline/RHIBlendState.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
-#include "Pipeline/RHIBlendState.hpp"
 #include "Descriptor/RHITexture.hpp"
 
 namespace worse
@@ -82,6 +82,30 @@ namespace worse
             if (pso.blendState)
             {
                 hash = math::hashCombine(hash, pso.blendState->getHash());
+            }
+
+            for (RHIShader* shader : pso.shaders)
+            {
+                if (shader)
+                {
+                    hash = math::hashCombine(hash, shader->getHash());
+                }
+            }
+
+            for (RHITexture* texture : pso.renderTargetColorTextures)
+            {
+                if (texture)
+                {
+                    hash =
+                        math::hashCombine(hash, texture->getImage().asValue());
+                }
+            }
+
+            if (pso.renderTargetDepthTexture)
+            {
+                hash = math::hashCombine(
+                    hash,
+                    pso.renderTargetDepthTexture->getImage().asValue());
             }
 
             return hash;

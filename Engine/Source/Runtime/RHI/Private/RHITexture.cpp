@@ -1,3 +1,4 @@
+#include "RHIDevice.hpp"
 #include "RHICommandList.hpp"
 #include "Descriptor/RHITexture.hpp"
 
@@ -7,7 +8,7 @@ namespace worse
     RHITexture::RHITexture(RHITextureType const type, std::uint32_t const width,
                            std::uint32_t const height,
                            std::uint32_t const depth, RHIFormat const format,
-                           RHITextureUsageFlags const usage,
+                           RHITextureUsageFlags const usage, void* data,
                            std::string const& name)
         : RHIResource(name)
     {
@@ -23,7 +24,11 @@ namespace worse
 
     RHITexture::~RHITexture()
     {
-        nativeDestroy();
+        RHIDevice::deletionQueueAdd(m_rtv);
+        m_rtv = {};
+
+        RHIDevice::deletionQueueAdd(m_image);
+        m_image = {};
     }
 
     RHIImageLayout RHITexture::getImageLayout() const

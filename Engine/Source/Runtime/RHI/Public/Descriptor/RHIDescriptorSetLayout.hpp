@@ -28,8 +28,8 @@ namespace worse
 
         // clang-format off
         std::vector<RHIDescriptor> const& getDescriptors() const { return m_descriptors; }
-        std::uint64_t getHash() const                            { return m_hash; }
-        RHINativeHandle getHandle() const                        { return m_handle; }
+        std::uint64_t                     getHash() const        { return m_hash; }
+        RHINativeHandle                   getHandle() const      { return m_handle; }
         // clang-format on
 
     private:

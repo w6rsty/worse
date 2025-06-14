@@ -48,13 +48,13 @@ namespace worse
         }
 
         // clang-format off
-        RHIBufferType getType() const          { return m_type; }
-        std::uint32_t getStride() const        { return m_stride; }
-        std::uint32_t getOffset() const        { return m_offset; }
-        std::uint32_t getElementCount() const  { return m_elementCount; }
-        std::uint32_t getSize() const          { return m_size; }
-        void* getMappedData() const            { return m_gpuData; }
-        RHINativeHandle getHandle() const      { return m_handle; }
+        RHIBufferType   getType() const         { return m_type; }
+        std::uint32_t   getStride() const       { return m_stride; }
+        std::uint32_t   getOffset() const       { return m_offset; }
+        std::uint32_t   getElementCount() const { return m_elementCount; }
+        std::uint32_t   getSize() const         { return m_size; }
+        void*           getMappedData() const   { return m_gpuData; }
+        RHINativeHandle getHandle() const       { return m_handle; }
         // clang-format on
     private:
         RHIBufferType m_type         = RHIBufferType::Max;
