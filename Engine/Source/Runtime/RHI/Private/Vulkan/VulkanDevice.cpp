@@ -94,6 +94,7 @@ namespace worse
             {
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+                // WS_LOG_INFO("Vulkan", "{}", pCallbackData->pMessage);
                 return VK_FALSE;
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
                 WS_LOG_WARN("Vulkan", "{}", pCallbackData->pMessage);
@@ -206,13 +207,13 @@ namespace worse
         std::uint32_t indexCompute  = std::numeric_limits<std::uint32_t>::max();
         std::uint32_t indexTransfer = std::numeric_limits<std::uint32_t>::max();
 
-        std::array<std::shared_ptr<RHIQueue>, k_rhiQueueTypeCount> regular;
+        EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> regular;
 
         std::mutex mtxImmediateCmd;
         bool isImmediateCmdActive = false;
         std::binary_semaphore semImmediateCmd{1};
         RHIQueue* activeQueue = nullptr;
-        std::array<std::shared_ptr<RHIQueue>, k_rhiQueueTypeCount> immediate;
+        EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
 
         std::uint32_t getQueueFamilyIndex(
             std::vector<VkQueueFamilyProperties> const& queueFamilies,
@@ -1009,13 +1010,13 @@ namespace worse
             queues::transfer = RHINativeHandle{queue, RHINativeHandleType::Queue};
             RHIDevice::setResourceName(queues::transfer, "transfer");
 
-            queues::regular[static_cast<std::size_t>(RHIQueueType::Graphics)] = std::make_shared<RHIQueue>(RHIQueueType::Graphics, "graphics");
-            queues::regular[static_cast<std::size_t>(RHIQueueType::Compute)]  = std::make_shared<RHIQueue>(RHIQueueType::Compute, "compute");
-            queues::regular[static_cast<std::size_t>(RHIQueueType::Transfer)] = std::make_shared<RHIQueue>(RHIQueueType::Transfer, "transfer");
+            queues::regular[RHIQueueType::Graphics] = std::make_shared<RHIQueue>(RHIQueueType::Graphics, "graphics");
+            queues::regular[RHIQueueType::Compute]  = std::make_shared<RHIQueue>(RHIQueueType::Compute, "compute");
+            queues::regular[RHIQueueType::Transfer] = std::make_shared<RHIQueue>(RHIQueueType::Transfer, "transfer");
 
-            queues::immediate[static_cast<std::size_t>(RHIQueueType::Graphics)] = std::make_shared<RHIQueue>(RHIQueueType::Graphics, "graphics");
-            queues::immediate[static_cast<std::size_t>(RHIQueueType::Compute)]  = std::make_shared<RHIQueue>(RHIQueueType::Compute, "compute");
-            queues::immediate[static_cast<std::size_t>(RHIQueueType::Transfer)] = std::make_shared<RHIQueue>(RHIQueueType::Transfer, "transfer");
+            queues::immediate[RHIQueueType::Graphics] = std::make_shared<RHIQueue>(RHIQueueType::Graphics, "graphics");
+            queues::immediate[RHIQueueType::Compute]  = std::make_shared<RHIQueue>(RHIQueueType::Compute, "compute");
+            queues::immediate[RHIQueueType::Transfer] = std::make_shared<RHIQueue>(RHIQueueType::Transfer, "transfer");
             // clang-format on
         }
 
@@ -1063,10 +1064,8 @@ namespace worse
 
     void RHIDevice::queueWaitAll()
     {
-        queues::regular[static_cast<std::size_t>(RHIQueueType::Graphics)]
-            ->wait();
-        queues::regular[static_cast<std::size_t>(RHIQueueType::Compute)]
-            ->wait();
+        queues::regular[RHIQueueType::Graphics]->wait();
+        queues::regular[RHIQueueType::Compute]->wait();
     }
 
     std::uint32_t RHIDevice::getQueueIndex(RHIQueueType const type)
@@ -1091,15 +1090,11 @@ namespace worse
     {
         if (type == RHIQueueType::Graphics)
         {
-            return queues::regular[static_cast<std::size_t>(
-                                       RHIQueueType::Graphics)]
-                .get();
+            return queues::regular[RHIQueueType::Graphics].get();
         }
         if (type == RHIQueueType::Compute)
         {
-            return queues::regular[static_cast<std::size_t>(
-                                       RHIQueueType::Compute)]
-                .get();
+            return queues::regular[RHIQueueType::Compute].get();
         }
 
         return nullptr;
@@ -1227,14 +1222,14 @@ namespace worse
 
     void RHIDevice::memoryTextureCreate(RHITexture* texture)
     {
-        VkImageUsageFlags vkUsage  = 0;
-        RHITextureUsageFlags usage = texture->getUsage();
+        VkImageUsageFlags vkUsage      = 0;
+        RHITextureViewUsageFlags usage = texture->getUsage();
         // clang-format off
-        if (usage & RHITextureUsageFlagBits::Srv)         { vkUsage |= VK_IMAGE_USAGE_SAMPLED_BIT; }
-        if (usage & RHITextureUsageFlagBits::Uav)         { vkUsage |= VK_IMAGE_USAGE_STORAGE_BIT; }
-        if (usage & RHITextureUsageFlagBits::Rtv)         { vkUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; }
-        if (usage & RHITextureUsageFlagBits::Dsv)         { vkUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; }
-        if (usage & RHITextureUsageFlagBits::ClearOrBlit) { vkUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; }
+        if (usage & RHITextureViewUsageFlagBits::Srv)         { vkUsage |= VK_IMAGE_USAGE_SAMPLED_BIT; }
+        if (usage & RHITextureViewUsageFlagBits::Uav)         { vkUsage |= VK_IMAGE_USAGE_STORAGE_BIT; }
+        if (usage & RHITextureViewUsageFlagBits::Rtv)         { vkUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; }
+        if (usage & RHITextureViewUsageFlagBits::Dsv)         { vkUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; }
+        if (usage & RHITextureViewUsageFlagBits::ClearOrBlit) { vkUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; }
 
         VkImageCreateInfo infoImage = {};
         infoImage.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1279,6 +1274,9 @@ namespace worse
                              texture->getName().c_str());
         RHIDevice::setResourceName(texture->getImage(), texture->getName());
 
+        WS_LOG_INFO("VMA",
+                    "Allocated textue: 0x{:x}",
+                    texture->m_image.asValue());
         vma::saveAllocation(allocation, texture->getImage());
     }
 
@@ -1297,11 +1295,11 @@ namespace worse
         }
     }
 
-    void RHIDevice::memoryBufferCreate(RHINativeHandle& buffer,
-                                       std::uint32_t size,
-                                       std::uint32_t bufferUsage,
-                                       std::uint32_t memoryProperty,
-                                       void const* data, std::string_view name)
+    RHINativeHandle RHIDevice::memoryBufferCreate(std::uint32_t size,
+                                                  std::uint32_t bufferUsage,
+                                                  std::uint32_t memoryProperty,
+                                                  void const* data,
+                                                  std::string_view name)
     {
         // clang-format off
         VkBufferCreateInfo infoBuffer = {};
@@ -1337,7 +1335,7 @@ namespace worse
         }
         WS_ASSERT_VK(result);
 
-        buffer = RHINativeHandle{vkBuffer, RHINativeHandleType::Buffer};
+        RHINativeHandle buffer = RHINativeHandle{vkBuffer, RHINativeHandleType::Buffer};
         vmaSetAllocationName(vma::allocator,
                              allocation,
                              name.data());
@@ -1360,7 +1358,12 @@ namespace worse
             vmaUnmapMemory(vma::allocator, allocation);
         }
 
+        WS_LOG_INFO("VMA", "Allocated buffer: 0x{:x} (size: {})", 
+            buffer.asValue(), size
+        );
         vma::saveAllocation(allocation, buffer);
+
+        return buffer;
         // clang-format on
     }
 
@@ -1444,8 +1447,7 @@ namespace worse
         // wait
         queues::semImmediateCmd.acquire();
         queues::isImmediateCmdActive = true;
-        queues::activeQueue =
-            queues::immediate[static_cast<std::size_t>(type)].get();
+        queues::activeQueue          = queues::immediate[type].get();
 
         RHICommandList* cmdList = queues::activeQueue->nextCommandList();
         cmdList->begin();

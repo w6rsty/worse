@@ -1,4 +1,4 @@
-#include "FileSystem.hpp"
+#include "FileStream.hpp"
 #include "Math/Hash.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "RHIDevice.hpp"
@@ -36,14 +36,16 @@ namespace worse
         m_vertexType  = vertexType;
         m_inputLayout = RHIInputLayout(m_vertexType);
 
-        m_source = FileSystem::readFile(filepath);
-        if (m_source.empty())
+        FileStream fileStream(filepath, FileStreamUsageFlagBits::Read);
+        if (!fileStream.isOpen())
         {
             WS_LOG_ERROR("rhi",
                          "Failed to read shader file: {}",
                          filepath.string());
             return;
         }
+        m_source = fileStream.read();
+        fileStream.close();
 
         {
             std::hash<std::string> hasher;

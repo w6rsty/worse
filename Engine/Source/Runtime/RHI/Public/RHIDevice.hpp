@@ -43,11 +43,11 @@ namespace worse
 
         static void memoryTextureCreate(RHITexture* texture);
         static void memoryTextureDestroy(RHINativeHandle handle);
-        static void memoryBufferCreate(RHINativeHandle& buffer,
-                                       std::uint32_t size,
-                                       std::uint32_t bufferUsage,
-                                       std::uint32_t memoryProperty,
-                                       void const* data, std::string_view name);
+        static RHINativeHandle memoryBufferCreate(std::uint32_t size,
+                                                  std::uint32_t bufferUsage,
+                                                  std::uint32_t memoryProperty,
+                                                  void const* data,
+                                                  std::string_view name);
         static void memoryBufferDestroy(RHINativeHandle handle);
         static void* memoryGetMappedBufferData(RHINativeHandle handle);
 

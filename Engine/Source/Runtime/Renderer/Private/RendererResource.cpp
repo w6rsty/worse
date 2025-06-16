@@ -59,8 +59,9 @@ namespace worse
 
         RHIFormat standardFormat = RHIFormat::B8R8G8A8Unorm;
 
-        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, standardFormat, RHITextureUsageFlagBits::Rtv | RHITextureUsageFlagBits::Uav | RHITextureUsageFlagBits::Srv | RHITextureUsageFlagBits::ClearOrBlit, nullptr, "render");
-        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>( RHITextureType::Texture2D, renderWidth, renderHeight, 1, standardFormat, RHITextureUsageFlagBits::Rtv | RHITextureUsageFlagBits::Uav | RHITextureUsageFlagBits::Srv | RHITextureUsageFlagBits::ClearOrBlit, nullptr, "output");
+        std::vector<RHITextureSlice> data;
+        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "render");
+        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "output");
         // clang-format on
     }
 
@@ -84,10 +85,17 @@ namespace worse
 
     void Renderer::createTextures()
     {
-        // Placeholder texture
-        std::uint32_t placeholder = 0xFF00FFFF;
         // clang-format off
-        textures[RendererTexture::Placeholder] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureUsageFlagBits::Srv | RHITextureUsageFlagBits::ClearOrBlit, &placeholder, "placeholder");
+        std::uint32_t white = 0xFFFFFFFF;
+        RHITextureMip mip;
+        mip.bytes.resize(4);
+        std::memcpy(mip.bytes.data(), &white, 4);
+        RHITextureSlice slice;
+        slice.mips.push_back(mip);
+        std::vector<RHITextureSlice> data;
+        data.push_back(slice);
+        
+        textures[RendererTexture::Placeholder] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "placeholder");
         // clang-format on
     }
 

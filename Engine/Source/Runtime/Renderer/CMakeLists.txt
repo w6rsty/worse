@@ -1,5 +1,6 @@
 set(MODULE_NAME Renderer)
 add_library(${MODULE_NAME} STATIC)
+add_library(Worse::${MODULE_NAME} ALIAS ${MODULE_NAME})
 
 file(GLOB_RECURSE ${MODULE_NAME}_PUBLIC_HEADERS
     CONFIGURE_DEPENDS
@@ -22,6 +23,6 @@ target_include_directories(${MODULE_NAME}
 )
 
 target_link_libraries(${MODULE_NAME} PRIVATE
-    RHI
-    Core
+    Worse::RHI
+    Worse::Core
 )

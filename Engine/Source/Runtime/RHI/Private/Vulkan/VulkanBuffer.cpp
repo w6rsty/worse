@@ -26,8 +26,7 @@ namespace worse
                 VkMemoryPropertyFlags memoryProperty =
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-                RHIDevice::memoryBufferCreate(
-                    m_handle,
+                m_handle = RHIDevice::memoryBufferCreate(
                     m_size,
                     bufferUsage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                     memoryProperty,
@@ -38,8 +37,7 @@ namespace worse
             {
                 RHINativeHandle stagingBuffer;
                 std::string stagingName = m_name + "_staging";
-                RHIDevice::memoryBufferCreate(
-                    stagingBuffer,
+                stagingBuffer           = RHIDevice::memoryBufferCreate(
                     m_size,
                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -47,8 +45,7 @@ namespace worse
                     data,
                     stagingName);
 
-                RHIDevice::memoryBufferCreate(
-                    m_handle,
+                m_handle = RHIDevice::memoryBufferCreate(
                     m_size,
                     bufferUsage | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -113,12 +110,11 @@ namespace worse
                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
             }
 
-            RHIDevice::memoryBufferCreate(m_handle,
-                                          m_size,
-                                          bufferUsage,
-                                          memoryProperty,
-                                          data,
-                                          m_name);
+            m_handle = RHIDevice::memoryBufferCreate(m_size,
+                                                     bufferUsage,
+                                                     memoryProperty,
+                                                     data,
+                                                     m_name);
         }
         else if (m_type == RHIBufferType::Constant)
         {
@@ -139,12 +135,11 @@ namespace worse
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-            RHIDevice::memoryBufferCreate(m_handle,
-                                          m_size,
-                                          bufferUsage,
-                                          memoryProperty,
-                                          data,
-                                          m_name);
+            m_handle = RHIDevice::memoryBufferCreate(m_size,
+                                                     bufferUsage,
+                                                     memoryProperty,
+                                                     data,
+                                                     m_name);
         }
 
         WS_ASSERT_MSG(m_handle, "Failed to create buffer");

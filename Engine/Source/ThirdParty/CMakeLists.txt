@@ -1,8 +1,11 @@
 include(FetchContent)
 
 add_subdirectory(dxc)
+add_subdirectory(gli)
+add_subdirectory(glm)
 add_subdirectory(SDL3)
 add_subdirectory(SPIRV-Cross)
+add_subdirectory(stb)
 add_subdirectory(VMA)
 add_subdirectory(volk)
 add_subdirectory(Vulkan)

@@ -215,11 +215,6 @@ namespace worse
                                     &frameConstantData);
         }
 
-        // update bindless data
-        {
-            // updateBindlessBuffers(m_cmdList);
-        }
-
         {
             // clang-format off
             // RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
@@ -232,8 +227,8 @@ namespace worse
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PBRV))
-                .addShader(Renderer::getShader(RendererShader::PBRP))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderV))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderP))
                 .setRenderTargetColorTexture(0, frameOutput)
                 .setScissor({0, 0, 800, 600})
                 .setViewport(Renderer::getViewport())
@@ -258,8 +253,8 @@ namespace worse
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PlaceholderV))
-                .addShader(Renderer::getShader(RendererShader::PlaceholderP))
+                .addShader(Renderer::getShader(RendererShader::PBRV))
+                .addShader(Renderer::getShader(RendererShader::PBRP))
                 .setRenderTargetColorTexture(0, frameOutput)
                 .setScissor({0, 0, 400, 300})
                 .setViewport(viewport)

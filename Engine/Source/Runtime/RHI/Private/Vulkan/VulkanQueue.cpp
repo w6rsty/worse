@@ -9,11 +9,11 @@ namespace worse
 
     namespace
     {
-        std::array<std::mutex, k_rhiQueueTypeCount> mtxes;
+        EnumArray<RHIQueueType, std::mutex> mtxes;
 
         std::mutex const& getMutex(RHIQueueType const type)
         {
-            return mtxes[static_cast<std::size_t>(type)];
+            return mtxes[type];
         }
     } // namespace
 

@@ -1,8 +1,8 @@
+#include "Log.hpp"
 #include "Engine.hpp"
 #include "Window.hpp"
 #include "Input/Input.hpp"
 #include "Input/Controller.hpp"
-#include "Log.hpp"
 
 using namespace worse;
 
@@ -10,6 +10,7 @@ int main()
 {
     bool mouseVisible = true;
 
+    Logger::initialize();
     Engine::initialize();
 
     while (!Window::shouldClose())
@@ -36,4 +37,5 @@ int main()
     }
 
     Engine::shutdown();
+    Logger::shutdown();
 }

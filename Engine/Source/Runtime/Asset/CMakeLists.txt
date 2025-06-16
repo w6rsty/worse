@@ -1,4 +1,4 @@
-set(MODULE_NAME RHI)
+set(MODULE_NAME Asset)
 add_library(${MODULE_NAME} STATIC)
 add_library(Worse::${MODULE_NAME} ALIAS ${MODULE_NAME})
 
@@ -22,21 +22,10 @@ target_include_directories(${MODULE_NAME}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Public>
 )
 
-target_link_libraries(${MODULE_NAME}
-    PRIVATE
-        GPUOpen::VulkanMemoryAllocator
-        Vulkan-Headers
-        DXC
-        spirv-cross-hlsl
-    PUBLIC
-       volk_headers
-        Worse::Core
-        Worse::FileSystem
-        Worse::Asset
-)
-
-# Disable nullability completeness warnings for Clang and AppleClang
-target_compile_options(${MODULE_NAME} PRIVATE
-    $<$<CXX_COMPILER_ID:Clang>:-Wno-nullability-completeness>
-    $<$<CXX_COMPILER_ID:AppleClang>:-Wno-nullability-completeness>
+target_link_libraries(${MODULE_NAME} PRIVATE
+    Worse::Core
+    Worse::FileSystem
+    glm
+    gli
+    stb
 )

@@ -6,28 +6,64 @@ namespace worse
 {
     namespace
     {
+        void uploadTexture(RHITexture& texture)
+        {
+            std::size_t size = texture.getMip(0, 0).bytes.size();
+
+            RHINativeHandle stagingBuffer = RHIDevice::memoryBufferCreate(
+                size,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                texture.getMip(0, 0).bytes.data(),
+                "texture_staging_buffer");
+            WS_ASSERT(stagingBuffer);
+
+            if (RHICommandList* cmdList =
+                    RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
+            {
+                cmdList->insertBarrier(texture.getImage(),
+                                       texture.getFormat(),
+                                       RHIImageLayout::TransferDestination);
+
+                VkBufferImageCopy2 copyRegion = {};
+                copyRegion.sType        = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2;
+                copyRegion.bufferOffset = 0;
+                copyRegion.bufferRowLength   = 0;
+                copyRegion.bufferImageHeight = 0;
+                copyRegion.imageSubresource.aspectMask =
+                    vulkanImageAspectFlags(texture.getFormat());
+                copyRegion.imageSubresource.baseArrayLayer = 0;
+                copyRegion.imageSubresource.layerCount     = 1;
+                copyRegion.imageSubresource.mipLevel       = 0;
+                copyRegion.imageOffset                     = {0, 0, 0};
+                copyRegion.imageExtent = {texture.getWidth(),
+                                          texture.getHeight(),
+                                          texture.getDepth()};
+
+                VkCopyBufferToImageInfo2 infoCopy = {};
+                infoCopy.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2;
+                infoCopy.srcBuffer      = stagingBuffer.asValue<VkBuffer>();
+                infoCopy.dstImage       = texture.getImage().asValue<VkImage>();
+                infoCopy.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                infoCopy.regionCount    = 1;
+                infoCopy.pRegions       = &copyRegion;
+
+                vkCmdCopyBufferToImage2KHR(
+                    cmdList->getHandle().asValue<VkCommandBuffer>(),
+                    &infoCopy);
+
+                RHIDevice::cmdImmediateSubmit(cmdList);
+
+                RHIDevice::memoryBufferDestroy(stagingBuffer);
+            }
+        }
+
         void createImageView(RHINativeHandle image, RHINativeHandle& imageView,
                              RHITexture* texture)
         {
-            VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
-            switch (texture->getType())
-            {
-            case RHITextureType::Texture2D:
-                viewType = VK_IMAGE_VIEW_TYPE_2D;
-                break;
-            case RHITextureType::Texture2DArray:
-                viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-                break;
-            case RHITextureType::Texture3D:
-                viewType = VK_IMAGE_VIEW_TYPE_3D;
-                break;
-            case RHITextureType::TextureCube:
-                viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-                break;
-            default:
-                WS_ASSERT_MSG(false, "Unsupported texture type for image view");
-                break;
-            }
+            VkImageViewType viewType = vulkanImageViewType(texture->getType());
+            WS_ASSERT(viewType != VK_IMAGE_VIEW_TYPE_MAX_ENUM);
 
             VkImageViewCreateInfo infoImageView = {};
             infoImageView.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -76,18 +112,23 @@ namespace worse
         // allocate memory
         RHIDevice::memoryTextureCreate(this);
 
+        if (hasShaderReadData())
+        {
+            uploadTexture(*this);
+        }
+
         // transition layout
         {
             RHIImageLayout layout = RHIImageLayout::Max;
-            if (m_usage & RHITextureUsageFlagBits::Rtv)
+            if (m_usage & RHITextureViewUsageFlagBits::Rtv)
             {
                 layout = RHIImageLayout::ColorAttachment;
             }
-            if (m_usage & RHITextureUsageFlagBits::Uav)
+            if (m_usage & RHITextureViewUsageFlagBits::Uav)
             {
                 layout = RHIImageLayout::General;
             }
-            if (m_usage & RHITextureUsageFlagBits::Srv)
+            if (m_usage & RHITextureViewUsageFlagBits::Srv)
             {
                 layout = RHIImageLayout::ShaderRead;
             }
