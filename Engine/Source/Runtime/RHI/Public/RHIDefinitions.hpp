@@ -670,7 +670,9 @@ namespace worse
         static bool enableVSync            = true;
         static bool enableValidationLayers = true;
 
-        constexpr std::size_t MAX_RENDER_TARGET             = 8;
+        constexpr std::size_t MAX_RENDER_TARGET = 8;
+        // Minimum descriptor for initial descriptor pool
+        constexpr std::uint32_t MIN_DESCRIPTORS             = 32;
         constexpr std::uint32_t MAX_DESCRIPTORS             = 512;
         constexpr std::uint32_t MAX_DESCRIPTOR_SETS         = 512;
         constexpr std::uint32_t MAX_DESCRIPTOR_SET_BINDINGS = 256;

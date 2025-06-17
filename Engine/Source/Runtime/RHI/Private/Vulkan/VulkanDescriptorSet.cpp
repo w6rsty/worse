@@ -53,7 +53,7 @@ namespace worse
                 WS_ASSERT(texture);
 
                 VkDescriptorImageInfo imageInfo = {};
-                imageInfo.imageView   = texture->getRtv().asValue<VkImageView>();
+                imageInfo.imageView   = texture->getView().asValue<VkImageView>();
                 imageInfo.imageLayout = vulkanImageLayout(descriptor.layout);
                 imageInfo.sampler     = VK_NULL_HANDLE;
 

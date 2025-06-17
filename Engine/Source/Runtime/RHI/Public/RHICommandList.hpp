@@ -1,5 +1,6 @@
 #pragma once
 #include "Math/Rectangle.hpp"
+#include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
@@ -83,6 +84,9 @@ namespace worse
 
         void updateBuffer(RHIBuffer* buffer, std::uint32_t const offset,
                           std::uint32_t const size, void const* data);
+
+        void bindSet(RHIBindlessResourceType const type,
+                     RHINativeHandle const set);
 
         // clang-format off
         RHISyncPrimitive* getRenderingCompleteSemaphore() { return m_renderingCompleteBinaySemaphore.get(); }

@@ -1,5 +1,4 @@
 #include "Math/Hash.hpp"
-#include "RHIDevice.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHIDescriptor.hpp"
 #include "Descriptor/RHIDescriptorSet.hpp"
@@ -69,32 +68,7 @@ namespace worse
 
     RHIDescriptorSet* RHIDescriptorSetLayout::getDescriptorSet() const
     {
-        // integrate data factors
-        std::uint64_t hash = m_hash;
-        for (RHIDescriptor const& descriptor : m_descriptors)
-        {
-            hash = math::hashCombine(
-                hash,
-                reinterpret_cast<std::uint64_t>(descriptor.data.raw));
-        }
-
-        auto& descriptorSets            = RHIDevice::getDescriptorSets();
-        RHIDescriptorSet* descriptorSet = nullptr;
-
-        auto const it = descriptorSets.find(hash);
-        if (it == descriptorSets.end())
-        {
-            descriptorSets[hash] =
-                RHIDescriptorSet{*this, m_descriptors, m_name};
-            descriptorSet = &descriptorSets[hash];
-        }
-        else
-        {
-            descriptorSet = &it->second;
-        }
-        WS_ASSERT(descriptorSet);
-
-        return descriptorSet;
+        
     }
 
 } // namespace worse

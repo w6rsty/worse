@@ -46,7 +46,8 @@ namespace worse
         m_depth    = data->depth;
         m_mipCount = data->mipLevels;
         m_format   = data->format;
-        m_usage    = RHITextureViewUsageFlagBits::Srv;
+        m_usage    = RHITextureViewUsageFlagBits::Srv |
+                  RHITextureViewUsageFlagBits::ClearOrBlit;
 
         m_slices.resize(data->layers);            // only 1 now, no array
         m_slices[0].mips.resize(data->mipLevels); // mip 0 only

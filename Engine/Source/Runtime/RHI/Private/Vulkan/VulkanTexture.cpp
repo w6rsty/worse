@@ -11,7 +11,7 @@ namespace worse
             std::size_t size = texture.getMip(0, 0).bytes.size();
 
             RHINativeHandle stagingBuffer = RHIDevice::memoryBufferCreate(
-                size,
+                static_cast<std::uint32_t>(size),
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,

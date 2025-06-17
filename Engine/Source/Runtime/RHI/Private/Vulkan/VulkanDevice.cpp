@@ -13,6 +13,7 @@
 #include "Descriptor/RHIDescriptor.hpp"
 #include "Descriptor/RHIDescriptorSet.hpp"
 #include "Descriptor/RHIDescriptorSetLayout.hpp"
+#include "VulkanDescriptor.hpp"
 
 #include "SDL3/SDL_vulkan.h"
 #include "vk_mem_alloc.h"
@@ -314,36 +315,11 @@ namespace worse
 
     namespace descriptor
     {
-        // global pool
-        RHINativeHandle pool = {};
+        std::unique_ptr<VulkanDescriptorAllocator> allocator = nullptr;
 
-        void createPool()
+        void initialize()
         {
-            // clang-format off
-            std::array poolSizes = {
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER,                RHIConfig::MAX_DESCRIPTORS},
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          RHIConfig::MAX_DESCRIPTORS},
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          RHIConfig::MAX_DESCRIPTORS},
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         RHIConfig::MAX_DESCRIPTORS},
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, RHIConfig::MAX_DESCRIPTORS},
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         RHIConfig::MAX_DESCRIPTORS},
-                VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, RHIConfig::MAX_DESCRIPTORS}};
-
-            VkDescriptorPoolCreateInfo infoPool = {};
-            infoPool.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            infoPool.flags         = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-            infoPool.maxSets       = RHIConfig::MAX_DESCRIPTOR_SETS;
-            infoPool.poolSizeCount = static_cast<std::uint32_t>(poolSizes.size());
-            infoPool.pPoolSizes    = poolSizes.data();
-
-            VkDescriptorPool vkPool = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkCreateDescriptorPool(RHIContext::device,
-                                                &infoPool,
-                                                nullptr,
-                                                &vkPool));
-            pool = RHINativeHandle{vkPool, RHINativeHandleType::DescriptorPool};
-            RHIDevice::setResourceName(pool, "global_descriptor_pool");
-            // clang-format on
+            allocator = std::make_unique<VulkanDescriptorAllocator>();
         }
 
         namespace global
@@ -364,14 +340,14 @@ namespace worse
                 layoutBindings[0].pImmutableSamplers = nullptr;
 
                 // SamplerComparisonState
-                layoutBindings[1].binding            = RHIConfig::SAMPLER_COMPARISON_STATE_REGISTER;
+                layoutBindings[1].binding            = RHIConfig::HLSL_REGISTER_SHIFT_S + 0; // s0
                 layoutBindings[1].descriptorCount    = 1;
                 layoutBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
                 layoutBindings[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
                 layoutBindings[1].pImmutableSamplers = nullptr;
                 
                 // SamplerState
-                layoutBindings[2].binding            = RHIConfig::SAMPLER_REGULAR_STATE_REGISTER;
+                layoutBindings[2].binding            = RHIConfig::HLSL_REGISTER_SHIFT_S + 1; // s1
                 layoutBindings[2].descriptorCount    = 8;
                 layoutBindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
                 layoutBindings[2].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -404,34 +380,15 @@ namespace worse
                 // clang-format on
             }
 
-            void allocateSet()
-            {
-                // clang-format off
-                VkDescriptorSetLayout vkLayout = layout.asValue<VkDescriptorSetLayout>();
-
-                VkDescriptorSetAllocateInfo infoAlloc = {};
-                infoAlloc.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                infoAlloc.descriptorPool     = pool.asValue<VkDescriptorPool>();
-                infoAlloc.descriptorSetCount = 1;
-                infoAlloc.pSetLayouts        = &vkLayout;
-
-                VkDescriptorSet vkSet = VK_NULL_HANDLE;
-                WS_ASSERT_VK(vkAllocateDescriptorSets(RHIContext::device,
-                                                       &infoAlloc,
-                                                       &vkSet));
-                set = RHINativeHandle{vkSet, RHINativeHandleType::DescriptorSet};
-                RHIDevice::setResourceName(set, "global_descriptor_set");
-                // clang-format on
-            }
-
+            // allocate and write
             void updateSet()
             {
-                // create at first use
                 if (!layout)
                 {
                     createLayout();
-                    allocateSet();
                 }
+
+                set = allocator->allocateSet(layout);
 
                 RHIBuffer* buffer =
                     RHIDevice::getResourceProvider()->getFrameConstantBuffer();
@@ -461,7 +418,7 @@ namespace worse
                 // SamplerComparisonState
                 write[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 write[1].dstSet           = set.asValue<VkDescriptorSet>();
-                write[1].dstBinding       = RHIConfig::SAMPLER_COMPARISON_STATE_REGISTER;
+                write[1].dstBinding       = RHIConfig::HLSL_REGISTER_SHIFT_S + 0; // s0
                 write[1].descriptorCount  = 1;
                 write[1].descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLER;
                 write[1].pImageInfo       = &infoSamplerComparison;
@@ -485,7 +442,7 @@ namespace worse
                 // SamplerState
                 write[2].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 write[2].dstSet           = set.asValue<VkDescriptorSet>();
-                write[2].dstBinding       = RHIConfig::SAMPLER_REGULAR_STATE_REGISTER;
+                write[2].dstBinding       = RHIConfig::HLSL_REGISTER_SHIFT_S + 1; // s1
                 write[2].descriptorCount  = 8;
                 write[2].descriptorType   = VK_DESCRIPTOR_TYPE_SAMPLER;
                 write[2].pImageInfo       = infoSamplerRegulars.data();
@@ -502,12 +459,11 @@ namespace worse
         namespace bindless
         {
             EnumArray<RHIBindlessResourceType, RHINativeHandle> layouts;
-            EnumArray<RHIBindlessResourceType, RHINativeHandle> sets;
+            std::unordered_map<std::uint64_t, RHINativeHandle> sets;
 
             // create bindless descriptor set layout
             void createLayout(RHIBindlessResourceType const type,
-                              std::uint32_t const binding,
-                              std::string_view name)
+                              std::uint32_t const binding)
             {
                 // clang-format off
                 VkDescriptorSetLayoutBinding layoutBinding = {};
@@ -544,7 +500,7 @@ namespace worse
 
                 VkDescriptorSetLayoutCreateInfo infoLayout = {};
                 infoLayout.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-                infoLayout.pNext        = &bindingFlags;
+                infoLayout.pNext        = &infoBindingFlags;
                 infoLayout.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
                 infoLayout.bindingCount = 1;
                 infoLayout.pBindings    = &layoutBinding;
@@ -555,107 +511,179 @@ namespace worse
                                                          nullptr,
                                                          &vkSetLayout));
                 layouts[type] = RHINativeHandle{vkSetLayout, RHINativeHandleType::DescriptorSetLayout};
-                RHIDevice::setResourceName(layouts[type], name);
+                RHIDevice::setResourceName(layouts[type], "bindless_descriptor_set_layout");
                 // clang-format on
             }
 
-            // allocate bindless descriptor set
-            // @param count number used in set, consume this amount of
-            // descriptors from pool
-            void allocateSet(RHIBindlessResourceType const type,
-                             std::uint32_t const count, std::string_view name)
+            void writeSet(RHIBindlessResourceType const type,
+                          std::span<RHIDescriptorBindlessWrite> updates)
             {
                 // clang-format off
-                VkDescriptorSetVariableDescriptorCountAllocateInfo variableCountInfo = {};
-                variableCountInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
-                variableCountInfo.descriptorSetCount = 1;
-                variableCountInfo.pDescriptorCounts  = &count;
 
-                VkDescriptorSetLayout vkSetLayout = layouts[type].asValue<VkDescriptorSetLayout>();
-
-                VkDescriptorSetAllocateInfo infoAlloc = {};
-                infoAlloc.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                infoAlloc.pNext              = &variableCountInfo;
-                infoAlloc.descriptorPool     = pool.asValue<VkDescriptorPool>();
-                infoAlloc.descriptorSetCount = 1;
-                infoAlloc.pSetLayouts        = &vkSetLayout;
-
-                VkDescriptorSet vkSet = VK_NULL_HANDLE;
-                WS_ASSERT_VK(vkAllocateDescriptorSets(RHIContext::device,
-                                                       &infoAlloc,
-                                                       &vkSet));
-                sets[type] = RHINativeHandle{vkSet, RHINativeHandleType::DescriptorSet};
-                RHIDevice::setResourceName(sets[type], name);
-                // clang-format on
-            }
-
-            void updateSet(RHIBindlessResourceType const type,
-                           std::uint32_t const slot,
-                           std::span<RHIDescriptorResource const> data,
-                           std::string_view name)
-            {
-                // when compiing HLSL to SPIR-V, all the register are place in
+                // when compiling HLSL to SPIR-V, all the register are place in
                 // the same register space by default. this will cause
                 // conflicting bindings in vulkan, so we manually specify offset
                 // for different types
-                std::uint32_t binding = +slot;
-
-                // create at first use
+                std::uint32_t binding = 0;
+                switch (type)
+                {
+                case RHIBindlessResourceType::MaterialTexture: binding = RHIConfig::HLSL_REGISTER_SHIFT_T + 0; break;
+                case RHIBindlessResourceType::Material:        binding = RHIConfig::HLSL_REGISTER_SHIFT_T + 1; break;
+                case RHIBindlessResourceType::Light:           binding = RHIConfig::HLSL_REGISTER_SHIFT_T + 2; break;
+                default: WS_ASSERT_MSG(false, "Unknown bindless resource type"); return;
+                }
+                
                 if (!layouts[type])
                 {
-                    createLayout(type, binding, name);
-                    allocateSet(type, data.size(), name);
+                    createLayout(type, binding);
                 }
 
-                // clang-format off
-                if (type == RHIBindlessResourceType::MaterialTexture)
+                if (updates.empty())
                 {
-                    std::vector<VkDescriptorImageInfo> imageInfos(data.size());
+                    return;
+                }
 
-                    for (std::size_t i = 0; i < data.size(); ++i)
+                std::sort(updates.begin(),
+                updates.end(),
+                [&](RHIDescriptorBindlessWrite const& a,
+                    RHIDescriptorBindlessWrite const& b)
                     {
-                        RHITexture const* texture = data[i].texture;
-                        texture = texture ? texture : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+                        return a.index < b.index;
+                    });
 
-                        imageInfos[i].imageView = texture->getRtv().asValue<VkImageView>();
-                        imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                // largest index in updates determines descriptorCount
+                std::uint32_t count = updates.back().index + 1;
+            
+                RHINativeHandle set = {};
+
+                std::uint64_t hash = 0;
+                for (RHIDescriptorBindlessWrite const& update : updates)
+                {
+                    hash = math::hashCombine(hash, update.index);
+                }
+
+                if (sets.contains(hash))
+                {
+                    set = sets[hash];
+                }
+                else
+                {
+                    set = allocator->allocateVariableSet(layouts[type], count);
+                    sets[hash] = set;
+                }
+
+                // Build contiguous ranges for efficient updates
+                std::vector<std::pair<std::uint32_t, std::uint32_t>> ranges;
+                for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(updates.size()); ++i)
+                {
+                    std::uint32_t rangeStart = updates[i].index;
+                    std::uint32_t rangeCount = 1;
+
+                    // Check for contiguous indices
+                    while ((i + 1 < updates.size()) &&
+                           (updates[i + 1].index == updates[i].index + 1))
+                    {
+                        ++i;
+                        ++rangeCount;
                     }
 
-                    VkWriteDescriptorSet write = {};
-                    write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    write.dstSet          = sets[type].asValue<VkDescriptorSet>();
-                    write.dstBinding      = binding;
-                    write.dstArrayElement = 0; // start index of the array
-                    write.descriptorCount = static_cast<std::uint32_t>(data.size());
-                    write.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-                    write.pImageInfo      = imageInfos.data();
-
-                    vkUpdateDescriptorSets(RHIContext::device, 1, &write, 0, nullptr);
-                    // clang-format on
+                    ranges.emplace_back(rangeStart, rangeCount);
                 }
-                else if ((type == RHIBindlessResourceType::Material) ||
-                         (type == RHIBindlessResourceType::Light))
+
+                // Pre-allocate storage for descriptor infos to avoid dangling
+                // pointers
+                std::vector<std::vector<VkDescriptorImageInfo>> allImageInfos;
+                std::vector<std::vector<VkDescriptorBufferInfo>> allBufferInfos;
+
+                if (type == RHIBindlessResourceType::MaterialTexture)
                 {
-                    RHIBuffer* buffer = data[0].buffer;
+                    allImageInfos.reserve(ranges.size());
+                }
+                else
+                {
+                    allBufferInfos.reserve(ranges.size());
+                }
 
-                    VkDescriptorBufferInfo bufferInfo = {};
-                    bufferInfo.buffer = buffer->getHandle().asValue<VkBuffer>();
-                    bufferInfo.offset = 0;
-                    bufferInfo.range  = buffer->getSize();
+                std::vector<VkWriteDescriptorSet> writes;
+                writes.reserve(ranges.size());
 
-                    // clang-format off
+                for (std::size_t rangeIdx = 0; rangeIdx < ranges.size(); ++rangeIdx)
+                {
+                    auto const& range = ranges[rangeIdx];
+
                     VkWriteDescriptorSet write = {};
                     write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                    write.dstSet          = sets[type].asValue<VkDescriptorSet>();
+                    write.dstSet          = set.asValue<VkDescriptorSet>();
                     write.dstBinding      = binding;
-                    write.dstArrayElement = 0;
-                    write.descriptorCount = 1;
-                    write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    write.pBufferInfo     = &bufferInfo;
+                    write.dstArrayElement = range.first;
+                    write.descriptorCount = range.second;
 
-                    vkUpdateDescriptorSets(RHIContext::device, 1, &write, 0, nullptr);
-                    // clang-format on
+                    if (type == RHIBindlessResourceType::MaterialTexture)
+                    {
+                        allImageInfos.emplace_back(range.second);
+                        auto& imageInfos = allImageInfos.back();
+
+                        for (std::uint32_t i = 0; i < range.second; ++i)
+                        {
+                            // Find the update for this index
+                            auto updateIt = std::find_if(
+                                updates.begin(),
+                                updates.end(),
+                                [targetIndex = range.first + i](const auto& update)
+                                {
+                                    return update.index == targetIndex;
+                                });
+
+                            if (updateIt != updates.end())
+                            {
+                                RHITexture const* texture = updateIt->resource.texture
+                                                                ? updateIt->resource.texture
+                                                                : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+                                imageInfos[i].imageView   = texture->getView().asValue<VkImageView>();
+                                imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                imageInfos[i].sampler     = VK_NULL_HANDLE; // Separate sampler
+                            }
+                        }
+
+                        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+                        write.pImageInfo     = imageInfos.data();
+                    }
+                    else if ((type == RHIBindlessResourceType::Material) ||
+                             (type == RHIBindlessResourceType::Light))
+                    {
+                        allBufferInfos.emplace_back(range.second);
+                        auto& bufferInfos = allBufferInfos.back();
+
+                        for (std::uint32_t i = 0; i < range.second; ++i)
+                        {
+                            // Find the update for this index
+                            auto updateIt = std::find_if(
+                                updates.begin(),
+                                updates.end(),
+                                [targetIndex = range.first + i](const auto& update)
+                                {
+                                    return update.index == targetIndex;
+                                });
+
+                            if (updateIt != updates.end())
+                            {
+                                WS_ASSERT_MSG(updateIt->resource.buffer, "Buffer resource is null");
+                                RHIBuffer const* buffer = updateIt->resource.buffer;
+                                bufferInfos[i].buffer = buffer->getHandle().asValue<VkBuffer>();
+                                bufferInfos[i].offset = 0;
+                                bufferInfos[i].range  = buffer->getSize();
+                            }
+                        }
+
+                        write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                        write.pBufferInfo    = bufferInfos.data();
+                    }
+
+                    writes.push_back(write);
                 }
+
+                vkUpdateDescriptorSets(RHIContext::device, static_cast<std::uint32_t>(writes.size()), writes.data(), 0, nullptr);
+                // clang-format on
             }
         } // namespace bindless
 
@@ -785,7 +813,7 @@ namespace worse
 
         void release()
         {
-            RHIDevice::deletionQueueAdd(pool);
+            allocator.reset();
 
             // global
             RHIDevice::deletionQueueAdd(global::layout);
@@ -1021,8 +1049,7 @@ namespace worse
         }
 
         vma::create();
-        descriptor::createPool();
-
+        descriptor::initialize();
         DXCompiler::initialize();
     }
 
@@ -1118,26 +1145,13 @@ namespace worse
         return RHINativeHandle{};
     }
 
-    // allocate generic set from global pool
-    RHINativeHandle
-    RHIDevice::allocateDescriptorSet(RHIDescriptorSetLayout const& layout)
+    void RHIDevice::resetDescriptorAllocator()
     {
-        // clang-format off
-        VkDescriptorSetLayout vkLayout = layout.getHandle().asValue<VkDescriptorSetLayout>();
+        descriptor::allocator->resetAll();
 
-        VkDescriptorSetAllocateInfo infoAlloc = {};
-        infoAlloc.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        infoAlloc.descriptorPool     = descriptor::pool.asValue<VkDescriptorPool>();
-        infoAlloc.descriptorSetCount = 1;
-        infoAlloc.pSetLayouts        = &vkLayout;
-
-        VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-        WS_ASSERT_VK(vkAllocateDescriptorSets(RHIContext::device,
-                                              &infoAlloc,
-                                              &descriptorSet));
-        RHINativeHandle handle{descriptorSet, RHINativeHandleType::DescriptorSet};
-        // clang-format on
-        return handle;
+        // invalidate caches
+        descriptor::global::set = {};
+        descriptor::bindless::sets.clear();
     }
 
     RHINativeHandle RHIDevice::getGlobalDescriptorSetLayout()
@@ -1150,16 +1164,16 @@ namespace worse
         return descriptor::global::set;
     }
 
-    std::unordered_map<std::uint64_t, RHIDescriptorSet>&
-    RHIDevice::getDescriptorSets()
+    void RHIDevice::writeGlobalDescriptorSet()
     {
-        return descriptor::specific::sets;
+        descriptor::global::updateSet();
     }
 
-    RHINativeHandle
-    RHIDevice::getBindlessDescriptorSet(RHIBindlessResourceType const type)
+    void
+    RHIDevice::updateBindless(RHIBindlessResourceType const type,
+                              std::span<RHIDescriptorBindlessWrite> updates)
     {
-        return descriptor::bindless::sets[type];
+        descriptor::bindless::writeSet(type, updates);
     }
 
     RHINativeHandle RHIDevice::getBindlessDescriptorSetLayout(
@@ -1168,29 +1182,32 @@ namespace worse
         return descriptor::bindless::layouts[type];
     }
 
-    void RHIDevice::updateGlobalDescriptorSet()
+    RHINativeHandle
+    RHIDevice::getBindlessSet(RHIBindlessResourceType const type,
+                              std::span<RHIDescriptorBindlessWrite> updates)
     {
-        descriptor::global::updateSet();
-    }
-
-    void RHIDevice::updateBindlessResources()
-    {
-
-        // descriptor::bindless::updateSet(
-        //     RHIBindlessResourceType::MaterialTexture,
-        //     RHIConfig::MATERIAL_TEXTURE_SLOT,
-        //     {},
-        //     "material_texture");
-
-        // descriptor::bindless::updateSet(RHIBindlessResourceType::Material,
-        //                                 RHIConfig::MATERIAL_PROPERTIES_SLOT,
-        //                                 {},
-        //                                 "material_properties");
-
-        // descriptor::bindless::updateSet(RHIBindlessResourceType::Light,
-        //                                 RHIConfig::LIGHT_PROPERTIES_SLOT,
-        //                                 {},
-        //                                 "light_properties");
+        std::uint64_t hash = 0;
+        for (RHIDescriptorBindlessWrite const& update : updates)
+        {
+            hash = math::hashCombine(hash, update.index);
+        }
+        if (auto it = descriptor::bindless::sets.find(hash);
+            it != descriptor::bindless::sets.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            // If the set is not found in cache, it means updateBindless was not
+            // called or there's a mismatch. This should not happen in normal
+            // operation.
+            WS_LOG_ERROR("RHIDevice",
+                         "Bindless descriptor set not found in cache for type "
+                         "{}, hash: 0x{:x}",
+                         static_cast<int>(type),
+                         hash);
+            return {};
+        }
     }
 
     void
@@ -1264,7 +1281,7 @@ namespace worse
         if ((result == VK_ERROR_OUT_OF_DEVICE_MEMORY) ||
             (result == VK_ERROR_OUT_OF_HOST_MEMORY))
         {
-            WS_LOG_ERROR("Vulkan", "Allocation out of memory");
+            WS_LOG_ERROR("VMA", "Allocation out of memory");
         }
         WS_ASSERT_VK(result);
 
@@ -1274,9 +1291,9 @@ namespace worse
                              texture->getName().c_str());
         RHIDevice::setResourceName(texture->getImage(), texture->getName());
 
-        WS_LOG_INFO("VMA",
-                    "Allocated textue: 0x{:x}",
-                    texture->m_image.asValue());
+        WS_LOG_DEBUG("VMA",
+                     "Allocated textue: 0x{:x}",
+                     texture->m_image.asValue());
         vma::saveAllocation(allocation, texture->getImage());
     }
 
@@ -1331,7 +1348,7 @@ namespace worse
         if ((result == VK_ERROR_OUT_OF_DEVICE_MEMORY) ||
             (result == VK_ERROR_OUT_OF_HOST_MEMORY))
         {
-            WS_LOG_ERROR("Vulkan", "Allocation out of memory");
+            WS_LOG_ERROR("VMA", "Allocation out of memory");
         }
         WS_ASSERT_VK(result);
 
@@ -1358,7 +1375,7 @@ namespace worse
             vmaUnmapMemory(vma::allocator, allocation);
         }
 
-        WS_LOG_INFO("VMA", "Allocated buffer: 0x{:x} (size: {})", 
+        WS_LOG_DEBUG("VMA", "Allocated buffer: 0x{:x} (size: {})", 
             buffer.asValue(), size
         );
         vma::saveAllocation(allocation, buffer);
@@ -1416,17 +1433,17 @@ namespace worse
                 // clang-format off
                 switch (type)
                 {
-                case RHINativeHandleType::Image:               RHIDevice::memoryTextureDestroy(handle);                                                            break;
-                case RHINativeHandleType::ImageView:           vkDestroyImageView(RHIContext::device, handle.asValue<VkImageView>(), nullptr);                     break;
                 case RHINativeHandleType::Fence:               vkDestroyFence(RHIContext::device, handle.asValue<VkFence>(), nullptr);                             break;
                 case RHINativeHandleType::Semaphore:           vkDestroySemaphore(RHIContext::device, handle.asValue<VkSemaphore>(), nullptr);                     break;
                 case RHINativeHandleType::Shader:              vkDestroyShaderModule(RHIContext::device, handle.asValue<VkShaderModule>(), nullptr);               break;
                 case RHINativeHandleType::Pipeline:            vkDestroyPipeline(RHIContext::device, handle.asValue<VkPipeline>(), nullptr);                       break;
                 case RHINativeHandleType::PipelineLayout:      vkDestroyPipelineLayout(RHIContext::device, handle.asValue<VkPipelineLayout>(), nullptr);           break;
+                case RHINativeHandleType::Image:               RHIDevice::memoryTextureDestroy(handle);                                                            break;
+                case RHINativeHandleType::ImageView:           vkDestroyImageView(RHIContext::device, handle.asValue<VkImageView>(), nullptr);                     break;
+                case RHINativeHandleType::Sampler:             vkDestroySampler(RHIContext::device, handle.asValue<VkSampler>(), nullptr);                         break;
+                case RHINativeHandleType::Buffer:              RHIDevice::memoryBufferDestroy(handle);                                                             break;
                 case RHINativeHandleType::DescriptorPool:      vkDestroyDescriptorPool(RHIContext::device, handle.asValue<VkDescriptorPool>(), nullptr);           break;
                 case RHINativeHandleType::DescriptorSetLayout: vkDestroyDescriptorSetLayout(RHIContext::device, handle.asValue<VkDescriptorSetLayout>(), nullptr); break;
-                case RHINativeHandleType::Buffer:              RHIDevice::memoryBufferDestroy(handle);                                                             break;
-                case RHINativeHandleType::Sampler:             vkDestroySampler(RHIContext::device, handle.asValue<VkSampler>(), nullptr);                         break;
                 default:
                     WS_LOG_ERROR("RHI", "Unhandled handle type");
                     WS_ASSERT(false);

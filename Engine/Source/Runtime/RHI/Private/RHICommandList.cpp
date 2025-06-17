@@ -1,5 +1,5 @@
 #include "RHICommandList.hpp"
-#include "RHISyncPrimitive.hpp"
+#include "RHISyncPrimitive.hpp" // IWYU pragma: keep
 
 namespace worse
 {

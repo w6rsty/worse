@@ -47,6 +47,7 @@ namespace worse
 
     enum class RendererTexture : std::size_t
     {
+        Test,
         Placeholder,
         Max,
     };
@@ -62,8 +63,6 @@ namespace worse
         static void createSamplers();
 
         static void destroyResources();
-
-        static void updateBindlessBuffers(RHICommandList* cmdList);
 
     public:
         static void initialize();

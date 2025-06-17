@@ -1,6 +1,9 @@
 #pragma once
 #include "Types.hpp"
 #include "RHIResource.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
+
+#include <span>
 
 namespace worse
 {
@@ -22,18 +25,23 @@ namespace worse
         [[nodiscard]] static std::uint32_t getQueueIndex(RHIQueueType const type);
         [[nodiscard]] static RHIQueue* getQueue(RHIQueueType const type);
         [[nodiscard]] static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
-        [[nodiscard]] static RHINativeHandle allocateDescriptorSet(RHIDescriptorSetLayout const& layout);
-        // dynamic descriptor sets
-        [[nodiscard]] static RHINativeHandle getGlobalDescriptorSetLayout();
-        [[nodiscard]] static RHINativeHandle getGlobalDescriptorSet();
-        [[nodiscard]] static std::unordered_map<std::uint64_t, RHIDescriptorSet>& getDescriptorSets();
-        [[nodiscard]] static RHINativeHandle getBindlessDescriptorSet(RHIBindlessResourceType const type);
-        [[nodiscard]] static RHINativeHandle getBindlessDescriptorSetLayout(RHIBindlessResourceType const type);
-        // update descriptors
-        static void updateGlobalDescriptorSet();
-        static void updateBindlessResources();
-
         // clang-format on
+
+        // reset allocated descriptors
+        static void resetDescriptorAllocator();
+        // expose for pipeline layout creation
+        static RHINativeHandle getGlobalDescriptorSetLayout();
+        static RHINativeHandle getGlobalDescriptorSet();
+        // allocate and write global descriptor set
+        static void writeGlobalDescriptorSet();
+        static void
+        updateBindless(RHIBindlessResourceType const type,
+                       std::span<RHIDescriptorBindlessWrite> updates);
+        static RHINativeHandle
+        getBindlessDescriptorSetLayout(RHIBindlessResourceType const type);
+        static RHINativeHandle
+        getBindlessSet(RHIBindlessResourceType const type,
+                       std::span<RHIDescriptorBindlessWrite> updates);
 
         // use pso hash to get pipeline and descriptor set layout from cache
         // guaranteed to return a valid pipeline and descriptor set layout

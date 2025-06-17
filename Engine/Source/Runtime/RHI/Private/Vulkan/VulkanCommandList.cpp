@@ -8,7 +8,6 @@
 #include "Pipeline/RHIPipelineState.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHITexture.hpp"
-#include "Descriptor/RHIDescriptorSet.hpp"
 
 #include <unordered_map>
 
@@ -80,76 +79,6 @@ namespace worse
             }
         }
 
-        // bind dynamic descriptor set
-        void bindSpecific(RHINativeHandle cmdBuffer,
-                          RHIPipelineState const& pso,
-                          RHINativeHandle pipelineLayout,
-                          RHIDescriptorSetLayout const& descriptorSetLayout)
-        {
-            // get a descriptor set from pipeline descriptor set layout
-            // create on first call
-            RHIDescriptorSet* descriptorSet =
-                descriptorSetLayout.getDescriptorSet();
-            VkDescriptorSet vkSet =
-                descriptorSet->getHandle().asValue<VkDescriptorSet>();
-
-            std::array<std::uint32_t, 1> dynamicOffsets{0};
-
-            VkPipelineBindPoint bindPoint =
-                (pso.type == RHIPipelineType::Graphics)
-                    ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                    : VK_PIPELINE_BIND_POINT_COMPUTE;
-
-            vkCmdBindDescriptorSets(
-                cmdBuffer.asValue<VkCommandBuffer>(),
-                bindPoint,
-                pipelineLayout.asValue<VkPipelineLayout>(),
-                0,
-                1,
-                &vkSet,
-                static_cast<std::uint32_t>(dynamicOffsets.size()),
-                dynamicOffsets.data());
-        }
-
-        // bind all bindless descriptor sets
-        void bindBindless(RHINativeHandle cmdBuffer,
-                          RHIPipelineState const& pso,
-                          RHINativeHandle pipelineLayout)
-        {
-            EnumArray<RHIBindlessResourceType, VkDescriptorSet> bindlessSets;
-
-            constexpr std::size_t bindlessSetCount =
-                static_cast<std::size_t>(RHIBindlessResourceType::Max);
-
-            for (auto it = bindlessSets.begin_pairs();
-                 it != bindlessSets.end_pairs();
-                 ++it)
-            {
-                auto [type, set] = *it;
-            }
-
-            for (std::size_t i = 0; i < bindlessSetCount; ++i)
-            {
-                bindlessSets[i] = RHIDevice::getBindlessDescriptorSet(
-                                      static_cast<RHIBindlessResourceType>(i))
-                                      .asValue<VkDescriptorSet>();
-            }
-
-            VkPipelineBindPoint bindPoint =
-                (pso.type == RHIPipelineType::Graphics)
-                    ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                    : VK_PIPELINE_BIND_POINT_COMPUTE;
-
-            vkCmdBindDescriptorSets(
-                cmdBuffer.asValue<VkCommandBuffer>(),
-                bindPoint,
-                pipelineLayout.asValue<VkPipelineLayout>(),
-                1,
-                static_cast<std::uint32_t>(bindlessSets.size()),
-                bindlessSets.data(),
-                0,
-                nullptr);
-        }
     } // namespace descriptorSet
 
     RHICommandList::RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool,
@@ -264,7 +193,7 @@ namespace worse
             // clang-format off
             VkRenderingAttachmentInfo colorAttachment = {};
             colorAttachment.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            colorAttachment.imageView        = texture->getRtv().asValue<VkImageView>();
+            colorAttachment.imageView        = texture->getView().asValue<VkImageView>();
             colorAttachment.imageLayout      = vulkanImageLayout(texture->getImageLayout());
             colorAttachment.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
             colorAttachment.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;
@@ -359,11 +288,6 @@ namespace worse
                 0);
 
             descriptorSet::bindGlobal(m_handle, pso, m_pipeline->getLayout());
-            // clang-format off
-            // descriptorSet::setBindless(m_handle, pso, m_pipeline->getLayout());
-            // dereference m_descriptorSetLayout is safe here
-            // descriptorSet::setSpecific(m_handle, pso, m_pipeline->getLayout(), *m_descriptorSetLayout);
-            // clang-format on
         }
     }
 
@@ -788,6 +712,54 @@ namespace worse
                 static_cast<std::byte*>(buffer->getMappedData()) + offset;
             std::memcpy(mappedData, data, size);
         }
+    }
+
+    void RHICommandList::bindSet(RHIBindlessResourceType const type,
+                                 RHINativeHandle const set)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+
+        // Check if the descriptor set handle is valid
+        if (!set)
+        {
+            WS_LOG_ERROR(
+                "Command",
+                "Attempting to bind invalid (null) descriptor set for type {}",
+                static_cast<int>(type));
+            return;
+        }
+
+        VkDescriptorSet vkSet = set.asValue<VkDescriptorSet>();
+
+        // Map bindless resource type to descriptor set index in pipeline layout
+        // Pipeline layout order: [0] Global, [1] MaterialTexture, [2] Material,
+        // [3] Light
+        std::uint32_t setIndex = 0;
+        switch (type)
+        {
+        case RHIBindlessResourceType::MaterialTexture:
+            setIndex = 1;
+            break;
+        case RHIBindlessResourceType::Material:
+            setIndex = 2;
+            break;
+        case RHIBindlessResourceType::Light:
+            setIndex = 3;
+            break;
+        case RHIBindlessResourceType::Max:
+            WS_ASSERT_MSG(false, "Invalid bindless resource type");
+            return;
+        }
+
+        vkCmdBindDescriptorSets(
+            m_handle.asValue<VkCommandBuffer>(),
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            m_pipeline->getLayout().asValue<VkPipelineLayout>(),
+            setIndex,
+            1,
+            &vkSet,
+            0,
+            nullptr);
     }
 
     RHIImageLayout RHICommandList::getImageLayout(RHINativeHandle image)

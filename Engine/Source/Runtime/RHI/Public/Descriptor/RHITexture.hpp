@@ -63,15 +63,15 @@ namespace worse
                                     std::size_t const mipIndex) const;
 
         // clang-format off
-        RHITextureType       getType() const       { return m_type; }
-        std::uint32_t        getWidth() const      { return m_width; }
-        std::uint32_t        getHeight() const     { return m_height; }
-        std::uint32_t        getDepth() const      { return m_depth; }
-        std::uint32_t        getMipCount() const   { return m_mipCount; }
-        RHIFormat            getFormat() const     { return m_format; }
-        RHITextureViewUsageFlags getUsage() const  { return m_usage; }
-        RHINativeHandle      getRtv() const        { return m_rtv; }
-        RHINativeHandle      getImage() const      { return m_image; }
+        RHITextureType           getType() const     { return m_type; }
+        std::uint32_t            getWidth() const    { return m_width; }
+        std::uint32_t            getHeight() const   { return m_height; }
+        std::uint32_t            getDepth() const    { return m_depth; }
+        std::uint32_t            getMipCount() const { return m_mipCount; }
+        RHIFormat                getFormat() const   { return m_format; }
+        RHITextureViewUsageFlags getUsage() const    { return m_usage; }
+        RHINativeHandle          getView() const     { return m_rtv; }
+        RHINativeHandle          getImage() const    { return m_image; }
         // clang-format on
 
     private:

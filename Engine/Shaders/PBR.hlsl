@@ -15,15 +15,23 @@ struct FrameConstantData
     float4x4 viewProjection;
 };
 
-cbuffer FrameConstantBuffer : register(b0)
+cbuffer FrameConstantBuffer : register(b0, space0)
 {
     FrameConstantData frameData;
 };
+SamplerComparisonState samplerComparison  : register(s0, space0);
+SamplerState           samplers[8]        : register(s1, space0);
 
-Texture2D myTexture      : register(t0, space0);
-SamplerState mySampler   : register(s0, space0);
+static const uint samplerPointClampEdge;
+static const uint samplerPointClampBorder;
+static const uint samplerWrap;
+static const uint samplerBilinearClampEdge;
+static const uint samplerBilinearClampBorder;
+static const uint samplerBilinearWrap;
+static const uint samplerTrilinearClamp;
+static const uint samplerAnisotropicClamp;
 
-Texture2D materialTexture[] : register(t0, space1);
+Texture2D<float4> materialTextures[] : register(t0, space1);
 
 struct VertexPosUvNrmTan
 {
@@ -73,8 +81,8 @@ PixelOutput main_ps(VertexOutput input)
 
     float wave = sin(PI * (8.0 * d + phaseShift));
     
-    float3 black = float3(0.0, 0.0, 0.0);
-    float3 white = float3(1.0, 1.0, 1.0);
+    float3 white = materialTextures[1].Sample(samplers[samplerBilinearClampEdge], input.uv).rgb;
+    float3 black = materialTextures[0].Sample(samplers[samplerBilinearClampEdge], input.uv).rgb;
 
     float3 color = lerp(black, white, wave > 0.0 ? 1.0 : 0.0);
 

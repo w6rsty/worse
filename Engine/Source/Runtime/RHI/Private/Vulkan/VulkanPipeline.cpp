@@ -65,12 +65,9 @@ namespace worse
             layouts.push_back(RHIDevice::getGlobalDescriptorSetLayout().asValue<VkDescriptorSetLayout>());
 
             // bindless
-            // for (std::size_t i = 0; i < bindlessLayoutCount; ++i)
-            // {
-            //     layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(
-            //         static_cast<RHIBindlessResourceType>(i)
-            //     ).asValue<VkDescriptorSetLayout>());
-            // }
+            layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(RHIBindlessResourceType::MaterialTexture).asValue<VkDescriptorSetLayout>());
+            layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(RHIBindlessResourceType::Material).asValue<VkDescriptorSetLayout>());
+            layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(RHIBindlessResourceType::Light).asValue<VkDescriptorSetLayout>());
             
             // // specific
             // layouts.push_back(descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>());

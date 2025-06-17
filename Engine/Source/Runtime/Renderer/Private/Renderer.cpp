@@ -9,6 +9,7 @@
 #include "RHISwapchain.hpp"
 #include "RHICommandList.hpp"
 #include "Descriptor/RHIBuffer.hpp"
+#include "Descriptor/RHITexture.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <memory>
@@ -95,17 +96,13 @@ namespace worse
 
         // resolution
         {
-            std::uint32_t width  = Window::getWidth();
-            std::uint32_t height = Window::getHeight();
-
             // render resolution
             resolutionRender = {800, 600};
             // output resolution
-            resolutionOutput = {static_cast<float>(width),
-                                static_cast<float>(height)};
+            resolutionOutput = {static_cast<float>(Window::getWidth()),
+                                static_cast<float>(Window::getWidth())};
 
-            Renderer::setViewport(static_cast<float>(width),
-                                  static_cast<float>(height));
+            Renderer::setViewport(resolutionRender.x, resolutionRender.y);
         }
 
         // swapchain
@@ -167,7 +164,10 @@ namespace worse
 
         RHIDevice::setResourceProvider(&resourceProvider);
 
-        RHIDevice::updateGlobalDescriptorSet();
+        // create bindless layout
+        RHIDevice::updateBindless(RHIBindlessResourceType::MaterialTexture, {});
+        RHIDevice::updateBindless(RHIBindlessResourceType::Material, {});
+        RHIDevice::updateBindless(RHIBindlessResourceType::Light, {});
     }
 
     void Renderer::shutdown()
@@ -216,38 +216,31 @@ namespace worse
         }
 
         {
+            RHIDevice::resetDescriptorAllocator();
+            RHIDevice::writeGlobalDescriptorSet();
+        }
+
+        {
             // clang-format off
             // RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
+            
             RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
 
-            static auto testPso = RHIPipelineStateBuilder()
-                .setName("testPSO")
-                .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
-                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PlaceholderV))
-                .addShader(Renderer::getShader(RendererShader::PlaceholderP))
-                .setRenderTargetColorTexture(0, frameOutput)
-                .setScissor({0, 0, 800, 600})
-                .setViewport(Renderer::getViewport())
-                .setClearColor(Color::Black())
-                .build();
+            std::array<RHIDescriptorBindlessWrite, 2> matTexUpdates = {
+                RHIDescriptorBindlessWrite{0, {Renderer::getTexture(RendererTexture::Placeholder)}},
+                RHIDescriptorBindlessWrite{1, {Renderer::getTexture(RendererTexture::Test)}},
+            };
+            RHIDevice::updateBindless(
+                RHIBindlessResourceType::MaterialTexture,
+                matTexUpdates
+            );
+            auto matTexSet = RHIDevice::getBindlessSet(RHIBindlessResourceType::MaterialTexture,
+                matTexUpdates);
             // clang-format on
 
-            m_cmdList->setPipelineState(testPso);
-            m_cmdList->setBufferVertex(testVbo.get());
-            m_cmdList->setBufferIndex(testIbo.get());
-            m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
-            m_cmdList->renderPassEnd();
-
             // clang-format off
-            auto viewport = Renderer::getViewport();
-            viewport.width  = viewport.width / 2.0f;
-            viewport.height = viewport.height / 2.0f;
-            static auto leftCorner = RHIPipelineStateBuilder()
-                .setName("leftCorner")
+            static auto testPso = RHIPipelineStateBuilder()
+                .setName("testPso")
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
@@ -256,13 +249,15 @@ namespace worse
                 .addShader(Renderer::getShader(RendererShader::PBRV))
                 .addShader(Renderer::getShader(RendererShader::PBRP))
                 .setRenderTargetColorTexture(0, frameOutput)
-                .setScissor({0, 0, 400, 300})
-                .setViewport(viewport)
+                .setScissor({0, 0, 800, 600})
+                .setViewport(Renderer::getViewport())
                 .setClearColor(Color::Black())
                 .build();
             // clang-format on
 
-            m_cmdList->setPipelineState(leftCorner);
+            m_cmdList->setPipelineState(testPso);
+            m_cmdList->bindSet(RHIBindlessResourceType::MaterialTexture,
+                               matTexSet);
             m_cmdList->setBufferVertex(testVbo.get());
             m_cmdList->setBufferIndex(testIbo.get());
             m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
@@ -332,11 +327,6 @@ namespace worse
     math::Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
-    }
-
-    void Renderer::updateBindlessBuffers(RHICommandList* cmdList)
-    {
-        RHIDevice::updateBindlessResources();
     }
 
 } // namespace worse

@@ -318,8 +318,6 @@ namespace worse
 
         surfaceFormat = getSurfaceFormat(m_surface.asValue<VkSurfaceKHR>());
 
-        RHIDevice::queueWaitAll();
-
         m_width  = std::clamp(m_width,
                              cap.minImageExtent.width,
                              cap.maxImageExtent.width);
@@ -356,6 +354,7 @@ namespace worse
 
             if (infoSwapchain.oldSwapchain != VK_NULL_HANDLE)
             {
+                RHIDevice::queueWaitAll();
                 vkDestroySwapchainKHR(RHIContext::device,
                                       infoSwapchain.oldSwapchain,
                                       nullptr);

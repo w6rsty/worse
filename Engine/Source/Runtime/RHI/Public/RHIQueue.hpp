@@ -23,7 +23,11 @@ namespace worse
         void present(RHINativeHandle swapchain, std::uint32_t const imageIndex,
                      RHISyncPrimitive* semaphoreWait);
         RHICommandList* nextCommandList();
-        RHIQueueType getType() const;
+
+        // clang-format off
+        std::uint32_t getIndex() const { return m_index; }
+        RHIQueueType  getType() const  { return m_type; }
+        // clang-format on
 
     private:
         std::array<std::shared_ptr<RHICommandList>, 2> m_cmdLists = {nullptr};

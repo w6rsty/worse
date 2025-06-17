@@ -23,7 +23,7 @@ namespace worse
         EnumArray<RendererTarget, std::shared_ptr<RHITexture>>                      renderTargets;
         EnumArray<RendererShader, std::shared_ptr<RHIShader>>                       shaders;
         EnumArray<RendererTexture, std::shared_ptr<RHITexture>>                     textures;
-        EnumArray<RHISamplerType, std::shared_ptr<RHISampler>>                     samplers;
+        EnumArray<RHISamplerType, std::shared_ptr<RHISampler>>                      samplers;
         // clang-format on
     } // namespace
 
@@ -86,6 +86,9 @@ namespace worse
     void Renderer::createTextures()
     {
         // clang-format off
+        std::filesystem::path testPath = "/Users/w6rsty/Pictures/cornell.png";
+        textures[RendererTexture::Test] = std::make_shared<RHITexture>(testPath);
+
         std::uint32_t white = 0xFFFFFFFF;
         RHITextureMip mip;
         mip.bytes.resize(4);

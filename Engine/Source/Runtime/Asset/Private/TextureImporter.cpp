@@ -112,9 +112,15 @@ namespace worse
         std::unique_ptr<DeferredTextureCopy>
         loadCommon(std::filesystem::path const& path)
         {
-            int width, height, channels;
-            stbi_uc* data =
-                stbi_load(path.string().c_str(), &width, &height, &channels, 0);
+            int width, height, originalChannels;
+            // Force load as RGBA (4 channels) to match RHIFormat::R8G8B8A8Unorm
+            constexpr int desiredChannels = 4;
+            stbi_set_flip_vertically_on_load(true);
+            stbi_uc* data = stbi_load(path.string().c_str(),
+                                      &width,
+                                      &height,
+                                      &originalChannels,
+                                      desiredChannels);
             if (!data)
             {
                 WS_LOG_ERROR("Asset",
@@ -122,6 +128,14 @@ namespace worse
                              path.string());
                 return nullptr;
             }
+
+            WS_LOG_DEBUG("Asset",
+                         "Loaded texture: {} ({}x{}, {} -> {} channels)",
+                         path.string(),
+                         width,
+                         height,
+                         originalChannels,
+                         desiredChannels);
 
             auto textureData       = std::make_unique<DeferredTextureCopy>();
             textureData->width     = width;
@@ -132,7 +146,8 @@ namespace worse
             textureData->type      = RHITextureType::Texture2D;
             textureData->format    = RHIFormat::R8G8B8A8Unorm;
 
-            textureData->size = width * height * channels;
+            // Now size matches the format (always 4 channels)
+            textureData->size = width * height * desiredChannels;
             textureData->deferredCopyFn =
                 [data, size = textureData->size](std::byte* dst)
             {
