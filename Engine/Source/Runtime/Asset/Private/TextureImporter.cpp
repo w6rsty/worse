@@ -129,14 +129,6 @@ namespace worse
                 return nullptr;
             }
 
-            WS_LOG_DEBUG("Asset",
-                         "Loaded texture: {} ({}x{}, {} -> {} channels)",
-                         path.string(),
-                         width,
-                         height,
-                         originalChannels,
-                         desiredChannels);
-
             auto textureData       = std::make_unique<DeferredTextureCopy>();
             textureData->width     = width;
             textureData->height    = height;

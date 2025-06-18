@@ -380,14 +380,6 @@ namespace worse
         }
     }
 
-    enum class RHIBindlessResourceType
-    {
-        MaterialTexture,
-        Material,
-        Light,
-        Max
-    };
-
     constexpr VkObjectType vulkanObjectType(RHINativeHandleType const type)
     {
         switch (type)
@@ -672,20 +664,16 @@ namespace worse
 
         constexpr std::size_t MAX_RENDER_TARGET = 8;
         // Minimum descriptor for initial descriptor pool
-        constexpr std::uint32_t MIN_DESCRIPTORS             = 32;
-        constexpr std::uint32_t MAX_DESCRIPTORS             = 512;
+        constexpr std::uint32_t MIN_DESCRIPTORS             = 512;
+        constexpr std::uint32_t MAX_DESCRIPTORS             = 2048;
         constexpr std::uint32_t MAX_DESCRIPTOR_SETS         = 512;
         constexpr std::uint32_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
         constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB
 
         constexpr std::uint32_t HLSL_REGISTER_SHIFT_B = 0;
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_T = 100;
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_S = 200;
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_U = 300;
-
-        constexpr std::uint32_t FRAME_DATA_REGISTER               = 0;
-        constexpr std::uint32_t SAMPLER_COMPARISON_STATE_REGISTER = 1;
-        constexpr std::uint32_t SAMPLER_REGULAR_STATE_REGISTER    = 2;
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_S = 100;
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_U = 200;
+        constexpr std::uint32_t HLSL_REGISTER_SHIFT_T = 300;
     } // namespace RHIConfig
 
 } // namespace worse

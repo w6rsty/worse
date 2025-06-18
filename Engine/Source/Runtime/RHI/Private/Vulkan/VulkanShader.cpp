@@ -89,10 +89,10 @@ namespace worse
             L"-fspv-target-env=vulkan1.2",
             L"-fspv-preserve-bindings",  // disable re-numbering
             L"-fspv-preserve-interface", // disable optimization that removes unused locations
-            L"-fvk-t-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_T), L"all",
             L"-fvk-b-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_B), L"all",
+            L"-fvk-t-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_T), L"all",
             L"-fvk-s-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_S), L"all",
-            L"-fvk-u-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_U), L"all"
+            L"-fvk-u-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_U), L"all",
         };
         // clang-format on
 

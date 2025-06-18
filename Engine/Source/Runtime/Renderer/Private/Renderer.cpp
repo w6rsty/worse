@@ -10,6 +10,7 @@
 #include "RHICommandList.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHITexture.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <memory>
@@ -88,6 +89,7 @@ namespace worse
                 return samplers;
             }
         } resourceProvider;
+
     } // namespace
 
     void Renderer::initialize()
@@ -163,11 +165,6 @@ namespace worse
         }
 
         RHIDevice::setResourceProvider(&resourceProvider);
-
-        // create bindless layout
-        RHIDevice::updateBindless(RHIBindlessResourceType::MaterialTexture, {});
-        RHIDevice::updateBindless(RHIBindlessResourceType::Material, {});
-        RHIDevice::updateBindless(RHIBindlessResourceType::Light, {});
     }
 
     void Renderer::shutdown()
@@ -226,16 +223,13 @@ namespace worse
             
             RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
 
-            std::array<RHIDescriptorBindlessWrite, 2> matTexUpdates = {
-                RHIDescriptorBindlessWrite{0, {Renderer::getTexture(RendererTexture::Placeholder)}},
-                RHIDescriptorBindlessWrite{1, {Renderer::getTexture(RendererTexture::Test)}},
+            std::array updates = {
+                RHIBindlessDescriptorWrite{0, {Renderer::getTexture(RendererTexture::Placeholder)}},
+                RHIBindlessDescriptorWrite{1, {Renderer::getTexture(RendererTexture::TestA)}},
+                RHIBindlessDescriptorWrite{2, {Renderer::getTexture(RendererTexture::TestB)}},
             };
-            RHIDevice::updateBindless(
-                RHIBindlessResourceType::MaterialTexture,
-                matTexUpdates
-            );
-            auto matTexSet = RHIDevice::getBindlessSet(RHIBindlessResourceType::MaterialTexture,
-                matTexUpdates);
+            RHIDevice::udpateBindlessTextures(updates);
+
             // clang-format on
 
             // clang-format off
@@ -256,8 +250,6 @@ namespace worse
             // clang-format on
 
             m_cmdList->setPipelineState(testPso);
-            m_cmdList->bindSet(RHIBindlessResourceType::MaterialTexture,
-                               matTexSet);
             m_cmdList->setBufferVertex(testVbo.get());
             m_cmdList->setBufferIndex(testIbo.get());
             m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);

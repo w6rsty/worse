@@ -57,18 +57,11 @@ namespace worse
         }
 
         // descriptor set layout
-        constexpr std::size_t bindlessLayoutCount = static_cast<std::size_t>(RHIBindlessResourceType::Max);
         std::vector<VkDescriptorSetLayout> layouts;
-        layouts.reserve(1 + bindlessLayoutCount + 1);
+        layouts.reserve(1);
         {
             // global
             layouts.push_back(RHIDevice::getGlobalDescriptorSetLayout().asValue<VkDescriptorSetLayout>());
-
-            // bindless
-            layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(RHIBindlessResourceType::MaterialTexture).asValue<VkDescriptorSetLayout>());
-            layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(RHIBindlessResourceType::Material).asValue<VkDescriptorSetLayout>());
-            layouts.push_back(RHIDevice::getBindlessDescriptorSetLayout(RHIBindlessResourceType::Light).asValue<VkDescriptorSetLayout>());
-            
             // // specific
             // layouts.push_back(descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>());
         }

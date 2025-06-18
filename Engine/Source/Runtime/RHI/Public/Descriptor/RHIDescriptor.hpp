@@ -43,10 +43,10 @@ namespace worse
         };
     };
 
-    struct RHIDescriptorBindlessWrite
+    struct RHIBindlessDescriptorWrite
     {
-        std::uint32_t index;
-        RHIDescriptorResource resource;
+        std::uint32_t index            = 0;
+        RHIDescriptorResource resource = {};
     };
 
     class RHIDescriptor

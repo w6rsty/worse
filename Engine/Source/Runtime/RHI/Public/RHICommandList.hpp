@@ -85,9 +85,6 @@ namespace worse
         void updateBuffer(RHIBuffer* buffer, std::uint32_t const offset,
                           std::uint32_t const size, void const* data);
 
-        void bindSet(RHIBindlessResourceType const type,
-                     RHINativeHandle const set);
-
         // clang-format off
         RHISyncPrimitive* getRenderingCompleteSemaphore() { return m_renderingCompleteBinaySemaphore.get(); }
         RHICommandListState getState() const              { return m_state; }

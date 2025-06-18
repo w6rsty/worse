@@ -35,13 +35,7 @@ namespace worse
         // allocate and write global descriptor set
         static void writeGlobalDescriptorSet();
         static void
-        updateBindless(RHIBindlessResourceType const type,
-                       std::span<RHIDescriptorBindlessWrite> updates);
-        static RHINativeHandle
-        getBindlessDescriptorSetLayout(RHIBindlessResourceType const type);
-        static RHINativeHandle
-        getBindlessSet(RHIBindlessResourceType const type,
-                       std::span<RHIDescriptorBindlessWrite> updates);
+        updateBindlessTextures(std::span<RHIBindlessDescriptorWrite> updates);
 
         // use pso hash to get pipeline and descriptor set layout from cache
         // guaranteed to return a valid pipeline and descriptor set layout

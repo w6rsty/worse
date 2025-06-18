@@ -714,54 +714,6 @@ namespace worse
         }
     }
 
-    void RHICommandList::bindSet(RHIBindlessResourceType const type,
-                                 RHINativeHandle const set)
-    {
-        WS_ASSERT(m_state == RHICommandListState::Recording);
-
-        // Check if the descriptor set handle is valid
-        if (!set)
-        {
-            WS_LOG_ERROR(
-                "Command",
-                "Attempting to bind invalid (null) descriptor set for type {}",
-                static_cast<int>(type));
-            return;
-        }
-
-        VkDescriptorSet vkSet = set.asValue<VkDescriptorSet>();
-
-        // Map bindless resource type to descriptor set index in pipeline layout
-        // Pipeline layout order: [0] Global, [1] MaterialTexture, [2] Material,
-        // [3] Light
-        std::uint32_t setIndex = 0;
-        switch (type)
-        {
-        case RHIBindlessResourceType::MaterialTexture:
-            setIndex = 1;
-            break;
-        case RHIBindlessResourceType::Material:
-            setIndex = 2;
-            break;
-        case RHIBindlessResourceType::Light:
-            setIndex = 3;
-            break;
-        case RHIBindlessResourceType::Max:
-            WS_ASSERT_MSG(false, "Invalid bindless resource type");
-            return;
-        }
-
-        vkCmdBindDescriptorSets(
-            m_handle.asValue<VkCommandBuffer>(),
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            m_pipeline->getLayout().asValue<VkPipelineLayout>(),
-            setIndex,
-            1,
-            &vkSet,
-            0,
-            nullptr);
-    }
-
     RHIImageLayout RHICommandList::getImageLayout(RHINativeHandle image)
     {
         return map::getImageLayout(image);

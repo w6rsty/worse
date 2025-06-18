@@ -47,7 +47,8 @@ namespace worse
 
     enum class RendererTexture : std::size_t
     {
-        Test,
+        TestA,
+        TestB,
         Placeholder,
         Max,
     };
