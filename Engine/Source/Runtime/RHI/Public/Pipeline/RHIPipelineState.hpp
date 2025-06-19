@@ -1,9 +1,8 @@
 #pragma once
 #include "Math/Rectangle.hpp"
+#include "Color.hpp"
 #include "RHIDefinitions.hpp"
 #include "RHIViewport.hpp"
-#include "Color.hpp"
-#include <sys/_types/_fd_def.h>
 
 namespace worse
 {
@@ -18,6 +17,7 @@ namespace worse
         // and generate hash
         void finalize();
         RHIShader const* getShader(RHIShaderType const type) const;
+        std::vector<RHIDescriptor> collectDescriptors() const;
 
         // clang-format off
         bool isValidated() const      { return m_validated; }
@@ -32,7 +32,7 @@ namespace worse
         RHIRasterizerState* rasterizerState                  = nullptr;
         RHIDepthStencilState* depthStencilState              = nullptr;
         RHIBlendState* blendState                            = nullptr;
-        std::array<RHIShader*, k_rhiShaderTypeCount> shaders = {};
+        EnumArray<RHIShaderType, RHIShader*> shaders= {};
         std::array<RHITexture*, RHIConfig::MAX_RENDER_TARGET> renderTargetColorTextures = {nullptr};
         RHITexture* renderTargetDepthTexture = nullptr;
         // clang-format on

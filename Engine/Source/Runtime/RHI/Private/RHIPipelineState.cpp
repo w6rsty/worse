@@ -29,11 +29,11 @@ namespace worse
 
             // clang-format off
             RHIShaderStageFlags flags = {};
-            for (std::size_t i = 0; i < k_rhiShaderTypeCount; ++i)
+            for (RHIShader const* shader : pso.shaders)
             {
-                if ((pso.shaders[i] != nullptr) && (pso.shaders[i]->getState() == RHIShaderCompilationState::CompiledSuccess))
+                if ((shader != nullptr) && (shader->getState() == RHIShaderCompilationState::CompiledSuccess))
                 {
-                    flags |= rhiShaderStageFlags(pso.shaders[i]->getShaderType());
+                    flags |= rhiShaderStageFlags(shader->getShaderType());
                 }
             }
 
@@ -110,6 +110,33 @@ namespace worse
 
             return hash;
         }
+
+        // find descriptors bound to the same slot, merge their
+        // stageFlags
+        void mergeDescriptors(std::vector<RHIDescriptor>& bases,
+                              std::vector<RHIDescriptor> const& additionals)
+        {
+            for (RHIDescriptor const& additional : additionals)
+            {
+                auto it =
+                    std::find_if(bases.begin(),
+                                 bases.end(),
+                                 [additional](RHIDescriptor const& base)
+                                 {
+                                     return (base.slot == additional.slot) &&
+                                            (base.space == additional.space);
+                                 });
+
+                if (it != bases.end())
+                {
+                    it->stageFlags |= additional.stageFlags;
+                }
+                else
+                {
+                    bases.push_back(additional);
+                }
+            }
+        }
     } // namespace
 
     RHIPipelineState::~RHIPipelineState()
@@ -128,7 +155,44 @@ namespace worse
 
     RHIShader const* RHIPipelineState::getShader(RHIShaderType const type) const
     {
-        return shaders[static_cast<std::size_t>(type)];
+        return shaders[type];
+    }
+
+    std::vector<RHIDescriptor> RHIPipelineState::collectDescriptors() const
+    {
+        std::vector<RHIDescriptor> descriptors;
+
+        if (type == RHIPipelineType::Compute)
+        {
+            descriptors = shaders[RHIShaderType::Compute]->getDescriptors();
+        }
+        else if (type == RHIPipelineType::Graphics)
+        {
+            descriptors = shaders[RHIShaderType::Vertex]->getDescriptors();
+            mergeDescriptors(descriptors,
+                             shaders[RHIShaderType::Pixel]->getDescriptors());
+        }
+
+        // remove space != 1
+        descriptors.erase(std::remove_if(descriptors.begin(),
+                                         descriptors.end(),
+                                         [](RHIDescriptor const& descriptor)
+                                         {
+                                             return descriptor.space != 1;
+                                         }),
+                          descriptors.end());
+
+        // helper for generating same hash for same descriptor set with
+        // different order
+        std::sort(descriptors.begin(),
+                  descriptors.end(),
+                  [](RHIDescriptor const& a, RHIDescriptor const& b)
+                  {
+                      return a.slot < b.slot;
+                  });
+        descriptors.shrink_to_fit();
+
+        return descriptors;
     }
 
     RHIPipelineStateBuilder&

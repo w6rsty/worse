@@ -1,17 +1,18 @@
 #pragma once
 #include "Math/Rectangle.hpp"
-#include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
+#include "Descriptor/RHIDescriptor.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
-#include "Descriptor/RHIDescriptorSetLayout.hpp"
 
+#include <span>
 #include <cstdint>
 #include <atomic>
 
 namespace worse
 {
 
+    // track submission state
     enum class RHICommandListState
     {
         Idle,
@@ -53,8 +54,8 @@ namespace worse
                          std::uint32_t const instanceIndex = 0,
                          std::uint32_t const instanceCount = 1);
 
-        void dipatch(std::uint32_t const x, std::uint32_t const y,
-                     std::uint32_t const z = 1);
+        void dispatch(std::uint32_t const x, std::uint32_t const y,
+                      std::uint32_t const z = 1);
 
         // bind pipeline specific resources and begin render pass make sure pso
         // has been called `finalize()`
@@ -77,19 +78,23 @@ namespace worse
 
         void setBufferVertex(RHIBuffer* buffer);
         void setBufferIndex(RHIBuffer* buffer);
-        // need to update descriptor set
-        void setContantBuffer(RHIBuffer* buffer, std::uint32_t const slot);
-        // need to update descriptor set
-        void setBuffer(RHIBuffer* buffer, std::uint32_t const slot);
 
         void updateBuffer(RHIBuffer* buffer, std::uint32_t const offset,
                           std::uint32_t const size, void const* data);
 
+        // get global set 0 and bind
+        void bindGlobalSet();
+        // get pipeline specific set 1, or create one if not exists, and bind
+        void bindSpecificSet();
+        void updateSpecificSet(std::span<RHIDescriptorWrite> constantBuffers,
+                               std::span<RHIDescriptorWrite> rwBuffers,
+                               std::span<RHIDescriptorWrite> textures);
+
         // clang-format off
-        RHISyncPrimitive* getRenderingCompleteSemaphore() { return m_renderingCompleteBinaySemaphore.get(); }
-        RHICommandListState getState() const              { return m_state; }
-        RHIQueue* getQueue() const                        { return m_submissionQueue; }
-        RHINativeHandle getHandle() const                 { return m_handle; }
+        RHISyncPrimitive*   getRenderingCompleteSemaphore() { return m_renderingCompleteBinaySemaphore.get(); }
+        RHICommandListState getState() const                { return m_state; }
+        RHIQueue*           getQueue() const                { return m_submissionQueue; }
+        RHINativeHandle     getHandle() const               { return m_handle; }
         // clang-format on
 
         // TODO: move to other place
@@ -99,9 +104,10 @@ namespace worse
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteBinaySemaphore;
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteTimelineSemaphore;
 
+        // for bind global descriptor set once
+        bool m_isFirstPass = true;
         RHIPipelineState m_pso;
-        RHIPipeline* m_pipeline                       = nullptr;
-        RHIDescriptorSetLayout* m_descriptorSetLayout = nullptr;
+        RHIPipeline* m_pipeline = nullptr;
 
         std::atomic<RHICommandListState> m_state = RHICommandListState::Idle;
         RHIQueue* m_submissionQueue              = nullptr;

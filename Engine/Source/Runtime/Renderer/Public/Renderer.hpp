@@ -79,8 +79,6 @@ namespace worse
         static void setViewport(float const width, float const height);
         static RHIViewport const& getViewport();
 
-        static void setFrameConstantData(RHICommandList* cmdList);
-
         static RHIRasterizerState*
         getRasterizerState(RendererRasterizerState const state);
         static RHIDepthStencilState*

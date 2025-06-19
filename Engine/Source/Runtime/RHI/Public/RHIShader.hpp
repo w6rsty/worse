@@ -33,14 +33,14 @@ namespace worse
                      RHIVertexType const vertexType = RHIVertexType::None);
 
         // clang-format off
-        std::string_view getEntryPoint() const;
+        std::string_view                  getEntryPoint() const;
         std::vector<RHIDescriptor> const& getDescriptors() const { return m_descriptors; }
-        RHIShaderCompilationState getState() const               { return m_state; }
-        RHIShaderType getShaderType() const                      { return m_shaderType; }
-        RHIVertexType getVertexType() const                      { return m_vertexType; }
-        RHIInputLayout const& getInputLayout() const             { return m_inputLayout; }
-        std::uint64_t getHash() const                            { return m_hash; }
-        RHINativeHandle getHandle() const                        { return m_shaderModule; }
+        RHIShaderCompilationState         getState() const       { return m_state; }
+        RHIShaderType                     getShaderType() const  { return m_shaderType; }
+        RHIVertexType                     getVertexType() const  { return m_vertexType; }
+        RHIInputLayout const&             getInputLayout() const { return m_inputLayout; }
+        std::uint64_t                     getHash() const        { return m_hash; }
+        RHINativeHandle                   getHandle() const      { return m_shaderModule; }
         // clang-format on
 
     private:

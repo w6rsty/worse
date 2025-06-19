@@ -189,8 +189,6 @@ namespace worse
         Compute,
         Max,
     };
-    constexpr std::size_t k_rhiShaderTypeCount =
-        static_cast<std::size_t>(RHIShaderType::Max);
 
     enum class RHIPipelineType
     {
@@ -341,7 +339,7 @@ namespace worse
 
     enum class RHIDescriptorType
     {
-        Image,
+        Texture,
         TextureStorage,
         PushConstantBuffer,
         ConstantBuffer,
@@ -355,10 +353,10 @@ namespace worse
         switch (type)
         {
             // clang-format off
-        case RHIDescriptorType::Image:            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case RHIDescriptorType::Texture:          return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         case RHIDescriptorType::TextureStorage:   return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        case RHIDescriptorType::ConstantBuffer:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        case RHIDescriptorType::StructuredBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+        case RHIDescriptorType::ConstantBuffer:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case RHIDescriptorType::StructuredBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         default: WS_ASSERT(false);                return VK_DESCRIPTOR_TYPE_MAX_ENUM;
             // clang-format on
         }
@@ -370,7 +368,7 @@ namespace worse
         switch (type)
         {
             // clang-format off
-        case RHIDescriptorType::Image:              return "Image";
+        case RHIDescriptorType::Texture:            return "Texture";
         case RHIDescriptorType::TextureStorage:     return "TextureStorage";
         case RHIDescriptorType::PushConstantBuffer: return "PushConstantBuffer";
         case RHIDescriptorType::ConstantBuffer:     return "ConstantBuffer";

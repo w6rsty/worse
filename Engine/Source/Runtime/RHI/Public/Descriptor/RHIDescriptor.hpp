@@ -43,8 +43,10 @@ namespace worse
         };
     };
 
-    struct RHIBindlessDescriptorWrite
+    struct RHIDescriptorWrite
     {
+        // for bindless keep this 0
+        std::uint32_t slot             = 0;
         std::uint32_t index            = 0;
         RHIDescriptorResource resource = {};
     };
@@ -78,6 +80,28 @@ namespace worse
         std::uint32_t arrayLength   = 0;
         std::string name            = "";
         // clang-format on
+    };
+
+    class RHIDescriptorAllocator
+    {
+        RHINativeHandle createPool();
+        RHINativeHandle allocateInternal(RHINativeHandle layout, void* pNext);
+
+    public:
+        RHIDescriptorAllocator();
+        ~RHIDescriptorAllocator();
+
+        void resetAll();
+
+        RHINativeHandle allocateSet(RHINativeHandle layout);
+        RHINativeHandle allocateVariableSet(RHINativeHandle layout,
+                                            std::uint32_t count);
+
+    private:
+        std::uint32_t m_expandRatio = 1;
+        std::uint32_t m_rotateIndex = 0;
+        std::array<std::vector<RHINativeHandle>, 2> m_pools;
+        std::array<std::uint32_t, 2> m_currentPoolIndex;
     };
 
 } // namespace worse

@@ -1,16 +1,12 @@
 #include "DXCompiler.hpp" // Do not move
 #include "Log.hpp"
-#include "Math/Hash.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
-#include "RHIShader.hpp"
 #include "RHICommandList.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 #include "Descriptor/RHITexture.hpp"
 #include "Descriptor/RHIDescriptor.hpp"
-#include "Descriptor/RHIDescriptorSet.hpp"
-#include "Descriptor/RHIDescriptorSetLayout.hpp"
 #include "VulkanDescriptor.hpp"
 
 #include "SDL3/SDL_vulkan.h"
@@ -175,6 +171,7 @@ namespace worse
             featureDescriptorIndexing.descriptorBindingSampledImageUpdateAfterBind  = VK_TRUE;
             featureDescriptorIndexing.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
             featureDescriptorIndexing.descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE;
+            featureDescriptorIndexing.descriptorBindingStorageImageUpdateAfterBind  = VK_TRUE;
             featureDescriptorIndexing.pNext                                         = nullptr;
 
             featureSynchronization2.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
@@ -311,189 +308,22 @@ namespace worse
 
     namespace descriptor
     {
-        std::unique_ptr<VulkanDescriptorAllocator> allocator = nullptr;
-        std::unique_ptr<VulkanGlobalSet> globalSet           = nullptr;
+        std::unique_ptr<RHIDescriptorAllocator> allocator = nullptr;
+        std::unique_ptr<VulkanGlobalSet> globalSet        = nullptr;
+        std::unique_ptr<VulkanSpecificSet> specificSet    = nullptr;
 
         void initialize()
         {
-            allocator = std::make_unique<VulkanDescriptorAllocator>();
-            globalSet = std::make_unique<VulkanGlobalSet>(allocator.get());
+            allocator   = std::make_unique<RHIDescriptorAllocator>();
+            globalSet   = std::make_unique<VulkanGlobalSet>(allocator.get());
+            specificSet = std::make_unique<VulkanSpecificSet>(allocator.get());
         }
-
-        // namespace bindless
-        // {
-        //     // Build contiguous ranges for efficient updates
-        //     std::vector<std::pair<std::uint32_t, std::uint32_t>> ranges;
-        //     for (std::uint32_t i = 0;
-        //          i < static_cast<std::uint32_t>(updates.size()); ++i)
-        //     {
-        //         std::uint32_t rangeStart = updates[i].index;
-        //         std::uint32_t rangeCount = 1;
-
-        //         // Check for contiguous indices
-        //         while ((i + 1 < updates.size()) &&
-        //                (updates[i + 1].index == updates[i].index + 1))
-        //         {
-        //             ++i;
-        //             ++rangeCount;
-        //         }
-
-        //         ranges.emplace_back(rangeStart, rangeCount);
-        //     }
-
-        //     // Pre-allocate storage for descriptor infos to avoid dangling
-        //     // pointers
-        //     std::vector<std::vector<VkDescriptorImageInfo>> allImageInfos;
-        //     std::vector<std::vector<VkDescriptorBufferInfo>> allBufferInfos;
-
-        //     if (type == RHIBindlessResourceType::MaterialTexture)
-        //     {
-        //         allImageInfos.reserve(ranges.size());
-        //     }
-        //     else
-        //     {
-        //         allBufferInfos.reserve(ranges.size());
-        //     }
-
-        //     std::vector<VkWriteDescriptorSet> writes;
-        //     writes.reserve(ranges.size());
-        // }
-
-        namespace specific
-        {
-            // clang-format off
-            std::unordered_map<std::uint64_t, std::shared_ptr<RHIDescriptorSetLayout>> layouts;
-            std::unordered_map<std::uint64_t, RHIDescriptorSet>                        sets;
-            std::unordered_map<std::uint64_t, std::vector<RHIDescriptor>>              descriptorCombinationCache;
-            // clang-format on
-
-            namespace detail
-            {
-                // find descriptors bound to the same slot, merge their
-                // stageFlags
-                void
-                mergeDescriptors(std::vector<RHIDescriptor>& bases,
-                                 std::vector<RHIDescriptor> const& additionals)
-                {
-                    for (RHIDescriptor const& additional : additionals)
-                    {
-                        auto it = std::find_if(
-                            bases.begin(),
-                            bases.end(),
-                            [slot = additional.slot](RHIDescriptor const& base)
-                            {
-                                return base.slot == slot;
-                            });
-
-                        if (it != bases.end())
-                        {
-                            it->stageFlags |= additional.stageFlags;
-                        }
-                        else
-                        {
-                            bases.push_back(additional);
-                        }
-                    }
-                }
-            } // namespace detail
-
-            // collect descriptors from pipeline shaders
-            void getDescriptorFromPipelineState(
-                RHIPipelineState const& pso,
-                std::vector<RHIDescriptor>& descriptors)
-            {
-                std::uint64_t hash = pso.getHash();
-                auto it            = descriptorCombinationCache.find(hash);
-                if (it != descriptorCombinationCache.end())
-                {
-                    descriptors = it->second;
-                    return;
-                }
-
-                descriptors.clear();
-                if (pso.type == RHIPipelineType::Compute)
-                {
-                    descriptors =
-                        pso.getShader(RHIShaderType::Compute)->getDescriptors();
-                }
-                else if (pso.type == RHIPipelineType::Graphics)
-                {
-                    descriptors =
-                        pso.getShader(RHIShaderType::Vertex)->getDescriptors();
-                    detail::mergeDescriptors(
-                        descriptors,
-                        pso.getShader(RHIShaderType::Pixel)->getDescriptors());
-                }
-
-                std::sort(descriptors.begin(),
-                          descriptors.end(),
-                          [](RHIDescriptor const& a, RHIDescriptor const& b)
-                          {
-                              return a.slot < b.slot;
-                          });
-
-                // cache result
-                descriptorCombinationCache.emplace(hash, descriptors);
-            }
-
-            // get or create dynamic descriptor set layout
-            RHIDescriptorSetLayout*
-            getOrCreateDescriptorSetLayout(RHIPipelineState const& pso)
-            {
-                std::vector<RHIDescriptor> descriptors;
-                getDescriptorFromPipelineState(pso, descriptors);
-
-                // calculate hash of the descriptors
-                std::uint64_t hash = 0;
-                for (RHIDescriptor const& descriptor : descriptors)
-                {
-                    hash = math::hashCombine(
-                        hash,
-                        static_cast<std::uint64_t>(descriptor.slot));
-                    hash = math::hashCombine(
-                        hash,
-                        static_cast<std::uint64_t>(descriptor.stageFlags));
-                }
-
-                auto it     = layouts.find(hash);
-                bool cached = it != layouts.end();
-
-                if (!cached)
-                {
-                    it = layouts
-                             .emplace(hash,
-                                      std::make_shared<RHIDescriptorSetLayout>(
-                                          descriptors,
-                                          pso.name))
-                             .first;
-                }
-
-                // TODO: support this
-                // if (cached)
-                // {
-                //     it->second->clearData();
-                // }
-
-                return it->second.get();
-            }
-        } // namespace specific
-
-        // TODO: move away from descriptor
-        std::mutex mtxPipelines;
-        std::unordered_map<std::uint64_t, std::shared_ptr<RHIPipeline>>
-            pipelines;
 
         void release()
         {
+            specificSet.reset();
             globalSet.reset();
             allocator.reset();
-
-            // specific
-            specific::layouts.clear();
-            specific::sets.clear();
-            specific::descriptorCombinationCache.clear();
-
-            pipelines.clear();
         }
 
     } // namespace descriptor
@@ -580,13 +410,28 @@ namespace worse
         }
     } // namespace vma
 
+    namespace pipeline
+    {
+        std::unique_ptr<RHIPipelinePool> pipelinePool = nullptr;
+
+        void initialize()
+        {
+            pipelinePool = std::make_unique<RHIPipelinePool>();
+        }
+
+        void release()
+        {
+            pipelinePool.reset();
+        }
+    } // namespace pipeline
+
     namespace
     {
-        RHIResourceProvider* resourceProvider = nullptr;
-
         std::mutex mtxDeletionQueue;
         std::unordered_map<RHINativeHandleType, std::vector<RHINativeHandle>>
             deletionQueue;
+
+        RHIResourceProvider* resourceProvider = nullptr;
     } // namespace
 
     void RHIDevice::initialize()
@@ -713,8 +558,9 @@ namespace worse
         }
 
         vma::create();
-        descriptor::initialize();
         DXCompiler::initialize();
+        descriptor::initialize();
+        pipeline::initialize();
     }
 
     void RHIDevice::destroy()
@@ -723,6 +569,7 @@ namespace worse
         queues::destroy();
 
         descriptor::release();
+        pipeline::release();
 
         RHIDevice::deletionQueueFlush();
 
@@ -816,55 +663,57 @@ namespace worse
 
     RHINativeHandle RHIDevice::getGlobalDescriptorSetLayout()
     {
+        WS_ASSERT(descriptor::globalSet);
         return descriptor::globalSet->getLayout();
     }
 
     RHINativeHandle RHIDevice::getGlobalDescriptorSet()
     {
+        WS_ASSERT(descriptor::globalSet);
         return descriptor::globalSet->getSet();
     }
 
     void RHIDevice::writeGlobalDescriptorSet()
     {
-        descriptor::globalSet->writeAll();
+        WS_ASSERT(descriptor::globalSet);
+        descriptor::globalSet->writeStatic();
     }
 
-    void RHIDevice::udpateBindlessTextures(
-        std::span<RHIBindlessDescriptorWrite> updates)
+    void
+    RHIDevice::updateBindlessTextures(std::span<RHIDescriptorWrite> updates)
     {
         if (updates.empty())
         {
             return;
         }
-
+        WS_ASSERT(descriptor::globalSet);
         descriptor::globalSet->writeBindlessTextures(updates);
     }
 
-    void
-    RHIDevice::getOrCreatePipeline(RHIPipelineState const& pso,
-                                   RHIPipeline*& pipeline,
-                                   RHIDescriptorSetLayout*& descriptorSetLayout)
+    RHIDescriptorSetLayout*
+    RHIDevice::getSpecificDescriptorSetLayout(RHIPipelineState const& pso)
     {
-        descriptorSetLayout =
-            descriptor::specific::getOrCreateDescriptorSetLayout(pso);
-        WS_ASSERT(descriptorSetLayout);
+        WS_ASSERT(descriptor::specificSet);
+        return descriptor::specificSet->getDescriptorSetLayout(pso);
+    }
 
-        std::lock_guard guard{descriptor::mtxPipelines};
+    RHINativeHandle
+    RHIDevice::getSpecificDescriptorSet(std::uint64_t descriptorHash)
+    {
+        WS_ASSERT(descriptor::specificSet);
+        return descriptor::specificSet->getDescriptorSet(descriptorHash);
+    }
 
-        std::uint64_t hash = pso.getHash();
-        auto it            = descriptor::pipelines.find(hash);
-        if (it == descriptor::pipelines.end())
-        {
-            it = descriptor::pipelines
-                     .emplace(
-                         hash,
-                         std::make_shared<RHIPipeline>(pso,
-                                                       *descriptorSetLayout))
-                     .first;
-        }
+    void RHIDevice::resetSpecificDescriptorSets()
+    {
+        WS_ASSERT(descriptor::specificSet);
+        descriptor::specificSet->resetSets();
+    }
 
-        pipeline = it->second.get();
-        WS_ASSERT(pipeline);
+    RHIPipeline* RHIDevice::getPipeline(RHIPipelineState const& pso)
+    {
+        WS_ASSERT(pipeline::pipelinePool);
+        return pipeline::pipelinePool->getPipeline(pso);
     }
 
     void RHIDevice::memoryTextureCreate(RHITexture* texture)
@@ -921,9 +770,9 @@ namespace worse
                              texture->getName().c_str());
         RHIDevice::setResourceName(texture->getImage(), texture->getName());
 
-        WS_LOG_DEBUG("VMA",
-                     "Allocated textue: 0x{:x}",
-                     texture->m_image.asValue());
+        // WS_LOG_DEBUG("VMA",
+        //              "Allocated textue: 0x{:x}",
+        //              texture->m_image.asValue());
         vma::saveAllocation(allocation, texture->getImage());
     }
 
@@ -1005,9 +854,9 @@ namespace worse
             vmaUnmapMemory(vma::allocator, allocation);
         }
 
-        WS_LOG_DEBUG("VMA", "Allocated buffer: 0x{:x} (size: {})", 
-            buffer.asValue(), size
-        );
+        // WS_LOG_DEBUG("VMA", "Allocated buffer: 0x{:x} (size: {})", 
+        //     buffer.asValue(), size
+        // );
         vma::saveAllocation(allocation, buffer);
 
         return buffer;

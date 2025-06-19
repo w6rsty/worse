@@ -95,9 +95,9 @@ namespace worse
         }
 
         // clang-format off
-        RHIVertexType getType() const                                { return m_type; }
+        RHIVertexType                          getType() const       { return m_type; }
         std::vector<RHIVertexAttribute> const& getAttributes() const { return m_attributes; }
-        std::uint32_t getStride() const                              { return m_stride; }
+        std::uint32_t                          getStride() const     { return m_stride; }
         
         bool operator==(RHIInputLayout const& other) const { return m_type == other.m_type; }
         bool operator!=(RHIInputLayout const& other) const { return !(*this == other); }

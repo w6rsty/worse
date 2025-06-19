@@ -215,22 +215,14 @@ namespace worse
         {
             RHIDevice::resetDescriptorAllocator();
             RHIDevice::writeGlobalDescriptorSet();
+            RHIDevice::resetSpecificDescriptorSets();
         }
 
         {
-            // clang-format off
-            // RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
-            
-            RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
-
-            std::array updates = {
-                RHIBindlessDescriptorWrite{0, {Renderer::getTexture(RendererTexture::Placeholder)}},
-                RHIBindlessDescriptorWrite{1, {Renderer::getTexture(RendererTexture::TestA)}},
-                RHIBindlessDescriptorWrite{2, {Renderer::getTexture(RendererTexture::TestB)}},
-            };
-            RHIDevice::udpateBindlessTextures(updates);
-
-            // clang-format on
+            RHITexture* frameRender =
+                Renderer::getRenderTarget(RendererTarget::Render);
+            RHITexture* frameOutput =
+                Renderer::getRenderTarget(RendererTarget::Output);
 
             // clang-format off
             static auto testPso = RHIPipelineStateBuilder()
@@ -242,6 +234,45 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PBRV))
                 .addShader(Renderer::getShader(RendererShader::PBRP))
+                .setRenderTargetColorTexture(0, frameRender)
+                .setScissor({0, 0, 800, 600})
+                .setViewport(Renderer::getViewport())
+                .setClearColor(Color::Black())
+                .build();
+
+            std::array bindlessTextureupdates = {
+                RHIDescriptorWrite{0, 0, {Renderer::getTexture(RendererTexture::Placeholder)}},
+                RHIDescriptorWrite{0, 1, {Renderer::getTexture(RendererTexture::TestA)}},
+                RHIDescriptorWrite{0, 2, {Renderer::getTexture(RendererTexture::TestB)}},
+            };
+            RHIDevice::updateBindlessTextures(bindlessTextureupdates);
+            // clang-format on
+
+            m_cmdList->setPipelineState(testPso);
+            m_cmdList->setBufferVertex(testVbo.get());
+            m_cmdList->setBufferIndex(testIbo.get());
+            m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
+
+            m_cmdList->renderPassEnd();
+
+            // ====================================
+            // post pass
+            // ====================================
+
+            m_cmdList->insertBarrier(frameRender->getImage(),
+                                     frameRender->getFormat(),
+                                     RHIImageLayout::ShaderRead);
+
+            // clang-format off
+            static auto postPso = RHIPipelineStateBuilder()
+                .setName("postPso")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderV))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderP))
                 .setRenderTargetColorTexture(0, frameOutput)
                 .setScissor({0, 0, 800, 600})
                 .setViewport(Renderer::getViewport())
@@ -249,16 +280,22 @@ namespace worse
                 .build();
             // clang-format on
 
-            m_cmdList->setPipelineState(testPso);
+            std::array updates = {
+                RHIDescriptorWrite{0, 0, {frameRender}},
+            };
+            m_cmdList->updateSpecificSet({}, {}, updates);
+
+            m_cmdList->setPipelineState(postPso);
             m_cmdList->setBufferVertex(testVbo.get());
             m_cmdList->setBufferIndex(testIbo.get());
             m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
+
             m_cmdList->renderPassEnd();
+
+            blitToBackBuffer(m_cmdList);
 
             m_cmdList->clearPipelineState();
         }
-
-        blitToBackBuffer(m_cmdList);
 
         // [Sumbit] wait image acquire semaphore(swapchain)
         //          signal rendering semaphore(CommandList)
@@ -304,11 +341,6 @@ namespace worse
     RHIViewport const& Renderer::getViewport()
     {
         return viewport;
-    }
-
-    void Renderer::setFrameConstantData(RHICommandList* cmdList)
-    {
-        cmdList->setContantBuffer(frameConstantBuffer.get(), 0);
     }
 
     math::Vector2 Renderer::getResolutionRender()

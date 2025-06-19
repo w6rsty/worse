@@ -1,6 +1,6 @@
 #pragma once
-#include "RHIDefinitions.hpp"
 #include "Math/Hash.hpp"
+#include "RHIDefinitions.hpp"
 
 #include <functional>
 #include <cstdint>
@@ -33,7 +33,6 @@ namespace worse
             m_blendFactor   = blendFactor;
 
             std::hash<float> hasher;
-            // clang-format off
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(blendEnable));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(srcBlend));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(dstBlend));
@@ -42,54 +41,20 @@ namespace worse
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(dstAlphaBlend));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(alphaBlendOp));
             m_hash = math::hashCombine(m_hash, hasher(blendFactor));
-            // clang-format on
         }
 
-        bool getBlendEnable() const
-        {
-            return m_blendEnable;
-        }
-        RHIBlendFactor getSrcBlend() const
-        {
-            return m_srcBlend;
-        }
-        RHIBlendFactor getDstBlend() const
-        {
-            return m_dstBlend;
-        }
-        RHIBlendOperation getBlendOp() const
-        {
-            return m_blendOp;
-        }
-        RHIBlendFactor getSrcAlphaBlend() const
-        {
-            return m_srcAlphaBlend;
-        }
-        RHIBlendFactor getDstAlphaBlend() const
-        {
-            return m_dstAlphaBlend;
-        }
-        RHIBlendOperation getAlphaBlendOp() const
-        {
-            return m_alphaBlendOp;
-        }
-        float getBlendFactor() const
-        {
-            return m_blendFactor;
-        }
-        std::uint64_t getHash() const
-        {
-            return m_hash;
-        }
+        bool              getBlendEnable() const   { return m_blendEnable; }
+        RHIBlendFactor    getSrcBlend() const      { return m_srcBlend; }
+        RHIBlendFactor    getDstBlend() const      { return m_dstBlend; }
+        RHIBlendOperation getBlendOp() const       { return m_blendOp; }
+        RHIBlendFactor    getSrcAlphaBlend() const { return m_srcAlphaBlend; }
+        RHIBlendFactor    getDstAlphaBlend() const { return m_dstAlphaBlend; }
+        RHIBlendOperation getAlphaBlendOp() const  { return m_alphaBlendOp; }
+        float             getBlendFactor() const   { return m_blendFactor; }
+        std::uint64_t     getHash() const          { return m_hash; }
 
-        bool operator==(RHIBlendState const& other) const
-        {
-            return m_hash == other.m_hash;
-        }
-        bool operator!=(RHIBlendState const& other) const
-        {
-            return m_hash != other.m_hash;
-        }
+        bool operator==(RHIBlendState const& other) const { return m_hash == other.m_hash; }
+        bool operator!=(RHIBlendState const& other) const { return m_hash != other.m_hash; }
         // clang-format on
 
     private:

@@ -34,6 +34,8 @@ static const uint samplerAnisotropicClamp;
 
 Texture2D<float4> materialTextures[] : register(t0, space0);
 
+Texture2D<float4> albedo : register(t0, space1);
+
 struct VertexPosUvNrmTan
 {
     float3 position : POSITION;

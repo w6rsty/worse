@@ -18,14 +18,11 @@ namespace worse
         static void setResourceProvider(RHIResourceProvider* provider);
         static RHIResourceProvider* getResourceProvider();
 
-        // clang-format off
-
         // wait graphics and compute queues
         static void queueWaitAll();
-        [[nodiscard]] static std::uint32_t getQueueIndex(RHIQueueType const type);
-        [[nodiscard]] static RHIQueue* getQueue(RHIQueueType const type);
-        [[nodiscard]] static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
-        // clang-format on
+        static std::uint32_t getQueueIndex(RHIQueueType const type);
+        static RHIQueue* getQueue(RHIQueueType const type);
+        static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
 
         // reset allocated descriptors
         static void resetDescriptorAllocator();
@@ -35,13 +32,16 @@ namespace worse
         // allocate and write global descriptor set
         static void writeGlobalDescriptorSet();
         static void
-        updateBindlessTextures(std::span<RHIBindlessDescriptorWrite> updates);
+        updateBindlessTextures(std::span<RHIDescriptorWrite> updates);
+        // used by RHIPipelinePool to create pipeline layout
+        static RHIDescriptorSetLayout*
+        getSpecificDescriptorSetLayout(RHIPipelineState const& pso);
+        static RHINativeHandle
+        getSpecificDescriptorSet(std::uint64_t descriptorHash);
+        static void resetSpecificDescriptorSets();
 
-        // use pso hash to get pipeline and descriptor set layout from cache
-        // guaranteed to return a valid pipeline and descriptor set layout
-        static void
-        getOrCreatePipeline(RHIPipelineState const& pso, RHIPipeline*& pipeline,
-                            RHIDescriptorSetLayout*& descriptorSetLayout);
+        // get descriptor set layout from pool or create a new one
+        static RHIPipeline* getPipeline(RHIPipelineState const& pso);
 
         static void memoryTextureCreate(RHITexture* texture);
         static void memoryTextureDestroy(RHINativeHandle handle);
@@ -56,8 +56,7 @@ namespace worse
         static void deletionQueueAdd(RHINativeHandle const& resource);
         static void deletionQueueFlush();
 
-        [[nodiscard]] static RHICommandList*
-        cmdImmediateBegin(RHIQueueType const type);
+        static RHICommandList* cmdImmediateBegin(RHIQueueType const type);
         static void cmdImmediateSubmit(RHICommandList* cmdList);
 
         static void setResourceName(RHINativeHandle const& resource,

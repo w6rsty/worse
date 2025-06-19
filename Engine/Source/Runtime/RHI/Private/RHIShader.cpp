@@ -67,7 +67,7 @@ namespace worse
             if (m_state == RHIShaderCompilationState::CompiledSuccess)
             {
                 WS_LOG_INFO("Shader",
-                            "Compiled: {} took: {}ms",
+                            "Compiled: {} took: {:.1f}ms",
                             m_path.string(),
                             sw.elapsedMs());
             }

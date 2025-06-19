@@ -1,6 +1,6 @@
 #pragma once
-#include "RHIDefinitions.hpp"
 #include "Math/Hash.hpp"
+#include "RHIDefinitions.hpp"
 
 #include <functional>
 
@@ -40,54 +40,20 @@ namespace worse
             m_hash = math::hashCombine(m_hash, hasher(depthBias));
             m_hash = math::hashCombine(m_hash, hasher(depthBiasClamp));
             m_hash = math::hashCombine(m_hash, hasher(depthBiaSlopeFactor));
-            // clang-format on
         }
 
-        RHIPolygonMode getPolygonMode() const
-        {
-            return m_polygonMode;
-        }
-        RHICullMode getCullMode() const
-        {
-            return m_cullMode;
-        }
-        RHIFrontFace getFrontFace() const
-        {
-            return m_frontFace;
-        }
-        float getLineWidth() const
-        {
-            return m_lineWidth;
-        }
-        bool getDepthClampEnable() const
-        {
-            return m_depthClampEnable;
-        }
-        float getDepthBias() const
-        {
-            return m_depthBias;
-        }
-        float getDepthBiasClamp() const
-        {
-            return m_depthBiasClamp;
-        }
-        float getDepthBiasSlopeFactor() const
-        {
-            return m_depthBiaSlopeFactor;
-        }
-        std::uint64_t getHash() const
-        {
-            return m_hash;
-        }
+        RHIPolygonMode getPolygonMode() const          { return m_polygonMode; }
+        RHICullMode    getCullMode() const             { return m_cullMode; }
+        RHIFrontFace   getFrontFace() const            { return m_frontFace; }
+        float          getLineWidth() const            { return m_lineWidth; }
+        bool           getDepthClampEnable() const     { return m_depthClampEnable; }
+        float          getDepthBias() const            { return m_depthBias; }
+        float          getDepthBiasClamp() const       { return m_depthBiasClamp; }
+        float          getDepthBiasSlopeFactor() const { return m_depthBiaSlopeFactor; }
+        std::uint64_t  getHash() const                 { return m_hash; }
 
-        bool operator==(RHIRasterizerState const& other) const
-        {
-            return m_hash == other.m_hash;
-        }
-        bool operator!=(RHIRasterizerState const& other) const
-        {
-            return m_hash != other.m_hash;
-        }
+        bool operator==(RHIRasterizerState const& other) const { return m_hash == other.m_hash; }
+        bool operator!=(RHIRasterizerState const& other) const { return m_hash != other.m_hash; }
         // clang-format on
 
     private:

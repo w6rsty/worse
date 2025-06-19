@@ -20,7 +20,7 @@ namespace worse
             switch (descriptorType)
             {
                 // clang-format off
-            case RHIDescriptorType::Image:              resources = shaderResources.separate_images;       break;
+            case RHIDescriptorType::Texture:            resources = shaderResources.separate_images;       break;
             case RHIDescriptorType::TextureStorage:     resources = shaderResources.storage_images;        break;
             case RHIDescriptorType::PushConstantBuffer: resources = shaderResources.push_constant_buffers; break;
             case RHIDescriptorType::ConstantBuffer:     resources = shaderResources.uniform_buffers;       break;
@@ -33,7 +33,7 @@ namespace worse
             layout = descriptorType == RHIDescriptorType::TextureStorage
                          ? RHIImageLayout::General
                          : layout;
-            layout = descriptorType == RHIDescriptorType::Image
+            layout = descriptorType == RHIDescriptorType::Texture
                          ? RHIImageLayout::ShaderRead
                          : layout;
 
@@ -104,7 +104,7 @@ namespace worse
         std::wstring wFilepath = std::wstring(filepath.begin(), filepath.end());
         wArguments.push_back(wFilepath);
 
-        RHINativeHandle handle = {};
+        RHINativeHandle shader = {};
 
         CComPtr<IDxcBlob> codeBlob =
             DXCompiler::instance()->compile(m_source, wArguments);
@@ -112,7 +112,7 @@ namespace worse
         if (!codeBlob)
         {
             WS_LOG_ERROR("Shader", "Compilation failed");
-            return handle;
+            return shader;
         }
 
         // clang-format off
@@ -122,13 +122,13 @@ namespace worse
         infoShader.codeSize                 = codeBlob->GetBufferSize();
         // clang-format on
 
-        VkShaderModule shader = VK_NULL_HANDLE;
+        VkShaderModule vkShader = VK_NULL_HANDLE;
         WS_ASSERT_VK(vkCreateShaderModule(RHIContext::device,
                                           &infoShader,
                                           nullptr,
-                                          &shader));
-        handle = RHINativeHandle{shader, RHINativeHandleType::Shader};
-        RHIDevice::setResourceName(handle, m_name);
+                                          &vkShader));
+        shader = RHINativeHandle{vkShader, RHINativeHandleType::Shader};
+        RHIDevice::setResourceName(shader, m_name);
 
         reflect(m_shaderType,
                 static_cast<std::uint32_t*>(codeBlob->GetBufferPointer()),
@@ -136,7 +136,7 @@ namespace worse
 
         codeBlob.Release();
 
-        return handle;
+        return shader;
     }
 
     void RHIShader::reflect(RHIShaderType const shaderType,
@@ -151,20 +151,30 @@ namespace worse
 
         // clang-format off
         RHIShaderStageFlags shaderStage = rhiShaderStageFlags(shaderType);
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::Image,              shaderStage, m_descriptors);
+        // Texture
+        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::Texture,            shaderStage, m_descriptors);
+        // RWTexture
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::TextureStorage,     shaderStage, m_descriptors);
+        // [[vk::push_constant]]
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::PushConstantBuffer, shaderStage, m_descriptors);
+        // cbuffer / uniform buffer
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::ConstantBuffer,     shaderStage, m_descriptors);
+        // RWStructuredBuffer / storage buffer
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer,   shaderStage, m_descriptors);
         // clang-format on
 
         for (RHIDescriptor& descriptor : m_descriptors)
         {
+            std::string typeName = rhiDescriptorTypeToString(descriptor.type);
             WS_LOG_DEBUG("SPIRV-Cross",
-                         "{} : register({}, space{}) ",
-                         descriptor.name,
+                         "(type: {:>15}, slot: {:>3}, space: {:>2}, length: {:>2}) {}",
+                         typeName,
                          descriptor.slot,
-                         descriptor.space);
+                         descriptor.space,
+                         descriptor.isArray
+                             ? std::to_string(descriptor.arrayLength)
+                             : "1",
+                         descriptor.name);
         }
     }
 

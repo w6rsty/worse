@@ -13,9 +13,11 @@
 
 namespace worse
 {
+
     namespace map
     {
         std::mutex mtxImageLayoutMap;
+        // cache image transition layouts
         std::unordered_map<std::uint64_t, RHIImageLayout> imageLayoutMap;
 
         void setImageLayout(RHINativeHandle image, RHIImageLayout layout)
@@ -48,38 +50,6 @@ namespace worse
             imageLayoutMap.erase(image.asValue());
         }
     } // namespace map
-
-    namespace descriptorSet
-    {
-        // bind global descriptor set
-        void bindGlobal(RHINativeHandle cmdBuffer, RHIPipelineState const& pso,
-                        RHINativeHandle pipelineLayout)
-        {
-            // global descriptor set is always available
-            // it is created during device initialization
-            // and never destroyed
-            {
-                VkDescriptorSet vkSet = RHIDevice::getGlobalDescriptorSet()
-                                            .asValue<VkDescriptorSet>();
-
-                VkPipelineBindPoint bindPoint =
-                    (pso.type == RHIPipelineType::Graphics)
-                        ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                        : VK_PIPELINE_BIND_POINT_COMPUTE;
-
-                vkCmdBindDescriptorSets(
-                    cmdBuffer.asValue<VkCommandBuffer>(),
-                    bindPoint,
-                    pipelineLayout.asValue<VkPipelineLayout>(),
-                    0,
-                    1,
-                    &vkSet,
-                    0,
-                    nullptr);
-            }
-        }
-
-    } // namespace descriptorSet
 
     RHICommandList::RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool,
                                    std::string_view name)
@@ -131,13 +101,14 @@ namespace worse
         WS_ASSERT_VK(vkBeginCommandBuffer(m_handle.asValue<VkCommandBuffer>(),
                                           &infoBegin));
 
-        m_state = RHICommandListState::Recording;
+        m_state       = RHICommandListState::Recording;
+        m_isFirstPass = true;
     }
 
     void RHICommandList::submit(RHISyncPrimitive* semaphoreWait)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
-
+        renderPassEnd();
         WS_ASSERT_VK(vkEndCommandBuffer(m_handle.asValue<VkCommandBuffer>()));
 
         if (!m_renderingCompleteBinaySemaphore->hasBeenWaitedFor)
@@ -264,6 +235,7 @@ namespace worse
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(pso.isValidated());
 
+        // skip if the pso is not changed
         if (pso.getHash() == m_pso.getHash())
         {
             return;
@@ -271,7 +243,7 @@ namespace worse
 
         m_pso = pso;
 
-        RHIDevice::getOrCreatePipeline(pso, m_pipeline, m_descriptorSetLayout);
+        m_pipeline = RHIDevice::getPipeline(pso);
 
         renderPassBegin();
 
@@ -281,14 +253,14 @@ namespace worse
 
         setScissor(pso.scissor);
 
-        // bind pipeline specific resources
+        if (m_isFirstPass)
         {
-            setContantBuffer(
-                RHIDevice::getResourceProvider()->getFrameConstantBuffer(),
-                0);
+            bindGlobalSet();
 
-            descriptorSet::bindGlobal(m_handle, pso, m_pipeline->getLayout());
+            m_isFirstPass = false;
         }
+
+        bindSpecificSet();
     }
 
     void RHICommandList::clearPipelineState()
@@ -296,8 +268,8 @@ namespace worse
         m_pso = {};
     }
 
-    void RHICommandList::dipatch(std::uint32_t const x, std::uint32_t const y,
-                                 std::uint32_t const z)
+    void RHICommandList::dispatch(std::uint32_t const x, std::uint32_t const y,
+                                  std::uint32_t const z)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
 
@@ -619,35 +591,6 @@ namespace worse
                              indexType);
     }
 
-    void RHICommandList::setContantBuffer(RHIBuffer* buffer,
-                                          std::uint32_t const slot)
-    {
-        WS_ASSERT(m_state == RHICommandListState::Recording);
-
-        if (!m_descriptorSetLayout)
-        {
-            WS_LOG_WARN("RHICommandList",
-                        "Cannot set constant buffer out of render pass");
-            return;
-        }
-
-        m_descriptorSetLayout->setConstantBuffer(buffer, slot);
-    }
-
-    void RHICommandList::setBuffer(RHIBuffer* buffer, std::uint32_t const slot)
-    {
-        WS_ASSERT(m_state == RHICommandListState::Recording);
-
-        if (!m_descriptorSetLayout)
-        {
-            WS_LOG_WARN("RHICommandList",
-                        "Cannot set buffer out of render pass");
-            return;
-        }
-
-        m_descriptorSetLayout->setBuffer(buffer, slot);
-    }
-
     void RHICommandList::updateBuffer(RHIBuffer* buffer,
                                       std::uint32_t const offset,
                                       std::uint32_t const size,
@@ -712,6 +655,169 @@ namespace worse
                 static_cast<std::byte*>(buffer->getMappedData()) + offset;
             std::memcpy(mappedData, data, size);
         }
+    }
+
+    void RHICommandList::bindGlobalSet()
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(m_pipeline);
+
+        VkDescriptorSet vkSet =
+            RHIDevice::getGlobalDescriptorSet().asValue<VkDescriptorSet>();
+
+        VkPipelineBindPoint bindPoint =
+            (m_pso.type == RHIPipelineType::Graphics)
+                ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                : VK_PIPELINE_BIND_POINT_COMPUTE;
+
+        vkCmdBindDescriptorSets(
+            m_handle.asValue<VkCommandBuffer>(),
+            bindPoint,
+            m_pipeline->getLayout().asValue<VkPipelineLayout>(),
+            0,
+            1,
+            &vkSet,
+            0,
+            nullptr);
+    }
+
+    void RHICommandList::bindSpecificSet()
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(m_pipeline);
+
+        std::uint64_t hash = m_pipeline->getDescriptorHash();
+
+        RHINativeHandle set = RHIDevice::getSpecificDescriptorSet(hash);
+        WS_ASSERT(set);
+
+        VkDescriptorSet vkSet = set.asValue<VkDescriptorSet>();
+
+        VkPipelineBindPoint bindPoint =
+            (m_pso.type == RHIPipelineType::Graphics)
+                ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                : VK_PIPELINE_BIND_POINT_COMPUTE;
+
+        vkCmdBindDescriptorSets(
+            m_handle.asValue<VkCommandBuffer>(),
+            bindPoint,
+            m_pipeline->getLayout().asValue<VkPipelineLayout>(),
+            1,
+            1,
+            &vkSet,
+            0,
+            nullptr);
+    }
+
+    void RHICommandList::updateSpecificSet(
+        std::span<RHIDescriptorWrite> constantBuffers,
+        std::span<RHIDescriptorWrite> rwBuffers,
+        std::span<RHIDescriptorWrite> textures)
+    {
+        // clang-format off
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(m_pipeline);
+
+        std::uint64_t hash  = m_pipeline->getDescriptorHash();
+        RHINativeHandle set = RHIDevice::getSpecificDescriptorSet(hash);
+        WS_ASSERT(set);
+
+        std::size_t const totalWrites =
+            constantBuffers.size() + rwBuffers.size() + textures.size();
+        if (totalWrites == 0)
+        {
+            return; // Early exit if no descriptors to update
+        }
+
+        VkDescriptorSet vkSet = set.asValue<VkDescriptorSet>();
+
+        // Pre-allocate all vectors with known sizes
+        std::vector<VkWriteDescriptorSet> writes;
+        writes.reserve(totalWrites);
+
+        std::vector<VkDescriptorBufferInfo> bufferInfos;
+        bufferInfos.reserve(constantBuffers.size() + rwBuffers.size());
+
+        std::vector<VkDescriptorImageInfo> imageInfos;
+        imageInfos.reserve(textures.size());
+
+        // Process constant buffers
+        for (RHIDescriptorWrite const& desc : constantBuffers)
+        {
+            RHIBuffer* buffer = desc.resource.buffer;
+            WS_ASSERT(buffer); // Validate buffer pointer
+
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = buffer->getHandle().asValue<VkBuffer>();
+            bufferInfo.offset = buffer->getOffset();
+            bufferInfo.range  = buffer->getSize();
+            bufferInfos.push_back(bufferInfo);
+
+            VkWriteDescriptorSet writeSet = {};
+            writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeSet.dstSet          = vkSet;
+            writeSet.dstBinding      = desc.slot;
+            writeSet.dstArrayElement = 0;
+            writeSet.descriptorCount = 1;
+            writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            writeSet.pBufferInfo     = &bufferInfos.back();
+            writes.push_back(writeSet);
+        }
+
+        // Process RW buffers
+        for (RHIDescriptorWrite const& desc : rwBuffers)
+        {
+            RHIBuffer* buffer = desc.resource.buffer;
+            WS_ASSERT(buffer); // Validate buffer pointer
+
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = buffer->getHandle().asValue<VkBuffer>();
+            bufferInfo.offset = buffer->getOffset();
+            bufferInfo.range  = buffer->getSize();
+            bufferInfos.push_back(bufferInfo);
+
+            VkWriteDescriptorSet writeSet = {};
+            writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeSet.dstSet          = vkSet;
+            writeSet.dstBinding      = RHIConfig::HLSL_REGISTER_SHIFT_U + desc.slot;
+            writeSet.dstArrayElement = 0;
+            writeSet.descriptorCount = 1;
+            writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            writeSet.pBufferInfo     = &bufferInfos.back();
+            writes.push_back(writeSet);
+        }
+
+        // Process textures
+        for (RHIDescriptorWrite const& desc : textures)
+        {
+            RHITexture* texture = desc.resource.texture;
+            texture = texture
+                          ? texture
+                          : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+
+            VkDescriptorImageInfo imageInfo = {};
+            imageInfo.imageView   = texture->getView().asValue<VkImageView>();
+            imageInfo.imageLayout = vulkanImageLayout(texture->getImageLayout());
+            imageInfo.sampler     = VK_NULL_HANDLE;
+            imageInfos.push_back(imageInfo);
+
+            VkWriteDescriptorSet writeSet = {};
+            writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeSet.dstSet          = vkSet;
+            writeSet.dstBinding      = RHIConfig::HLSL_REGISTER_SHIFT_T + desc.slot;
+            writeSet.dstArrayElement = 0;
+            writeSet.descriptorCount = 1;
+            writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            writeSet.pImageInfo      = &imageInfos.back();
+            writes.push_back(writeSet);
+        }
+
+        vkUpdateDescriptorSets(RHIContext::device,
+                               static_cast<std::uint32_t>(writes.size()),
+                               writes.data(),
+                               0,
+                               nullptr);
+        // clang-format on
     }
 
     RHIImageLayout RHICommandList::getImageLayout(RHINativeHandle image)

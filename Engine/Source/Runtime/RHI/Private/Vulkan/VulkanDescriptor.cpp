@@ -1,14 +1,17 @@
+#include "Math/Hash.hpp"
 #include "RHIDevice.hpp"
 #include "RHIResource.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHITexture.hpp"
 #include "Descriptor/RHISampler.hpp"
+#include "Descriptor/RHIDescriptorSetLayout.hpp"
+#include "Pipeline/RHIPipelineState.hpp"
 #include "VulkanDescriptor.hpp"
 
 namespace worse
 {
 
-    VkDescriptorPool VulkanDescriptorAllocator::createPool()
+    RHINativeHandle RHIDescriptorAllocator::createPool()
     {
         std::uint32_t count = m_expandRatio * RHIConfig::MIN_DESCRIPTORS;
         if (count < RHIConfig::MAX_DESCRIPTORS)
@@ -18,12 +21,11 @@ namespace worse
 
         // clang-format off
         std::array poolSizes = {
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER,                count},
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          count},
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          count},
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         count},
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, count},
-            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         count},
+            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER,        count},
+            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,  count},
+            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,  count},
+            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, count},
+            VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, count},
         };
 
         VkDescriptorPoolCreateInfo infoPool = {};
@@ -36,18 +38,19 @@ namespace worse
         VkDescriptorPool vkPool = VK_NULL_HANDLE;
         WS_ASSERT_VK(vkCreateDescriptorPool(RHIContext::device, &infoPool, nullptr, &vkPool));
         
-        m_pools[m_rotateIndex].push_back(vkPool);
+        RHINativeHandle poolHandle = RHINativeHandle{vkPool, RHINativeHandleType::DescriptorPool};
+        m_pools[m_rotateIndex].push_back(poolHandle);
 
         std::string name = "descriptor_pool_" + std::to_string(m_pools.size() - 1);
-        RHIDevice::setResourceName(RHINativeHandle{vkPool, RHINativeHandleType::DescriptorPool}, name);
+        RHIDevice::setResourceName(poolHandle, name);
 
-        return vkPool;
+        return poolHandle;
         // clang-format on
     }
 
     RHINativeHandle
-    VulkanDescriptorAllocator::allocateInternal(VkDescriptorSetLayout layout,
-                                                void* pNext)
+    RHIDescriptorAllocator::allocateInternal(RHINativeHandle layout,
+                                             void* pNext)
     {
         if (m_pools[m_rotateIndex].empty())
         {
@@ -55,11 +58,14 @@ namespace worse
             m_currentPoolIndex[m_rotateIndex] = 0;
         }
 
+        VkDescriptorSetLayout vkLayout =
+            layout.asValue<VkDescriptorSetLayout>();
+
         VkDescriptorSetAllocateInfo infoAlloc = {};
         infoAlloc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         infoAlloc.pNext = pNext;
         infoAlloc.descriptorSetCount = 1;
-        infoAlloc.pSetLayouts        = &layout;
+        infoAlloc.pSetLayouts        = &vkLayout;
 
         VkDescriptorSet set = VK_NULL_HANDLE;
         VkResult result;
@@ -67,7 +73,8 @@ namespace worse
         for (;;)
         {
             infoAlloc.descriptorPool =
-                m_pools[m_rotateIndex][m_currentPoolIndex[m_rotateIndex]];
+                m_pools[m_rotateIndex][m_currentPoolIndex[m_rotateIndex]]
+                    .asValue<VkDescriptorPool>();
             result =
                 vkAllocateDescriptorSets(RHIContext::device, &infoAlloc, &set);
 
@@ -95,49 +102,47 @@ namespace worse
         }
     }
 
-    VulkanDescriptorAllocator::VulkanDescriptorAllocator()
+    RHIDescriptorAllocator::RHIDescriptorAllocator()
     {
         m_currentPoolIndex = {0, 0};
     }
 
-    VulkanDescriptorAllocator::~VulkanDescriptorAllocator()
+    RHIDescriptorAllocator::~RHIDescriptorAllocator()
     {
         WS_LOG_DEBUG("Descriptor",
                      "Destroying {} descriptor pools",
                      m_pools[0].size() + m_pools[1].size());
-        for (VkDescriptorPool pool : m_pools[0])
+        for (RHINativeHandle pool : m_pools[0])
         {
-            RHIDevice::deletionQueueAdd(
-                RHINativeHandle{pool, RHINativeHandleType::DescriptorPool});
+            RHIDevice::deletionQueueAdd(pool);
         }
-        for (VkDescriptorPool pool : m_pools[1])
+        for (RHINativeHandle pool : m_pools[1])
         {
-            RHIDevice::deletionQueueAdd(
-                RHINativeHandle{pool, RHINativeHandleType::DescriptorPool});
+            RHIDevice::deletionQueueAdd(pool);
         }
     }
 
-    void VulkanDescriptorAllocator::resetAll()
+    void RHIDescriptorAllocator::resetAll()
     {
         m_rotateIndex = (m_rotateIndex + 1) % m_pools.size();
 
-        for (VkDescriptorPool pool : m_pools[m_rotateIndex])
+        for (RHINativeHandle pool : m_pools[m_rotateIndex])
         {
-            vkResetDescriptorPool(RHIContext::device, pool, 0);
+            vkResetDescriptorPool(RHIContext::device,
+                                  pool.asValue<VkDescriptorPool>(),
+                                  0);
         }
         m_currentPoolIndex[m_rotateIndex] = 0;
     }
 
-    RHINativeHandle
-    VulkanDescriptorAllocator::allocateSet(RHINativeHandle layout)
+    RHINativeHandle RHIDescriptorAllocator::allocateSet(RHINativeHandle layout)
     {
-        return allocateInternal(layout.asValue<VkDescriptorSetLayout>(),
-                                nullptr);
+        return allocateInternal(layout, nullptr);
     }
 
     RHINativeHandle
-    VulkanDescriptorAllocator::allocateVariableSet(RHINativeHandle layout,
-                                                   std::uint32_t count)
+    RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout,
+                                                std::uint32_t count)
     {
         WS_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
         // clang-format off
@@ -147,8 +152,7 @@ namespace worse
         variableCountInfo.pDescriptorCounts  = &count;
         // clang-format on
 
-        return allocateInternal(layout.asValue<VkDescriptorSetLayout>(),
-                                &variableCountInfo);
+        return allocateInternal(layout, &variableCountInfo);
     }
 
     void VulkanGlobalSet::createLayout()
@@ -254,7 +258,7 @@ namespace worse
         // clang-format on
     }
 
-    VulkanGlobalSet::VulkanGlobalSet(VulkanDescriptorAllocator* allocator)
+    VulkanGlobalSet::VulkanGlobalSet(RHIDescriptorAllocator* allocator)
     {
         m_allocator = allocator;
 
@@ -266,7 +270,7 @@ namespace worse
         RHIDevice::deletionQueueAdd(m_layout);
     }
 
-    void VulkanGlobalSet::writeAll()
+    void VulkanGlobalSet::writeStatic()
     {
         WS_ASSERT(m_allocator);
 
@@ -296,14 +300,13 @@ namespace worse
     }
 
     void VulkanGlobalSet::writeBindlessTextures(
-        std::span<RHIBindlessDescriptorWrite> updates)
+        std::span<RHIDescriptorWrite> updates)
     {
         WS_ASSERT(m_set);
 
         std::sort(updates.begin(),
                   updates.end(),
-                  [](RHIBindlessDescriptorWrite const& a,
-                     RHIBindlessDescriptorWrite const& b)
+                  [](RHIDescriptorWrite const& a, RHIDescriptorWrite const& b)
                   {
                       return a.index < b.index;
                   });
@@ -357,6 +360,81 @@ namespace worse
                                writes.data(),
                                0,
                                nullptr);
+    }
+
+    VulkanSpecificSet::VulkanSpecificSet(RHIDescriptorAllocator* allocator)
+    {
+        m_allocator = allocator;
+    }
+
+    VulkanSpecificSet::~VulkanSpecificSet()
+    {
+        // release layouts to deletion queue
+        m_descriptorSetLayouts.clear();
+    }
+
+    RHIDescriptorSetLayout*
+    VulkanSpecificSet::getDescriptorSetLayout(RHIPipelineState const& pso)
+    {
+        // collect ordered set 1 descriptors
+        std::vector<RHIDescriptor> descriptors = pso.collectDescriptors();
+
+        std::uint64_t hash = 0;
+        for (RHIDescriptor const& descriptor : descriptors)
+        {
+            // clang-format off
+            hash = math::hashCombine(hash, static_cast<std::uint64_t>(descriptor.slot));
+            hash = math::hashCombine(hash, static_cast<std::uint64_t>(descriptor.stageFlags));
+            // clang-format on
+        }
+
+        auto it = m_descriptorSetLayouts.find(hash);
+        if (it != m_descriptorSetLayouts.end())
+        {
+            return it->second.get();
+        }
+
+        std::shared_ptr<RHIDescriptorSetLayout> layout =
+            std::make_shared<RHIDescriptorSetLayout>(descriptors,
+                                                     hash,
+                                                     pso.name);
+        m_descriptorSetLayouts.emplace(hash, layout);
+        return layout.get();
+    }
+
+    RHIDescriptorSetLayout*
+    VulkanSpecificSet::getDescriptorSetLayout(std::uint64_t hash)
+    {
+        auto it = m_descriptorSetLayouts.find(hash);
+        if (it != m_descriptorSetLayouts.end())
+        {
+            return it->second.get();
+        }
+
+        return nullptr;
+    }
+
+    RHINativeHandle VulkanSpecificSet::getDescriptorSet(std::uint64_t hash)
+    {
+        auto it = m_descriptorSets.find(hash);
+        if (it != m_descriptorSets.end())
+        {
+            return it->second;
+        }
+
+        RHIDescriptorSetLayout* layout = getDescriptorSetLayout(hash);
+        // layout was created along with pipeline, so it must exist
+        WS_ASSERT_MSG(layout, "Unmatched descriptor hash");
+
+        RHINativeHandle set = m_allocator->allocateSet(layout->getLayout());
+        m_descriptorSets.emplace(hash, set);
+        return set;
+    }
+
+    void VulkanSpecificSet::resetSets()
+    {
+        // clear all sets
+        m_descriptorSets.clear();
     }
 
 } // namespace worse

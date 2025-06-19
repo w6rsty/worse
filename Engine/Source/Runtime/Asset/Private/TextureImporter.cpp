@@ -76,15 +76,17 @@ namespace worse
                 return nullptr;
             }
 
+            // clang-format off
             auto textureData       = std::make_unique<DeferredTextureCopy>();
             textureData->width     = texture.extent().x;
             textureData->height    = texture.extent().y;
             textureData->depth     = texture.extent().z;
-            textureData->layers    = texture.layers();
-            textureData->mipLevels = texture.levels();
+            textureData->layers    = static_cast<std::uint32_t>(texture.layers());
+            textureData->mipLevels = static_cast<std::uint32_t>(texture.levels());
             textureData->type      = rhiTextureType(texture.target());
             textureData->format    = rhiFormat(texture.format());
             textureData->size      = texture.size();
+            // clang-format on
 
             if (textureData->type == RHITextureType::Max)
             {
@@ -172,14 +174,15 @@ namespace worse
             textureData = loadCommon(path);
         }
 
-        WS_LOG_INFO("Asset",
-                    "Loaded texture: {} ({}x{}x{}, layers: {}, mip: {})",
-                    path.string(),
-                    textureData->width,
-                    textureData->height,
-                    textureData->depth,
-                    textureData->layers,
-                    textureData->mipLevels);
+        WS_LOG_INFO(
+            "Asset",
+            "Loaded texture: ({:>4}x{:>4}x{:>2}, layers: {:>2}, mip: {:>2}) {}",
+            textureData->width,
+            textureData->height,
+            textureData->depth,
+            textureData->layers,
+            textureData->mipLevels,
+            path.string());
 
         return textureData;
     }

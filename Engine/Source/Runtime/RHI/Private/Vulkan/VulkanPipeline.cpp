@@ -58,12 +58,12 @@ namespace worse
 
         // descriptor set layout
         std::vector<VkDescriptorSetLayout> layouts;
-        layouts.reserve(1);
+        layouts.reserve(2);
         {
             // global
             layouts.push_back(RHIDevice::getGlobalDescriptorSetLayout().asValue<VkDescriptorSetLayout>());
-            // // specific
-            // layouts.push_back(descriptorSetLayout.getHandle().asValue<VkDescriptorSetLayout>());
+            // specific
+            layouts.push_back(descriptorSetLayout.getLayout().asValue<VkDescriptorSetLayout>());
         }
 
         // push constant

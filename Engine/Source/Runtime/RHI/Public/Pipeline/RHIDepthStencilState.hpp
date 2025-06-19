@@ -1,6 +1,6 @@
 #pragma once
-#include "RHIDefinitions.hpp"
 #include "Math/Hash.hpp"
+#include "RHIDefinitions.hpp"
 
 #include <cstdint>
 
@@ -37,7 +37,6 @@ namespace worse
             m_stencilReadMask    = stencilReadMask;
             m_stencilWriteMask   = stencilWriteMask;
 
-            // clang-format off
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthTestEnable));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthWriteEnable));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthCompareOp));
@@ -49,66 +48,23 @@ namespace worse
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilPassOp));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilReadMask));
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilWriteMask));
-            // clang-format on
         }
 
-        bool getDepthTestEnabled() const
-        {
-            return m_depthTestEnable;
-        }
-        bool getDepthWriteEnabled() const
-        {
-            return m_depthWriteEnable;
-        }
-        RHICompareOperation getDepthCompareOp() const
-        {
-            return m_depthCompareOp;
-        }
-        bool getStencilTestEnabled() const
-        {
-            return m_stencilTestEnable;
-        }
-        bool getStencilWriteEnabled() const
-        {
-            return m_stencilWriteEnable;
-        }
-        RHICompareOperation getStencilCompareOp() const
-        {
-            return m_stencilCompareOp;
-        }
-        RHIStencilOperation getStencilFailOp() const
-        {
-            return m_stencilFailOp;
-        }
-        RHIStencilOperation getStencilDepthFailOp() const
-        {
-            return m_stencilDepthFailOp;
-        }
-        RHIStencilOperation getStencilPassOp() const
-        {
-            return m_stencilPassOp;
-        }
-        std::uint8_t getStencilReadMask() const
-        {
-            return m_stencilReadMask;
-        }
-        std::uint8_t getStencilWriteMask() const
-        {
-            return m_stencilWriteMask;
-        }
-        std::uint64_t getHash() const
-        {
-            return m_hash;
-        }
+        bool                getDepthTestEnabled() const    { return m_depthTestEnable; }
+        bool                getDepthWriteEnabled() const   { return m_depthWriteEnable; }
+        RHICompareOperation getDepthCompareOp() const      { return m_depthCompareOp; }
+        bool                getStencilTestEnabled() const  { return m_stencilTestEnable; }
+        bool                getStencilWriteEnabled() const { return m_stencilWriteEnable; }
+        RHICompareOperation getStencilCompareOp() const    { return m_stencilCompareOp; }
+        RHIStencilOperation getStencilFailOp() const       { return m_stencilFailOp; }
+        RHIStencilOperation getStencilDepthFailOp() const  { return m_stencilDepthFailOp; }
+        RHIStencilOperation getStencilPassOp() const       { return m_stencilPassOp; }
+        std::uint8_t        getStencilReadMask() const     { return m_stencilReadMask; }
+        std::uint8_t        getStencilWriteMask() const    { return m_stencilWriteMask; }
+        std::uint64_t       getHash() const                { return m_hash; }
 
-        bool operator==(RHIDepthStencilState const& other) const
-        {
-            return m_hash == other.m_hash;
-        }
-        bool operator!=(RHIDepthStencilState const& other) const
-        {
-            return m_hash != other.m_hash;
-        }
+        bool operator==(RHIDepthStencilState const& other) const { return m_hash == other.m_hash; }
+        bool operator!=(RHIDepthStencilState const& other) const { return m_hash != other.m_hash; }
         // clang-format on
 
     private:
