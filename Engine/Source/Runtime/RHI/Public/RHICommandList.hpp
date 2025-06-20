@@ -86,9 +86,7 @@ namespace worse
         void bindGlobalSet();
         // get pipeline specific set 1, or create one if not exists, and bind
         void bindSpecificSet();
-        void updateSpecificSet(std::span<RHIDescriptorWrite> constantBuffers,
-                               std::span<RHIDescriptorWrite> rwBuffers,
-                               std::span<RHIDescriptorWrite> textures);
+        void updateSpecificSet(std::span<RHIDescriptorWrite> writes);
 
         // clang-format off
         RHISyncPrimitive*   getRenderingCompleteSemaphore() { return m_renderingCompleteBinaySemaphore.get(); }
@@ -105,7 +103,8 @@ namespace worse
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteTimelineSemaphore;
 
         // for bind global descriptor set once
-        bool m_isFirstPass = true;
+        bool m_isFirstGraphicsPass = true;
+        bool m_isFirstComputePass  = true;
         RHIPipelineState m_pso;
         RHIPipeline* m_pipeline = nullptr;
 

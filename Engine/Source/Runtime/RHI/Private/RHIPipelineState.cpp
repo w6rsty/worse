@@ -58,7 +58,7 @@ namespace worse
                 WS_ASSERT_MSG(hasMandatoryState, "Graphics Pipeline miss mandatory states");
             }
 
-            WS_ASSERT_MSG((width != 0) && (height != 0), "Invalid render target size");
+            WS_ASSERT_MSG(((width != 0) && (height != 0)) || isCompute, "Invalid render target size");
 
             WS_ASSERT_MSG(!pso.name.empty(), "Pipeline state must have a name");
             // clang-format on

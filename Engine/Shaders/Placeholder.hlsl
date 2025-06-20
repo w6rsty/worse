@@ -34,22 +34,22 @@ static const uint samplerAnisotropicClamp;
 
 Texture2D<float4> materialTextures[] : register(t0, space0);
 
-Texture2D<float4> albedo : register(t0, space1);
+// RWTexture2D<float4> albedo : register(u0, space1);
 
 struct VertexPosUvNrmTan
 {
     float3 position : POSITION;
-    float2 uv : TEXCOORD0;
-    float3 normal : NORMAL;
-    float3 tangent : TANGENT;
+    float2 uv       : TEXCOORD0;
+    float3 normal   : NORMAL;
+    float3 tangent  : TANGENT;
 };
 
 struct VertexOutput
 {
     float4 position : SV_Position;
-    float2 uv : TEXCOORD0;
-    float3 normal : NORMAL;
-    float3 tangent : TANGENT;
+    float2 uv       : TEXCOORD0;
+    float3 normal   : NORMAL;
+    float3 tangent  : TANGENT;
 };
 
 VertexOutput main_vs(VertexPosUvNrmTan input)
@@ -74,33 +74,9 @@ PixelOutput main_ps(VertexOutput input)
 
     float2 uv = float2(input.uv.x, 1.0 - input.uv.y);
     
-    // Get texture dimensions for offset calculation
-    uint width, height;
-    albedo.GetDimensions(width, height);
-    float2 texelSize = float2(1.0 / width, 1.0 / height);
+    float4 textureColor = materialTextures[0].Sample(samplers[samplerBilinearWrap], uv);
     
-    // Sobel X kernel
-    float3 sobelX = 
-        -1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(-texelSize.x, -texelSize.y)).rgb +
-         1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2( texelSize.x, -texelSize.y)).rgb +
-        -2.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(-texelSize.x,         0.0)).rgb +
-         2.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2( texelSize.x,         0.0)).rgb +
-        -1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(-texelSize.x,  texelSize.y)).rgb +
-         1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2( texelSize.x,  texelSize.y)).rgb;
-    
-    // Sobel Y kernel
-    float3 sobelY = 
-        -1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(-texelSize.x, -texelSize.y)).rgb +
-        -2.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(        0.0, -texelSize.y)).rgb +
-        -1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2( texelSize.x, -texelSize.y)).rgb +
-         1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(-texelSize.x,  texelSize.y)).rgb +
-         2.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2(        0.0,  texelSize.y)).rgb +
-         1.0 * albedo.Sample(samplers[samplerBilinearClampEdge], uv + float2( texelSize.x,  texelSize.y)).rgb;
-    
-    // Calculate edge magnitude
-    float3 edge = sqrt(sobelX * sobelX + sobelY * sobelY);
-    
-    output.color = float4(edge, 1.0);
+    output.color = textureColor;
 
     return output;
 }

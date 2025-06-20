@@ -39,12 +39,6 @@ namespace worse
         infoLayout.bindingCount = static_cast<std::uint32_t>(bindings.size());
         infoLayout.pBindings    = bindings.data();
 
-        for (auto const& bind: bindings)
-        {
-            WS_LOG_DEBUG("LayoutBinding", "{}", bind.binding);
-
-        }
-
         VkDescriptorSetLayout vkLayout = VK_NULL_HANDLE;
         WS_ASSERT_VK(vkCreateDescriptorSetLayout(RHIContext::device,
                                                  &infoLayout,

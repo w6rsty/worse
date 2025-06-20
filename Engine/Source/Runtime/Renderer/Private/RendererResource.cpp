@@ -71,6 +71,9 @@ namespace worse
         std::filesystem::path shaderPath = resourceRoot / "Engine" / "Shaders";
 
         // clang-format off
+        shaders[RendererShader::TestC] = std::make_shared<RHIShader>("test_c");
+        shaders[RendererShader::TestC]->compile(shaderPath / "Compute.hlsl", RHIShaderType::Compute);
+
         shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("placeholder_v");
         shaders[RendererShader::PlaceholderV]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::PlaceholderP] = std::make_shared<RHIShader>("placeholder_p");

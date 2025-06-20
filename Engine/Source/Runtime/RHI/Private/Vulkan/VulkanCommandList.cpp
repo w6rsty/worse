@@ -101,8 +101,9 @@ namespace worse
         WS_ASSERT_VK(vkBeginCommandBuffer(m_handle.asValue<VkCommandBuffer>(),
                                           &infoBegin));
 
-        m_state       = RHICommandListState::Recording;
-        m_isFirstPass = true;
+        m_state               = RHICommandListState::Recording;
+        m_isFirstGraphicsPass = true;
+        m_isFirstComputePass  = true;
     }
 
     void RHICommandList::submit(RHISyncPrimitive* semaphoreWait)
@@ -142,6 +143,11 @@ namespace worse
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         renderPassEnd();
+
+        if (!(m_pso.type == RHIPipelineType::Graphics))
+        {
+            return;
+        }
 
         VkClearColorValue clearColor = {m_pso.clearColor.r,
                                         m_pso.clearColor.g,
@@ -247,17 +253,29 @@ namespace worse
 
         renderPassBegin();
 
+        VkPipelineBindPoint bindPoint =
+            (m_pso.type == RHIPipelineType::Graphics)
+                ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                : VK_PIPELINE_BIND_POINT_COMPUTE;
+
         vkCmdBindPipeline(m_handle.asValue<VkCommandBuffer>(),
-                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          bindPoint,
                           m_pipeline->getHandle().asValue<VkPipeline>());
 
-        setScissor(pso.scissor);
+        if (m_pso.type == RHIPipelineType::Graphics)
+        {
+            setScissor(pso.scissor);
+        }
 
-        if (m_isFirstPass)
+        if ((m_pso.type == RHIPipelineType::Graphics) && m_isFirstGraphicsPass)
         {
             bindGlobalSet();
-
-            m_isFirstPass = false;
+            m_isFirstGraphicsPass = false;
+        }
+        if ((m_pso.type == RHIPipelineType::Compute) && m_isFirstComputePass)
+        {
+            bindGlobalSet();
+            m_isFirstComputePass = false;
         }
 
         bindSpecificSet();
@@ -709,112 +727,109 @@ namespace worse
             nullptr);
     }
 
-    void RHICommandList::updateSpecificSet(
-        std::span<RHIDescriptorWrite> constantBuffers,
-        std::span<RHIDescriptorWrite> rwBuffers,
-        std::span<RHIDescriptorWrite> textures)
+    void RHICommandList::updateSpecificSet(std::span<RHIDescriptorWrite> writes)
     {
         // clang-format off
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(m_pipeline);
 
+        if (writes.empty())
+        {
+            return; // Early exit if no writes
+        }
+
         std::uint64_t hash  = m_pipeline->getDescriptorHash();
         RHINativeHandle set = RHIDevice::getSpecificDescriptorSet(hash);
         WS_ASSERT(set);
 
-        std::size_t const totalWrites =
-            constantBuffers.size() + rwBuffers.size() + textures.size();
-        if (totalWrites == 0)
-        {
-            return; // Early exit if no descriptors to update
-        }
-
         VkDescriptorSet vkSet = set.asValue<VkDescriptorSet>();
 
         // Pre-allocate all vectors with known sizes
-        std::vector<VkWriteDescriptorSet> writes;
-        writes.reserve(totalWrites);
+        std::vector<VkWriteDescriptorSet> vkWrites;
+        vkWrites.reserve(writes.size());
 
-        std::vector<VkDescriptorBufferInfo> bufferInfos;
-        bufferInfos.reserve(constantBuffers.size() + rwBuffers.size());
+        std::vector<VkDescriptorBufferInfo> infoBuffers;
 
-        std::vector<VkDescriptorImageInfo> imageInfos;
-        imageInfos.reserve(textures.size());
+        std::vector<VkDescriptorImageInfo> infoImages;
 
-        // Process constant buffers
-        for (RHIDescriptorWrite const& desc : constantBuffers)
+        for (RHIDescriptorWrite const& desc : writes)
         {
-            RHIBuffer* buffer = desc.resource.buffer;
-            WS_ASSERT(buffer); // Validate buffer pointer
+            switch (desc.type)
+            {
+            case RHIDescriptorType::Texture:
+            case RHIDescriptorType::TextureStorage:
+            {
+                RHITexture* texture = desc.resource.texture;
+                texture = texture
+                              ? texture
+                              : RHIDevice::getResourceProvider()->getPlaceholderTexture();
 
-            VkDescriptorBufferInfo bufferInfo = {};
-            bufferInfo.buffer = buffer->getHandle().asValue<VkBuffer>();
-            bufferInfo.offset = buffer->getOffset();
-            bufferInfo.range  = buffer->getSize();
-            bufferInfos.push_back(bufferInfo);
+                VkDescriptorType vkType =
+                    (desc.type == RHIDescriptorType::Texture)
+                        ? VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+                        : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
-            VkWriteDescriptorSet writeSet = {};
-            writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeSet.dstSet          = vkSet;
-            writeSet.dstBinding      = desc.slot;
-            writeSet.dstArrayElement = 0;
-            writeSet.descriptorCount = 1;
-            writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            writeSet.pBufferInfo     = &bufferInfos.back();
-            writes.push_back(writeSet);
-        }
+                std::uint32_t shift = (desc.type == RHIDescriptorType::Texture)
+                                          ? RHIConfig::HLSL_REGISTER_SHIFT_T
+                                          : RHIConfig::HLSL_REGISTER_SHIFT_U;
 
-        // Process RW buffers
-        for (RHIDescriptorWrite const& desc : rwBuffers)
-        {
-            RHIBuffer* buffer = desc.resource.buffer;
-            WS_ASSERT(buffer); // Validate buffer pointer
+                VkDescriptorImageInfo infoImage = {};
+                infoImage.imageView   = texture->getView().asValue<VkImageView>();
+                infoImage.imageLayout = vulkanImageLayout(texture->getImageLayout());
+                infoImage.sampler     = VK_NULL_HANDLE;
+                infoImages.push_back(infoImage);
 
-            VkDescriptorBufferInfo bufferInfo = {};
-            bufferInfo.buffer = buffer->getHandle().asValue<VkBuffer>();
-            bufferInfo.offset = buffer->getOffset();
-            bufferInfo.range  = buffer->getSize();
-            bufferInfos.push_back(bufferInfo);
+                VkWriteDescriptorSet writeSet = {};
+                writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeSet.dstSet          = vkSet;
+                writeSet.dstBinding      = shift + desc.reg;
+                writeSet.dstArrayElement = desc.index;
+                writeSet.descriptorCount = 1;
+                writeSet.descriptorType  = vkType;
+                writeSet.pImageInfo      = &infoImages.back();
+                vkWrites.push_back(writeSet);
+                break;
+            }
+            case RHIDescriptorType::ConstantBuffer:
+            case RHIDescriptorType::StructuredBuffer:
+            {
+                RHIBuffer* buffer = desc.resource.buffer;
+                WS_ASSERT(buffer); // Validate buffer pointer
 
-            VkWriteDescriptorSet writeSet = {};
-            writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeSet.dstSet          = vkSet;
-            writeSet.dstBinding      = RHIConfig::HLSL_REGISTER_SHIFT_U + desc.slot;
-            writeSet.dstArrayElement = 0;
-            writeSet.descriptorCount = 1;
-            writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            writeSet.pBufferInfo     = &bufferInfos.back();
-            writes.push_back(writeSet);
-        }
+                VkDescriptorType vkType =
+                    (desc.type == RHIDescriptorType::ConstantBuffer)
+                        ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+                        : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
-        // Process textures
-        for (RHIDescriptorWrite const& desc : textures)
-        {
-            RHITexture* texture = desc.resource.texture;
-            texture = texture
-                          ? texture
-                          : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+                std::uint32_t shift = (desc.type == RHIDescriptorType::ConstantBuffer)
+                                          ? RHIConfig::HLSL_REGISTER_SHIFT_B
+                                          : RHIConfig::HLSL_REGISTER_SHIFT_U;
 
-            VkDescriptorImageInfo imageInfo = {};
-            imageInfo.imageView   = texture->getView().asValue<VkImageView>();
-            imageInfo.imageLayout = vulkanImageLayout(texture->getImageLayout());
-            imageInfo.sampler     = VK_NULL_HANDLE;
-            imageInfos.push_back(imageInfo);
+                VkDescriptorBufferInfo infoBuffer = {};
+                infoBuffer.buffer = buffer->getHandle().asValue<VkBuffer>();
+                infoBuffer.offset = buffer->getOffset();
+                infoBuffer.range  = buffer->getSize();
+                infoBuffers.push_back(infoBuffer);
 
-            VkWriteDescriptorSet writeSet = {};
-            writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeSet.dstSet          = vkSet;
-            writeSet.dstBinding      = RHIConfig::HLSL_REGISTER_SHIFT_T + desc.slot;
-            writeSet.dstArrayElement = 0;
-            writeSet.descriptorCount = 1;
-            writeSet.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            writeSet.pImageInfo      = &imageInfos.back();
-            writes.push_back(writeSet);
+                VkWriteDescriptorSet writeSet = {};
+                writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeSet.dstSet          = vkSet;
+                writeSet.dstBinding      = shift + desc.reg;
+                writeSet.dstArrayElement = desc.index;
+                writeSet.descriptorCount = 1;
+                writeSet.descriptorType  = vkType;
+                writeSet.pBufferInfo     = &infoBuffers.back();
+                vkWrites.push_back(writeSet);
+                break;
+            }
+            default:
+                WS_ASSERT_MSG(false, "Unsupported descriptor type");
+            }
         }
 
         vkUpdateDescriptorSets(RHIContext::device,
-                               static_cast<std::uint32_t>(writes.size()),
-                               writes.data(),
+                               static_cast<std::uint32_t>(vkWrites.size()),
+                               vkWrites.data(),
                                0,
                                nullptr);
         // clang-format on

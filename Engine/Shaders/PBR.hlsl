@@ -34,8 +34,6 @@ static const uint samplerAnisotropicClamp;
 
 Texture2D<float4> materialTextures[] : register(t0, space0);
 
-Texture2D<float4> albedo : register(t0, space1);
-
 struct VertexPosUvNrmTan
 {
     float3 position : POSITION;
@@ -65,7 +63,7 @@ VertexOutput main_vs(VertexPosUvNrmTan input)
 
 struct PixelOutput
 {
-    float4 color : SV_Target;
+    float4 color : SV_Target0;
 };
 
 PixelOutput main_ps(VertexOutput input)
@@ -79,11 +77,11 @@ PixelOutput main_ps(VertexOutput input)
     
     if (tilt < 0.0)
     {
-        sampledColor = materialTextures[1].Sample(samplers[samplerPointClampEdge], input.uv);
+        sampledColor = materialTextures[0].Sample(samplers[samplerPointClampEdge], input.uv);
     }
     else
     {
-        sampledColor = materialTextures[2].Sample(samplers[samplerPointClampEdge], input.uv);
+        sampledColor = materialTextures[1].Sample(samplers[samplerPointClampEdge], input.uv);
     }
 
     output.color = sampledColor;

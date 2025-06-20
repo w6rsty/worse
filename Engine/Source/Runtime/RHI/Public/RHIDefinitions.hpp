@@ -357,7 +357,7 @@ namespace worse
         case RHIDescriptorType::TextureStorage:   return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
         case RHIDescriptorType::ConstantBuffer:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         case RHIDescriptorType::StructuredBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        default: WS_ASSERT(false);                return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        default:                                  return VK_DESCRIPTOR_TYPE_MAX_ENUM;
             // clang-format on
         }
     }

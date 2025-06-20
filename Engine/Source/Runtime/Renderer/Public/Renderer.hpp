@@ -31,6 +31,7 @@ namespace worse
 
     enum class RendererShader : std::size_t
     {
+        TestC,
         PlaceholderV,
         PlaceholderP,
         PBRV,

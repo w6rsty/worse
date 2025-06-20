@@ -46,9 +46,11 @@ namespace worse
     struct RHIDescriptorWrite
     {
         // for bindless keep this 0
-        std::uint32_t slot             = 0;
+        std::uint32_t reg = 0;
+        // array index
         std::uint32_t index            = 0;
         RHIDescriptorResource resource = {};
+        RHIDescriptorType type         = RHIDescriptorType::Max;
     };
 
     class RHIDescriptor

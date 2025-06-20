@@ -171,14 +171,14 @@ namespace worse
         layoutBindings[1].binding            = RHIConfig::HLSL_REGISTER_SHIFT_S + 0; // s0
         layoutBindings[1].descriptorCount    = 1;
         layoutBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
-        layoutBindings[1].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+        layoutBindings[1].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
         layoutBindings[1].pImmutableSamplers = nullptr;
         
         // SamplerState
         layoutBindings[2].binding            = RHIConfig::HLSL_REGISTER_SHIFT_S + 1; // s1
         layoutBindings[2].descriptorCount    = 8;
         layoutBindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
-        layoutBindings[2].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
+    layoutBindings[2].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
         layoutBindings[2].pImmutableSamplers = nullptr;
 
         layoutBindings[3].binding            = RHIConfig::HLSL_REGISTER_SHIFT_T + 0; // t0
