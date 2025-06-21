@@ -1,58 +1,12 @@
 #pragma once
 #include "Math/Vector.hpp"
 #include "RHIDefinitions.hpp"
+#include "RendererDefinitions.hpp"
 
 #include <cstdint>
 
 namespace worse
 {
-    class RHIViewport;
-    class RHISwapchain;
-    class RHICommandList;
-
-    enum class RendererRasterizerState : std::size_t
-    {
-        Solid,
-        Wireframe,
-        Max
-    };
-
-    enum class RendererDepthStencilState : std::size_t
-    {
-        Off,
-        Max
-    };
-
-    enum class RendererBlendState : std::size_t
-    {
-        Off,
-        Max
-    };
-
-    enum class RendererShader : std::size_t
-    {
-        TestC,
-        PlaceholderV,
-        PlaceholderP,
-        PBRV,
-        PBRP,
-        Max
-    };
-
-    enum class RendererTarget : std::size_t
-    {
-        Render,
-        Output,
-        Max,
-    };
-
-    enum class RendererTexture : std::size_t
-    {
-        TestA,
-        TestB,
-        Placeholder,
-        Max,
-    };
 
     class Renderer
     {
@@ -90,8 +44,8 @@ namespace worse
         static RHITexture* getTexture(RendererTexture const texture);
         static RHISampler* getSampler(RHISamplerType const sampler);
 
-        static math::Vector2 getResolutionRender();
-        static math::Vector2 getResolutionOutput();
+        static Vector2 getResolutionRender();
+        static Vector2 getResolutionOutput();
 
     private:
         static inline std::uint64_t s_frameCount = 0;

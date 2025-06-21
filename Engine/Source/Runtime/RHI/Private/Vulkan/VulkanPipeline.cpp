@@ -69,17 +69,14 @@ namespace worse
         // push constant
         std::vector<VkPushConstantRange> pushConstantRanges;
         {
-            for (RHIDescriptor const& descriptor : descriptorSetLayout.getDescriptors())
+            for (RHIDescriptor const& descriptor : descriptorSetLayout.getPushConstants())
             {
-                if (descriptor.type == RHIDescriptorType::PushConstantBuffer)
-                {
-                    VkPushConstantRange pushConstantRange = {};
-                    pushConstantRange.stageFlags = vulkanShaderStageFlags(descriptor.stageFlags);
-                    pushConstantRange.offset     = 0;
-                    pushConstantRange.size       = descriptor.size;
+                VkPushConstantRange pushConstantRange = {};
+                pushConstantRange.stageFlags = vulkanShaderStageFlags(descriptor.stageFlags);
+                pushConstantRange.offset     = 0;
+                pushConstantRange.size       = RHIConfig::MAX_PUSH_CONSTANT_SIZE;
 
-                    pushConstantRanges.push_back(pushConstantRange);
-                }
+                pushConstantRanges.push_back(pushConstantRange);
             }
         }
 

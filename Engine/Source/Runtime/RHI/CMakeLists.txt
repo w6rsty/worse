@@ -29,7 +29,7 @@ target_link_libraries(${MODULE_NAME}
         DXC
         spirv-cross-hlsl
     PUBLIC
-       volk_headers
+        volk_headers
         Worse::Core
         Worse::FileSystem
         Worse::Asset

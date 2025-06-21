@@ -1,5 +1,5 @@
-#include "Input/Input.hpp"
 #include "Definitions.hpp"
+#include "Input/Input.hpp"
 #include "Input/Controller.hpp"
 
 #include "SDL3/SDL_events.h"
@@ -11,8 +11,8 @@ namespace worse
     namespace
     {
         std::shared_ptr<Controller> s_controller = nullptr;
-        math::Vector2 s_thumbStickLeft{0.0f, 0.0f};
-        math::Vector2 s_thumbStickRight{0.0f, 0.0f};
+        Vector2 s_thumbStickLeft{0.0f, 0.0f};
+        Vector2 s_thumbStickRight{0.0f, 0.0f};
         float s_triggerLeft{0.0f};
         float s_triggerRight{0.0f};
 
@@ -246,24 +246,24 @@ namespace worse
         return (s_controller != nullptr) && s_controller->isConnected();
     }
 
-    math::Vector2 const& Input::getThumbStickLeft()
+    Vector2 const& Input::getThumbStickLeft()
     {
         return s_thumbStickLeft;
     }
 
-    math::Vector2 const& Input::getThumbStickRight()
+    Vector2 const& Input::getThumbStickRight()
     {
         return s_thumbStickRight;
     }
 
     float Input::getThumbStickLeftDistance()
     {
-        return s_thumbStickLeft.length();
+        return length(s_thumbStickLeft);
     }
 
     float Input::getThumbStickRightDistance()
     {
-        return s_thumbStickRight.length();
+        return length(s_thumbStickRight);
     }
 
     float Input::getTriggerLeft()

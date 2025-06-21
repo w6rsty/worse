@@ -7,8 +7,8 @@ namespace worse
     class Camera
     {
     public:
-        math::Vector3 position       = {0.0f, 0.0f, 0.0f};
-        math::Quaternion orientation = {1.0f, 0.0f, 0.0f, 0.0f};
+        Vector3 position       = {0.0f, 0.0f, 0.0f};
+        Quaternion orientation = {1.0f, 0.0f, 0.0f, 0.0f};
 
         float near        = 0.1f;
         float far         = 1000.0f;

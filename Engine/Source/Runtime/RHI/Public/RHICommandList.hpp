@@ -76,6 +76,9 @@ namespace worse
         void copy(RHITexture const* source, RHITexture const* destination);
         void copy(RHITexture const* source, RHISwapchain const* destination);
 
+        void pushConstants(
+            std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
+
         void setBufferVertex(RHIBuffer* buffer);
         void setBufferIndex(RHIBuffer* buffer);
 

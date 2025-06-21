@@ -53,7 +53,7 @@ namespace worse
     void Renderer::createRendererTarget()
     {
         // clang-format off
-        math::Vector2 renderResolution = getResolutionRender();
+        Vector2 renderResolution = getResolutionRender();
         std::uint32_t renderWidth  = static_cast<std::uint32_t>(renderResolution.x);
         std::uint32_t renderHeight = static_cast<std::uint32_t>(renderResolution.y);
 

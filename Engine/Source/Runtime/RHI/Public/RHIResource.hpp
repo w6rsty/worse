@@ -1,6 +1,7 @@
 #pragma once
 #include "RHIDefinitions.hpp"
 
+#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -103,11 +104,12 @@ namespace worse
     public:
         virtual ~RHIResourceProvider() = default;
 
-        virtual std::pair<RHIShader*, RHIShader*>
-        getPlaceholderShader() const                                       = 0;
-        virtual RHITexture* getPlaceholderTexture() const                  = 0;
-        virtual RHIBuffer* getFrameConstantBuffer() const                  = 0;
+        // clang-format off
+        virtual std::pair<RHIShader*, RHIShader*> getPlaceholderShader() const = 0;
+        virtual RHITexture* getPlaceholderTexture() const = 0;
+        virtual RHIBuffer* getFrameConstantBuffer() const = 0;
         virtual EnumArray<RHISamplerType, RHISampler*> getSamplers() const = 0;
+        // clang-format on
 
         // make sure all resources are ready
         bool validate()

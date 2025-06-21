@@ -15,13 +15,11 @@ struct FrameConstantData
     float4x4 viewProjection;
 };
 
-cbuffer FrameConstantBuffer : register(b0, space0)
+struct PushConstantData
 {
-    FrameConstantData frameData;
+    float4x4 model;
+    uint materialIndex;
 };
-
-SamplerComparisonState samplerComparison  : register(s0, space0);
-SamplerState           samplers[8]        : register(s1, space0);
 
 static const uint samplerPointClampEdge;
 static const uint samplerPointClampBorder;
@@ -32,9 +30,16 @@ static const uint samplerBilinearWrap;
 static const uint samplerTrilinearClamp;
 static const uint samplerAnisotropicClamp;
 
-Texture2D<float4> materialTextures[] : register(t0, space0);
+// ================================================================================
+// global set
+// ================================================================================
 
-// RWTexture2D<float4> albedo : register(u0, space1);
+cbuffer FrameConstantBuffer               : register(b0, space0) { FrameConstantData frameData; };
+SamplerComparisonState samplerComparison  : register(s0, space0);
+SamplerState samplers[8]                  : register(s1, space0);
+Texture2D<float4> materialTextures[]      : register(t0, space0);
+
+[[vk::push_constant]] PushConstantData pushData;
 
 struct VertexPosUvNrmTan
 {
@@ -71,12 +76,8 @@ struct PixelOutput
 PixelOutput main_ps(VertexOutput input)
 {
     PixelOutput output;
-
-    float2 uv = float2(input.uv.x, 1.0 - input.uv.y);
     
-    float4 textureColor = materialTextures[0].Sample(samplers[samplerBilinearWrap], uv);
-    
-    output.color = textureColor;
+    output.color = float4(1.0, 0.0, 1.0, 1.0);
 
     return output;
 }

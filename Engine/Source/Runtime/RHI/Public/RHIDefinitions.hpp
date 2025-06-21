@@ -369,9 +369,9 @@ namespace worse
         {
             // clang-format off
         case RHIDescriptorType::Texture:            return "Texture";
-        case RHIDescriptorType::TextureStorage:     return "TextureStorage";
-        case RHIDescriptorType::PushConstantBuffer: return "PushConstantBuffer";
-        case RHIDescriptorType::ConstantBuffer:     return "ConstantBuffer";
+        case RHIDescriptorType::TextureStorage:     return "RWTexture";
+        case RHIDescriptorType::PushConstantBuffer: return "PushConstant";
+        case RHIDescriptorType::ConstantBuffer:     return "cbuffer";
         case RHIDescriptorType::StructuredBuffer:   return "StructuredBuffer";
         default:                                    return "Unknown";
             // clang-format on
@@ -666,7 +666,8 @@ namespace worse
         constexpr std::uint32_t MAX_DESCRIPTORS             = 2048;
         constexpr std::uint32_t MAX_DESCRIPTOR_SETS         = 512;
         constexpr std::uint32_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
-        constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB
+        constexpr std::size_t MAX_BUFFER_UPDATE_SIZE        = 64 * 1024; // 64 KB
+        constexpr std::size_t MAX_PUSH_CONSTANT_SIZE        = 128; // 128 bytes
 
         constexpr std::uint32_t HLSL_REGISTER_SHIFT_B = 0;
         constexpr std::uint32_t HLSL_REGISTER_SHIFT_S = 100;

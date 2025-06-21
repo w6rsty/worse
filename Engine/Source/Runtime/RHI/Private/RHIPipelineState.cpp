@@ -174,13 +174,16 @@ namespace worse
         }
 
         // remove space != 1
-        descriptors.erase(std::remove_if(descriptors.begin(),
-                                         descriptors.end(),
-                                         [](RHIDescriptor const& descriptor)
-                                         {
-                                             return descriptor.space != 1;
-                                         }),
-                          descriptors.end());
+        descriptors.erase(
+            std::remove_if(descriptors.begin(),
+                           descriptors.end(),
+                           [](RHIDescriptor const& descriptor)
+                           {
+                               return (descriptor.space != 1) &&
+                                      (descriptor.type !=
+                                       RHIDescriptorType::PushConstantBuffer);
+                           }),
+            descriptors.end());
 
         // helper for generating same hash for same descriptor set with
         // different order

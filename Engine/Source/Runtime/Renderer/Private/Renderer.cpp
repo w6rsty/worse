@@ -1,4 +1,5 @@
 #include "Math/Math.hpp"
+#include "Math/Vector.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "RHIVertex.hpp"
 #include "Window.hpp"
@@ -12,6 +13,7 @@
 #include "Descriptor/RHITexture.hpp"
 #include "Descriptor/RHIDescriptor.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "RendererBuffer.hpp"
 
 #include <memory>
 
@@ -21,30 +23,31 @@ namespace worse
     {
         float deltaTime;
         float time;
-        math::Vector2 padding0; // align to 16 bytes
+        Vector2 padding0; // align to 16 bytes
 
-        math::Vector3 cameraPosition;
+        Vector3 cameraPosition;
         float cameraNear;
-        math::Vector3 cameraForward;
+        Vector3 cameraForward;
         float cameraFar;
-        math::Vector4 padding1; // align to 16 bytes
+        Vector4 padding1; // align to 16 bytes
 
-        math::Matrix4 view;
-        math::Matrix4 projection;
-        math::Matrix4 viewProjection;
+        Matrix4 view;
+        Matrix4 projection;
+        Matrix4 viewProjection;
     };
 
     namespace
     {
-        math::Vector2 resolutionRender = math::Vector2{0, 0};
-        math::Vector2 resolutionOutput = math::Vector2{0, 0};
-        RHIViewport viewport           = RHIViewport(0, 0, 0, 0);
+        Vector2 resolutionRender = Vector2{0, 0};
+        Vector2 resolutionOutput = Vector2{0, 0};
+        RHIViewport viewport     = RHIViewport(0, 0, 0, 0);
 
         std::shared_ptr<RHISwapchain> swapchain = nullptr;
         RHICommandList* m_cmdList               = nullptr;
 
         FrameConstantData frameConstantData            = {};
         std::shared_ptr<RHIBuffer> frameConstantBuffer = nullptr;
+        PushConstantData pushConstantData              = {};
 
         std::shared_ptr<RHIBuffer> testVbo = nullptr;
         std::shared_ptr<RHIBuffer> testIbo = nullptr;
@@ -288,6 +291,11 @@ namespace worse
                 m_cmdList->updateSpecificSet(updates);
                 uint32_t groupCountX = (resolutionOutput.x + 7) / 8;
                 uint32_t groupCountY = (resolutionOutput.y + 7) / 8;
+                pushConstantData.setF30(Vector3{0.2, 0.3, 0.4});
+                m_cmdList->pushConstants(
+                    std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE>(
+                        reinterpret_cast<std::byte*>(&pushConstantData),
+                        sizeof(PushConstantData)));
                 m_cmdList->dispatch(groupCountX, groupCountY, 1);
             }
 
@@ -342,12 +350,12 @@ namespace worse
         return viewport;
     }
 
-    math::Vector2 Renderer::getResolutionRender()
+    Vector2 Renderer::getResolutionRender()
     {
         return resolutionRender;
     }
 
-    math::Vector2 Renderer::getResolutionOutput()
+    Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
     }

@@ -580,6 +580,34 @@ namespace worse
                       RHIImageLayout::PresentSource);
     }
 
+    void RHICommandList::pushConstants(
+        std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data)
+    {
+        WS_ASSERT(m_state == RHICommandListState::Recording);
+        WS_ASSERT(m_pipeline);
+
+        VkShaderStageFlags stageFlags = 0;
+        if (m_pso.shaders[RHIShaderType::Compute])
+        {
+            stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
+        }
+        if (m_pso.shaders[RHIShaderType::Vertex])
+        {
+            stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+        }
+        if (m_pso.shaders[RHIShaderType::Pixel])
+        {
+            stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
+
+        vkCmdPushConstants(m_handle.asValue<VkCommandBuffer>(),
+                           m_pipeline->getLayout().asValue<VkPipelineLayout>(),
+                           stageFlags,
+                           0,
+                           data.size(),
+                           data.data());
+    }
+
     void RHICommandList::setBufferVertex(RHIBuffer* buffer)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);

@@ -163,19 +163,27 @@ namespace worse
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer,   shaderStage, m_descriptors);
         // clang-format on
 
+        std::string logMessage = m_name + "\n";
         for (RHIDescriptor& descriptor : m_descriptors)
         {
-            std::string typeName = rhiDescriptorTypeToString(descriptor.type);
-            WS_LOG_DEBUG("SPIRV-Cross",
-                         "(type: {:>15}, slot: {:>3}, space: {:>2}, length: {:>2}) {}",
-                         typeName,
-                         descriptor.slot,
-                         descriptor.space,
-                         descriptor.isArray
-                             ? std::to_string(descriptor.arrayLength)
-                             : "1",
-                         descriptor.name);
+            std::string typeName  = rhiDescriptorTypeToString(descriptor.type);
+            std::string arrayName = descriptor.isArray
+                                        ? std::to_string(descriptor.arrayLength)
+                                        : "0";
+            if (descriptor.isArray)
+            {
+                arrayName = "bindless";
+            }
+            logMessage += std::format(
+                "(type: {:>15}, slot: {:>3}, space: {:>2}, length: {:>2}) "
+                "{}\n",
+                typeName,
+                descriptor.slot,
+                descriptor.space,
+                arrayName,
+                descriptor.name);
         }
+        WS_LOG_DEBUG("SPIRV-Cross", "{}", logMessage);
     }
 
 } // namespace worse

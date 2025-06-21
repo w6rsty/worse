@@ -73,19 +73,19 @@ namespace worse
         // Mouse
         static void setMouseVisible(bool const visible);
         static bool getMouseVisible();
-        static math::Vector2 const& getMouseDelta();
-        static math::Vector2 const& getMouseWheelDelta();
+        static Vector2 const& getMouseDelta();
+        static Vector2 const& getMouseWheelDelta();
         // System position
-        static void setMousePositionGlobal(math::Vector2 const& position);
-        static math::Vector2 const& getMousePositionGlobal();
-        static math::Vector2 getMousePositionRelativeToWindow();
-        static math::Vector2 getMousePositionRelativeToViewport();
+        static void setMousePositionGlobal(Vector2 const& position);
+        static Vector2 const& getMousePositionGlobal();
+        static Vector2 getMousePositionRelativeToWindow();
+        static Vector2 getMousePositionRelativeToViewport();
 
         // Gamepad
         static bool isGamepadConnected();
         // safe to call even if no controller is connected
-        static math::Vector2 const& getThumbStickLeft();
-        static math::Vector2 const& getThumbStickRight();
+        static Vector2 const& getThumbStickLeft();
+        static Vector2 const& getThumbStickRight();
         static float getThumbStickLeftDistance();
         static float getThumbStickRightDistance();
         static float getTriggerLeft();
