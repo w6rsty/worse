@@ -4,6 +4,8 @@
 namespace worse
 {
 
+#ifdef DEBUG
+
 #include <cassert>
 #define WS_ASSERT(expression)                                                  \
     if (!(expression))                                                         \
@@ -21,6 +23,13 @@ namespace worse
         ::worse::Logger::instance()->waitShutdown();                           \
         assert(expression && message);                                         \
     }
+
+#else
+
+#define WS_ASSERT(expression)
+#define WS_ASSERT_MSG(expression, message)
+
+#endif
 
 #define UNIMPLEMENTED() WS_ASSERT_MSG(false, "Unimplemented code")
 

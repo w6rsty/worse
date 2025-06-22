@@ -1,4 +1,5 @@
 #include "Math/Math.hpp"
+#include "Math/Transform.hpp"
 #include "Math/Vector.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "RHIVertex.hpp"
@@ -291,11 +292,14 @@ namespace worse
                 m_cmdList->updateSpecificSet(updates);
                 uint32_t groupCountX = (resolutionOutput.x + 7) / 8;
                 uint32_t groupCountY = (resolutionOutput.y + 7) / 8;
-                pushConstantData.setF30(Vector3{0.2, 0.3, 0.4});
-                m_cmdList->pushConstants(
-                    std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE>(
-                        reinterpret_cast<std::byte*>(&pushConstantData),
-                        sizeof(PushConstantData)));
+                pushConstantData.setModel(makeTranslation(Vector3::ONE()))
+                    .setF2({0.1, 0.2})
+                    .setF30({0.3, 0.4, 0.5})
+                    .setF31({0.6, 0.7, 0.8})
+                    .setF4({0.9, 1.0, 1.1, 1.2})
+                    .setMaterialId(42)
+                    .setTransparent(true);
+                m_cmdList->pushConstants(pushConstantData.asSpan());
                 m_cmdList->dispatch(groupCountX, groupCountY, 1);
             }
 

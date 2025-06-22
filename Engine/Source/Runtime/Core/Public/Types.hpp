@@ -22,41 +22,6 @@ namespace worse
         NonMovable& operator=(NonMovable&&)      = delete;
     };
 
-    class Bool32
-    {
-    public:
-        constexpr Bool32() : m_value(0)
-        {
-        }
-        constexpr Bool32(bool value) : m_value(value ? 1 : 0)
-        {
-        }
-
-        constexpr Bool32& operator=(bool value)
-        {
-            m_value = value ? 1 : 0;
-            return *this;
-        }
-
-        [[nodiscard]] constexpr bool operator==(Bool32 const& rhs) const
-        {
-            return m_value == rhs.m_value;
-        }
-
-        [[nodiscard]] constexpr bool operator!=(Bool32 const& rhs) const
-        {
-            return !(*this == rhs);
-        }
-
-        [[nodiscard]] explicit operator bool() const
-        {
-            return m_value != 0;
-        }
-
-    private:
-        std::uint32_t m_value;
-    };
-
     /// Helper class to define bit flags.
     /// Usage:
     ///     struct State

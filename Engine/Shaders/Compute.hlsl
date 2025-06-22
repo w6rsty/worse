@@ -41,11 +41,12 @@ Texture2D<float4> materialTextures[]      : register(t0, space0);
 
 [[vk::push_constant]] PushConstantData pushData;
 
-float2 getF2() { return float2(pushData.values._m00, pushData.values._m10); }
-float3 getF30() { return float3(pushData.values._m20, pushData.values._m30, pushData.values._m01); }
-float3 getF31() { return float3(pushData.values._m11, pushData.values._m21, pushData.values._m31); }
-float4 getF4() { return float4(pushData.values._m02, pushData.values._m12, pushData.values._m22, pushData.values._m32); }
-uint getMaterialIndex() { return asuint(pushData.values._m30); }
+float2 getF2()          { return float2(pushData.values._m00, pushData.values._m10); }
+float3 getF30()         { return float3(pushData.values._m20, pushData.values._m30, pushData.values._m01); }
+float3 getF31()         { return float3(pushData.values._m11, pushData.values._m21, pushData.values._m31); }
+float4 getF4()          { return float4(pushData.values._m02, pushData.values._m12, pushData.values._m22, pushData.values._m32); }
+uint   getMaterialId()  { return pushData.values._m03; }
+bool   getTransparent() { return pushData.values._m13 != 0; }
 
 Texture2D<float4> albedoTexture : register(t0, space1);
 RWTexture2D<float4> output : register(u0, space1);
