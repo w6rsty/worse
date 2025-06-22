@@ -29,17 +29,17 @@ namespace worse
                supporteImagedExtensions.end();
     }
 
-    bool isPathExists(std::filesystem::path const& path)
+    bool FileSystem::isPathExists(std::filesystem::path const& path)
     {
         return std::filesystem::exists(path);
     }
 
-    bool isFileExists(std::filesystem::path const& path)
+    bool FileSystem::isFileExists(std::filesystem::path const& path)
     {
         return std::filesystem::is_regular_file(path);
     }
 
-    bool isDirectoryExists(std::filesystem::path const& path)
+    bool FileSystem::isDirectoryExists(std::filesystem::path const& path)
     {
         return std::filesystem::is_directory(path);
     }

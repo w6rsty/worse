@@ -1,7 +1,6 @@
 #pragma once
 #include "RHIDefinitions.hpp"
 
-#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>

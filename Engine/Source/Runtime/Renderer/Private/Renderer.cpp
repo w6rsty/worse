@@ -1,6 +1,4 @@
 #include "Math/Math.hpp"
-#include "Math/Transform.hpp"
-#include "Math/Vector.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "RHIVertex.hpp"
 #include "Window.hpp"
@@ -20,22 +18,6 @@
 
 namespace worse
 {
-    struct FrameConstantData
-    {
-        float deltaTime;
-        float time;
-        Vector2 padding0; // align to 16 bytes
-
-        Vector3 cameraPosition;
-        float cameraNear;
-        Vector3 cameraForward;
-        float cameraFar;
-        Vector4 padding1; // align to 16 bytes
-
-        Matrix4 view;
-        Matrix4 projection;
-        Matrix4 viewProjection;
-    };
 
     namespace
     {
@@ -132,7 +114,6 @@ namespace worse
             Renderer::createTextures();
             Renderer::createSamplers();
 
-            frameConstantData.time = 0.0;
             frameConstantBuffer =
                 std::make_shared<RHIBuffer>(RHIBufferType::Constant,
                                             sizeof(FrameConstantData),
@@ -290,17 +271,11 @@ namespace worse
                                            RHIDescriptorType::TextureStorage},
                 };
                 m_cmdList->updateSpecificSet(updates);
-                uint32_t groupCountX = (resolutionOutput.x + 7) / 8;
-                uint32_t groupCountY = (resolutionOutput.y + 7) / 8;
-                pushConstantData.setModel(makeTranslation(Vector3::ONE()))
-                    .setF2({0.1, 0.2})
-                    .setF30({0.3, 0.4, 0.5})
-                    .setF31({0.6, 0.7, 0.8})
-                    .setF4({0.9, 1.0, 1.1, 1.2})
-                    .setMaterialId(42)
-                    .setTransparent(true);
+                pushConstantData.setF30({0.3, 0.4, 0.5});
                 m_cmdList->pushConstants(pushConstantData.asSpan());
-                m_cmdList->dispatch(groupCountX, groupCountY, 1);
+                m_cmdList->dispatch(resolutionOutput.x / 8,
+                                    resolutionOutput.y / 8,
+                                    1);
             }
 
             blitToBackBuffer(m_cmdList);

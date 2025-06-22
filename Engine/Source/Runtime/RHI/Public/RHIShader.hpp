@@ -3,9 +3,11 @@
 #include "RHIVertex.hpp"
 #include "Descriptor/RHIDescriptor.hpp"
 
+#include <regex>
 #include <string>
-#include <filesystem>
 #include <vector>
+#include <filesystem>
+#include <unordered_set>
 
 namespace worse
 {
@@ -15,6 +17,19 @@ namespace worse
         Compiling,
         CompiledSuccess,
         CompiledFailure,
+    };
+
+    class PreprocessIncludesParser
+    {
+        std::string recursiveParse(std::filesystem::path const& path);
+
+    public:
+        std::string parse(std::filesystem::path const& path);
+
+    private:
+        std::unordered_set<std::filesystem::path> m_includes;
+
+        std::regex const includeRegex{R"(^\s*#include\s+\"([^"]+)\")"};
     };
 
     class RHIShader : public RHIResource
@@ -44,6 +59,8 @@ namespace worse
         // clang-format on
 
     private:
+        inline static PreprocessIncludesParser preprocessParser;
+
         std::filesystem::path m_path;
         std::string m_source;
 

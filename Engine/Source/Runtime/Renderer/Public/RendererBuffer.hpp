@@ -7,6 +7,24 @@
 namespace worse
 {
 
+    class FrameConstantData
+    {
+    public:
+        float deltaTime = 0.0f;
+        float time      = 0.0f;
+        Vector2 padding0; // align to 16 bytes
+
+        Vector3 cameraPosition;
+        float cameraNear;
+        Vector3 cameraForward;
+        float cameraFar;
+        Vector4 padding1; // align to 16 bytes
+
+        Matrix4 view;
+        Matrix4 projection;
+        Matrix4 viewProjection;
+    };
+
     class PushConstantData
     {
     public:
