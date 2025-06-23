@@ -341,9 +341,10 @@ namespace worse
     {
         Texture,
         TextureStorage,
-        PushConstantBuffer,
-        ConstantBuffer,
+        PushConstant,
+        UniformBuffer,
         StructuredBuffer,
+        RWStructuredBuffer,
         Max
     };
 
@@ -353,11 +354,12 @@ namespace worse
         switch (type)
         {
             // clang-format off
-        case RHIDescriptorType::Texture:          return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        case RHIDescriptorType::TextureStorage:   return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        case RHIDescriptorType::ConstantBuffer:   return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        case RHIDescriptorType::StructuredBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        default:                                  return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        case RHIDescriptorType::Texture:            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case RHIDescriptorType::TextureStorage:     return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case RHIDescriptorType::UniformBuffer:      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case RHIDescriptorType::StructuredBuffer:
+        case RHIDescriptorType::RWStructuredBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        default:                                    return VK_DESCRIPTOR_TYPE_MAX_ENUM;
             // clang-format on
         }
     }
@@ -370,9 +372,10 @@ namespace worse
             // clang-format off
         case RHIDescriptorType::Texture:            return "Texture";
         case RHIDescriptorType::TextureStorage:     return "RWTexture";
-        case RHIDescriptorType::PushConstantBuffer: return "PushConstant";
-        case RHIDescriptorType::ConstantBuffer:     return "cbuffer";
+        case RHIDescriptorType::PushConstant:       return "PushConstant";
+        case RHIDescriptorType::UniformBuffer:      return "UniformBuffer";
         case RHIDescriptorType::StructuredBuffer:   return "StructuredBuffer";
+        case RHIDescriptorType::RWStructuredBuffer: return "RWStructuredBuffer";
         default:                                    return "Unknown";
             // clang-format on
         }
@@ -666,8 +669,8 @@ namespace worse
         constexpr std::uint32_t MAX_DESCRIPTORS             = 2048;
         constexpr std::uint32_t MAX_DESCRIPTOR_SETS         = 512;
         constexpr std::uint32_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
-        constexpr std::size_t MAX_BUFFER_UPDATE_SIZE        = 64 * 1024; // 64 KB
-        constexpr std::size_t MAX_PUSH_CONSTANT_SIZE        = 128; // 128 bytes
+        constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB
+        constexpr std::size_t MAX_PUSH_CONSTANT_SIZE = 128;       // 128 bytes
 
         constexpr std::uint32_t HLSL_REGISTER_SHIFT_B = 0;
         constexpr std::uint32_t HLSL_REGISTER_SHIFT_S = 100;

@@ -38,6 +38,17 @@ namespace worse
         Window::tick();
         Input::tick();
 
+        static float radius = 2.0f;
+        if (Input::isKeyDown(KeyCode::ArrowUp))
+        {
+            radius += 1.0f;
+        }
+        if (Input::isKeyDown(KeyCode::ArrowDown))
+        {
+            radius -= 1.0f;
+        }
+        Renderer::setPushParameters(radius, 0.0f);
+
         Renderer::tick();
     }
 

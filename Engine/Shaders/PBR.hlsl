@@ -28,19 +28,7 @@ PixelOutput main_ps(VertexOutput input)
 {
     PixelOutput output;
 
-    float4 sampledColor = float4(0.0, 0.0, 0.0, 1.0);
-    
-    float2 centeredUV = input.uv - 0.5;
-    float tilt = centeredUV.x + centeredUV.y * 0.5;
-    
-    if (tilt < 0.0)
-    {
-        sampledColor = materialTextures[0].Sample(samplers[samplerPointClampEdge], input.uv);
-    }
-    else
-    {
-        sampledColor = materialTextures[1].Sample(samplers[samplerPointClampEdge], input.uv);
-    }
+    float4 sampledColor = materialTextures[0].Sample(samplers[samplerPointClampEdge], input.uv);
 
     output.color = sampledColor;
 

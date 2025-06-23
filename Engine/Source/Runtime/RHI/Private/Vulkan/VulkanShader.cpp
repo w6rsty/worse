@@ -20,12 +20,12 @@ namespace worse
             switch (descriptorType)
             {
                 // clang-format off
-            case RHIDescriptorType::Texture:            resources = shaderResources.separate_images;       break;
-            case RHIDescriptorType::TextureStorage:     resources = shaderResources.storage_images;        break;
-            case RHIDescriptorType::PushConstantBuffer: resources = shaderResources.push_constant_buffers; break;
-            case RHIDescriptorType::ConstantBuffer:     resources = shaderResources.uniform_buffers;       break;
-            case RHIDescriptorType::StructuredBuffer:   resources = shaderResources.storage_buffers;       break;
-            default:                                                                                       break;
+            case RHIDescriptorType::Texture:          resources = shaderResources.separate_images;       break;
+            case RHIDescriptorType::TextureStorage:   resources = shaderResources.storage_images;        break;
+            case RHIDescriptorType::PushConstant:     resources = shaderResources.push_constant_buffers; break;
+            case RHIDescriptorType::UniformBuffer:    resources = shaderResources.uniform_buffers;       break;
+            case RHIDescriptorType::StructuredBuffer: resources = shaderResources.storage_buffers;       break;
+            default:                                                                                     break;
                 // clang-format on
             }
 
@@ -49,8 +49,8 @@ namespace worse
                 descriptor.layout        = layout;
 
                 auto spirvType = hlsl.get_type(resource.type_id);
-                if ((descriptorType == RHIDescriptorType::PushConstantBuffer) ||
-                    (descriptorType == RHIDescriptorType::ConstantBuffer))
+                if ((descriptorType == RHIDescriptorType::PushConstant) ||
+                    (descriptorType == RHIDescriptorType::UniformBuffer))
                 {
                     descriptor.size = static_cast<std::uint32_t>(hlsl.get_declared_struct_size(spirvType));
                 }
@@ -93,6 +93,7 @@ namespace worse
             L"-fvk-t-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_T), L"all",
             L"-fvk-s-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_S), L"all",
             L"-fvk-u-shift", std::to_wstring(RHIConfig::HLSL_REGISTER_SHIFT_U), L"all",
+            L"-Zi",
         };
         // clang-format on
 
@@ -152,15 +153,15 @@ namespace worse
         // clang-format off
         RHIShaderStageFlags shaderStage = rhiShaderStageFlags(shaderType);
         // Texture
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::Texture,            shaderStage, m_descriptors);
+        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::Texture,          shaderStage, m_descriptors);
         // RWTexture
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::TextureStorage,     shaderStage, m_descriptors);
+        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::TextureStorage,   shaderStage, m_descriptors);
         // [[vk::push_constant]]
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::PushConstantBuffer, shaderStage, m_descriptors);
+        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::PushConstant,     shaderStage, m_descriptors);
         // cbuffer / uniform buffer
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::ConstantBuffer,     shaderStage, m_descriptors);
+        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::UniformBuffer,    shaderStage, m_descriptors);
         // RWStructuredBuffer / storage buffer
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer,   shaderStage, m_descriptors);
+        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer, shaderStage, m_descriptors);
         // clang-format on
 
         std::string logMessage = m_name + "\n";

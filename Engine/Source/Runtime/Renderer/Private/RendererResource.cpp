@@ -92,7 +92,7 @@ namespace worse
         std::filesystem::path testPathA = "/Users/w6rsty/Downloads/normal.png";
         textures[RendererTexture::TestA] = std::make_shared<RHITexture>(testPathA);
 
-        std::filesystem::path testPathB = "/Users/w6rsty/Downloads/tangent.png";
+        std::filesystem::path testPathB = "/Users/w6rsty/Pictures/cornell.png";
         textures[RendererTexture::TestB] = std::make_shared<RHITexture>(testPathB);
 
         std::uint32_t white = 0xFFFFFFFF;

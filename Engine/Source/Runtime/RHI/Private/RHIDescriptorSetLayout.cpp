@@ -12,7 +12,7 @@ namespace worse
         m_hash = descriptorHash;
         for (RHIDescriptor const& descriptor : descriptors)
         {
-            if (descriptor.type == RHIDescriptorType::PushConstantBuffer)
+            if (descriptor.type == RHIDescriptorType::PushConstant)
             {
                 m_pushConstants.push_back(descriptor);
             }

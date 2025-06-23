@@ -58,6 +58,12 @@ namespace worse
         PushConstantData& setF4(Vector4 const& f4)              { values.f4 = f4; return *this; }
         PushConstantData& setMaterialId(std::uint32_t const id) { values.materialId = static_cast<std::uint32_t>(id); return *this; }
         PushConstantData& setTransparent(bool const enable)     { values.transparent = enable ? 1.0f : 0.0f; return *this; }
+        PushConstantData& setPadding(float const p0, float const p1)
+        {
+            values.padding[0] = p0;
+            values.padding[1] = p1;
+            return *this;
+        }
         // clang-format on
     };
 

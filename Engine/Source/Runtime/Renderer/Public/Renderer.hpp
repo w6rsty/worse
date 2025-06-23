@@ -47,6 +47,8 @@ namespace worse
         static Vector2 getResolutionRender();
         static Vector2 getResolutionOutput();
 
+        static void setPushParameters(float a, float b);
+
     private:
         static inline std::uint64_t s_frameCount = 0;
     };

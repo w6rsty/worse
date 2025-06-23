@@ -8,13 +8,13 @@ namespace worse
     {
         void uploadTexture(RHITexture& texture)
         {
+            // clang-format off
             std::size_t size = texture.getMip(0, 0).bytes.size();
 
             RHINativeHandle stagingBuffer = RHIDevice::memoryBufferCreate(
                 static_cast<std::uint32_t>(size),
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 texture.getMip(0, 0).bytes.data(),
                 "texture_staging_buffer");
             WS_ASSERT(stagingBuffer);
@@ -27,19 +27,18 @@ namespace worse
                                        RHIImageLayout::TransferDestination);
 
                 VkBufferImageCopy2 copyRegion = {};
-                copyRegion.sType        = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2;
-                copyRegion.bufferOffset = 0;
-                copyRegion.bufferRowLength   = 0;
-                copyRegion.bufferImageHeight = 0;
-                copyRegion.imageSubresource.aspectMask =
-                    vulkanImageAspectFlags(texture.getFormat());
+                copyRegion.sType                           = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2;
+                copyRegion.bufferOffset                    = 0;
+                copyRegion.bufferRowLength                 = 0;
+                copyRegion.bufferImageHeight               = 0;
+                copyRegion.imageSubresource.aspectMask     = vulkanImageAspectFlags(texture.getFormat());
                 copyRegion.imageSubresource.baseArrayLayer = 0;
                 copyRegion.imageSubresource.layerCount     = 1;
                 copyRegion.imageSubresource.mipLevel       = 0;
                 copyRegion.imageOffset                     = {0, 0, 0};
-                copyRegion.imageExtent = {texture.getWidth(),
-                                          texture.getHeight(),
-                                          texture.getDepth()};
+                copyRegion.imageExtent                     = {texture.getWidth(),
+                                                              texture.getHeight(),
+                                                              texture.getDepth()};
 
                 VkCopyBufferToImageInfo2 infoCopy = {};
                 infoCopy.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2;
@@ -49,14 +48,13 @@ namespace worse
                 infoCopy.regionCount    = 1;
                 infoCopy.pRegions       = &copyRegion;
 
-                vkCmdCopyBufferToImage2KHR(
-                    cmdList->getHandle().asValue<VkCommandBuffer>(),
-                    &infoCopy);
+                vkCmdCopyBufferToImage2KHR(cmdList->getHandle().asValue<VkCommandBuffer>(), &infoCopy);
 
                 RHIDevice::cmdImmediateSubmit(cmdList);
 
                 RHIDevice::memoryBufferDestroy(stagingBuffer);
             }
+            // clang-format on
         }
 
         void createImageView(RHINativeHandle image, RHINativeHandle& imageView,

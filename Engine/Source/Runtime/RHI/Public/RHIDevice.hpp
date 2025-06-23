@@ -18,11 +18,19 @@ namespace worse
         static void setResourceProvider(RHIResourceProvider* provider);
         static RHIResourceProvider* getResourceProvider();
 
+        // =====================================================================
+        // Queues
+        // =====================================================================
+
         // wait graphics and compute queues
         static void queueWaitAll();
         static std::uint32_t getQueueIndex(RHIQueueType const type);
         static RHIQueue* getQueue(RHIQueueType const type);
         static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
+
+        // =====================================================================
+        // Descriptor
+        // =====================================================================
 
         // reset allocated descriptors
         static void resetDescriptorAllocator();
@@ -43,6 +51,10 @@ namespace worse
         // get descriptor set layout from pool or create a new one
         static RHIPipeline* getPipeline(RHIPipelineState const& pso);
 
+        // =====================================================================
+        // Memory
+        // =====================================================================
+
         static void memoryTextureCreate(RHITexture* texture);
         static void memoryTextureDestroy(RHINativeHandle handle);
         static RHINativeHandle memoryBufferCreate(std::uint32_t size,
@@ -51,10 +63,19 @@ namespace worse
                                                   void const* data,
                                                   std::string_view name);
         static void memoryBufferDestroy(RHINativeHandle handle);
+        // get mapped buffer data pointer from VMA allocation map
         static void* memoryGetMappedBufferData(RHINativeHandle handle);
+
+        // =====================================================================
+        // RHI GC
+        // =====================================================================
 
         static void deletionQueueAdd(RHINativeHandle const& resource);
         static void deletionQueueFlush();
+
+        // =====================================================================
+        // Immediate Command
+        // =====================================================================
 
         static RHICommandList* cmdImmediateBegin(RHIQueueType const type);
         static void cmdImmediateSubmit(RHICommandList* cmdList);

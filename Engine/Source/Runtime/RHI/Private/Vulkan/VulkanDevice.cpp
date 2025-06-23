@@ -770,9 +770,6 @@ namespace worse
                              texture->getName().c_str());
         RHIDevice::setResourceName(texture->getImage(), texture->getName());
 
-        // WS_LOG_DEBUG("VMA",
-        //              "Allocated textue: 0x{:x}",
-        //              texture->m_image.asValue());
         vma::saveAllocation(allocation, texture->getImage());
     }
 
@@ -808,7 +805,7 @@ namespace worse
         infoAllocCreate.usage         = VMA_MEMORY_USAGE_AUTO;
         infoAllocCreate.requiredFlags = memoryProperty;
 
-        bool mappable = (memoryProperty & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0;
+        bool mappable = memoryProperty & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
         if (mappable)
         {
             infoAllocCreate.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -832,31 +829,21 @@ namespace worse
         WS_ASSERT_VK(result);
 
         RHINativeHandle buffer = RHINativeHandle{vkBuffer, RHINativeHandleType::Buffer};
-        vmaSetAllocationName(vma::allocator,
-                             allocation,
-                             name.data());
+        vmaSetAllocationName(vma::allocator, allocation, name.data());
         RHIDevice::setResourceName(buffer, name);
 
-        if (data)
+        if (mappable && data)
         {
-            WS_ASSERT(mappable);
-
             void* mappedData = nullptr;
             // get mapped data pointer
             WS_ASSERT_VK(vmaMapMemory(vma::allocator, allocation, &mappedData));
-
             
             std::memcpy(mappedData, data, size);
-            WS_ASSERT_VK(vmaFlushAllocation(vma::allocator,
-                                            allocation,
-                                            0,
-                                            size));
+            // synchronize the memory
+            WS_ASSERT_VK(vmaFlushAllocation(vma::allocator, allocation, 0, size));
             vmaUnmapMemory(vma::allocator, allocation);
         }
 
-        // WS_LOG_DEBUG("VMA", "Allocated buffer: 0x{:x} (size: {})", 
-        //     buffer.asValue(), size
-        // );
         vma::saveAllocation(allocation, buffer);
 
         return buffer;

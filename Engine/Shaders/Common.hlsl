@@ -47,6 +47,7 @@ float3 getF31()         { return float3(pushData.values._m11, pushData.values._m
 float4 getF4()          { return float4(pushData.values._m02, pushData.values._m12, pushData.values._m22, pushData.values._m32); }
 uint   getMaterialId()  { return pushData.values._m03; }
 bool   getTransparent() { return pushData.values._m13 != 0; }
+float2 getPadding()     { return float2(pushData.values._m23, pushData.values._m33); }
 
 struct VertexPos
 {

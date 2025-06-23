@@ -35,6 +35,8 @@ namespace worse
         std::shared_ptr<RHIBuffer> testVbo = nullptr;
         std::shared_ptr<RHIBuffer> testIbo = nullptr;
 
+        std::shared_ptr<RHIBuffer> testSsbo = nullptr;
+
         class RendererResourceProvider : public RHIResourceProvider
         {
         public:
@@ -115,7 +117,7 @@ namespace worse
             Renderer::createSamplers();
 
             frameConstantBuffer =
-                std::make_shared<RHIBuffer>(RHIBufferType::Constant,
+                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
                                             sizeof(FrameConstantData),
                                             1,
                                             &frameConstantData,
@@ -135,18 +137,27 @@ namespace worse
             };
             // clang-format on
 
-            testVbo = std::make_shared<RHIBuffer>(RHIBufferType::Vertex,
-                                                  sizeof(RHIVertexPosUvNrmTan),
-                                                  vertices.size(),
-                                                  vertices.data(),
-                                                  true,
-                                                  "testVbo");
-            testIbo = std::make_shared<RHIBuffer>(RHIBufferType::Index,
+            testVbo =
+                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Vertex,
+                                            sizeof(RHIVertexPosUvNrmTan),
+                                            vertices.size(),
+                                            vertices.data(),
+                                            false,
+                                            "testVbo");
+            testIbo = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
                                                   sizeof(std::uint32_t),
                                                   indices.size(),
                                                   indices.data(),
-                                                  true,
+                                                  false,
                                                   "testIbo");
+
+            testSsbo =
+                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Storage,
+                                            64,
+                                            64,
+                                            nullptr,
+                                            false,
+                                            "testSsbo");
         }
 
         RHIDevice::setResourceProvider(&resourceProvider);
@@ -160,6 +171,7 @@ namespace worse
             frameConstantBuffer.reset();
             testVbo.reset();
             testIbo.reset();
+            testSsbo.reset();
 
             destroyResources();
             swapchain.reset();
@@ -226,8 +238,6 @@ namespace worse
 
             std::array bindlessTextureupdates = {
                 RHIDescriptorWrite{0, 0,
-                {Renderer::getTexture(RendererTexture::TestA)}},
-                RHIDescriptorWrite{0, 1,
                 {Renderer::getTexture(RendererTexture::TestB)}},
             };
             RHIDevice::updateBindlessTextures(bindlessTextureupdates);
@@ -269,9 +279,12 @@ namespace worse
                                        .resource = {frameOutput},
                                        .type =
                                            RHIDescriptorType::TextureStorage},
+                    RHIDescriptorWrite{.reg      = 1, // u1
+                                       .resource = {testSsbo.get()},
+                                       .type =
+                                           RHIDescriptorType::StructuredBuffer},
                 };
                 m_cmdList->updateSpecificSet(updates);
-                pushConstantData.setF30({0.3, 0.4, 0.5});
                 m_cmdList->pushConstants(pushConstantData.asSpan());
                 m_cmdList->dispatch(resolutionOutput.x / 8,
                                     resolutionOutput.y / 8,
@@ -337,6 +350,11 @@ namespace worse
     Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
+    }
+
+    void Renderer::setPushParameters(float a, float b)
+    {
+        pushConstantData.setPadding(a, b);
     }
 
 } // namespace worse

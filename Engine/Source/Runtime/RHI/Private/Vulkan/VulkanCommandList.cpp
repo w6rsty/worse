@@ -642,6 +642,7 @@ namespace worse
                                       std::uint32_t const size,
                                       void const* data)
     {
+        // clang-format off
         bool synchronizeUpdate = true;
         synchronizeUpdate &= (offset % 4 == 0);
         synchronizeUpdate &= (size % 4 == 0);
@@ -655,52 +656,37 @@ namespace worse
                               size,
                               data);
             VkBufferMemoryBarrier2 barrier = {};
-            barrier.sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
-            barrier.srcStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-            barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-            barrier.dstStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-            barrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+            barrier.srcStageMask        = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            barrier.srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            barrier.dstStageMask        = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            barrier.dstAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
             barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.buffer = buffer->getHandle().asValue<VkBuffer>();
-            barrier.offset = offset;
-            barrier.size   = size;
+            barrier.buffer              = buffer->getHandle().asValue<VkBuffer>();
+            barrier.offset              = offset;
+            barrier.size                = size;
 
-            switch (buffer->getType())
-            {
-            case RHIBufferType::Vertex:
-            case RHIBufferType::Instance:
-                barrier.dstAccessMask |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
-                break;
-            case RHIBufferType::Index:
-                barrier.dstAccessMask |= VK_ACCESS_2_INDEX_READ_BIT;
-                break;
-            case RHIBufferType::Storage:
-                barrier.dstAccessMask |= VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
-                break;
-            case RHIBufferType::Constant:
-                barrier.dstAccessMask |=
-                    VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_UNIFORM_READ_BIT;
-                break;
-            default:
-                WS_LOG_ERROR("RHICommandList", "Unknown buffer type");
-                break;
-            }
+            RHIBufferUsageFlags bufferUsage = buffer->getUsage();
+            if ((bufferUsage & RHIBufferUsageFlagBits::Vertex) ||
+                (bufferUsage & RHIBufferUsageFlagBits::Instance)) { barrier.dstAccessMask |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT; }
+            if (bufferUsage & RHIBufferUsageFlagBits::Index)      { barrier.dstAccessMask |= VK_ACCESS_2_INDEX_READ_BIT; }
+            if (bufferUsage & RHIBufferUsageFlagBits::Storage)    { barrier.dstAccessMask |= VK_ACCESS_2_SHADER_STORAGE_READ_BIT | VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT; }
+            if (bufferUsage & RHIBufferUsageFlagBits::Uniform)    { barrier.dstAccessMask |= VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_UNIFORM_READ_BIT; }
 
             VkDependencyInfo dependencyInfo = {};
-            dependencyInfo.sType            = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+            dependencyInfo.sType                    = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
             dependencyInfo.bufferMemoryBarrierCount = 1;
             dependencyInfo.pBufferMemoryBarriers    = &barrier;
 
-            vkCmdPipelineBarrier2KHR(m_handle.asValue<VkCommandBuffer>(),
-                                     &dependencyInfo);
+            vkCmdPipelineBarrier2KHR(m_handle.asValue<VkCommandBuffer>(), &dependencyInfo);
         }
         else
         {
-            void* mappedData =
-                static_cast<std::byte*>(buffer->getMappedData()) + offset;
+            void* mappedData = static_cast<std::byte*>(buffer->getMappedData()) + offset;
             std::memcpy(mappedData, data, size);
         }
+        // clang-format on
     }
 
     void RHICommandList::bindGlobalSet()
@@ -818,20 +804,31 @@ namespace worse
                 vkWrites.push_back(writeSet);
                 break;
             }
-            case RHIDescriptorType::ConstantBuffer:
+            case RHIDescriptorType::UniformBuffer:
             case RHIDescriptorType::StructuredBuffer:
+            case RHIDescriptorType::RWStructuredBuffer:
             {
                 RHIBuffer* buffer = desc.resource.buffer;
                 WS_ASSERT(buffer); // Validate buffer pointer
 
                 VkDescriptorType vkType =
-                    (desc.type == RHIDescriptorType::ConstantBuffer)
+                    (desc.type == RHIDescriptorType::UniformBuffer)
                         ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
                         : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
-                std::uint32_t shift = (desc.type == RHIDescriptorType::ConstantBuffer)
-                                          ? RHIConfig::HLSL_REGISTER_SHIFT_B
-                                          : RHIConfig::HLSL_REGISTER_SHIFT_U;
+                std::uint32_t shift = 0;
+                if (desc.type == RHIDescriptorType::UniformBuffer)
+                {
+                    shift = RHIConfig::HLSL_REGISTER_SHIFT_B;
+                }
+                else if (desc.type == RHIDescriptorType::StructuredBuffer)
+                {
+                    shift = RHIConfig::HLSL_REGISTER_SHIFT_T;
+                }
+                else if (desc.type == RHIDescriptorType::RWStructuredBuffer)
+                {
+                    shift = RHIConfig::HLSL_REGISTER_SHIFT_U;
+                }
 
                 VkDescriptorBufferInfo infoBuffer = {};
                 infoBuffer.buffer = buffer->getHandle().asValue<VkBuffer>();

@@ -181,7 +181,7 @@ namespace worse
                            {
                                return (descriptor.space != 1) &&
                                       (descriptor.type !=
-                                       RHIDescriptorType::PushConstantBuffer);
+                                       RHIDescriptorType::PushConstant);
                            }),
             descriptors.end());
 
