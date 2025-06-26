@@ -194,7 +194,9 @@ namespace worse
             depthAttachment.loadOp      = m_pso.clearDepth == std::numeric_limits<float>::max()
                                              ? VK_ATTACHMENT_LOAD_OP_LOAD
                                              : VK_ATTACHMENT_LOAD_OP_CLEAR;
-            depthAttachment.storeOp     = m_pso.depthStencilState->getDepthWriteEnabled() ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            depthAttachment.storeOp     = m_pso.depthStencilState->getDepthWriteEnabled()
+                                             ? VK_ATTACHMENT_STORE_OP_STORE
+                                             : VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
             depthAttachment.clearValue.depthStencil.depth = m_pso.clearDepth;
             // clang-format on

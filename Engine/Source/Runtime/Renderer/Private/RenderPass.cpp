@@ -34,7 +34,7 @@ namespace worse
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 800, 600})
                 .setViewport(Renderer::getViewport())
-                .setClearDepth(0.0f)
+                .setClearDepth(0.0f) // clear with far value
                 .build());
 
 
@@ -71,8 +71,8 @@ namespace worse
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadEqual))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PBRV))
-                .addShader(Renderer::getShader(RendererShader::PBRP))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderV))
+                .addShader(Renderer::getShader(RendererShader::PlaceholderP))
                 .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 800, 600})
@@ -119,6 +119,8 @@ namespace worse
                                .type     = RHIDescriptorType::TextureStorage},
         };
         cmdList->updateSpecificSet(updates);
+
+        cmdList->pushConstants(pushConstantData.asSpan());
 
         math::Vector2 resolutionOutput = Renderer::getResolutionOutput();
         cmdList->dispatch(resolutionOutput.x / 8, resolutionOutput.y / 8, 1);

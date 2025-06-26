@@ -181,8 +181,8 @@ namespace worse::math
     // Projection
     // =========================================================================
 
-    /// Right-handed Perspective projection matrix
-    /// Depth range from [0, 1]
+  /// Right-handed Perspective projection matrix
+    /// Depth range from [0, 1] (near = 1, far = 0)
     inline Matrix4 projectionPerspective(float verticalFov, float aspectRatio, float near, float far)
     {
         // Compute the scale factors for x and y directions
@@ -190,8 +190,8 @@ namespace worse::math
         float a = f / aspectRatio;
 
         // Depth scaling and translation terms
-        float b = far / (near - far);
-        float c = near * b;
+        float b = near / (far - near);
+        float c = near * far / (far - near); 
 
         return Matrix4{
                a, 0.0f,  0.0f,  0.0f,
@@ -202,41 +202,40 @@ namespace worse::math
     }
 
     /// Right-handed Orthographic projection matrix
-    /// Depth range from [0, 1]
-    inline Matrix4 projectionOrtho(float left, float right, float bottom, float top, float near, float far)
+    /// REVERSED-Z with depth range from [1, 0] (near=1, far=0)
+    inline Matrix4 projectionOrthoReversedZ(float left, float right, float bottom, float top, float near, float far)
     {
         float recipW = 1.0f / (right - left);
         float recipH = 1.0f / (top - bottom);
         float a      = 2.0f * recipW;
         float b      = 2.0f * recipH;
-        float c      = 1.0f / (near - far);
         float tx     = -(right + left) * recipW;
-        float ty     = -(top + bottom) * recipH;
-        float tz     = near * c;
+        float ty     = -(top + bottom) * recipH;   
+        float c      = 1.0f / (far - near);
+        float tz     = far * c;
 
         return Matrix4{
-               a, 0.0f, 0.0f,   tx,
+            a,    0.0f, 0.0f,   tx,
             0.0f,    b, 0.0f,   ty,
             0.0f, 0.0f,    c,   tz,
             0.0f, 0.0f, 0.0f, 1.0f
         };
     }
-
     /// Right-handed Orthographic projection matrix
     /// With x-y symmetry
-    /// Depth range from [0, 1]
-    inline Matrix4 projectionOrtho(float right, float top, float near, float far)
+    /// REVERSED-Z with depth range from [1, 0] (near=1, far=0)
+    inline Matrix4 projectionOrthoReversedZ(float right, float top, float near, float far)
     {
         float a  = 1.0f / right;
         float b  = 1.0f / top;
-        float c  = 1.0f / (near - far);
-        float tz = near * c;
+        float c  = 1.0f / (far - near);
+        float tz = far * c;
 
         return Matrix4{
-               a, 0.0f, 0.0f, 0.0f,
+            a,    0.0f, 0.0f, 0.0f,
             0.0f,    b, 0.0f, 0.0f,
             0.0f, 0.0f,    c,   tz,
-               0,    0, 0.0f, 1.0f
+            0.0f, 0.0f, 0.0f, 1.0f
         };
     }
 

@@ -230,8 +230,8 @@ namespace worse
                 depthStencilState.front.writeMask   = m_state.depthStencilState->getStencilWriteMask();
                 depthStencilState.front.reference   = 1;
                 depthStencilState.back              = depthStencilState.front;
-                depthStencilState.minDepthBounds    = 0.0f;
-                depthStencilState.maxDepthBounds    = 1.0f;
+                depthStencilState.minDepthBounds    = 1.0f; // reversed-Z
+                depthStencilState.maxDepthBounds    = 0.0f; // reversed-Z
             }
 
             std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments;
