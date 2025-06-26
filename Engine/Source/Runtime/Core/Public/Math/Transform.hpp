@@ -6,7 +6,7 @@
 #include <cmath>
 #include <tuple>
 
-namespace worse
+namespace worse::math
 {
     // clang-format off
 
@@ -118,6 +118,42 @@ namespace worse
         return mat;
     }
 
+    inline Vector3 decomposeScale(Matrix4 const& mat)
+    {
+        float det = determinant(mat);
+        WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
+
+        Vector3 scale{
+            length(mat.col0) * worse::math::signum(det),
+            length(mat.col1),
+            length(mat.col2)
+        };
+
+        WS_ASSERT_MATH(!isZero(scale), "Decomposed scale is zero, cause division by zero");
+        return scale;
+    }
+
+    inline Quaternion decomposeRotation(Matrix4 const& mat)
+    {
+        float det = determinant(mat);
+        WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
+
+        Vector3 inv_scale = reciprocal(decomposeScale(mat));
+
+        Matrix3 rotationMat{
+            (mat.col0 * inv_scale.x).truncate(),
+            (mat.col1 * inv_scale.y).truncate(),
+            (mat.col2 * inv_scale.z).truncate()
+        };
+
+        return Quaternion::fromMat3(rotationMat);
+    }
+
+    inline Vector3 decomposeTranslation(Matrix4 const& mat)
+    {
+        return mat.col3.truncate();
+    }
+
     /// Decompose a 4x4 matrix into scale, rotation and translation
     inline std::tuple<Vector3, Quaternion, Vector3>
     decomposeSRT(Matrix4 const& mat)
@@ -125,7 +161,7 @@ namespace worse
         float det = determinant(mat);
         WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
 
-        Vector3 scale{length(mat.col0) * worse::signum(det), length(mat.col1), length(mat.col2)};
+        Vector3 scale{length(mat.col0) * worse::math::signum(det), length(mat.col1), length(mat.col2)};
 
         WS_ASSERT_MATH(!isZero(scale), "Decomposed scale is zero, cause division by zero");
         Vector3 inv_scale = reciprocal(scale);
@@ -144,65 +180,6 @@ namespace worse
     // =========================================================================
     // Projection
     // =========================================================================
-
-    /// Right-handed OpenGL perspective projection matrix
-    /// Depth range from [-1, 1]
-    inline Matrix4 projectionPerspectiveGL(float verticalFov, float aspectRatio, float near, float far)
-    {
-        float recipRange = 1.0f / (near - far);
-        float f          = 1.0f / std::tanf(verticalFov * 0.5f);
-        float a          = f / aspectRatio;
-        float b          = (near + far) * recipRange;
-        float c          = 2.0f * near * far * recipRange;
-
-        return Matrix4{
-               a, 0.0f,  0.0f,  0.0f,
-            0.0f,    f,  0.0f,  0.0f,
-            0.0f, 0.0f,     b,     c,
-            0.0f, 0.0f, -1.0f,  0.0f
-        };
-    }
-
-    /// Right-handed OpenGL orthographic projection matrix
-    /// Depth range from [-1, 1]
-    inline Matrix4 projectionOrthoGL(float left, float right, float bottom, float top, float near, float far)
-    {
-        float recipW = 1.0f / (right - left);
-        float recipH = 1.0f / (top - bottom);
-        float recipD = 1.0f / (near - far);
-        float a      = 2.0f * recipW;
-        float b      = 2.0f * recipH;
-        float c      = 2.0f * recipD;
-        float tx     = -(right + left) * recipW;
-        float ty     = -(top + bottom) * recipH;
-        float tz     = (near + far) * recipD;
-
-        return Matrix4{
-               a, 0.0f, 0.0f,   tx,
-            0.0f,    b, 0.0f,   ty,
-            0.0f, 0.0f,    c,   tz,
-            0.0f, 0.0f, 0.0f, 1.0f
-        };
-    }
-
-    /// Right-handed OpenGL orthographic projection matrix
-    /// With x-y symmetry
-    /// Depth range from [-1, 1]
-    inline Matrix4 projectionOrthoGL(float right, float top, float near, float far)
-    {
-        float a      = 1.0f / right;
-        float b      = 1.0f / top;
-        float recipD = 1.0f / (near - far);
-        float c      = 2.0f * recipD;
-        float tz     = (near + far) * recipD;
-
-        return Matrix4{
-               a, 0.0f, 0.0f, 0.0f,
-            0.0f,    b, 0.0f, 0.0f,
-            0.0f, 0.0f,    c,   tz,
-            0,       0, 0.0f, 1.0f
-        };
-    }
 
     /// Right-handed Perspective projection matrix
     /// Depth range from [0, 1]
@@ -300,4 +277,4 @@ namespace worse
     }
 
     // clang-format on
-} // namespace worse
+} // namespace worse::math

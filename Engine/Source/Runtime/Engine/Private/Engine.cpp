@@ -1,5 +1,6 @@
 #include "Log.hpp"
 #include "Engine.hpp"
+#include "Math/Vector.hpp"
 #include "Window.hpp"
 #include "Renderer.hpp"
 #include "Input/Input.hpp"
@@ -38,16 +39,47 @@ namespace worse
         Window::tick();
         Input::tick();
 
-        static float radius = 2.0f;
-        if (Input::isKeyDown(KeyCode::ArrowUp))
         {
-            radius += 1.0f;
+            static float radius = 2.0f;
+            if (Input::isKeyDown(KeyCode::ArrowUp))
+            {
+                radius += 1.0f;
+            }
+            if (Input::isKeyDown(KeyCode::ArrowDown))
+            {
+                radius -= 1.0f;
+            }
+            Renderer::setPushParameters(radius, 0.0f);
         }
-        if (Input::isKeyDown(KeyCode::ArrowDown))
         {
-            radius -= 1.0f;
+            static math::Vector3 cameraPosition = {0.0f, 0.5f, 1.0f};
+            if (Input::isKey(KeyCode::W))
+            {
+                cameraPosition.z -= 0.01f;
+            }
+            if (Input::isKey(KeyCode::S))
+            {
+                cameraPosition.z += 0.01f;
+            }
+            if (Input::isKey(KeyCode::A))
+            {
+                cameraPosition.x -= 0.01f;
+            }
+            if (Input::isKey(KeyCode::D))
+            {
+                cameraPosition.x += 0.01f;
+            }
+            if (Input::isKey(KeyCode::Space))
+            {
+                cameraPosition.y += 0.01f;
+            }
+            if (Input::isKey(KeyCode::ShiftLeft))
+            {
+                cameraPosition.y -= 0.01f;
+            }
+
+            Renderer::setCameraPosition(cameraPosition);
         }
-        Renderer::setPushParameters(radius, 0.0f);
 
         Renderer::tick();
     }

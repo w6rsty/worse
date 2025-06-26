@@ -14,7 +14,7 @@ namespace worse
         constexpr RHIDepthStencilState(
             bool const depthTestEnable                   = false,
             bool const depthWriteEnable                  = false,
-            RHICompareOperation const depthCompareOp     = RHICompareOperation::Less,
+            RHICompareOperation const depthCompareOp     = RHICompareOperation::GreaterEqual,
             bool const stencilTestEnable                 = false,
             bool const stencilWriteEnable                = false,
             RHICompareOperation const stencilCompareOp   = RHICompareOperation::Always,

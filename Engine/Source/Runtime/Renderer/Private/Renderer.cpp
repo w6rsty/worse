@@ -1,6 +1,5 @@
 #include "Math/Math.hpp"
 #include "Profiling/Stopwatch.hpp"
-#include "RHIVertex.hpp"
 #include "Window.hpp"
 #include "Renderer.hpp"
 #include "RHIQueue.hpp"
@@ -10,8 +9,6 @@
 #include "RHICommandList.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHITexture.hpp"
-#include "Descriptor/RHIDescriptor.hpp"
-#include "Pipeline/RHIPipelineState.hpp"
 #include "RendererBuffer.hpp"
 
 #include <memory>
@@ -21,21 +18,15 @@ namespace worse
 
     namespace
     {
-        Vector2 resolutionRender = Vector2{0, 0};
-        Vector2 resolutionOutput = Vector2{0, 0};
-        RHIViewport viewport     = RHIViewport(0, 0, 0, 0);
+        math::Vector2 resolutionRender = math::Vector2{0, 0};
+        math::Vector2 resolutionOutput = math::Vector2{0, 0};
+        RHIViewport viewport           = RHIViewport(0, 0, 0, 0);
 
         std::shared_ptr<RHISwapchain> swapchain = nullptr;
         RHICommandList* m_cmdList               = nullptr;
 
         FrameConstantData frameConstantData            = {};
         std::shared_ptr<RHIBuffer> frameConstantBuffer = nullptr;
-        PushConstantData pushConstantData              = {};
-
-        std::shared_ptr<RHIBuffer> testVbo = nullptr;
-        std::shared_ptr<RHIBuffer> testIbo = nullptr;
-
-        std::shared_ptr<RHIBuffer> testSsbo = nullptr;
 
         class RendererResourceProvider : public RHIResourceProvider
         {
@@ -90,7 +81,7 @@ namespace worse
             resolutionRender = {800, 600};
             // output resolution
             resolutionOutput = {static_cast<float>(Window::getWidth()),
-                                static_cast<float>(Window::getWidth())};
+                                static_cast<float>(Window::getHeight())};
 
             Renderer::setViewport(resolutionRender.x, resolutionRender.y);
         }
@@ -115,6 +106,7 @@ namespace worse
             Renderer::createShaders();
             Renderer::createTextures();
             Renderer::createSamplers();
+            Renderer::createStandardMeshes();
 
             frameConstantBuffer =
                 std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
@@ -123,41 +115,6 @@ namespace worse
                                             &frameConstantData,
                                             true,
                                             "frameConstantBuffer");
-
-            // clang-format off
-            static const std::array<RHIVertexPosUvNrmTan, 4> vertices = {
-                RHIVertexPosUvNrmTan{{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, { 1.0f, 0.0f, 0.0f}},
-                RHIVertexPosUvNrmTan{{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
-                RHIVertexPosUvNrmTan{{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, { 1.0f, 0.0f, 0.0f}},
-                RHIVertexPosUvNrmTan{{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}}
-            };
-            static const std::array<std::uint32_t, 6> indices = {
-                0, 1, 2,
-                2, 3, 0
-            };
-            // clang-format on
-
-            testVbo =
-                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Vertex,
-                                            sizeof(RHIVertexPosUvNrmTan),
-                                            vertices.size(),
-                                            vertices.data(),
-                                            false,
-                                            "testVbo");
-            testIbo = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
-                                                  sizeof(std::uint32_t),
-                                                  indices.size(),
-                                                  indices.data(),
-                                                  false,
-                                                  "testIbo");
-
-            testSsbo =
-                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Storage,
-                                            64,
-                                            64,
-                                            nullptr,
-                                            false,
-                                            "testSsbo");
         }
 
         RHIDevice::setResourceProvider(&resourceProvider);
@@ -169,9 +126,6 @@ namespace worse
 
         {
             frameConstantBuffer.reset();
-            testVbo.reset();
-            testIbo.reset();
-            testSsbo.reset();
 
             destroyResources();
             swapchain.reset();
@@ -196,105 +150,12 @@ namespace worse
             RHIDevice::deletionQueueFlush();
         }
 
-        // update frame constant data
-        {
-            static profiling::Stopwatch frameTimer;
-            frameConstantData.deltaTime = frameTimer.elapsedSec();
-            frameConstantData.time += frameConstantData.deltaTime;
-            frameTimer.reset();
+        updateBuffers(m_cmdList);
 
-            m_cmdList->updateBuffer(frameConstantBuffer.get(),
-                                    0,
-                                    sizeof(FrameConstantData),
-                                    &frameConstantData);
-        }
+        // render passes
+        produceFrame(m_cmdList);
 
-        {
-            RHIDevice::resetDescriptorAllocator();
-            RHIDevice::writeGlobalDescriptorSet();
-            RHIDevice::resetSpecificDescriptorSets();
-        }
-
-        RHITexture* frameRender =
-            Renderer::getRenderTarget(RendererTarget::Render);
-        RHITexture* frameOutput =
-            Renderer::getRenderTarget(RendererTarget::Output);
-        {
-            // clang-format off
-            static auto testPso = RHIPipelineStateBuilder()
-                .setName("testPso")
-                .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
-                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PBRV))
-                .addShader(Renderer::getShader(RendererShader::PBRP))
-                .setRenderTargetColorTexture(0, frameRender)
-                .setScissor({0, 0, 800, 600})
-                .setViewport(Renderer::getViewport())
-                .setClearColor(Color::Black())
-                .build();
-
-            std::array bindlessTextureupdates = {
-                RHIDescriptorWrite{0, 0,
-                {Renderer::getTexture(RendererTexture::TestB)}},
-            };
-            RHIDevice::updateBindlessTextures(bindlessTextureupdates);
-            // clang-format on
-
-            m_cmdList->setPipelineState(testPso);
-            m_cmdList->setBufferVertex(testVbo.get());
-            m_cmdList->setBufferIndex(testIbo.get());
-            m_cmdList->drawIndexed(testIbo->getElementCount(), 0, 0, 0, 1);
-
-            m_cmdList->renderPassEnd();
-
-            // ====================================
-            // post pass
-            // ====================================
-
-            {
-                static auto computePso =
-                    RHIPipelineStateBuilder()
-                        .setName("computePso")
-                        .setType(RHIPipelineType::Compute)
-                        .addShader(Renderer::getShader(RendererShader::TestC))
-                        .build();
-
-                m_cmdList->insertBarrier(frameRender->getImage(),
-                                         frameRender->getFormat(),
-                                         RHIImageLayout::ShaderRead);
-
-                m_cmdList->insertBarrier(frameOutput->getImage(),
-                                         frameOutput->getFormat(),
-                                         RHIImageLayout::General);
-
-                m_cmdList->setPipelineState(computePso);
-                std::array updates = {
-                    RHIDescriptorWrite{.reg      = 0, // t0
-                                       .resource = {frameRender},
-                                       .type     = RHIDescriptorType::Texture},
-                    RHIDescriptorWrite{.reg      = 0, // u0
-                                       .resource = {frameOutput},
-                                       .type =
-                                           RHIDescriptorType::TextureStorage},
-                    RHIDescriptorWrite{.reg      = 1, // u1
-                                       .resource = {testSsbo.get()},
-                                       .type =
-                                           RHIDescriptorType::StructuredBuffer},
-                };
-                m_cmdList->updateSpecificSet(updates);
-                m_cmdList->pushConstants(pushConstantData.asSpan());
-                m_cmdList->dispatch(resolutionOutput.x / 8,
-                                    resolutionOutput.y / 8,
-                                    1);
-            }
-
-            blitToBackBuffer(m_cmdList);
-
-            m_cmdList->clearPipelineState();
-        }
+        blitToBackBuffer(m_cmdList);
 
         // [Sumbit] wait image acquire semaphore(swapchain)
         //          signal rendering semaphore(CommandList)
@@ -326,6 +187,39 @@ namespace worse
         }
     }
 
+    void Renderer::updateBuffers(RHICommandList* cmdList)
+    {
+        // update frame constant data
+
+        static profiling::Stopwatch frameTimer;
+        frameConstantData.deltaTime = frameTimer.elapsedSec();
+        frameConstantData.time += frameConstantData.deltaTime;
+        frameConstantData.projection =
+            math::projectionPerspective(math::toRadians(70.0f),
+                                        viewport.width / viewport.height,
+                                        0.1f,
+                                        100.0f);
+
+
+        frameConstantData.view = math::lookAt(frameConstantData.cameraPosition,
+                                              math::Vector3{0, 0, 0},
+                                              math::Vector3{0, 1, 0});
+        frameConstantData.viewProjection =
+            frameConstantData.projection * frameConstantData.view;
+        frameTimer.reset();
+
+        m_cmdList->updateBuffer(frameConstantBuffer.get(),
+                                0,
+                                sizeof(FrameConstantData),
+                                &frameConstantData);
+
+        // prepare descriptor
+
+        RHIDevice::resetDescriptorAllocator();
+        RHIDevice::writeGlobalDescriptorSet();
+        RHIDevice::resetSpecificDescriptorSets();
+    }
+
     void Renderer::setViewport(float const width, float const height)
     {
         WS_ASSERT((width != 0.0f) && (height != 0.0f));
@@ -342,19 +236,19 @@ namespace worse
         return viewport;
     }
 
-    Vector2 Renderer::getResolutionRender()
+    math::Vector2 Renderer::getResolutionRender()
     {
         return resolutionRender;
     }
 
-    Vector2 Renderer::getResolutionOutput()
+    math::Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
     }
 
-    void Renderer::setPushParameters(float a, float b)
+    void Renderer::setCameraPosition(math::Vector3 const& position)
     {
-        pushConstantData.setPadding(a, b);
+        frameConstantData.cameraPosition = position;
     }
 
 } // namespace worse

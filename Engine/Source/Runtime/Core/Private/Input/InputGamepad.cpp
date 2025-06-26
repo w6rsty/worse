@@ -11,8 +11,8 @@ namespace worse
     namespace
     {
         std::shared_ptr<Controller> s_controller = nullptr;
-        Vector2 s_thumbStickLeft{0.0f, 0.0f};
-        Vector2 s_thumbStickRight{0.0f, 0.0f};
+        math::Vector2 s_thumbStickLeft{0.0f, 0.0f};
+        math::Vector2 s_thumbStickRight{0.0f, 0.0f};
         float s_triggerLeft{0.0f};
         float s_triggerRight{0.0f};
 
@@ -246,12 +246,12 @@ namespace worse
         return (s_controller != nullptr) && s_controller->isConnected();
     }
 
-    Vector2 const& Input::getThumbStickLeft()
+    math::Vector2 const& Input::getThumbStickLeft()
     {
         return s_thumbStickLeft;
     }
 
-    Vector2 const& Input::getThumbStickRight()
+    math::Vector2 const& Input::getThumbStickRight()
     {
         return s_thumbStickRight;
     }

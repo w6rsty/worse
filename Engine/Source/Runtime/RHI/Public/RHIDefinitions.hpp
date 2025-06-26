@@ -98,6 +98,7 @@ namespace worse
         Undefined,
         General,
         ColorAttachment,
+        DepthStencilAttachment,
         ShaderRead,
         TransferSource,
         TransferDestination,
@@ -460,14 +461,15 @@ namespace worse
         switch (layout)
         {
             // clang-format off
-        case RHIImageLayout::Undefined:           return VK_IMAGE_LAYOUT_UNDEFINED;
-        case RHIImageLayout::General:             return VK_IMAGE_LAYOUT_GENERAL;
-        case RHIImageLayout::ColorAttachment:     return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case RHIImageLayout::ShaderRead:          return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case RHIImageLayout::TransferSource:      return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case RHIImageLayout::TransferDestination: return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case RHIImageLayout::PresentSource:       return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        case RHIImageLayout::Max:                 return VK_IMAGE_LAYOUT_UNDEFINED;
+        case RHIImageLayout::Undefined:              return VK_IMAGE_LAYOUT_UNDEFINED;
+        case RHIImageLayout::General:                return VK_IMAGE_LAYOUT_GENERAL;
+        case RHIImageLayout::ColorAttachment:        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case RHIImageLayout::DepthStencilAttachment: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        case RHIImageLayout::ShaderRead:             return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case RHIImageLayout::TransferSource:         return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case RHIImageLayout::TransferDestination:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case RHIImageLayout::PresentSource:          return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        case RHIImageLayout::Max:                    return VK_IMAGE_LAYOUT_UNDEFINED;
             // clang-format on
         }
     }

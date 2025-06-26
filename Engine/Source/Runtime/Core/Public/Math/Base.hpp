@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cassert>
 
-namespace worse
+namespace worse::math
 {
 
 // for performance concerns, we use assert directly instead of logging
@@ -70,4 +70,4 @@ namespace worse
     struct Matrix4;
     struct Quaternion;
 
-} // namespace worse
+} // namespace worse::math

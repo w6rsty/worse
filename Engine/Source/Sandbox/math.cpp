@@ -2,7 +2,7 @@
 #include "Math/Math.hpp"
 #include "Definitions.hpp"
 
-using namespace worse;
+using namespace worse::math;
 
 // 测试用的浮点数比较函数
 bool floatEqual(float a, float b, float epsilon = 1e-6f)

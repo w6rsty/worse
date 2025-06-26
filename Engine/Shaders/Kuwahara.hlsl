@@ -2,7 +2,6 @@
 
 Texture2D<float4> albedoTexture : register(t0, space1);
 RWTexture2D<float4> output : register(u0, space1);
-StructuredBuffer<float4x4> testSsbo : register(t1, space1);
 
 float3 ACESFilm(float3 x)
 {
@@ -14,14 +13,10 @@ float3 ACESFilm(float3 x)
     return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
 }
 
-
-
-[numthreads(8, 8, 1)]
+[numthreads(THREAD_GROUP_COUNT_X, THREAD_GROUP_COUNT_Y, 1)]
 void main_cs(uint3 id : SV_DispatchThreadID)
 {
     int radius = getPadding().x;
-
-    float4x4 test = testSsbo[0];
 
     uint2 dims;
     albedoTexture.GetDimensions(dims.x, dims.y);

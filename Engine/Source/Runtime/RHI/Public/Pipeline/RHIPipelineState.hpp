@@ -39,6 +39,7 @@ namespace worse
 
         math::Rectangle scissor = {};
         RHIViewport viewport    = {};
+        float clearDepth        = std::numeric_limits<float>::max();
         Color clearColor        = Color::Black();
 
     private:
@@ -63,6 +64,7 @@ namespace worse
         RHIPipelineStateBuilder& setRenderTargetDepthTexture(RHITexture* texture);
         RHIPipelineStateBuilder& setScissor(math::Rectangle const& scissor);
         RHIPipelineStateBuilder& setViewport(RHIViewport const& viewport);
+        RHIPipelineStateBuilder& setClearDepth(float depth);
         RHIPipelineStateBuilder& setClearColor(Color const& color);
         // clang-format on
 

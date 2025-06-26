@@ -1,4 +1,5 @@
 #pragma once
+#include "Math/Vector.hpp"
 
 namespace worse
 {
@@ -49,6 +50,35 @@ namespace worse
     {
         Nearest,
         Linear,
+    };
+
+    // =========================================================================
+    // Vertex Structures
+    // =========================================================================
+
+    struct RHIVertexPos
+    {
+        math::Vector3 position = {0.0, 0.0, 0.0};
+    };
+
+    struct RHIVertexPosCol
+    {
+        math::Vector3 position = {0.0, 0.0, 0.0};
+        math::Vector4 color    = {0.0, 0.0, 0.0, 0.0};
+    };
+
+    struct RHIVertexPosUv
+    {
+        math::Vector3 position = {0.0, 0.0, 0.0};
+        math::Vector2 uv       = {0.0, 0.0};
+    };
+
+    struct RHIVertexPosUvNrmTan
+    {
+        math::Vector3 position = {0.0, 0.0, 0.0};
+        math::Vector2 uv       = {0.0, 0.0};
+        math::Vector3 normal   = {0.0, 0.0, 0.0};
+        math::Vector3 tangent  = {0.0, 0.0, 0.0};
     };
 
 } // namespace worse

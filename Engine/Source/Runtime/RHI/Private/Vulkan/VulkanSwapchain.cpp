@@ -233,14 +233,14 @@ namespace worse
 
     void RHISwapchain::acquireNextImage()
     {
+        // clang-format off
         if (Window::isMinimized())
         {
             return;
         }
 
         static std::uint64_t semaphoreIndex = 0;
-        RHISyncPrimitive* semaphoreSignal =
-            m_imageAcquireSemaphores[semaphoreIndex].get();
+        RHISyncPrimitive* semaphoreSignal = m_imageAcquireSemaphores[semaphoreIndex].get();
 
         if (RHICommandList* cmdList = semaphoreSignal->getBelongingCmdList())
         {
@@ -266,10 +266,8 @@ namespace worse
 
             if (result == VK_SUCCESS)
             {
-                m_imageAcquireSemaphores[m_imageIndex] =
-                    m_imageAcquireSemaphores[semaphoreIndex];
-                semaphoreIndex =
-                    (semaphoreIndex + 1) % m_imageAcquireSemaphores.size();
+                m_imageAcquireSemaphores[m_imageIndex] = m_imageAcquireSemaphores[semaphoreIndex];
+                semaphoreIndex = (semaphoreIndex + 1) % m_imageAcquireSemaphores.size();
                 return;
             }
             else if (result == VK_NOT_READY)
@@ -282,6 +280,7 @@ namespace worse
                 WS_ASSERT_VK(result);
             }
         }
+        // clang-format on
     }
 
     void RHISwapchain::present(RHICommandList* cmdList)

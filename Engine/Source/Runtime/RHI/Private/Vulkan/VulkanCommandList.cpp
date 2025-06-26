@@ -6,6 +6,7 @@
 #include "RHISyncPrimitive.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "Pipeline/RHIDepthStencilState.hpp"
 #include "Descriptor/RHIBuffer.hpp"
 #include "Descriptor/RHITexture.hpp"
 
@@ -149,6 +150,8 @@ namespace worse
             return;
         }
 
+        VkRenderingInfo infoRender = {};
+
         VkClearColorValue clearColor = {m_pso.clearColor.r,
                                         m_pso.clearColor.g,
                                         m_pso.clearColor.b,
@@ -163,9 +166,6 @@ namespace worse
             }
 
             texture->convertImageLayout(this, RHIImageLayout::ColorAttachment);
-            insertBarrier(texture->getImage(),
-                          texture->getFormat(),
-                          RHIImageLayout::ColorAttachment);
 
             // clang-format off
             VkRenderingAttachmentInfo colorAttachment = {};
@@ -180,8 +180,29 @@ namespace worse
             colorAttachments.push_back(colorAttachment);
         }
 
+        VkRenderingAttachmentInfo depthAttachment = {};
+        if (m_pso.renderTargetDepthTexture)
+        {
+            // clang-format off
+            RHITexture* depthTexture = m_pso.renderTargetDepthTexture;
+
+            depthTexture->convertImageLayout(this, RHIImageLayout::DepthStencilAttachment);
+
+            depthAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            depthAttachment.imageView   = depthTexture->getView().asValue<VkImageView>();
+            depthAttachment.imageLayout = vulkanImageLayout(depthTexture->getImageLayout());
+            depthAttachment.loadOp      = m_pso.clearDepth == std::numeric_limits<float>::max()
+                                             ? VK_ATTACHMENT_LOAD_OP_LOAD
+                                             : VK_ATTACHMENT_LOAD_OP_CLEAR;
+            depthAttachment.storeOp     = m_pso.depthStencilState->getDepthWriteEnabled() ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+            depthAttachment.clearValue.depthStencil.depth = m_pso.clearDepth;
+            // clang-format on
+
+            infoRender.pDepthAttachment = &depthAttachment;
+        }
+
         // clang-format off
-        VkRenderingInfo infoRender = {};
         infoRender.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
         infoRender.renderArea           = {m_pso.scissor.x, m_pso.scissor.y, m_pso.scissor.width, m_pso.scissor.height};
         infoRender.layerCount           = 1;

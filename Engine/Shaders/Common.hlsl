@@ -1,3 +1,18 @@
+#ifndef WS_COMMON_HLSL
+#define WS_COMMON_HLSL
+
+static const uint samplerPointClampEdge;
+static const uint samplerPointClampBorder;
+static const uint samplerWrap;
+static const uint samplerBilinearClampEdge;
+static const uint samplerBilinearClampBorder;
+static const uint samplerBilinearWrap;
+static const uint samplerTrilinearClamp;
+static const uint samplerAnisotropicClamp;
+
+static const uint THREAD_GROUP_COUNT_X = 8;
+static const uint THREAD_GROUP_COUNT_Y = 8;
+
 struct FrameConstantData
 {
     float deltaTime;
@@ -20,15 +35,6 @@ struct PushConstantData
     float4x4 model;
     float4x4 values;
 };
-
-static const uint samplerPointClampEdge;
-static const uint samplerPointClampBorder;
-static const uint samplerWrap;
-static const uint samplerBilinearClampEdge;
-static const uint samplerBilinearClampBorder;
-static const uint samplerBilinearWrap;
-static const uint samplerTrilinearClamp;
-static const uint samplerAnisotropicClamp;
 
 // ================================================================================
 // global set
@@ -73,3 +79,5 @@ struct VertexPosUvNrmTan
     float3 normal   : NORMAL;
     float3 tangent  : TANGENT;
 };
+
+#endif // WS_COMMON_HLSL

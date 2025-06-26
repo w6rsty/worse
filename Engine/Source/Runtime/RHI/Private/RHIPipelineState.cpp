@@ -278,6 +278,12 @@ namespace worse
         return *this;
     }
 
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setClearDepth(float depth)
+    {
+        m_pso.clearDepth = depth;
+        return *this;
+    }
+
     RHIPipelineStateBuilder&
     RHIPipelineStateBuilder::setClearColor(Color const& color)
     {

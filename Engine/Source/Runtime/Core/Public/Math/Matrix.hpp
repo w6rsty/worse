@@ -2,7 +2,7 @@
 #include "Base.hpp"
 #include "Vector.hpp"
 
-namespace worse
+namespace worse::math
 {
     // clang-format off
 
@@ -334,4 +334,4 @@ namespace worse
     }
 
     // clang-format on
-} // namespace worse
+} // namespace worse::math

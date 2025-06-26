@@ -11,7 +11,10 @@ struct VertexOutput
 VertexOutput main_vs(VertexPosUvNrmTan input)
 {
     VertexOutput output;
-    output.position = float4(input.position, 1.0);
+
+    float4x4 mvp = mul(frameData.viewProjection, pushData.model);
+    output.position = mul(mvp,float4(input.position, 1.0));
+    
     output.uv = input.uv;
     output.normal = normalize(input.normal);
     output.tangent = normalize(input.tangent);

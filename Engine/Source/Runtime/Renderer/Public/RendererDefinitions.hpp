@@ -14,6 +14,8 @@ namespace worse
     enum class RendererDepthStencilState : std::size_t
     {
         Off,
+        ReadWrite,
+        ReadEqual,
         Max
     };
 
@@ -25,7 +27,9 @@ namespace worse
 
     enum class RendererShader : std::size_t
     {
-        TestC,
+        DepthPrepassV,
+        DepthPrepassP,
+        KuwaharaC,
         PlaceholderV,
         PlaceholderP,
         PBRV,
@@ -37,6 +41,7 @@ namespace worse
     {
         Render,
         Output,
+        Depth,
         Max,
     };
 

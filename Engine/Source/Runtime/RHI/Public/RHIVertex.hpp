@@ -1,4 +1,5 @@
 #pragma once
+#include "Math/Math.hpp"
 #include "RHIResource.hpp"
 
 #include <vector>
@@ -13,31 +14,6 @@ namespace worse
         PosCol,
         PosUv,
         PosUvNrmTan,
-    };
-
-    struct RHIVertexPos
-    {
-        float position[3] = {0.0, 0.0, 0.0};
-    };
-
-    struct RHIVertexPosCol
-    {
-        float position[3] = {0.0, 0.0, 0.0};
-        float color[4]    = {0.0, 0.0, 0.0, 0.0};
-    };
-
-    struct RHIVertexPosUv
-    {
-        float position[3] = {0.0, 0.0, 0.0};
-        float uv[2]       = {0.0, 0.0};
-    };
-
-    struct RHIVertexPosUvNrmTan
-    {
-        float position[3] = {0.0, 0.0, 0.0};
-        float uv[2]       = {0.0, 0.0};
-        float normal[3]   = {0.0, 0.0, 0.0};
-        float tangent[3]  = {0.0, 0.0, 0.0};
     };
 
     struct RHIVertexAttribute

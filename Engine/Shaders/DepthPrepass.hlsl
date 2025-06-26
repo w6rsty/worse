@@ -15,23 +15,10 @@ VertexOutput main_vs(VertexPosUvNrmTan input)
     float4x4 mvp = mul(frameData.projection, mul(frameData.view, pushData.model));
     output.position = mul(mvp,float4(input.position, 1.0));
 
-    output.uv = input.uv;
-    output.normal = normalize(input.normal);
-    output.tangent = normalize(input.tangent);
-
     return output;
 }
 
-struct PixelOutput
+void main_ps(VertexOutput input)
 {
-    float4 color : SV_Target;
-};
-
-PixelOutput main_ps(VertexOutput input)
-{
-    PixelOutput output;
-    
-    output.color = float4(input.uv, 0.0, 1.0);
-
-    return output;
+    // No operations are needed here for the depth prepass.
 }

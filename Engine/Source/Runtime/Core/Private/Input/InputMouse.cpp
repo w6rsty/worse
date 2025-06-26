@@ -12,16 +12,16 @@ namespace worse
 
     namespace
     {
-        Vector2 s_mousePosition{0.0f, 0.0f};
-        Vector2 s_mouseDelta{0.0f, 0.0f};
-        Vector2 s_mouseWheelDelta{0.0f, 0.0f};
+        math::Vector2 s_mousePosition{0.0f, 0.0f};
+        math::Vector2 s_mouseDelta{0.0f, 0.0f};
+        math::Vector2 s_mouseWheelDelta{0.0f, 0.0f};
     } // namespace
 
     void Input::pollMouse()
     {
         float x{0.0f}, y{0.0f};
         SDL_MouseButtonFlags mouseStates = SDL_GetGlobalMouseState(&x, &y);
-        Vector2 position{x, y};
+        math::Vector2 position{x, y};
 
         s_mouseDelta    = position - s_mousePosition;
         s_mousePosition = position;
@@ -67,7 +67,7 @@ namespace worse
         return SDL_CursorVisible();
     }
 
-    void Input::setMousePositionGlobal(Vector2 const& position)
+    void Input::setMousePositionGlobal(math::Vector2 const& position)
     {
         if (!SDL_WarpMouseGlobal(position.x, position.y))
         {
@@ -77,29 +77,29 @@ namespace worse
         s_mousePosition = position;
     }
 
-    Vector2 const& Input::getMouseDelta()
+    math::Vector2 const& Input::getMouseDelta()
     {
         return s_mouseDelta;
     }
 
-    Vector2 const& Input::getMouseWheelDelta()
+    math::Vector2 const& Input::getMouseWheelDelta()
     {
         return s_mouseWheelDelta;
     }
 
-    Vector2 const& Input::getMousePositionGlobal()
+    math::Vector2 const& Input::getMousePositionGlobal()
     {
         return s_mousePosition;
     }
 
-    Vector2 Input::getMousePositionRelativeToWindow()
+    math::Vector2 Input::getMousePositionRelativeToWindow()
     {
         auto [windowX, windowY] = Window::getPosition();
-        return Vector2{static_cast<float>(s_mousePosition.x - windowX),
-                       static_cast<float>(s_mousePosition.y - windowY)};
+        return math::Vector2{static_cast<float>(s_mousePosition.x - windowX),
+                             static_cast<float>(s_mousePosition.y - windowY)};
     }
 
-    Vector2 Input::getMousePositionRelativeToViewport()
+    math::Vector2 Input::getMousePositionRelativeToViewport()
     {
         // TODO: Calculate position relative to the viewport
         return Input::getMousePositionRelativeToWindow();

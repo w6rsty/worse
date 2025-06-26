@@ -1,4 +1,6 @@
+#include "Geometry/GeometryGeneration.hpp"
 #include "Math/Vector.hpp"
+#include "Mesh.hpp"
 #include "Types.hpp"
 #include "Renderer.hpp"
 #include "RHIShader.hpp"
@@ -24,6 +26,8 @@ namespace worse
         EnumArray<RendererShader, std::shared_ptr<RHIShader>>                       shaders;
         EnumArray<RendererTexture, std::shared_ptr<RHITexture>>                     textures;
         EnumArray<RHISamplerType, std::shared_ptr<RHISampler>>                      samplers;
+
+        EnumArray<geometry::GeometryType, std::shared_ptr<Mesh>> standardMeshes;
         // clang-format on
     } // namespace
 
@@ -38,7 +42,10 @@ namespace worse
     void Renderer::createDepthStencilStates()
     {
         // clang-format off
-        depthStencilStates[RendererDepthStencilState::Off] = std::make_shared<RHIDepthStencilState>(false, false, RHICompareOperation::Less, false, false, RHICompareOperation::Always, RHIStencilOperation::Keep, RHIStencilOperation::Keep, RHIStencilOperation::Replace, 0x1, 0x1);
+        //                                                                                                test  | write  | compare
+        depthStencilStates[RendererDepthStencilState::Off]       = std::make_shared<RHIDepthStencilState>(false,  false,   RHICompareOperation::Never);
+        depthStencilStates[RendererDepthStencilState::ReadWrite] = std::make_shared<RHIDepthStencilState>(true,   true,    RHICompareOperation::GreaterEqual);
+        depthStencilStates[RendererDepthStencilState::ReadEqual] = std::make_shared<RHIDepthStencilState>(true,   false,   RHICompareOperation::Equal);
         // clang-format on
     }
 
@@ -53,15 +60,16 @@ namespace worse
     void Renderer::createRendererTarget()
     {
         // clang-format off
-        Vector2 renderResolution = getResolutionRender();
+        math::Vector2 renderResolution = getResolutionRender();
         std::uint32_t renderWidth  = static_cast<std::uint32_t>(renderResolution.x);
         std::uint32_t renderHeight = static_cast<std::uint32_t>(renderResolution.y);
 
         RHIFormat standardFormat = RHIFormat::B8R8G8A8Unorm;
 
-        std::vector<RHITextureSlice> data;
-        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "render");
-        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "output");
+        std::vector<RHITextureSlice> dummy;
+        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, dummy, "render");
+        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, dummy, "output");
+        renderTargets[RendererTarget::Depth]  = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, RHIFormat::D32Float, RHITextureViewUsageFlagBits::Dsv | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, dummy, "depth");
         // clang-format on
     }
 
@@ -71,17 +79,23 @@ namespace worse
         std::filesystem::path shaderPath = resourceRoot / "Engine" / "Shaders";
 
         // clang-format off
-        shaders[RendererShader::TestC] = std::make_shared<RHIShader>("test_c");
-        shaders[RendererShader::TestC]->compile(shaderPath / "Compute.hlsl", RHIShaderType::Compute);
+        shaders[RendererShader::DepthPrepassV] = std::make_shared<RHIShader>("DepthPrepassV");
+        shaders[RendererShader::DepthPrepassV]->compile(shaderPath / "DepthPrepass.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::DepthPrepassP] = std::make_shared<RHIShader>("DepthPrepassP");
+        shaders[RendererShader::DepthPrepassP]->compile(shaderPath / "DepthPrepass.hlsl", RHIShaderType::Pixel);
 
-        shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("placeholder_v");
+
+        shaders[RendererShader::KuwaharaC] = std::make_shared<RHIShader>("KuwaharaC");
+        shaders[RendererShader::KuwaharaC]->compile(shaderPath / "Kuwahara.hlsl", RHIShaderType::Compute);
+
+        shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("PlaceholderV");
         shaders[RendererShader::PlaceholderV]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
-        shaders[RendererShader::PlaceholderP] = std::make_shared<RHIShader>("placeholder_p");
+        shaders[RendererShader::PlaceholderP] = std::make_shared<RHIShader>("PlaceholderP");
         shaders[RendererShader::PlaceholderP]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Pixel);
 
-        shaders[RendererShader::PBRV] = std::make_shared<RHIShader>("pbr_v");
+        shaders[RendererShader::PBRV] = std::make_shared<RHIShader>("PBRV");
         shaders[RendererShader::PBRV]->compile(shaderPath / "PBR.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
-        shaders[RendererShader::PBRP] = std::make_shared<RHIShader>("pbr_p");
+        shaders[RendererShader::PBRP] = std::make_shared<RHIShader>("PBRP");
         shaders[RendererShader::PBRP]->compile(shaderPath / "PBR.hlsl", RHIShaderType::Pixel);
         // clang-format on
     }
@@ -123,6 +137,27 @@ namespace worse
         // clang-format on
     }
 
+    void Renderer::createStandardMeshes()
+    {
+        std::vector<RHIVertexPosUvNrmTan> vertices;
+        std::vector<std::uint32_t> indices;
+
+        // clang-format off
+        geometry::generateQuad3D(vertices, indices);
+        standardMeshes[geometry::GeometryType::Quad3D] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Quad3D]->addGeometry(vertices,indices);
+        standardMeshes[geometry::GeometryType::Quad3D]->createGPUBuffers();
+
+        vertices.clear();
+        indices.clear();
+
+        geometry::generateCube(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cube] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Cube]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cube]->createGPUBuffers();
+        // clang-format on
+    }
+
     void Renderer::destroyResources()
     {
         rasterizerStates.fill(nullptr);
@@ -132,6 +167,7 @@ namespace worse
         shaders.fill(nullptr);
         textures.fill(nullptr);
         samplers.fill(nullptr);
+        standardMeshes.fill(nullptr);
     }
 
     RHIRasterizerState*
@@ -169,6 +205,11 @@ namespace worse
     RHISampler* Renderer::getSampler(RHISamplerType const sampler)
     {
         return samplers[sampler].get();
+    }
+
+    Mesh* Renderer::getStandardMesh(geometry::GeometryType const type)
+    {
+        return standardMeshes[type].get();
     }
 
 } // namespace worse

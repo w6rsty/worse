@@ -1,4 +1,6 @@
 #pragma once
+#include "Mesh.hpp"
+#include "Geometry/GeometryGeneration.hpp"
 #include "Math/Vector.hpp"
 #include "RHIDefinitions.hpp"
 #include "RendererDefinitions.hpp"
@@ -10,16 +12,6 @@ namespace worse
 
     class Renderer
     {
-        static void createRasterizerStates();
-        static void createDepthStencilStates();
-        static void createBlendStates();
-        static void createRendererTarget();
-        static void createShaders();
-        static void createTextures();
-        static void createSamplers();
-
-        static void destroyResources();
-
     public:
         static void initialize();
         static void shutdown();
@@ -30,6 +22,7 @@ namespace worse
         static void blitToBackBuffer(RHICommandList* cmdList);
         // submit command list and present image to swapchain
         static void submitAndPresent();
+        static void updateBuffers(RHICommandList* cmdList);
 
         static void setViewport(float const width, float const height);
         static RHIViewport const& getViewport();
@@ -43,11 +36,38 @@ namespace worse
         static RHIShader* getShader(RendererShader const shader);
         static RHITexture* getTexture(RendererTexture const texture);
         static RHISampler* getSampler(RHISamplerType const sampler);
+        static Mesh* getStandardMesh(geometry::GeometryType const type);
 
-        static Vector2 getResolutionRender();
-        static Vector2 getResolutionOutput();
+        static math::Vector2 getResolutionRender();
+        static math::Vector2 getResolutionOutput();
 
         static void setPushParameters(float a, float b);
+        static void setCameraPosition(math::Vector3 const& position);
+
+    private:
+        // =====================================================================
+        // Resources
+        // =====================================================================
+        static void createRasterizerStates();
+        static void createDepthStencilStates();
+        static void createBlendStates();
+        static void createRendererTarget();
+        static void createShaders();
+        static void createTextures();
+        static void createSamplers();
+        static void createStandardMeshes();
+
+        static void destroyResources();
+
+        // =====================================================================
+        // Passes
+        // =====================================================================
+
+        static void passDpethPrepass(RHICommandList* cmdList);
+        static void passTest(RHICommandList* cmdList);
+        static void passoPostProcessing(RHICommandList* cmdList);
+
+        static void produceFrame(RHICommandList* cmdList);
 
     private:
         static inline std::uint64_t s_frameCount = 0;
