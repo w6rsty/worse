@@ -347,8 +347,11 @@ namespace worse
 
             for (uint32_t j = 0; j < range.second; ++j)
             {
+                RHITexture* texture = updates[imageInfoIndex + j].resource.texture;
+                texture = texture ? texture : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+
                 imageInfos[imageInfoIndex].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfos[imageInfoIndex].imageView   = updates[imageInfoIndex].resource.texture->getView().asValue<VkImageView>();
+                imageInfos[imageInfoIndex].imageView   = texture->getView().asValue<VkImageView>();
                 imageInfos[imageInfoIndex].sampler     = VK_NULL_HANDLE;
                 ++imageInfoIndex;
             }

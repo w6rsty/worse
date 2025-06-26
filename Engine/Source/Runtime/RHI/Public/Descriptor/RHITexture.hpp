@@ -62,6 +62,8 @@ namespace worse
         RHITextureMip const& getMip(std::size_t const arrayIndex,
                                     std::size_t const mipIndex) const;
 
+        bool isValid() const;
+
         // clang-format off
         RHITextureType           getType() const     { return m_type; }
         std::uint32_t            getWidth() const    { return m_width; }

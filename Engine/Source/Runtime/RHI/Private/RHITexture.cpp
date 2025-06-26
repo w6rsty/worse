@@ -33,9 +33,7 @@ namespace worse
         auto data = TextureImporter::FromFile(path);
         if (!data)
         {
-            WS_LOG_WARN("RHITexture",
-                        "Failed to create texture from file: {}",
-                        path.string());
+            WS_LOG_ERROR("RHITexture", "Failed to load texture");
             return;
         }
 
@@ -114,6 +112,11 @@ namespace worse
         WS_ASSERT(mipIndex < m_mipCount);
 
         return m_slices[arrayIndex].mips[mipIndex];
+    }
+
+    bool RHITexture::isValid() const
+    {
+        return m_image && m_rtv;
     }
 
 } // namespace worse

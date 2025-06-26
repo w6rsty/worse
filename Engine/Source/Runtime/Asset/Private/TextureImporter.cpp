@@ -156,6 +156,13 @@ namespace worse
     std::unique_ptr<DeferredTextureCopy>
     TextureImporter::FromFile(std::filesystem::path const& path)
     {
+        if (!FileSystem::isFileExists(path))
+        {
+            WS_LOG_ERROR("Asset",
+                         "Failed to load texture. File {} not found",
+                         path.string());
+            return {};
+        }
 
         if (!FileSystem::isSupportedImage(path))
         {

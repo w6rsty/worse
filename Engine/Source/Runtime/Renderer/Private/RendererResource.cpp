@@ -78,19 +78,18 @@ namespace worse
         std::filesystem::path shaderPath = resourceRoot / "Engine" / "Shaders";
 
         // clang-format off
+        shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("PlaceholderV");
+        shaders[RendererShader::PlaceholderV]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::PlaceholderP] = std::make_shared<RHIShader>("PlaceholderP");
+        shaders[RendererShader::PlaceholderP]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Pixel);
+
         shaders[RendererShader::DepthPrepassV] = std::make_shared<RHIShader>("DepthPrepassV");
         shaders[RendererShader::DepthPrepassV]->compile(shaderPath / "DepthPrepass.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::DepthPrepassP] = std::make_shared<RHIShader>("DepthPrepassP");
         shaders[RendererShader::DepthPrepassP]->compile(shaderPath / "DepthPrepass.hlsl", RHIShaderType::Pixel);
 
-
         shaders[RendererShader::KuwaharaC] = std::make_shared<RHIShader>("KuwaharaC");
         shaders[RendererShader::KuwaharaC]->compile(shaderPath / "Kuwahara.hlsl", RHIShaderType::Compute);
-
-        shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("PlaceholderV");
-        shaders[RendererShader::PlaceholderV]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
-        shaders[RendererShader::PlaceholderP] = std::make_shared<RHIShader>("PlaceholderP");
-        shaders[RendererShader::PlaceholderP]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::PBRV] = std::make_shared<RHIShader>("PBRV");
         shaders[RendererShader::PBRV]->compile(shaderPath / "PBR.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
@@ -102,13 +101,9 @@ namespace worse
     void Renderer::createTextures()
     {
         // clang-format off
-        std::filesystem::path testPathA = "/Users/w6rsty/Downloads/normal.png";
-        textures[RendererTexture::TestA] = std::make_shared<RHITexture>(testPathA);
+        textures[RendererTexture::Cornell] = std::make_shared<RHITexture>("/Users/w6rsty/Pictures/cornell.png");
 
-        std::filesystem::path testPathB = "/Users/w6rsty/Pictures/cornell.png";
-        textures[RendererTexture::TestB] = std::make_shared<RHITexture>(testPathB);
-
-        std::uint32_t white = 0xFFFFFFFF;
+        std::uint32_t white = 0xFFFF00FF;
         RHITextureMip mip;
         mip.bytes.resize(4);
         std::memcpy(mip.bytes.data(), &white, 4);
@@ -118,7 +113,20 @@ namespace worse
         data.push_back(slice);
         
         textures[RendererTexture::Placeholder] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "placeholder");
+
         // clang-format on
+        for (std::size_t i = 0; i < textures.size(); ++i)
+        {
+            if (auto& texture = textures[i]; !texture || !texture->isValid())
+            {
+                WS_LOG_WARN(
+                    "Renderer",
+                    "Texture {} load failed",
+                    renderTextureToString(static_cast<RendererTexture>(i)));
+                // prevent usage of invalid texture
+                texture = nullptr;
+            }
+        }
     }
 
     void Renderer::createSamplers()
