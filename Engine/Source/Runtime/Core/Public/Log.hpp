@@ -86,7 +86,7 @@ namespace worse
         void log(char const* target, std::format_string<Args...> fmt,
                  Args&&... args)
         {
-            if (!m_running)
+            if (!m_running.load(std::memory_order_acquire))
             {
                 return;
             }
@@ -136,10 +136,10 @@ namespace worse
 } // namespace worse
 
 // clang-format off
-#define WS_LOG_TRACE(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Trace>(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_DEBUG(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Debug>(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_INFO(target,  fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Info >(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_WARN(target,  fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Warn >(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_ERROR(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Error>(target, fmt __VA_OPT__(,) __VA_ARGS__)
-#define WS_LOG_FATAL(target, fmt, ...) ::worse::Logger::instance()->log<::worse::Level::Fatal>(target, fmt __VA_OPT__(,) __VA_ARGS__)
+#define WS_LOG_TRACE(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Trace>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_DEBUG(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Debug>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_INFO(target,  fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Info >(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_WARN(target,  fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Warn >(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_ERROR(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Error>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_FATAL(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Fatal>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
 // clang-format on
