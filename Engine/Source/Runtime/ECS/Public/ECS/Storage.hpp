@@ -345,4 +345,35 @@ namespace worse::ecs
     private:
         Entity::EntityType m_nextId;
     };
+
+    // Clean template-based type erasure for Storage
+    class StorageBase
+    {
+    public:
+        virtual ~StorageBase()                     = default;
+        virtual void remove(Entity entity)         = 0;
+        virtual std::size_t size() const           = 0;
+        virtual bool contains(Entity entity) const = 0;
+    };
+
+    template <typename T> struct StorageWrapper : public StorageBase
+    {
+        Storage<T> storage;
+
+        void remove(Entity entity) override
+        {
+            storage.remove(entity);
+        }
+
+        std::size_t size() const override
+        {
+            return storage.size();
+        }
+
+        bool contains(Entity entity) const override
+        {
+            return storage.contains(entity);
+        }
+    };
+
 } // namespace worse::ecs
