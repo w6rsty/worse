@@ -1,11 +1,11 @@
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
 #include "RHIVertex.hpp"
+#include "RHITexture.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIBlendState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
-#include "Descriptor/RHITexture.hpp"
 
 #include <vector>
 

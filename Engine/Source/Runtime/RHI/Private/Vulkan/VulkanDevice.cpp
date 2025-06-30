@@ -2,12 +2,12 @@
 #include "Log.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
+#include "RHITexture.hpp"
+#include "RHIDescriptor.hpp"
+#include "VulkanDescriptor.hpp"
 #include "RHICommandList.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
-#include "Descriptor/RHITexture.hpp"
-#include "Descriptor/RHIDescriptor.hpp"
-#include "VulkanDescriptor.hpp"
 
 #include "SDL3/SDL_vulkan.h"
 #include "vk_mem_alloc.h"
@@ -152,7 +152,10 @@ namespace worse
 
     namespace deviceFeatures
     {
+        VkPhysicalDeviceFeatures featureCore = {};
+
         void* featureChain = nullptr;
+
         // clang-format off
         VkPhysicalDeviceTimelineSemaphoreFeatures featureTimelineSemaphore   = {};
         VkPhysicalDeviceDynamicRenderingFeatures featureDynamicRendering     = {};
@@ -162,6 +165,8 @@ namespace worse
 
         void detect()
         {
+            featureCore.fillModeNonSolid = VK_TRUE;
+
             // clang-format off
             featureDescriptorIndexing.sType                                         = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
             featureDescriptorIndexing.runtimeDescriptorArray                        = VK_TRUE;
@@ -353,7 +358,7 @@ namespace worse
             VmaVulkanFunctions vulkanFunctions{};
             infoAllocator.pVulkanFunctions = &vulkanFunctions;
             WS_ASSERT_VK(vmaImportVulkanFunctionsFromVolk(&infoAllocator,
-                                                          &vulkanFunctions))
+                                                          &vulkanFunctions));
 
             WS_ASSERT_VK(vmaCreateAllocator(&infoAllocator, &vma::allocator));
         }
@@ -503,6 +508,7 @@ namespace worse
             infoDevice.pNext                   = deviceFeatures::featureChain;
             infoDevice.queueCreateInfoCount    = static_cast<std::uint32_t>(queueInfos.size());
             infoDevice.pQueueCreateInfos       = queueInfos.data();
+            infoDevice.pEnabledFeatures        = &deviceFeatures::featureCore;
 
             std::vector<char const*> extensionsDevice = extensions::getExtensionsDevice();
             infoDevice.enabledExtensionCount   = static_cast<std::uint32_t>(extensionsDevice.size());

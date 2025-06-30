@@ -26,6 +26,5 @@ target_link_libraries(${MODULE_NAME} PRIVATE
     Worse::Core
     Worse::FileSystem
     glm
-    gli
     stb
 )

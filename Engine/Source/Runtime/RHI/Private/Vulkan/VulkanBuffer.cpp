@@ -1,6 +1,6 @@
 #include "RHIDevice.hpp"
 #include "RHICommandList.hpp"
-#include "Descriptor/RHIBuffer.hpp"
+#include "RHIBuffer.hpp"
 
 #include <bit>
 

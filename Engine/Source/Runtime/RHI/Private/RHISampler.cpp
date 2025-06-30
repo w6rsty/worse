@@ -1,4 +1,4 @@
-#include "Descriptor/RHISampler.hpp"
+#include "RHISampler.hpp"
 #include "RHIDevice.hpp"
 
 namespace worse

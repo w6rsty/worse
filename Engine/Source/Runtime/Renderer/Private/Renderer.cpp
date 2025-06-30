@@ -1,15 +1,15 @@
-#include "Math/Math.hpp"
-#include "Profiling/Stopwatch.hpp"
+#include "Log.hpp"
 #include "Window.hpp"
-#include "Renderer.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
 #include "RHIViewport.hpp"
 #include "RHISwapchain.hpp"
 #include "RHICommandList.hpp"
-#include "Descriptor/RHIBuffer.hpp"
-#include "Descriptor/RHITexture.hpp"
+#include "RHIBuffer.hpp"
+#include "RHITexture.hpp"
+#include "Renderer.hpp"
 #include "RendererBuffer.hpp"
+#include "AssetServer.hpp"
 
 #include <memory>
 
@@ -71,14 +71,14 @@ namespace worse
 
     } // namespace
 
-    void Renderer::initialize()
+    void Renderer::initialize(ecs::Commands commands)
     {
         RHIDevice::initialize();
 
         // resolution
         {
             // render resolution
-            resolutionRender = {800, 600};
+            resolutionRender = {1200, 720};
             // output resolution
             resolutionOutput = {static_cast<float>(Window::getWidth()),
                                 static_cast<float>(Window::getHeight())};
@@ -99,6 +99,14 @@ namespace worse
 
         // resources
         {
+            frameConstantBuffer =
+                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
+                                            sizeof(FrameConstantData),
+                                            1,
+                                            &frameConstantData,
+                                            true,
+                                            "frameConstantBuffer");
+
             Renderer::createRasterizerStates();
             Renderer::createDepthStencilStates();
             Renderer::createBlendStates();
@@ -107,28 +115,37 @@ namespace worse
             Renderer::createTextures();
             Renderer::createSamplers();
             Renderer::createStandardMeshes();
-
-            frameConstantBuffer =
-                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
-                                            sizeof(FrameConstantData),
-                                            1,
-                                            &frameConstantData,
-                                            true,
-                                            "frameConstantBuffer");
+            Renderer::createPipelineStates();
         }
 
         RHIDevice::setResourceProvider(&resourceProvider);
+
+        commands.emplaceResource<GlobalContext>();
+        commands.emplaceResourceArray<Drawcall>();
+        commands.emplaceResourceArray<Mesh>();
+        commands.emplaceResourceArray<StandardMaterial>();
+        commands.emplaceResourceArray<StandardMaterialGPU>();
+        commands.emplaceResourceArray<TextureWrite>();
+        commands.emplaceResource<AssetServer>();
     }
 
-    void Renderer::shutdown()
+    void Renderer::shutdown(ecs::Commands commands)
     {
         RHIDevice::queueWaitAll();
-
         {
             frameConstantBuffer.reset();
 
             destroyResources();
             swapchain.reset();
+
+            commands.removeResource<GlobalContext>();
+            commands.removeResourceArray<Drawcall>();
+            commands.removeResourceArray<Mesh>();
+            commands.removeResourceArray<StandardMaterial>();
+            commands.removeResourceArray<StandardMaterialGPU>();
+            commands.removeResourceArray<TextureWrite>();
+
+            commands.removeResource<AssetServer>();
         }
 
         RHIDevice::destroy();
@@ -136,7 +153,11 @@ namespace worse
         WS_LOG_DEBUG("Renderer", "Finished {} frame", s_frameCount);
     }
 
-    void Renderer::tick()
+    void Renderer::tick(ecs::ResourceArray<Drawcall> drawcalls,
+                        ecs::Resource<Camera> camera,
+                        ecs::Resource<GlobalContext> globalContext,
+                        ecs::ResourceArray<Mesh> meshes,
+                        ecs::ResourceArray<TextureWrite> textureWrites)
     {
         // signal image acquire semaphore(swapchain)
         swapchain->acquireNextImage();
@@ -150,10 +171,14 @@ namespace worse
             RHIDevice::deletionQueueFlush();
         }
 
-        updateBuffers(m_cmdList);
+        updateBuffers(m_cmdList, camera, globalContext);
 
         // render passes
-        produceFrame(m_cmdList);
+        produceFrame(m_cmdList,
+                     globalContext,
+                     drawcalls,
+                     meshes,
+                     textureWrites);
 
         blitToBackBuffer(m_cmdList);
 
@@ -187,26 +212,46 @@ namespace worse
         }
     }
 
-    void Renderer::updateBuffers(RHICommandList* cmdList)
+    void Renderer::writeBindlessTextures(
+        ecs::ResourceArray<TextureWrite> textureWrites)
+    {
+        std::vector<RHIDescriptorWrite> updates;
+        updates.reserve(static_cast<std::size_t>(RendererTexture::Max) +
+                        textureWrites->data().size());
+
+        // builtin textures (0-6)
+        // clang-format off
+        updates.emplace_back(0, 0, RHIDescriptorResource{Renderer::getTexture(RendererTexture::Placeholder)},             RHIDescriptorType::Texture);
+        updates.emplace_back(0, 1, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAlbedo)},           RHIDescriptorType::Texture);
+        updates.emplace_back(0, 2, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultNormal)},           RHIDescriptorType::Texture);
+        updates.emplace_back(0, 3, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultMetallic)},         RHIDescriptorType::Texture);
+        updates.emplace_back(0, 4, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultRoughness)},        RHIDescriptorType::Texture);
+        updates.emplace_back(0, 5, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAmbientOcclusion)}, RHIDescriptorType::Texture);
+        updates.emplace_back(0, 6, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultEmissive)},         RHIDescriptorType::Texture);
+        
+        // dynamic textures
+        for (auto const& textureWrite : textureWrites->data())
+        {   
+            updates.emplace_back(0, textureWrite.index, RHIDescriptorResource{textureWrite.texture}, RHIDescriptorType::Texture);
+        }
+        // clang-format on
+
+        RHIDevice::updateBindlessTextures(updates);
+    }
+
+    void Renderer::updateBuffers(RHICommandList* cmdList,
+                                 ecs::Resource<Camera> camera,
+                                 ecs::Resource<GlobalContext> globalContext)
     {
         // update frame constant data
 
-        static profiling::Stopwatch frameTimer;
-        frameConstantData.deltaTime = frameTimer.elapsedSec();
-        frameConstantData.time += frameConstantData.deltaTime;
-        frameConstantData.projection =
-            math::projectionPerspective(math::toRadians(70.0f),
-                                        viewport.width / viewport.height,
-                                        0.1f,
-                                        100.0f);
+        frameConstantData.deltaTime  = globalContext->deltaTime;
+        frameConstantData.time       = globalContext->time;
+        frameConstantData.projection = camera->getProjectionMatrix();
 
-
-        frameConstantData.view = math::lookAt(frameConstantData.cameraPosition,
-                                              math::Vector3{0, 0, 0},
-                                              math::Vector3{0, 1, 0});
+        frameConstantData.view = camera->getViewMatrix();
         frameConstantData.viewProjection =
             frameConstantData.projection * frameConstantData.view;
-        frameTimer.reset();
 
         m_cmdList->updateBuffer(frameConstantBuffer.get(),
                                 0,
@@ -249,6 +294,11 @@ namespace worse
     void Renderer::setCameraPosition(math::Vector3 const& position)
     {
         frameConstantData.cameraPosition = position;
+    }
+
+    void Renderer::setCameraForward(math::Vector3 const& forward)
+    {
+        frameConstantData.cameraForward = forward;
     }
 
 } // namespace worse

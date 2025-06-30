@@ -1,10 +1,10 @@
 #include "Math/Hash.hpp"
 #include "RHIShader.hpp"
+#include "RHITexture.hpp"
 #include "Pipeline/RHIBlendState.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
-#include "Descriptor/RHITexture.hpp"
 
 namespace worse
 {

@@ -1,11 +1,61 @@
 #pragma once
 #include "Math/BoundingBox.hpp"
-#include "Descriptor/RHIBuffer.hpp"
+#include "RHIBuffer.hpp"
+#include "Geometry/GeometryGeneration.hpp"
 
+#include "ECS/Resource.hpp"
+#include "ECS/QueryView.hpp"
+
+#include <concepts>
 #include <memory>
 
 namespace worse
 {
+    // ECS index
+    struct Mesh3D
+    {
+        std::size_t index;
+    };
+
+    struct StandardMesh3D
+    {
+        geometry::GeometryType type;
+    };
+
+    struct Quad3D : StandardMesh3D
+    {
+        float width  = 1.0f;
+        float height = 1.0f;
+    };
+
+    struct Cube : StandardMesh3D
+    {
+        float width  = 1.0f;
+        float height = 1.0f;
+        float depth  = 1.0f;
+    };
+
+    struct Sphere : StandardMesh3D
+    {
+        float radius           = 0.5f;
+        std::uint32_t segments = 32; // horizontal segments
+        std::uint32_t rings    = 16; // vertical segments
+    };
+
+    struct Cylinder : StandardMesh3D
+    {
+        float radius           = 0.5f;
+        float height           = 1.0f;
+        std::uint32_t segments = 32; // horizontal segments
+    };
+
+    struct Capsule3D : StandardMesh3D
+    {
+        float radius           = 0.5f;
+        float height           = 2.0f;
+        std::uint32_t segments = 32; // horizontal segments
+        std::uint32_t rings    = 16; // vertical segments
+    };
 
     struct MeshLod
     {
@@ -27,6 +77,57 @@ namespace worse
     {
     public:
         Mesh();
+
+        template <std::derived_from<StandardMesh3D> T>
+        Mesh(T const& standardMesh)
+        {
+            std::vector<RHIVertexPosUvNrmTan> vertices;
+            std::vector<std::uint32_t> indices;
+
+            if constexpr (std::is_same_v<T, Quad3D>)
+            {
+                geometry::generateQuad3D(vertices,
+                                         indices,
+                                         standardMesh.width,
+                                         standardMesh.height);
+            }
+            else if constexpr (std::is_same_v<T, Cube>)
+            {
+                geometry::generateCube(vertices,
+                                       indices,
+                                       standardMesh.width,
+                                       standardMesh.height,
+                                       standardMesh.depth);
+            }
+            else if constexpr (std::is_same_v<T, Sphere>)
+            {
+                geometry::generateSphere(vertices,
+                                         indices,
+                                         standardMesh.radius,
+                                         standardMesh.segments,
+                                         standardMesh.rings);
+            }
+            else if constexpr (std::is_same_v<T, Cylinder>)
+            {
+                geometry::generateCylinder(vertices,
+                                           indices,
+                                           standardMesh.radius,
+                                           standardMesh.height,
+                                           standardMesh.segments);
+            }
+            else if constexpr (std::is_same_v<T, Capsule3D>)
+            {
+                geometry::generateCapsule(vertices,
+                                          indices,
+                                          standardMesh.radius,
+                                          standardMesh.height,
+                                          standardMesh.segments,
+                                          standardMesh.rings);
+            }
+
+            addGeometry(vertices, indices);
+        }
+
         ~Mesh();
 
         // Release CPU resources
@@ -51,5 +152,12 @@ namespace worse
         std::shared_ptr<RHIBuffer> m_vertexBuffer = nullptr;
         std::shared_ptr<RHIBuffer> m_indexBuffer  = nullptr;
     };
+
+    // clang-format off
+    void buildMeshes(
+        ecs::QueryView<Mesh3D> view,
+        ecs::ResourceArray<Mesh> meshes
+    );
+    // clang-format on
 
 } // namespace worse

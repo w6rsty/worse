@@ -77,6 +77,11 @@ namespace worse::ecs
             return m_registry.getResourceArray<Resource>();
         }
 
+        template <typename Resource> void removeResourceArray()
+        {
+            m_registry.removeResourceArray<Resource>();
+        }
+
         template <typename Resource> bool hasResourceArray() const
         {
             return m_registry.hasResourceArray<Resource>();

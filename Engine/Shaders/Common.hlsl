@@ -32,7 +32,7 @@ struct FrameConstantData
 
 struct PushConstantData
 {
-    float4x4 model;
+    float4x4 transform;
     float4x4 values;
 };
 
@@ -78,6 +78,20 @@ struct VertexPosUvNrmTan
     float2 uv       : TEXCOORD;
     float3 normal   : NORMAL;
     float3 tangent  : TANGENT;
+};
+
+struct Material
+{
+    uint albedoTextureIndex;
+    uint normalTextureIndex;
+    uint metallicTextureIndex;
+    uint roughnessTextureIndex;
+    uint ambientOcclusionTextureIndex;
+    uint emissiveTextureIndex;
+    float metallic;
+    float roughness;
+    float4 albedo;
+    float4 emissive;
 };
 
 #endif // WS_COMMON_HLSL

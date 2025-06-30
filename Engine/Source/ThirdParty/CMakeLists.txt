@@ -1,7 +1,6 @@
 include(FetchContent)
 
 add_subdirectory(dxc)
-add_subdirectory(gli)
 add_subdirectory(glm)
 add_subdirectory(SDL3)
 add_subdirectory(SPIRV-Cross)

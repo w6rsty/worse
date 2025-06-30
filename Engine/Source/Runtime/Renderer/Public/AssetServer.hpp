@@ -48,9 +48,12 @@ namespace worse
         RHITexture* getTexture(AssetHandle handle) const;
         std::size_t getLoadedCount() const;
 
+        void eachAsset(std::function<void(AssetHandle, RHITexture*)> const&
+                           callback) const;
+
     private:
         mutable std::mutex m_mtx;
-        std::hash<std::filesystem::path> m_pathHasher;
+        std::hash<std::filesystem::path> m_hasher;
         std::queue<std::filesystem::path> m_loadQueue;
         std::unordered_map<AssetHandle, AssetSlot> m_assets;
     };

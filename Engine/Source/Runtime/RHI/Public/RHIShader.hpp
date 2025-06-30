@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIResource.hpp"
 #include "RHIVertex.hpp"
-#include "Descriptor/RHIDescriptor.hpp"
+#include "RHIDescriptor.hpp"
 
 #include <regex>
 #include <string>

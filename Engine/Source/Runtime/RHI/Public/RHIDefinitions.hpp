@@ -8,12 +8,25 @@
 #ifdef WS_RHI_BACKEND_VULKAN
 #include "volk.h"
 
+#ifdef DEBUG
 #define WS_ASSERT_VK(result)                                                   \
-    if (result != VK_SUCCESS)                                                  \
+    do                                                                         \
     {                                                                          \
-        WS_LOG_ERROR("RHI", "Vulkan error: {}", #result);                      \
-        WS_ASSERT(result);                                                     \
-    }
+        VkResult vkResult = (result);                                          \
+        if (vkResult != VK_SUCCESS)                                            \
+        {                                                                      \
+            WS_LOG_ERROR("RHI", "Vulkan error: {}", #result);                  \
+            WS_ASSERT(vkResult);                                               \
+        }                                                                      \
+    } while (false)
+#else
+#define WS_ASSERT_VK(result)                                                   \
+    do                                                                         \
+    {                                                                          \
+        VkResult vkResult = (result);                                          \
+        (void)vkResult;                                                        \
+    } while (false)
+#endif
 #endif
 
 namespace worse

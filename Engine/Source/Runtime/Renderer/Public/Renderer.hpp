@@ -1,9 +1,15 @@
 #pragma once
-#include "Mesh.hpp"
+#include "Math/Math.hpp"
+#include "Prefab.hpp"
 #include "Geometry/GeometryGeneration.hpp"
-#include "Math/Vector.hpp"
-#include "RHIDefinitions.hpp"
 #include "RendererDefinitions.hpp"
+#include "Mesh.hpp"
+#include "Material.hpp"
+#include "Camera.hpp"
+#include "Renderable.hpp"
+
+#include "ECS/Resource.hpp"
+#include "ECS/Commands.hpp"
 
 #include <cstdint>
 
@@ -13,16 +19,25 @@ namespace worse
     class Renderer
     {
     public:
-        static void initialize();
-        static void shutdown();
-        static void tick();
+        static void initialize(ecs::Commands commands);
+        static void shutdown(ecs::Commands commands);
+        static void tick(ecs::ResourceArray<Drawcall> drawcalls,
+                         ecs::Resource<Camera> camera,
+                         ecs::Resource<GlobalContext> globalContext,
+                         ecs::ResourceArray<Mesh> meshes,
+                         ecs::ResourceArray<TextureWrite> textureWrites);
 
         // swapchain
         static RHISwapchain* getSwapchain();
         static void blitToBackBuffer(RHICommandList* cmdList);
         // submit command list and present image to swapchain
         static void submitAndPresent();
-        static void updateBuffers(RHICommandList* cmdList);
+
+        static void
+        createMaterialBuffers(std::span<StandardMaterialGPU> materials);
+
+        static void
+        writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites);
 
         static void setViewport(float const width, float const height);
         static RHIViewport const& getViewport();
@@ -37,17 +52,25 @@ namespace worse
         static RHITexture* getTexture(RendererTexture const texture);
         static RHISampler* getSampler(RHISamplerType const sampler);
         static Mesh* getStandardMesh(geometry::GeometryType const type);
+        static RHIPipelineState const& getPipelineState(RendererPSO const pso);
+        static RHIBuffer* getMaterialBuffer();
 
         static math::Vector2 getResolutionRender();
         static math::Vector2 getResolutionOutput();
 
         static void setPushParameters(float a, float b);
         static void setCameraPosition(math::Vector3 const& position);
+        static void setCameraForward(math::Vector3 const& forward);
 
     private:
+        static void updateBuffers(RHICommandList* cmdList,
+                                  ecs::Resource<Camera> camera,
+                                  ecs::Resource<GlobalContext> globalContext);
+
         // =====================================================================
         // Resources
         // =====================================================================
+
         static void createRasterizerStates();
         static void createDepthStencilStates();
         static void createBlendStates();
@@ -56,6 +79,7 @@ namespace worse
         static void createTextures();
         static void createSamplers();
         static void createStandardMeshes();
+        static void createPipelineStates();
 
         static void destroyResources();
 
@@ -63,11 +87,23 @@ namespace worse
         // Passes
         // =====================================================================
 
-        static void passDpethPrepass(RHICommandList* cmdList);
-        static void passTest(RHICommandList* cmdList);
-        static void passoPostProcessing(RHICommandList* cmdList);
+        static void passDpethPrepass(RHICommandList* cmdList,
+                                     ecs::ResourceArray<Drawcall> drawcalls,
+                                     ecs::ResourceArray<Mesh> meshes);
+        static void passColor(RHICommandList* cmdList,
+                              ecs::ResourceArray<Drawcall> drawcalls,
+                              ecs::ResourceArray<Mesh> meshes);
+        static void passWireFrame(RHICommandList* cmdList,
+                                  ecs::ResourceArray<Drawcall> drawcalls,
+                                  ecs::ResourceArray<Mesh> meshes);
+        static void passPostProcessing(RHICommandList* cmdList);
 
-        static void produceFrame(RHICommandList* cmdList);
+        static void
+        produceFrame(RHICommandList* cmdList,
+                     ecs::Resource<GlobalContext> globalContext,
+                     ecs::ResourceArray<Drawcall> drawcalls,
+                     ecs::ResourceArray<Mesh> meshes,
+                     ecs::ResourceArray<TextureWrite> textureWrites);
 
     private:
         static inline std::uint64_t s_frameCount = 0;

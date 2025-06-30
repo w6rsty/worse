@@ -7,4 +7,4 @@
 (Set 1, Binding 0-N) Specific
 ```
 
-Use inversed-Z (near=1, far=0)
+Use Reversed-Z (near=1, far=0)

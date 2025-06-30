@@ -1,4 +1,6 @@
 #pragma once
+#include "RHITexture.hpp"
+
 #include <cstddef>
 #include <string>
 
@@ -33,27 +35,14 @@ namespace worse
         DepthPrepassV,
         DepthPrepassP,
         KuwaharaC,
+        LineV,
+        LineP,
         PBRV,
         PBRP,
+        DistortionV,
+        DistortionP,
         Max
     };
-
-    constexpr std::string renderShaderToString(RendererShader shader)
-    {
-        switch (shader)
-        {
-            // clang-format off
-        case RendererShader::PlaceholderV:  return "PlaceholderV";
-        case RendererShader::PlaceholderP:  return "PlaceholderP";
-        case RendererShader::DepthPrepassV: return "DepthPrepassV";
-        case RendererShader::DepthPrepassP: return "DepthPrepassP";
-        case RendererShader::KuwaharaC:     return "KuwaharaC";
-        case RendererShader::PBRV:          return "PBRV";
-        case RendererShader::PBRP:          return "PBRP";
-        default:                            return "Unknown";
-            // clang-format on
-        }
-    }
 
     enum class RendererTarget : std::size_t
     {
@@ -63,10 +52,16 @@ namespace worse
         Max,
     };
 
+    // builtin textures
     enum class RendererTexture : std::size_t
     {
-        Cornell,
         Placeholder,
+        DefaultAlbedo,
+        DefaultNormal,
+        DefaultMetallic,
+        DefaultRoughness,
+        DefaultAmbientOcclusion,
+        DefaultEmissive,
         Max,
     };
 
@@ -75,11 +70,31 @@ namespace worse
         switch (texture)
         {
             // clang-format off
-        case RendererTexture::Cornell:     return "Cornell";
-        case RendererTexture::Placeholder: return "Placeholder";
-        default:                           return "Unknown";
+        case RendererTexture::Placeholder:             return "Placeholder";
+        case RendererTexture::DefaultNormal:           return "DefaultNormal";
+        case RendererTexture::DefaultMetallic:         return "DefaultMetallic";
+        case RendererTexture::DefaultRoughness:        return "DefaultRoughness";
+        case RendererTexture::DefaultAmbientOcclusion: return "DefaultAmbientOcclusion";
+        case RendererTexture::DefaultEmissive:         return "DefaultEmissive";
+        default:                                       return "Unknown";
             // clang-format on
         }
     }
+
+    // builtin pipeline
+    enum class RendererPSO : std::size_t
+    {
+        DepthPrepass,
+        PBR,
+        Wireframe,
+        PostProcessing,
+        Max
+    };
+
+    struct TextureWrite
+    {
+        RHITexture* texture;
+        std::size_t index;
+    };
 
 } // namespace worse

@@ -1,6 +1,6 @@
 #include "RHIDevice.hpp"
 #include "RHICommandList.hpp"
-#include "Descriptor/RHITexture.hpp"
+#include "RHITexture.hpp"
 
 namespace worse
 {

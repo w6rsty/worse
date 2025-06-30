@@ -203,7 +203,7 @@ namespace worse::math
 
     /// Right-handed Orthographic projection matrix
     /// REVERSED-Z with depth range from [1, 0] (near=1, far=0)
-    inline Matrix4 projectionOrthoReversedZ(float left, float right, float bottom, float top, float near, float far)
+    inline Matrix4 projectionOrtho(float left, float right, float bottom, float top, float near, float far)
     {
         float recipW = 1.0f / (right - left);
         float recipH = 1.0f / (top - bottom);
@@ -224,7 +224,7 @@ namespace worse::math
     /// Right-handed Orthographic projection matrix
     /// With x-y symmetry
     /// REVERSED-Z with depth range from [1, 0] (near=1, far=0)
-    inline Matrix4 projectionOrthoReversedZ(float right, float top, float near, float far)
+    inline Matrix4 projectionOrtho(float right, float top, float near, float far)
     {
         float a  = 1.0f / right;
         float b  = 1.0f / top;

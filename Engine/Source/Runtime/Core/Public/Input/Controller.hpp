@@ -33,6 +33,7 @@ namespace worse
         std::optional<std::uint32_t> getPowerPercentage() const;
         void setLEDColor(std::uint8_t const red, std::uint8_t const green,
                          std::uint8_t const blue) const;
+        // frequency 0-1
         void vibrate(float const lowFrequency, float const highFrequency,
                      std::uint32_t const durationMs) const;
 

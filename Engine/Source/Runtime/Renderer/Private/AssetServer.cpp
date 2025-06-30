@@ -14,7 +14,7 @@ namespace worse
     {
         std::lock_guard<std::mutex> lock(m_mtx);
 
-        AssetHandle handle = m_pathHasher(path);
+        AssetHandle handle = m_hasher(path);
 
         auto it = m_assets.find(handle);
         if (it != m_assets.end())
@@ -42,7 +42,7 @@ namespace worse
             std::filesystem::path path = m_loadQueue.front();
             m_loadQueue.pop();
 
-            AssetHandle handle = m_pathHasher(path);
+            AssetHandle handle = m_hasher(path);
             AssetSlot& slot    = m_assets[handle];
             WS_ASSERT_MSG(slot.state != AssetState::Loaded,
                           "Asset already loaded");
@@ -135,6 +135,19 @@ namespace worse
                              {
                                  return pair.second.state == AssetState::Loaded;
                              });
+    }
+
+    void AssetServer::eachAsset(
+        std::function<void(AssetHandle, RHITexture*)> const& callback) const
+    {
+        std::lock_guard<std::mutex> lock(m_mtx);
+        for (auto const& [handle, slot] : m_assets)
+        {
+            if (slot.state == AssetState::Loaded)
+            {
+                callback(handle, slot.texture.get());
+            }
+        }
     }
 
 } // namespace worse

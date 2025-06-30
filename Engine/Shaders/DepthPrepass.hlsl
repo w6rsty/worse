@@ -12,8 +12,8 @@ VertexOutput main_vs(VertexPosUvNrmTan input)
 {
     VertexOutput output;
 
-    float4x4 mvp = mul(frameData.projection, mul(frameData.view, pushData.model));
-    output.position = mul(mvp,float4(input.position, 1.0));
+    float4x4 mvp = mul(frameData.projection, mul(frameData.view, pushData.transform));
+    output.position = mul(mvp, float4(input.position, 1.0));
 
     return output;
 }

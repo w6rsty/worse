@@ -170,6 +170,7 @@ namespace worse::ecs
         void removeResource()
         {
             std::type_index typeIndex(typeid(Type));
+            m_resources[typeIndex].reset();
             m_resources.erase(typeIndex);
         }
 

@@ -1,12 +1,13 @@
 #include "Math/Hash.hpp"
+#include "Log.hpp"
 #include "RHIDevice.hpp"
 #include "RHIResource.hpp"
-#include "Descriptor/RHIBuffer.hpp"
-#include "Descriptor/RHITexture.hpp"
-#include "Descriptor/RHISampler.hpp"
-#include "Descriptor/RHIDescriptorSetLayout.hpp"
-#include "Pipeline/RHIPipelineState.hpp"
+#include "RHIBuffer.hpp"
+#include "RHITexture.hpp"
+#include "RHISampler.hpp"
 #include "VulkanDescriptor.hpp"
+#include "RHIDescriptorSetLayout.hpp"
+#include "Pipeline/RHIPipelineState.hpp"
 
 namespace worse
 {
@@ -333,6 +334,8 @@ namespace worse
         std::vector<VkDescriptorImageInfo> imageInfos(updates.size());
 
         uint32_t imageInfoIndex = 0;
+        uint32_t updatesIndex =
+            0; // Track position in the original updates array
         for (std::size_t i = 0; i < ranges.size(); ++i)
         {
             // clang-format off
@@ -347,7 +350,15 @@ namespace worse
 
             for (uint32_t j = 0; j < range.second; ++j)
             {
-                RHITexture* texture = updates[imageInfoIndex + j].resource.texture;
+                // Bounds check to prevent heap buffer overflow
+                if (updatesIndex + j >= updates.size())
+                {
+                    WS_LOG_ERROR("VulkanDescriptor", "Access out of bounds: updatesIndex({}) + j({}) >= updates.size({})", 
+                               updatesIndex, j, updates.size());
+                    return;
+                }
+                
+                RHITexture* texture = updates[updatesIndex + j].resource.texture;
                 texture = texture ? texture : RHIDevice::getResourceProvider()->getPlaceholderTexture();
 
                 imageInfos[imageInfoIndex].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -355,6 +366,9 @@ namespace worse
                 imageInfos[imageInfoIndex].sampler     = VK_NULL_HANDLE;
                 ++imageInfoIndex;
             }
+            
+            // Move to the next range in updates array
+            updatesIndex += range.second;
             // clang-format on
         }
 

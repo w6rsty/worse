@@ -26,8 +26,17 @@ namespace worse
 
 #else
 
-#define WS_ASSERT(expression)
-#define WS_ASSERT_MSG(expression, message)
+#define WS_ASSERT(expression)                                                  \
+    do                                                                         \
+    {                                                                          \
+        (void)(expression);                                                    \
+    } while (false)
+#define WS_ASSERT_MSG(expression, message)                                     \
+    do                                                                         \
+    {                                                                          \
+        (void)(expression);                                                    \
+        (void)(message);                                                       \
+    } while (false)
 
 #endif
 

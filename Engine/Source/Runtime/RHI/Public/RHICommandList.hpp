@@ -2,7 +2,7 @@
 #include "Math/Rectangle.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
-#include "Descriptor/RHIDescriptor.hpp"
+#include "RHIDescriptor.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <span>

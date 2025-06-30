@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIResource.hpp"
 #include "RHIPipelineState.hpp"
-#include "Descriptor/RHIDescriptorSetLayout.hpp"
+#include "RHIDescriptorSetLayout.hpp"
 
 #include <cstdint>
 #include <unordered_map>
@@ -15,9 +15,8 @@ namespace worse
                           RHIDescriptorSetLayout const& descriptorSetLayout);
 
     public:
-        RHIPipeline(
-            RHIPipelineState const& pipelineState,
-            RHIDescriptorSetLayout const& descriptorSetLayout);
+        RHIPipeline(RHIPipelineState const& pipelineState,
+                    RHIDescriptorSetLayout const& descriptorSetLayout);
         ~RHIPipeline();
 
         // clang-format off

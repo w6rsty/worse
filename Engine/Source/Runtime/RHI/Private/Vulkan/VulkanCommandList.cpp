@@ -4,11 +4,12 @@
 #include "RHISwapchain.hpp"
 #include "RHICommandList.hpp"
 #include "RHISyncPrimitive.hpp"
+#include "RHIBuffer.hpp"
+#include "RHITexture.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
+#include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
-#include "Descriptor/RHIBuffer.hpp"
-#include "Descriptor/RHITexture.hpp"
 
 #include <unordered_map>
 
@@ -172,7 +173,9 @@ namespace worse
             colorAttachment.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachment.imageView        = texture->getView().asValue<VkImageView>();
             colorAttachment.imageLayout      = vulkanImageLayout(texture->getImageLayout());
-            colorAttachment.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            colorAttachment.loadOp           = m_pso.rasterizerState->getPolygonMode() == RHIPolygonMode::Wirefame
+                                                   ? VK_ATTACHMENT_LOAD_OP_LOAD
+                                                   : VK_ATTACHMENT_LOAD_OP_CLEAR;
             colorAttachment.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;
             colorAttachment.clearValue.color = clearColor;
             // clang-format on
@@ -786,8 +789,10 @@ namespace worse
         vkWrites.reserve(writes.size());
 
         std::vector<VkDescriptorBufferInfo> infoBuffers;
+        infoBuffers.reserve(writes.size());
 
         std::vector<VkDescriptorImageInfo> infoImages;
+        infoImages.reserve(writes.size());
 
         for (RHIDescriptorWrite const& desc : writes)
         {

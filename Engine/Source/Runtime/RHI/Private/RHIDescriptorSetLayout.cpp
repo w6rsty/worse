@@ -1,5 +1,5 @@
-#include "Descriptor/RHIDescriptor.hpp"
-#include "Descriptor/RHIDescriptorSetLayout.hpp"
+#include "RHIDescriptor.hpp"
+#include "RHIDescriptorSetLayout.hpp"
 
 namespace worse
 {

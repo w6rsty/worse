@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/Commands.hpp"
 
 namespace worse
 {
@@ -6,9 +7,9 @@ namespace worse
     class Engine
     {
     public:
-        static void initialize();
+        static void initialize(ecs::Commands commands);
+        static void tick(ecs::Commands commands);
         static void shutdown();
-        static void tick();
     };
 
 } // namespace worse

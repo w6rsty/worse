@@ -155,6 +155,34 @@ namespace worse::ecs
         }
 
         // =====================================================================
+        // ResourceArray traits
+        // =====================================================================
+
+        template <typename> struct IsResourceArray
+        {
+            static constexpr bool value = false;
+        };
+
+        template <typename Type> struct IsResourceArray<ResourceArray<Type>>
+        {
+            static constexpr bool value = true;
+        };
+
+        template <typename T> struct ResourceArrayTraits;
+
+        template <typename Type> struct ResourceArrayTraits<ResourceArray<Type>>
+        {
+            using ResourceType = Type;
+        };
+
+        template <typename Type>
+        inline auto constructResourceArray(Registry& registry)
+        {
+            using ResourceType =
+                typename ResourceArrayTraits<Type>::ResourceType;
+            return registry.getResourceArray<ResourceType>();
+        }
+        // =====================================================================
         // System wrapper
         // =====================================================================
 
@@ -176,6 +204,10 @@ namespace worse::ecs
             else if constexpr (IsResource<Type>::value)
             {
                 return constructResource<Type>(registry);
+            }
+            else if constexpr (IsResourceArray<Type>::value)
+            {
+                return constructResourceArray<Type>(registry);
             }
             else
             {

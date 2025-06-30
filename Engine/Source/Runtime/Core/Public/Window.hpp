@@ -38,8 +38,8 @@ namespace worse
         static void* getHandleNative();
 
     private:
-        static inline std::uint32_t s_width  = 800;
-        static inline std::uint32_t s_height = 600;
+        static inline std::uint32_t s_width  = 1200;
+        static inline std::uint32_t s_height = 720;
         static inline std::string s_title    = "Window";
         static inline WindowMode s_mode      = WindowMode::Windowed;
         static inline bool s_shouldClose     = false;

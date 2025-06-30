@@ -11,7 +11,6 @@ namespace worse
         constexpr std::array<std::string, 3> supporteImagedExtensions = {
             ".png",
             ".jpg",
-            // ".dds",
         };
         // clang-format on
     } // namespace

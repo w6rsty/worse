@@ -1,4 +1,6 @@
 #include "Mesh.hpp"
+#include "RHIBuffer.hpp"
+#include "Log.hpp"
 
 namespace worse
 {
@@ -64,4 +66,18 @@ namespace worse
                                         "MeshIndexBuffer");
     }
 
+    // clang-format off
+    void buildMeshes(
+        ecs::QueryView<Mesh3D> view,
+        ecs::ResourceArray<Mesh> meshes
+    )
+    {
+        view.each(
+        [&meshes]
+        (ecs::Entity entity, Mesh3D const& mesh3D)
+        {
+            meshes->get(mesh3D.index)->createGPUBuffers();
+        });
+    }
+    // clang-format on
 } // namespace worse

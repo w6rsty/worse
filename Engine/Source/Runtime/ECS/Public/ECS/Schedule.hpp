@@ -4,11 +4,11 @@
 #include "System.hpp"
 
 #include <string>
-#include <string_view>
 #include <vector>
 #include <typeindex>
-#include <unordered_map>
 #include <algorithm>
+#include <string_view>
+#include <unordered_map>
 
 namespace worse::ecs
 {
@@ -47,6 +47,8 @@ namespace worse::ecs
         struct Update {};
         struct PostUpdate {};
 
+        struct CleanUp {};
+
         // clang-format on
     } // namespace CoreStage
 
@@ -61,18 +63,21 @@ namespace worse::ecs
             m_name = name;
 
             // clang-format off
-            m_startupStage = std::make_unique<Stage>();
+            m_startUpStage = std::make_unique<Stage>();
 
             addStage<CoreStage::Update>();
             addStage<CoreStage::PostUpdate>();
+
+            m_cleanUpStage = std::make_unique<Stage>();
             // clang-format on
         }
 
         template <typename StageLabel> Schedule& addStage()
         {
-            if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp>)
+            if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
+                          std::is_same_v<StageLabel, CoreStage::CleanUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot add CoreStage::StartUp.");
+                WS_LOG_WARN("ECS", "Cannot add CoreStage");
                 return *this;
             }
 
@@ -92,7 +97,12 @@ namespace worse::ecs
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp>)
             {
-                m_startupStage->addSystem(SystemWrapper::wrap<Func>());
+                m_startUpStage->addSystem(SystemWrapper::wrap<Func>());
+                return *this;
+            }
+            else if constexpr (std::is_same_v<StageLabel, CoreStage::CleanUp>)
+            {
+                m_cleanUpStage->addSystem(SystemWrapper::wrap<Func>());
                 return *this;
             }
             else
@@ -113,6 +123,14 @@ namespace worse::ecs
 
         template <typename StageLabel> bool removeStage()
         {
+            if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
+                          std::is_same_v<StageLabel, CoreStage::Update> ||
+                          std::is_same_v<StageLabel, CoreStage::PostUpdate> ||
+                          std::is_same_v<StageLabel, CoreStage::CleanUp>)
+            {
+                WS_LOG_WARN("ECS", "Cannot remove CoreStage");
+            }
+
             std::type_index const label(typeid(StageLabel));
             if (!m_stages.count(label))
             {
@@ -139,6 +157,13 @@ namespace worse::ecs
                           std::is_same_v<BeforeStageLabel, CoreStage::StartUp>)
             {
                 WS_LOG_WARN("ECS", "Cannot insert with CoreStage::StartUp.");
+                return *this;
+            }
+            else if constexpr (std::is_same_v<StageLabel, CoreStage::CleanUp> ||
+                               std::is_same_v<BeforeStageLabel,
+                                              CoreStage::CleanUp>)
+            {
+                WS_LOG_WARN("ECS", "Cannot insert with CoreStage::CleanUp.");
                 return *this;
             }
 
@@ -175,6 +200,13 @@ namespace worse::ecs
                           std::is_same_v<AfterStageLabel, CoreStage::StartUp>)
             {
                 WS_LOG_WARN("ECS", "Cannot insert with CoreStage::StartUp.");
+                return *this;
+            }
+            else if constexpr (std::is_same_v<StageLabel, CoreStage::CleanUp> ||
+                               std::is_same_v<AfterStageLabel,
+                                              CoreStage::CleanUp>)
+            {
+                WS_LOG_WARN("ECS", "Cannot insert with CoreStage::CleanUp.");
                 return *this;
             }
 
@@ -221,7 +253,7 @@ namespace worse::ecs
 
         void initialize(Registry& registry) const
         {
-            m_startupStage->run(registry);
+            m_startUpStage->run(registry);
         }
 
         // run once
@@ -236,11 +268,17 @@ namespace worse::ecs
             registry.dipatchEvents();
         }
 
+        void shutdown(Registry& registry) const
+        {
+            m_cleanUpStage->run(registry);
+        }
+
     private:
         std::string m_name;
 
-        std::unique_ptr<Stage> m_startupStage;
+        std::unique_ptr<Stage> m_startUpStage;
         std::unordered_map<StageLabelType, std::unique_ptr<Stage>> m_stages;
+        std::unique_ptr<Stage> m_cleanUpStage;
         std::vector<StageLabelType> m_stageOrder;
     };
 } // namespace worse::ecs

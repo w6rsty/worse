@@ -96,7 +96,7 @@ namespace worse
                               size,
                               "%s%04d-%02d-%02dT%02d:%02d:%02d.%03lld%s ",
                               k_ansiDim,
-                              tm.tm_year + 1900,
+                              tm.tm_year + 1720,
                               tm.tm_mon + 1,
                               tm.tm_mday,
                               tm.tm_hour,
