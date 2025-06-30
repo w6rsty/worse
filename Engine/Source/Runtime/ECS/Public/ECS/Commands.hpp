@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/Resource.hpp"
 #include "Registry.hpp"
 
 namespace worse::ecs
@@ -26,6 +27,16 @@ namespace worse::ecs
             m_registry.destroy(entity);
         }
 
+        template <typename Component> bool hasComponent(Entity entity)
+        {
+            return m_registry.hasComponent<Component>(entity);
+        }
+
+        template <typename Component> Component& getComponent(Entity entity)
+        {
+            return m_registry.getComponent<Component>(entity);
+        }
+
         template <typename Event> Commands& emitEvent(Event&& event)
         {
             m_registry.emitEvent(std::forward<Event>(event));
@@ -41,7 +52,8 @@ namespace worse::ecs
         template <typename Type, typename... Args>
         Type& emplaceResource(Args&&... args)
         {
-            return m_registry.emplaceResource<Type>(std::forward<Args>(args)...);
+            return m_registry.emplaceResource<Type>(
+                std::forward<Args>(args)...);
         }
 
         template <typename Resource> void removeResource()
@@ -52,6 +64,22 @@ namespace worse::ecs
         template <typename Resource> bool hasResource() const
         {
             return m_registry.hasResource<Resource>();
+        }
+
+        template <typename Resource>
+        ResourceArray<Resource> emplaceResourceArray()
+        {
+            return m_registry.emplaceResourceArray<Resource>();
+        }
+
+        template <typename Resource> ResourceArray<Resource> getResourceArray()
+        {
+            return m_registry.getResourceArray<Resource>();
+        }
+
+        template <typename Resource> bool hasResourceArray() const
+        {
+            return m_registry.hasResourceArray<Resource>();
         }
 
     private:

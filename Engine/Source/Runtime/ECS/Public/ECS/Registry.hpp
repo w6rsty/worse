@@ -187,11 +187,48 @@ namespace worse::ecs
             return getResourceWrapper<Type>() != nullptr;
         }
 
+        template <typename Type>
+        ResourceArray<Type> emplaceResourceArray()
+        {
+            std::type_index typeIndex(typeid(Type));
+            auto wrapper = std::make_unique<ResourceArrayWrapper<Type>>();
+            ResourceArray<Type> ptr(wrapper.get());
+            m_resourceArrays[typeIndex] = std::move(wrapper);
+            return ptr;
+        }
+
+        template <typename Type>
+        void removeResourceArray()
+        {
+            std::type_index typeIndex(typeid(Type));
+            m_resourceArrays.erase(typeIndex);
+        }
+
+        template <typename Type>
+        ResourceArray<Type> getResourceArray()
+        {
+            std::type_index typeIndex(typeid(Type));
+            auto it = m_resourceArrays.find(typeIndex);
+            if (it != m_resourceArrays.end())
+            {
+                return ResourceArray<Type>(static_cast<ResourceArrayWrapper<Type>*>(it->second.get()));
+            }
+            return ResourceArray<Type>(nullptr);
+        }   
+
+        template <typename Type>
+        bool hasResourceArray()
+        {
+            std::type_index typeIndex(typeid(Type));
+            return m_resourceArrays.find(typeIndex) != m_resourceArrays.end();
+        }
+
     private:
         Storage<Entity> m_entities;
         std::unordered_map<std::type_index, std::unique_ptr<StorageBase>> m_storages;
         EventBus m_eventBus;
         std::unordered_map<std::type_index, std::unique_ptr<ResourceBase>> m_resources;
+        std::unordered_map<std::type_index, std::unique_ptr<ResourceArrayBase>> m_resourceArrays;
     };
 
     // clang-format on
