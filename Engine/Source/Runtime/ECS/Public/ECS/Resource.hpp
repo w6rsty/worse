@@ -7,6 +7,7 @@ namespace worse::ecs
     // Template-based type erasure using CRTP pattern
     struct ResourceBase
     {
+        virtual ~ResourceBase() = default;
     };
 
     // Template wrapper that stores the resource directly - much simpler
@@ -55,6 +56,7 @@ namespace worse::ecs
 
     struct ResourceArrayBase
     {
+        virtual ~ResourceArrayBase() = default;
     };
 
     // ResourceArrayWrapper that stores the actual data
