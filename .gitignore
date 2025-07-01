@@ -3,6 +3,7 @@
 
 # build and cmake fetch directories
 Engine/Build/
+Engine/Binary/LAS
 
 # clangd database
 compile_commands.json
@@ -11,3 +12,4 @@ compile_commands.json
 .DS_Store
 
 .TODO
+imgui.ini
