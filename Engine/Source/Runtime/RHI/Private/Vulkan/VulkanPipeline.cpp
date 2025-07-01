@@ -272,7 +272,8 @@ namespace worse
 
             std::vector<VkDynamicState> dynamicStates = {
                 VK_DYNAMIC_STATE_VIEWPORT,
-                VK_DYNAMIC_STATE_SCISSOR};
+                VK_DYNAMIC_STATE_SCISSOR,
+            };
             VkPipelineDynamicStateCreateInfo dynamicState = {};
             dynamicState.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             dynamicState.dynamicStateCount = static_cast<std::uint32_t>(dynamicStates.size());
@@ -326,10 +327,11 @@ namespace worse
             }
         }
         WS_LOG_INFO("Pipeline",
-                    "Created `{}` (Type: {}, Shaders: [{}])",
+                    "Created `{}` (Type: {}, Topology {}, Shaders: [{}])",
                     m_state.name,
                     m_state.type == RHIPipelineType::Graphics ? "graphics"
                                                               : "compute",
+                    rhiPrimitiveTopologyToString(m_state.primitiveTopology),
                     shaderNames);
     }
 

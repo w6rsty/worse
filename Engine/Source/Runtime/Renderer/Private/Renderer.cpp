@@ -121,7 +121,7 @@ namespace worse
         RHIDevice::setResourceProvider(&resourceProvider);
 
         commands.emplaceResource<GlobalContext>();
-        commands.emplaceResourceArray<Drawcall>();
+        commands.emplaceResource<DrawcallStorage>();
         commands.emplaceResourceArray<Mesh>();
         commands.emplaceResourceArray<StandardMaterial>();
         commands.emplaceResourceArray<StandardMaterialGPU>();
@@ -139,7 +139,7 @@ namespace worse
             swapchain.reset();
 
             commands.removeResource<GlobalContext>();
-            commands.removeResourceArray<Drawcall>();
+            commands.removeResource<DrawcallStorage>();
             commands.removeResourceArray<Mesh>();
             commands.removeResourceArray<StandardMaterial>();
             commands.removeResourceArray<StandardMaterialGPU>();
@@ -153,7 +153,7 @@ namespace worse
         WS_LOG_DEBUG("Renderer", "Finished {} frame", s_frameCount);
     }
 
-    void Renderer::tick(ecs::ResourceArray<Drawcall> drawcalls,
+    void Renderer::tick(ecs::Resource<DrawcallStorage> drawcalls,
                         ecs::Resource<Camera> camera,
                         ecs::Resource<GlobalContext> globalContext,
                         ecs::ResourceArray<Mesh> meshes,

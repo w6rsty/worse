@@ -18,14 +18,28 @@ namespace worse
         math::Matrix4 transform;
     };
 
+    struct DrawcallStorage
+    {
+        std::vector<Drawcall> solid;
+        std::vector<Drawcall> wireframe;
+        std::vector<Drawcall> point;
+
+        void clear()
+        {
+            solid.clear();
+            wireframe.clear();
+            point.clear();
+        }
+    };
+
     // clang-format off
     inline void buildDrawcalls(
         ecs::Commands commands,
         ecs::QueryView<Mesh3D, LocalTransform> view,
-        ecs::ResourceArray<Drawcall> drawcalls
+        ecs::Resource<DrawcallStorage> drawcalls
     )
     {
-        drawcalls.clear();
+        drawcalls->clear();
 
         view.each(
         [&commands, &drawcalls]
@@ -34,14 +48,26 @@ namespace worse
             // TODO: add a default material if not exists
             MeshMaterial material = commands.getComponent<MeshMaterial>(entity);
 
-            std::uint32_t materialIndex = 
-            drawcalls->add(
-                static_cast<std::uint32_t>(mesh.index),
-                static_cast<std::uint32_t>(material.index),
-                math::makeSRT(transform.scale,
-                              transform.rotation,
-                              transform.position)
-            );
+            if (mesh.primitiveTopology == RHIPrimitiveTopology::PointList)
+            {
+                drawcalls->point.emplace_back(
+                    static_cast<std::uint32_t>(mesh.index),
+                    static_cast<std::uint32_t>(material.index),
+                    math::makeSRT(transform.scale,
+                                transform.rotation,
+                                transform.position)
+                );
+            }
+            else
+            {
+                drawcalls->solid.emplace_back(
+                    static_cast<std::uint32_t>(mesh.index),
+                    static_cast<std::uint32_t>(material.index),
+                    math::makeSRT(transform.scale,
+                                transform.rotation,
+                                transform.position)
+                );
+            }
         });
     }
     // clang-format on
