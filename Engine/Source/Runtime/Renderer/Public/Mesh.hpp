@@ -15,6 +15,8 @@ namespace worse
     struct Mesh3D
     {
         std::size_t index;
+        RHIPrimitiveTopology primitiveTopology =
+            RHIPrimitiveTopology::TriangleList;
     };
 
     struct StandardMesh3D

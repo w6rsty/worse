@@ -175,7 +175,8 @@ namespace worse
             colorAttachment.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             colorAttachment.imageView        = texture->getView().asValue<VkImageView>();
             colorAttachment.imageLayout      = vulkanImageLayout(texture->getImageLayout());
-            colorAttachment.loadOp           = m_pso.rasterizerState->getPolygonMode() == RHIPolygonMode::Wirefame
+            colorAttachment.loadOp           = ((m_pso.rasterizerState->getPolygonMode() == RHIPolygonMode::Wirefame) ||
+                                                (m_pso.primitiveTopology == RHIPrimitiveTopology::PointList))
                                                    ? VK_ATTACHMENT_LOAD_OP_LOAD
                                                    : VK_ATTACHMENT_LOAD_OP_CLEAR;
             colorAttachment.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;

@@ -296,8 +296,22 @@ namespace worse
     {
         PointList,
         LineList,
-        Trianglelist,
+        TriangleList,
     };
+
+    constexpr std::string
+    rhiPrimitiveTopologyToString(RHIPrimitiveTopology const topology)
+    {
+        switch (topology)
+        {
+            // clang-format off
+        case RHIPrimitiveTopology::PointList:     return "PointList";
+        case RHIPrimitiveTopology::LineList:      return "LineList";
+        case RHIPrimitiveTopology::TriangleList:  return "TriangleList";
+        default:                                   return "Unknown";
+            // clang-format on
+        }
+    }
 
     enum class RHICompareOperation
     {
@@ -545,7 +559,7 @@ namespace worse
             // clang-format off
         case RHIPrimitiveTopology::PointList:   return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
         case RHIPrimitiveTopology::LineList:    return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-        case RHIPrimitiveTopology::Trianglelist: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case RHIPrimitiveTopology::TriangleList: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         default:                                return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
             // clang-format on
         }

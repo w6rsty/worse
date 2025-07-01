@@ -21,7 +21,7 @@ namespace worse
     public:
         static void initialize(ecs::Commands commands);
         static void shutdown(ecs::Commands commands);
-        static void tick(ecs::ResourceArray<Drawcall> drawcalls,
+        static void tick(ecs::Resource<DrawcallStorage> drawcalls,
                          ecs::Resource<Camera> camera,
                          ecs::Resource<GlobalContext> globalContext,
                          ecs::ResourceArray<Mesh> meshes,
@@ -90,13 +90,13 @@ namespace worse
         // =====================================================================
 
         static void passDpethPrepass(RHICommandList* cmdList,
-                                     ecs::ResourceArray<Drawcall> drawcalls,
+                                     ecs::Resource<DrawcallStorage> drawcalls,
                                      ecs::ResourceArray<Mesh> meshes);
         static void passColor(RHICommandList* cmdList,
-                              ecs::ResourceArray<Drawcall> drawcalls,
+                              ecs::Resource<DrawcallStorage> drawcalls,
                               ecs::ResourceArray<Mesh> meshes);
         static void passWireFrame(RHICommandList* cmdList,
-                                  ecs::ResourceArray<Drawcall> drawcalls,
+                                  ecs::Resource<DrawcallStorage> drawcalls,
                                   ecs::ResourceArray<Mesh> meshes);
         static void passPostProcessing(RHICommandList* cmdList);
 
@@ -105,7 +105,7 @@ namespace worse
         static void
         produceFrame(RHICommandList* cmdList,
                      ecs::Resource<GlobalContext> globalContext,
-                     ecs::ResourceArray<Drawcall> drawcalls,
+                     ecs::Resource<DrawcallStorage> drawcalls,
                      ecs::ResourceArray<Mesh> meshes,
                      ecs::ResourceArray<TextureWrite> textureWrites);
 

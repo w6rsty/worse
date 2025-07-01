@@ -37,6 +37,8 @@ namespace worse
         KuwaharaC,
         LineV,
         LineP,
+        PointV,
+        PointP,
         PBRV,
         PBRP,
         DistortionV,
@@ -87,6 +89,7 @@ namespace worse
         DepthPrepass,
         PBR,
         Wireframe,
+        Point,
         PostProcessing,
         Max
     };

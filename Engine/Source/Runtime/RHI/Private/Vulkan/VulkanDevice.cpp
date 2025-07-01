@@ -40,7 +40,8 @@ namespace worse
             VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
             VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
             VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME,
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME};
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+        };
 
         std::vector<char const*> getExtensionsInstance()
         {
@@ -152,9 +153,9 @@ namespace worse
         void* featureChain = nullptr;
 
         // clang-format off
-        VkPhysicalDeviceTimelineSemaphoreFeatures featureTimelineSemaphore   = {};
-        VkPhysicalDeviceDynamicRenderingFeatures featureDynamicRendering     = {};
-        VkPhysicalDeviceSynchronization2Features featureSynchronization2     = {};
+        VkPhysicalDeviceTimelineSemaphoreFeatures featureTimelineSemaphore = {};
+        VkPhysicalDeviceDynamicRenderingFeatures featureDynamicRendering = {};
+        VkPhysicalDeviceSynchronization2Features featureSynchronization2 = {};
         VkPhysicalDeviceDescriptorIndexingFeatures featureDescriptorIndexing = {};
         // clang-format on
 
