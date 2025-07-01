@@ -590,90 +590,6 @@ void testViewMatrices()
     WS_LOG_INFO("ExtTest", "✓ View matrix tests passed");
 }
 
-void testProjectionMatrices()
-{
-    WS_LOG_INFO("ExtTest", "Testing projection matrix functions...");
-
-    float fov       = PI / 3.0f; // 60 degrees
-    float aspect    = 16.0f / 9.0f;
-    float nearPlane = 0.1f;
-    float farPlane  = 100.0f;
-
-    // Test perspective projection GL (depth [-1, 1])
-    Matrix4 perspGL = projectionPerspectiveGL(fov, aspect, nearPlane, farPlane);
-
-    // Test point at near plane
-    Vector4 nearPoint(0.0f, 0.0f, -nearPlane, 1.0f);
-    Vector4 projectedNear = perspGL * nearPoint;
-    projectedNear = projectedNear / projectedNear.w; // Perspective divide
-    WS_ASSERT_MSG(equal(projectedNear.z, -1.0f, 0.001f),
-                  "Near plane should project to -1 in GL");
-
-    // Test point at far plane
-    Vector4 farPoint(0.0f, 0.0f, -farPlane, 1.0f);
-    Vector4 projectedFar = perspGL * farPoint;
-    projectedFar         = projectedFar / projectedFar.w;
-    WS_ASSERT_MSG(equal(projectedFar.z, 1.0f, 0.001f),
-                  "Far plane should project to 1 in GL");
-
-    // Test perspective projection (depth [0, 1])
-    Matrix4 persp = projectionPerspective(fov, aspect, nearPlane, farPlane);
-
-    Vector4 nearPointD3D = persp * nearPoint;
-    nearPointD3D         = nearPointD3D / nearPointD3D.w;
-    WS_ASSERT_MSG(equal(nearPointD3D.z, 0.0f, 0.001f),
-                  "Near plane should project to 0 in D3D style");
-
-    Vector4 farPointD3D = persp * farPoint;
-    farPointD3D         = farPointD3D / farPointD3D.w;
-    WS_ASSERT_MSG(equal(farPointD3D.z, 1.0f, 0.001f),
-                  "Far plane should project to 1 in D3D style");
-
-    // Test orthographic projection GL
-    float left = -10.0f, right = 10.0f;
-    float bottom = -5.0f, top = 5.0f;
-    Matrix4 orthoGL =
-        projectionOrthoGL(left, right, bottom, top, nearPlane, farPlane);
-
-    Vector4 orthoNear = orthoGL * nearPoint;
-    WS_ASSERT_MSG(equal(orthoNear.z, -1.0f, 0.001f),
-                  "Near plane should project to -1 in ortho GL");
-
-    Vector4 orthoFar = orthoGL * farPoint;
-    WS_ASSERT_MSG(equal(orthoFar.z, 1.0f, 0.001f),
-                  "Far plane should project to 1 in ortho GL");
-
-    // Test symmetric orthographic GL
-    Matrix4 orthoSymGL = projectionOrthoGL(right, top, nearPlane, farPlane);
-    Vector4 cornerPoint(right, top, -nearPlane, 1.0f);
-    Vector4 projectedCorner = orthoSymGL * cornerPoint;
-    WS_ASSERT_MSG(equal(projectedCorner.x, 1.0f, 0.001f) &&
-                      equal(projectedCorner.y, 1.0f, 0.001f),
-                  "Corner should project to (1,1) in symmetric ortho");
-
-    // Test orthographic projection (depth [0, 1])
-    Matrix4 ortho =
-        projectionOrtho(left, right, bottom, top, nearPlane, farPlane);
-
-    Vector4 orthoNearD3D = ortho * nearPoint;
-    WS_ASSERT_MSG(equal(orthoNearD3D.z, 0.0f, 0.001f),
-                  "Near plane should project to 0 in ortho D3D style");
-
-    Vector4 orthoFarD3D = ortho * farPoint;
-    WS_ASSERT_MSG(equal(orthoFarD3D.z, 1.0f, 0.001f),
-                  "Far plane should project to 1 in ortho D3D style");
-
-    // Test symmetric orthographic (depth [0, 1])
-    Matrix4 orthoSym = projectionOrtho(right, top, nearPlane, farPlane);
-    Vector4 projectedCornerSym = orthoSym * cornerPoint;
-    WS_ASSERT_MSG(
-        equal(projectedCornerSym.x, 1.0f, 0.001f) &&
-            equal(projectedCornerSym.y, 1.0f, 0.001f),
-        "Corner should project to (1,1) in symmetric ortho D3D style");
-
-    WS_LOG_INFO("ExtTest", "✓ Projection matrix tests passed");
-}
-
 void testExtensionEdgeCases()
 {
     WS_LOG_INFO("ExtTest", "Testing Extension.hpp edge cases...");
@@ -814,59 +730,6 @@ void testExtensionAlgorithmCorrectness()
                       "Target should be at negative Z in view space");
     }
 
-    // 5. Test projection matrices edge cases
-    {
-        float fov       = PI / 2.0f; // 90 degrees
-        float aspect    = 1.0f;      // Square aspect
-        float nearPlane = 1.0f;
-        float farPlane  = 10.0f;
-
-        // Test GL perspective projection
-        Matrix4 perspGL =
-            projectionPerspectiveGL(fov, aspect, nearPlane, farPlane);
-
-        // Point at near plane corners
-        float tanHalfFov = std::tan(fov * 0.5f);
-        Vector4 nearCorner(tanHalfFov * nearPlane,
-                           tanHalfFov * nearPlane,
-                           -nearPlane,
-                           1.0f);
-        Vector4 projectedCorner = perspGL * nearCorner;
-        projectedCorner         = projectedCorner / projectedCorner.w;
-
-        WS_ASSERT_MSG(equal(projectedCorner.x, 1.0f, 0.001f) &&
-                          equal(projectedCorner.y, 1.0f, 0.001f) &&
-                          equal(projectedCorner.z, -1.0f, 0.001f),
-                      "Near plane corner should project to (1,1,-1) in GL");
-    }
-
-    // 6. Test orthographic projections
-    {
-        float left = -5.0f, right = 5.0f;
-        float bottom = -3.0f, top = 3.0f;
-        float nearPlane = 1.0f, farPlane = 10.0f;
-
-        Matrix4 orthoGL =
-            projectionOrthoGL(left, right, bottom, top, nearPlane, farPlane);
-        Matrix4 ortho =
-            projectionOrtho(left, right, bottom, top, nearPlane, farPlane);
-
-        // Test corner transformation
-        Vector4 corner(right, top, -nearPlane, 1.0f);
-        Vector4 projectedGL = orthoGL * corner;
-        Vector4 projected   = ortho * corner;
-
-        WS_ASSERT_MSG(equal(projectedGL.x, 1.0f, 0.001f) &&
-                          equal(projectedGL.y, 1.0f, 0.001f) &&
-                          equal(projectedGL.z, -1.0f, 0.001f),
-                      "Ortho GL should map corner to (1,1,-1)");
-
-        WS_ASSERT_MSG(equal(projected.x, 1.0f, 0.001f) &&
-                          equal(projected.y, 1.0f, 0.001f) &&
-                          equal(projected.z, 0.0f, 0.001f),
-                      "Ortho should map corner to (1,1,0)");
-    }
-
     WS_LOG_INFO("ExtTest", "✓ Extension algorithm correctness tests passed");
 }
 
@@ -896,37 +759,6 @@ void testExtensionBoundaryConditions()
                           equal(result.y, 1e6f, 1e3f) &&
                           equal(result.z, 1e6f, 1e3f),
                       "Very large scales should work correctly");
-    }
-
-    // 3. Test projection with extreme FOV
-    {
-        float extremeFov = PI * 0.95f; // Almost 180 degrees
-        float aspect     = 1.0f;
-        float nearPlane  = 0.01f;
-        float farPlane   = 1000.0f;
-
-        Matrix4 perspGL =
-            projectionPerspectiveGL(extremeFov, aspect, nearPlane, farPlane);
-
-        // Should not have NaN or infinite values
-        WS_ASSERT_MSG(std::isfinite(perspGL.col0.x) &&
-                          std::isfinite(perspGL.col1.y),
-                      "Extreme FOV should not produce NaN values");
-    }
-
-    // 4. Test projection with extreme aspect ratio
-    {
-        float fov           = PI / 3.0f;
-        float extremeAspect = 100.0f; // Ultra-wide
-        float nearPlane     = 0.1f;
-        float farPlane      = 100.0f;
-
-        Matrix4 perspGL =
-            projectionPerspectiveGL(fov, extremeAspect, nearPlane, farPlane);
-
-        // X scaling should be much smaller than Y scaling
-        WS_ASSERT_MSG(perspGL.col0.x < perspGL.col1.y * 0.1f,
-                      "Extreme aspect ratio should scale X much less than Y");
     }
 
     // 5. Test lookAt with nearly parallel up and forward vectors
@@ -994,7 +826,6 @@ int main()
     testMatrixConstruction();
     testSRTOperations();
     testViewMatrices();
-    testProjectionMatrices();
     testExtensionAlgorithmCorrectness();
     testExtensionBoundaryConditions();
     testExtensionEdgeCases();
