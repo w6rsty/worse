@@ -13,6 +13,13 @@ namespace worse
         static void shutdown();
         static void tick(ecs::Commands commands,
                          ecs::Resource<GlobalContext> globalContext);
+
+    private:
+        static void
+        createBasicLayout(ecs::Resource<GlobalContext> globalContext);
+
+        static void createHierarchyPanel();
+        static void createPropertiesPanel();
     };
 
 } // namespace worse
