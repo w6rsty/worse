@@ -197,10 +197,12 @@ namespace worse
             depthAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachment.imageView   = depthTexture->getView().asValue<VkImageView>();
             depthAttachment.imageLayout = vulkanImageLayout(depthTexture->getImageLayout());
-            depthAttachment.loadOp      = m_pso.clearDepth == std::numeric_limits<float>::max()
+            depthAttachment.loadOp      = (m_pso.clearDepth == std::numeric_limits<float>::max() ||
+                                           (m_pso.primitiveTopology == RHIPrimitiveTopology::PointList))
                                              ? VK_ATTACHMENT_LOAD_OP_LOAD
                                              : VK_ATTACHMENT_LOAD_OP_CLEAR;
-            depthAttachment.storeOp     = m_pso.depthStencilState->getDepthWriteEnabled()
+            depthAttachment.storeOp     = (m_pso.depthStencilState->getDepthWriteEnabled() ||
+                                           (m_pso.primitiveTopology == RHIPrimitiveTopology::PointList))
                                              ? VK_ATTACHMENT_STORE_OP_STORE
                                              : VK_ATTACHMENT_STORE_OP_DONT_CARE;
 

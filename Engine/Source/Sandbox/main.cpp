@@ -19,6 +19,8 @@
 #include "ECS/Registry.hpp"
 #include "ECS/Schedule.hpp"
 
+#include <random>
+
 using namespace worse;
 
 struct PlayerTag
@@ -225,15 +227,34 @@ public:
             MeshMaterial{vegetation}
         );
 
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> posDist(-3.0f, 3.0f);
+        std::uniform_real_distribution<float> heightDist(1.0f, 5.0f);
+
+        std::vector<RHIVertexPosUvNrmTan> vertices;
+        vertices.reserve(1000000);
+
+        for (int i = 0; i < 1000000; ++i)
+        {
+            vertices.push_back(RHIVertexPosUvNrmTan{
+                .position = math::Vector3{posDist(gen), heightDist(gen), posDist(gen)},
+                .uv = math::Vector2{0.0f, 0.0f},
+            });
+        }
+
         player = commands.spawn(
             LocalTransform{
                 .position = math::Vector3{0.0f, 10.0f, 0.0f},
             },
             Mesh3D{
-                meshes.add(Sphere{.radius = 1.0f, .segments = 32, .rings = 32}),
+                meshes.add(CustomMesh3D{.vertices = std::move(vertices)}),
                 RHIPrimitiveTopology::PointList
             },
-            MeshMaterial{gold}
+            MeshMaterial{materials->add(StandardMaterial{
+                .albedo = math::Vector4{0.0f, 0.8f, 0.8f, 1.0f},
+            })}
         );
     }
     // clang-format on
