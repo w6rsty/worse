@@ -110,8 +110,15 @@ PixelOutput main_ps(VertexOutput input)
     float3 normalMap = materialTextures[material.normalTextureIndex].Sample(samplers[samplerBilinearWrap], input.uv).rgb;
     normalMap = normalMap * 2.0 - 1.0; // Convert from [0,1] to [-1,1]
     
-    // TODO: Implement proper TBN matrix normal mapping
-    // For now, use world-space normals
+    // Construct TBN matrix for normal mapping
+    float3x3 TBN = float3x3(
+        normalize(input.tangent),
+        normalize(input.bitangent),
+        normalize(input.normal)
+    );
+    
+    // Transform normal from tangent space to world space
+    N = normalize(mul(normalMap, TBN));
     
     // Lighting calculations - Directional light
     const float3 lightDirection = normalize(float3(-0.2, -1.0, 0.1)); // Fixed directional light (pointing down and slightly forward)
