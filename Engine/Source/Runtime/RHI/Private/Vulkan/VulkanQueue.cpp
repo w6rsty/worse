@@ -76,7 +76,7 @@ namespace worse
         // TODO: lock
 
         WS_ASSERT_VK(vkQueueWaitIdle(
-            RHIDevice::getQueueRHIResource(m_type).asValue<VkQueue>()));
+            RHIDevice::getQueueHandle(m_type).asValue<VkQueue>()));
     }
 
     void RHIQueue::submit(void* cmdBuffer, std::uint32_t const waitFlags,
@@ -126,7 +126,7 @@ namespace worse
         infoSubmit.pCommandBufferInfos      = &infoCmdBuffer;
 
         WS_ASSERT_VK(vkQueueSubmit2KHR(
-            RHIDevice::getQueueRHIResource(m_type).asValue<VkQueue>(),
+            RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(),
             1,
             &infoSubmit,
             nullptr));
@@ -152,7 +152,7 @@ namespace worse
         infoPresent.pImageIndices      = &imageIndex;
 
         WS_ASSERT_VK(vkQueuePresentKHR(
-            RHIDevice::getQueueRHIResource(m_type).asValue<VkQueue>(),
+            RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(),
             &infoPresent));
     }
 

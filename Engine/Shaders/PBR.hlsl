@@ -113,17 +113,17 @@ PixelOutput main_ps(VertexOutput input)
     // TODO: Implement proper TBN matrix normal mapping
     // For now, use world-space normals
     
-    // Lighting calculations
-    const float3 lightPosition = float3(0.0, 20.0, 0.0);
+    // Lighting calculations - Directional light
+    const float3 lightDirection = normalize(float3(-0.2, -1.0, 0.1)); // Fixed directional light (pointing down and slightly forward)
     const float3 lightColor = float3(1.0, 1.0, 1.0);
     const float lightIntensity = 3.0;
     
     float3 V = normalize(frameData.cameraPosition - input.worldPos); // View direction
-    float3 L = normalize(lightPosition - input.worldPos); // Light direction
+    float3 L = -lightDirection; // Light direction (opposite of light direction vector)
     float3 H = normalize(V + L); // Half vector
     
-    float distance = length(lightPosition - input.worldPos);
-    float attenuation = 1.0 / (1.0 + 0.01 * distance + 0.001 * distance * distance);
+    // No attenuation for directional light
+    float attenuation = 1.0;
     
     // Cook-Torrance BRDF
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);

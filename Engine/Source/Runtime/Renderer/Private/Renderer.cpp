@@ -281,6 +281,11 @@ namespace worse
         return viewport;
     }
 
+    RHIFormat Renderer::getSwapchainFormat()
+    {
+        return swapchain->getFormat();
+    }
+
     math::Vector2 Renderer::getResolutionRender()
     {
         return resolutionRender;

@@ -22,11 +22,6 @@
 
 namespace worse
 {
-    namespace config
-    {
-        // require vulkan version
-        std::uint32_t version = VK_API_VERSION_1_3;
-    } // namespace config
 
     namespace validation
     {
@@ -353,7 +348,7 @@ namespace worse
             infoAllocator.physicalDevice   = RHIContext::physicalDevice;
             infoAllocator.device           = RHIContext::device;
             infoAllocator.instance         = RHIContext::instance;
-            infoAllocator.vulkanApiVersion = config::version;
+            infoAllocator.vulkanApiVersion = RHIContext::version;
 
             VmaVulkanFunctions vulkanFunctions{};
             infoAllocator.pVulkanFunctions = &vulkanFunctions;
@@ -445,7 +440,7 @@ namespace worse
         {
             VkApplicationInfo infoApp = {};
             infoApp.sType             = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-            infoApp.apiVersion        = config::version;
+            infoApp.apiVersion        = RHIContext::version;
 
             // clang-format off
             VkInstanceCreateInfo infoInst    = {};
@@ -644,7 +639,7 @@ namespace worse
         return nullptr;
     }
 
-    RHINativeHandle RHIDevice::getQueueRHIResource(RHIQueueType const type)
+    RHINativeHandle RHIDevice::getQueueHandle(RHIQueueType const type)
     {
         if (type == RHIQueueType::Graphics)
         {
@@ -714,6 +709,40 @@ namespace worse
     {
         WS_ASSERT(descriptor::specificSet);
         descriptor::specificSet->resetSets();
+    }
+
+    RHINativeHandle RHIDevice::createImGuiPool(std::uint32_t descriptorCount,
+                                               std::uint32_t maxSets)
+    {
+        // Create a new descriptor pool for ImGui
+        VkDescriptorPoolSize poolSizes[] = {
+            {VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, descriptorCount},
+            {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, descriptorCount}};
+
+        VkDescriptorPoolCreateInfo infoPool = {};
+        infoPool.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        infoPool.flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        infoPool.maxSets = maxSets;
+        infoPool.poolSizeCount =
+            static_cast<std::uint32_t>(std::size(poolSizes));
+        infoPool.pPoolSizes = poolSizes;
+
+        VkDescriptorPool pool = VK_NULL_HANDLE;
+        WS_ASSERT_VK(vkCreateDescriptorPool(RHIContext::device,
+                                            &infoPool,
+                                            nullptr,
+                                            &pool));
+
+        return RHINativeHandle{pool, RHINativeHandleType::DescriptorPool};
     }
 
     RHIPipeline* RHIDevice::getPipeline(RHIPipelineState const& pso)

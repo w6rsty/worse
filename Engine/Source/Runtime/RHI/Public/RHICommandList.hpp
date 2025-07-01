@@ -46,6 +46,10 @@ namespace worse
         void renderPassBegin();
         void renderPassEnd();
 
+        void imguiPassBegin(RHITexture const* renderTarget,
+                            math::Rectangle const& scissor);
+        void imguiPassEnd(void* drawData);
+
         void draw(std::uint32_t const vertexCount,
                   std::uint32_t const vertexOffset = 0);
         void drawIndexed(std::uint32_t const indexCount,

@@ -1,11 +1,13 @@
 #include "Log.hpp"
 #include "Event.hpp"
 #include "Math/Math.hpp"
+#include "Mesh.hpp"
 #include "Window.hpp"
 #include "Engine.hpp"
 #include "Renderer.hpp"
 #include "Input/Input.hpp"
 #include "Profiling/Stopwatch.hpp"
+#include "ImGuiRenderer.hpp"
 
 #include "Material.hpp"
 #include "Camera.hpp"
@@ -104,7 +106,7 @@ public:
         playerTransform.position = playerPosition;
 
         // 相机追踪设置
-        math::Vector3 const cameraOffset = math::Vector3{0.0f, 8.0f, 8.0f}; // 相机相对于 player 的偏移
+        math::Vector3 const cameraOffset = math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
         float const followSpeed          = 4.0f; // 相机跟随速度
         float const lookSpeed            = 4.0f; // 相机看向 player 的速度
 
@@ -184,41 +186,53 @@ public:
 
         assetServer->load();
 
+        // auto marble = materials->add(StandardMaterial{
+        //     .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_albedo.png"),
+        //     .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_Roughness.png"),
+        //     .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_ao.png"),
+        // });
+
+        // auto vegetation = materials->add(StandardMaterial{
+        //     .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_albedo.png"),
+        //     .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_normal-ogl.png"),
+        //     .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_roughness.png"),
+        //     .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_ao.png"),
+        // });
+
+        // auto gold = materials->add(StandardMaterial{
+        //     .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_albedo.png"),
+        //     .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_normal-ogl.png"),
+        //     .metallic                = 1.0f,
+        //     .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_roughness.png"),
+        //     .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_ao.png"),
+        // });
+        
         // floor
         commands.spawn(
             LocalTransform{
-                .position = math::Vector3{-0.5f, 0.0f, -0.5f},
-                .scale = math::Vector3{20.0f, 0.1f, 20.0f}
+                .position = math::Vector3{5.0f, 0.0f, 0.0f},
+                .scale = math::Vector3{10.0f, 0.1f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{materials->add(StandardMaterial{
-                .albedoTexture = assetServer->submitLoading("/Users/w6rsty/Pictures/cornell.png"),
-                .metallic = 0.8f,
-                .roughness = 0.5f,
-            })}
+            MeshMaterial{materials->add(StandardMaterial{})}
+        );
+        commands.spawn(
+            LocalTransform{
+                .position = math::Vector3{-5.0f, 0.0f, 0.0f},
+                .scale = math::Vector3{10.0f, 0.1f, 10.0f}
+            },
+            Mesh3D{meshes.add(Quad3D{})},
+            MeshMaterial{materials->add(StandardMaterial{})}
         );
 
         player = commands.spawn(
             LocalTransform{
                 .position = math::Vector3{0.0f, 10.0f, 0.0f},
             },
-            Mesh3D{meshes.add(Cylinder{})},
-            MeshMaterial{materials->add(StandardMaterial{
-                .albedoColor = math::Vector4{0.8, 0.7, 0.3, 1},
-                .metallic = 0.1f,
-                .roughness = 0.8f,
-            })}
-        );
-
-        // dome
-        commands.spawn(
-            LocalTransform{
-            .scale = math::Vector3{100.0f, 100.0f, 100.0f},
-            },
-            Mesh3D{meshes.add(Sphere{})},
-            MeshMaterial{materials->add(StandardMaterial{
-                .albedoColor = math::Vector4{0.5f, 0.7f, 0.9f, 1.0f},
-            })}
+            Mesh3D{meshes.add(Capsule3D{
+                .segments = 16,
+            })},
+            MeshMaterial{materials->add(StandardMaterial{})}
         );
     }
     // clang-format on
@@ -235,25 +249,6 @@ public:
         globalContext->deltaTime = frameTimer.elapsedSec();
         globalContext->time += globalContext->deltaTime;
         frameTimer.reset();
-
-        LocalTransform& playerTransform = commands.getComponent<LocalTransform>(player);
-        // Fake gravity simulation
-        static float verticalVelocity = 0.0f;
-        const float gravity = -9.8f;
-        const float groundLevel = 5.0f;
-
-        // Apply gravity
-        verticalVelocity += gravity * globalContext->deltaTime;
-
-        // Update position with gravity
-        playerTransform.position.y += verticalVelocity * globalContext->deltaTime;
-
-        // Ground collision resolution
-        if ((playerTransform.position.y) <= groundLevel)
-        {
-            playerTransform.position.y = groundLevel;
-            verticalVelocity = 0.0f; // Reset velocity when hitting ground
-        }
     }
     // clang-format on
 };
@@ -270,13 +265,16 @@ int main()
     schedule.addSystem<ecs::CoreStage::StartUp, &World::setupScene>();
     schedule.addSystem<ecs::CoreStage::StartUp, buildMeshes>();
     schedule.addSystem<ecs::CoreStage::StartUp, buildMaterials>();
+    schedule.addSystem<ecs::CoreStage::StartUp, &ImGuiRenderer::initialize>();
 
     schedule.addSystem<ecs::CoreStage::Update, &Engine::tick>();
     schedule.addSystem<ecs::CoreStage::Update, &World::inputControll>();
     schedule.addSystem<ecs::CoreStage::Update, &World::update>();
     schedule.addSystem<ecs::CoreStage::Update, buildDrawcalls>();
+    schedule.addSystem<ecs::CoreStage::Update, &ImGuiRenderer::tick>();
     schedule.addSystem<ecs::CoreStage::Update, &Renderer::tick>();
 
+    schedule.addSystem<ecs::CoreStage::CleanUp, &ImGuiRenderer::shutdown>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &Renderer::shutdown>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &Engine::shutdown>();
 

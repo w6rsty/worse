@@ -665,6 +665,8 @@ namespace worse
     struct RHIContext
     {
 #ifdef WS_RHI_BACKEND_VULKAN
+
+        static inline std::uint32_t version           = VK_API_VERSION_1_3;
         static inline VkInstance instance             = VK_NULL_HANDLE;
         static inline VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         static inline VkDevice device                 = VK_NULL_HANDLE;

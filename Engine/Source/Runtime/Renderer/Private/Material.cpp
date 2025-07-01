@@ -83,7 +83,7 @@ namespace worse
             }
 
             StandardMaterialGPU& data = materialGPUs->data()[i];
-            data.albedo = material->albedoColor;
+            data.albedo = material->albedo;
             
             // Map texture handles to indices using helper function
             data.albedoTextureIndex = getTextureIndex(material->albedoTexture, textureIndexMap, RendererTexture::DefaultAlbedo);

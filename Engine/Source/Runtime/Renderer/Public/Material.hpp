@@ -18,7 +18,7 @@ namespace worse
     // Renderer texture
     struct StandardMaterial
     {
-        math::Vector4 albedoColor                = math::Vector4::ONE();
+        math::Vector4 albedo                     = math::Vector4::ONE();
         std::optional<AssetHandle> albedoTexture = std::nullopt;
 
         std::optional<AssetHandle> normalTexture = std::nullopt;

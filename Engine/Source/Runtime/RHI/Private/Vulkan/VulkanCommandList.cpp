@@ -1,3 +1,5 @@
+#include "imgui_impl_vulkan.h"
+
 #include "Math/Rectangle.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
@@ -233,6 +235,36 @@ namespace worse
         vkCmdEndRenderingKHR(m_handle.asValue<VkCommandBuffer>());
 
         m_isRenderPassActive = false;
+    }
+
+    void RHICommandList::imguiPassBegin(RHITexture const* renderTarget,
+                                        math::Rectangle const& scissor)
+    {
+        // clang-format off
+        VkRenderingAttachmentInfo colorAttachment = {};
+        colorAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        colorAttachment.imageView   = renderTarget->getView().asValue<VkImageView>();
+        colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachment.loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
+        colorAttachment.storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
+
+        VkRenderingInfo rendering_info = {};
+        rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        rendering_info.renderArea = {scissor.x, scissor.y, scissor.width, scissor.height};
+        rendering_info.layerCount = 1;
+        rendering_info.colorAttachmentCount = 1;
+        rendering_info.pColorAttachments = &colorAttachment;
+        rendering_info.pDepthAttachment = nullptr;
+
+        vkCmdBeginRenderingKHR(m_handle.asValue<VkCommandBuffer>(), &rendering_info);
+        // clang-format on
+    }
+    void RHICommandList::imguiPassEnd(void* drawData)
+    {
+        ImGui_ImplVulkan_RenderDrawData(static_cast<ImDrawData*>(drawData),
+                                        m_handle.asValue<VkCommandBuffer>());
+
+        vkCmdEndRenderingKHR(m_handle.asValue<VkCommandBuffer>());
     }
 
     void RHICommandList::draw(std::uint32_t const vertexCount,

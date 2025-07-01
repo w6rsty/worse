@@ -73,7 +73,8 @@ void main_cs(uint3 id : SV_DispatchThreadID)
 
     // float3 filteredColor = ACESFilm(bestMean.rgb);
 
-    float3 filteredColor = ACESFilm(albedoTexture[center].rgb);
+    // float3 filteredColor = ACESFilm(albedoTexture[center].rgb);
+    float3 filteredColor  = albedoTexture[center].rgb;
 
     // Apply gamma correction
     // filteredColor = pow(filteredColor, 1.0f / 2.2f);

@@ -42,6 +42,8 @@ namespace worse
         static void setViewport(float const width, float const height);
         static RHIViewport const& getViewport();
 
+        static RHIFormat getSwapchainFormat();
+
         static RHIRasterizerState*
         getRasterizerState(RendererRasterizerState const state);
         static RHIDepthStencilState*
@@ -97,6 +99,8 @@ namespace worse
                                   ecs::ResourceArray<Drawcall> drawcalls,
                                   ecs::ResourceArray<Mesh> meshes);
         static void passPostProcessing(RHICommandList* cmdList);
+
+        static void passImGui(RHICommandList* cmdList);
 
         static void
         produceFrame(RHICommandList* cmdList,

@@ -26,7 +26,7 @@ namespace worse
         static void queueWaitAll();
         static std::uint32_t getQueueIndex(RHIQueueType const type);
         static RHIQueue* getQueue(RHIQueueType const type);
-        static RHINativeHandle getQueueRHIResource(RHIQueueType const type);
+        static RHINativeHandle getQueueHandle(RHIQueueType const type);
 
         // =====================================================================
         // Descriptor
@@ -47,6 +47,10 @@ namespace worse
         static RHINativeHandle
         getSpecificDescriptorSet(std::uint64_t descriptorHash);
         static void resetSpecificDescriptorSets();
+
+        static RHINativeHandle
+        createImGuiPool(std::uint32_t descriptorCount = 512,
+                        std::uint32_t maxSets         = 512);
 
         // get descriptor set layout from pool or create a new one
         static RHIPipeline* getPipeline(RHIPipelineState const& pso);

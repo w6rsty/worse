@@ -1,9 +1,10 @@
+#include "imgui.h"
+
 #include "RHICommandList.hpp"
 #include "RHITexture.hpp"
 #include "RHIBuffer.hpp"
 #include "Renderer.hpp"
 #include "RendererBuffer.hpp"
-
 namespace worse
 {
 
@@ -125,6 +126,19 @@ namespace worse
         // clang-format on
     }
 
+    void Renderer::passImGui(RHICommandList* cmdList)
+    {
+        cmdList->imguiPassBegin(
+            Renderer::getRenderTarget(RendererTarget::Output),
+            math::Rectangle{
+                0,
+                0,
+                static_cast<std::uint32_t>(Renderer::getResolutionOutput().x),
+                static_cast<std::uint32_t>(Renderer::getResolutionOutput().y)});
+
+        cmdList->imguiPassEnd(ImGui::GetDrawData());
+    }
+
     void Renderer::produceFrame(RHICommandList* cmdList,
                                 ecs::Resource<GlobalContext> globalContext,
                                 ecs::ResourceArray<Drawcall> drawcalls,
@@ -140,6 +154,8 @@ namespace worse
             passWireFrame(cmdList, drawcalls, meshes);
         }
         passPostProcessing(cmdList);
+
+        passImGui(cmdList);
     }
 
 } // namespace worse

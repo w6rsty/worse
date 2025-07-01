@@ -28,6 +28,7 @@ target_link_libraries(${MODULE_NAME}
         Vulkan-Headers
         DXC
         spirv-cross-hlsl
+        imgui
     PUBLIC
         volk_headers
         Worse::Core
