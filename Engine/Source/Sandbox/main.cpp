@@ -19,6 +19,8 @@
 #include "ECS/Registry.hpp"
 #include "ECS/Schedule.hpp"
 
+#include <random>
+
 using namespace worse;
 
 struct PlayerTag
@@ -224,6 +226,23 @@ public:
             Mesh3D{meshes.add(Quad3D{})},
             MeshMaterial{materials->add(StandardMaterial{})}
         );
+
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> posDist(-3.0f, 3.0f);
+        std::uniform_real_distribution<float> heightDist(1.0f, 5.0f);
+
+        std::vector<RHIVertexPosUvNrmTan> vertices;
+        vertices.reserve(1000000);
+
+        for (int i = 0; i < 1000000; ++i)
+        {
+            vertices.push_back(RHIVertexPosUvNrmTan{
+                .position = math::Vector3{posDist(gen), heightDist(gen), posDist(gen)},
+                .uv = math::Vector2{0.0f, 0.0f},
+            });
+        }
 
         player = commands.spawn(
             LocalTransform{

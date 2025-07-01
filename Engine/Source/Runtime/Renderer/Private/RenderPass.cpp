@@ -78,14 +78,15 @@ namespace worse
             Mesh* mesh = meshes.get(drawcall.meshIndex);
 
             cmdList->setBufferVertex(mesh->getVertexBuffer());
-            cmdList->setBufferIndex(mesh->getIndexBuffer());
+            // cmdList->setBufferIndex(mesh->getIndexBuffer());
 
             pushConstantData.setModel(drawcall.transform);
             pushConstantData.setMaterialId(drawcall.materialIndex);
 
-            pushConstantData.setPadding(2.0f, 0.0f); // Point size
+            pushConstantData.setPadding(1.0f, 0.0f); // Point size
             cmdList->pushConstants(pushConstantData.asSpan());
-            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+            // cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+            cmdList->draw(mesh->getVertexBuffer()->getElementCount());
         }
 
         cmdList->renderPassEnd();
@@ -100,19 +101,6 @@ namespace worse
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Wireframe));
 
         for (Drawcall const& drawcall : drawcalls->solid)
-        {
-            Mesh* mesh = meshes.get(drawcall.meshIndex);
-
-            cmdList->setBufferVertex(mesh->getVertexBuffer());
-            cmdList->setBufferIndex(mesh->getIndexBuffer());
-
-            pushConstantData.setModel(drawcall.transform);
-            cmdList->pushConstants(pushConstantData.asSpan());
-
-            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
-        }
-
-        for (Drawcall const& drawcall : drawcalls->point)
         {
             Mesh* mesh = meshes.get(drawcall.meshIndex);
 
