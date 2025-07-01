@@ -186,26 +186,26 @@ public:
 
         assetServer->load();
 
-        // auto marble = materials->add(StandardMaterial{
-        //     .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_albedo.png"),
-        //     .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_Roughness.png"),
-        //     .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_ao.png"),
-        // });
+        auto marble = materials->add(StandardMaterial{
+            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_albedo.png"),
+            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_Roughness.png"),
+            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_ao.png"),
+        });
 
-        // auto vegetation = materials->add(StandardMaterial{
-        //     .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_albedo.png"),
-        //     .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_normal-ogl.png"),
-        //     .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_roughness.png"),
-        //     .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_ao.png"),
-        // });
+        auto vegetation = materials->add(StandardMaterial{
+            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_albedo.png"),
+            .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_normal-ogl.png"),
+            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_roughness.png"),
+            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_ao.png"),
+        });
 
-        // auto gold = materials->add(StandardMaterial{
-        //     .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_albedo.png"),
-        //     .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_normal-ogl.png"),
-        //     .metallic                = 1.0f,
-        //     .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_roughness.png"),
-        //     .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_ao.png"),
-        // });
+        auto gold = materials->add(StandardMaterial{
+            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_albedo.png"),
+            .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_normal-ogl.png"),
+            .metallic                = 1.0f,
+            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_roughness.png"),
+            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_ao.png"),
+        });
         
         // floor
         commands.spawn(
@@ -214,7 +214,7 @@ public:
                 .scale = math::Vector3{10.0f, 0.1f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{materials->add(StandardMaterial{})}
+            MeshMaterial{marble}
         );
         commands.spawn(
             LocalTransform{
@@ -222,17 +222,15 @@ public:
                 .scale = math::Vector3{10.0f, 0.1f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{materials->add(StandardMaterial{})}
+            MeshMaterial{vegetation}
         );
 
         player = commands.spawn(
             LocalTransform{
                 .position = math::Vector3{0.0f, 10.0f, 0.0f},
             },
-            Mesh3D{meshes.add(Capsule3D{
-                .segments = 16,
-            })},
-            MeshMaterial{materials->add(StandardMaterial{})}
+            Mesh3D{meshes.add(Sphere{.radius = 1.0f})},
+            MeshMaterial{gold}
         );
     }
     // clang-format on
