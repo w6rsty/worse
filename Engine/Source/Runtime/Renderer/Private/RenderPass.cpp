@@ -19,13 +19,13 @@ namespace worse
     }
 
     void Renderer::passDpethPrepass(RHICommandList* cmdList,
-                                    ecs::ResourceArray<Drawcall> drawcalls,
+                                    ecs::Resource<DrawcallStorage> drawcalls,
                                     ecs::ResourceArray<Mesh> meshes)
     {
         // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::DepthPrepass));
 
-        for (Drawcall const& drawcall : drawcalls->data())
+        for (Drawcall const& drawcall : drawcalls->solid)
         {
             Mesh* mesh = meshes.get(drawcall.meshIndex);
 
@@ -43,11 +43,12 @@ namespace worse
     }
 
     void Renderer::passColor(RHICommandList* cmdList,
-                             ecs::ResourceArray<Drawcall> drawcalls,
+                             ecs::Resource<DrawcallStorage> drawcalls,
                              ecs::ResourceArray<Mesh> meshes)
     {
         // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PBR));
+
 
         std::array updates = {
             RHIDescriptorWrite{.reg      = 0, // t0
@@ -56,8 +57,8 @@ namespace worse
         };
         cmdList->updateSpecificSet(updates);
 
-        for (Drawcall const& drawcall : drawcalls->data())
-        {
+        for (Drawcall const& drawcall : drawcalls->solid)
+        {   
             Mesh* mesh = meshes.get(drawcall.meshIndex);
 
             cmdList->setBufferVertex(mesh->getVertexBuffer());
@@ -70,18 +71,48 @@ namespace worse
             cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
         }
 
+        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Point));
+
+        for (Drawcall const& drawcall : drawcalls->point)
+        {   
+            Mesh* mesh = meshes.get(drawcall.meshIndex);
+
+            cmdList->setBufferVertex(mesh->getVertexBuffer());
+            cmdList->setBufferIndex(mesh->getIndexBuffer());
+
+            pushConstantData.setModel(drawcall.transform);
+            pushConstantData.setMaterialId(drawcall.materialIndex);
+
+            pushConstantData.setPadding(2.0f, 0.0f); // Point size
+            cmdList->pushConstants(pushConstantData.asSpan());
+            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+        }
+
         cmdList->renderPassEnd();
         // clang-format on
     }
 
     void Renderer::passWireFrame(RHICommandList* cmdList,
-                                 ecs::ResourceArray<Drawcall> drawcalls,
+                                 ecs::Resource<DrawcallStorage> drawcalls,
                                  ecs::ResourceArray<Mesh> meshes)
     {
         // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Wireframe));
 
-        for (Drawcall const& drawcall : drawcalls->data())
+        for (Drawcall const& drawcall : drawcalls->solid)
+        {
+            Mesh* mesh = meshes.get(drawcall.meshIndex);
+
+            cmdList->setBufferVertex(mesh->getVertexBuffer());
+            cmdList->setBufferIndex(mesh->getIndexBuffer());
+
+            pushConstantData.setModel(drawcall.transform);
+            cmdList->pushConstants(pushConstantData.asSpan());
+
+            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+        }
+
+        for (Drawcall const& drawcall : drawcalls->point)
         {
             Mesh* mesh = meshes.get(drawcall.meshIndex);
 
@@ -141,7 +172,7 @@ namespace worse
 
     void Renderer::produceFrame(RHICommandList* cmdList,
                                 ecs::Resource<GlobalContext> globalContext,
-                                ecs::ResourceArray<Drawcall> drawcalls,
+                                ecs::Resource<DrawcallStorage> drawcalls,
                                 ecs::ResourceArray<Mesh> meshes,
                                 ecs::ResourceArray<TextureWrite> textureWrites)
     {

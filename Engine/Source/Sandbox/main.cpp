@@ -229,7 +229,10 @@ public:
             LocalTransform{
                 .position = math::Vector3{0.0f, 10.0f, 0.0f},
             },
-            Mesh3D{meshes.add(Sphere{.radius = 1.0f})},
+            Mesh3D{
+                meshes.add(Sphere{.radius = 1.0f, .segments = 32, .rings = 32}),
+                RHIPrimitiveTopology::PointList
+            },
             MeshMaterial{gold}
         );
     }

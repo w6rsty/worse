@@ -28,7 +28,7 @@ namespace worse
 
         // clang-format off
         RHIPipelineType type                                 = RHIPipelineType::Graphics;
-        RHIPrimitiveTopology primitiveTopology               = RHIPrimitiveTopology::Trianglelist;
+        RHIPrimitiveTopology primitiveTopology               = RHIPrimitiveTopology::TriangleList;
         RHIRasterizerState* rasterizerState                  = nullptr;
         RHIDepthStencilState* depthStencilState              = nullptr;
         RHIBlendState* blendState                            = nullptr;

@@ -68,6 +68,10 @@ namespace worse
         {
             std::uint64_t hash = 0;
 
+            hash = math::hashCombine(
+                hash,
+                static_cast<std::uint64_t>(pso.primitiveTopology));
+
             if (pso.rasterizerState)
             {
                 hash = math::hashCombine(hash, pso.rasterizerState->getHash());

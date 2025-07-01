@@ -68,6 +68,7 @@ namespace worse
         // in reneder loop, otherwise the activation of next pass will fail
         void clearPipelineState();
 
+        // dynamic state
         void setViewport(RHIViewport const& viewport);
         void setScissor(math::Rectangle const& scissor);
 

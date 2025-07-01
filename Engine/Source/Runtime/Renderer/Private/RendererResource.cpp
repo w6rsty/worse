@@ -37,7 +37,7 @@ namespace worse
     {
         // clang-format off
         rasterizerStates[RendererRasterizerState::Solid]     = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::None, RHIFrontFace::CCW, 1.0f, false, 0.0f, 0.0f, 0.0f);
-        rasterizerStates[RendererRasterizerState::Wireframe] = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None, RHIFrontFace::CW, 1.0f, false, 0.0f, 0.0f, 0.0f);
+        rasterizerStates[RendererRasterizerState::Wireframe] = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None, RHIFrontFace::CCW, 1.0f, false, 0.0f, 0.0f, 0.0f);
         // clang-format on
     }
 
@@ -97,6 +97,11 @@ namespace worse
         shaders[RendererShader::LineV]->compile(shaderPath / "Line.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::LineP] = std::make_shared<RHIShader>("LineP");
         shaders[RendererShader::LineP]->compile(shaderPath / "Line.hlsl", RHIShaderType::Pixel);
+
+        shaders[RendererShader::PointV] = std::make_shared<RHIShader>("PointV");
+        shaders[RendererShader::PointV]->compile(shaderPath / "Point.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::PointP] = std::make_shared<RHIShader>("PointP");
+        shaders[RendererShader::PointP]->compile(shaderPath / "Point.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::PBRV] = std::make_shared<RHIShader>("PBRV");
         shaders[RendererShader::PBRV]->compile(shaderPath / "PBR.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
@@ -297,7 +302,7 @@ namespace worse
             RHIPipelineStateBuilder()
                 .setName("DepthPrepass")
                 .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
@@ -311,47 +316,65 @@ namespace worse
         RHIDevice::getPipeline(pipelineStates[RendererPSO::DepthPrepass]);
 
         pipelineStates[RendererPSO::PBR] =
-        RHIPipelineStateBuilder()
-            .setName("PBRPass")
-            .setType(RHIPipelineType::Graphics)
-            .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
-            .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-            .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
-            .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-            .addShader(Renderer::getShader(RendererShader::PBRV))
-            .addShader(Renderer::getShader(RendererShader::PBRP))
-            .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
-            .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-            .setScissor({0, 0, 1200, 720})
-            .setViewport(Renderer::getViewport())
-            .setClearColor(Color{0.2f, 0.2f, 0.2f, 1.0f})
-            .setClearDepth(0.0f)
-            .build();
+            RHIPipelineStateBuilder()
+                .setName("PBRPass")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PBRV))
+                .addShader(Renderer::getShader(RendererShader::PBRP))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .setClearColor(Color{0.2f, 0.2f, 0.2f, 1.0f})
+                .setClearDepth(0.0f)
+                .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PBR]);
 
         pipelineStates[RendererPSO::Wireframe] =
             RHIPipelineStateBuilder()
-            .setName("WireFramePass")
-            .setType(RHIPipelineType::Graphics)
-            .setPrimitiveTopology(RHIPrimitiveTopology::Trianglelist)
-            .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Wireframe))
-            .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
-            .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-            .addShader(Renderer::getShader(RendererShader::LineV))
-            .addShader(Renderer::getShader(RendererShader::LineP))
-            .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
-            .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-            .setScissor({0, 0, 1200, 720})
-            .setViewport(Renderer::getViewport())
-            .build();
+                .setName("WireFramePass")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Wireframe))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::LineV))
+                .addShader(Renderer::getShader(RendererShader::LineP))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::Wireframe]);
 
+        pipelineStates[RendererPSO::Point] =
+            RHIPipelineStateBuilder()
+                .setName("PointPass")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::PointList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PointV))
+                .addShader(Renderer::getShader(RendererShader::PointP))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .setClearDepth(0.0f)
+                .build();
+        RHIDevice::getPipeline(pipelineStates[RendererPSO::Point]);
+
         pipelineStates[RendererPSO::PostProcessing] =
-        RHIPipelineStateBuilder()
-            .setName("PostProcessingPass")
-            .setType(RHIPipelineType::Compute)
-            .addShader(Renderer::getShader(RendererShader::KuwaharaC))
-            .build();
+            RHIPipelineStateBuilder()
+                .setName("PostProcessingPass")
+                .setType(RHIPipelineType::Compute)
+                .addShader(Renderer::getShader(RendererShader::KuwaharaC))
+                .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PostProcessing]);
 
         // clang-format on
