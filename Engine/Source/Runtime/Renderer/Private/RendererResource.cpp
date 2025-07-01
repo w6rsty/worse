@@ -151,7 +151,7 @@ namespace worse
         }
         // Default Normal Map: (0.5, 0.5, 1.0, 1.0) in tangent space = (128, 128, 255, 255) in RGBA8
         {
-            std::uint32_t normal = 0xFF8080FF; // ABGR format: A=255, B=128, G=128, R=255
+            std::uint32_t normal = 0xFFFF8080; // ABGR format: A=255, B=128, G=128, R=255
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &normal, 4);
@@ -324,7 +324,7 @@ namespace worse
             .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
             .setScissor({0, 0, 1200, 720})
             .setViewport(Renderer::getViewport())
-            .setClearColor(Color{0.1f, 0.1f, 0.1f, 1.0f})
+            .setClearColor(Color{0.2f, 0.2f, 0.2f, 1.0f})
             .setClearDepth(0.0f)
             .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PBR]);
@@ -343,7 +343,6 @@ namespace worse
             .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
             .setScissor({0, 0, 1200, 720})
             .setViewport(Renderer::getViewport())
-            .setClearColor(Color{0.1f, 0.1f, 0.1f, 1.0f})
             .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::Wireframe]);
 
