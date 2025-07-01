@@ -44,9 +44,9 @@ namespace worse
 
     void Mesh::createGPUBuffers()
     {
-        if (m_vertices.empty() || m_indices.empty())
+        if (m_vertices.empty())
         {
-            WS_LOG_WARN("Mesh", "Incomplete mesh data");
+            WS_LOG_WARN("Mesh", "No vertices");
             return;
         }
 
@@ -57,13 +57,17 @@ namespace worse
                                         m_vertices.data(),
                                         false,
                                         "MeshVertexBuffer");
-        m_indexBuffer =
-            std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
-                                        sizeof(std::uint32_t),
-                                        m_indices.size(),
-                                        m_indices.data(),
-                                        false,
-                                        "MeshIndexBuffer");
+
+        if (m_indices.size() != 0)
+        {
+            m_indexBuffer =
+                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
+                                            sizeof(std::uint32_t),
+                                            m_indices.size(),
+                                            m_indices.data(),
+                                            false,
+                                            "MeshIndexBuffer");
+        }
     }
 
     // clang-format off

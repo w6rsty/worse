@@ -24,6 +24,12 @@ namespace worse
         geometry::GeometryType type;
     };
 
+    struct CustomMesh3D : StandardMesh3D
+    {
+        std::vector<RHIVertexPosUvNrmTan> vertices;
+        std::optional<std::vector<std::uint32_t>> indices = std::nullopt;
+    };
+
     struct Quad3D : StandardMesh3D
     {
         float width  = 1.0f;
@@ -83,6 +89,14 @@ namespace worse
         template <std::derived_from<StandardMesh3D> T>
         Mesh(T const& standardMesh)
         {
+            if constexpr (std::is_same_v<T, CustomMesh3D>)
+            {
+                addGeometry(standardMesh.vertices,
+                            standardMesh.indices.value_or(
+                                std::vector<std::uint32_t>{}));
+                return;
+            }
+
             std::vector<RHIVertexPosUvNrmTan> vertices;
             std::vector<std::uint32_t> indices;
 
