@@ -18,7 +18,9 @@ namespace worse
     void Mesh::clear()
     {
         m_vertices.clear();
+        m_vertices.shrink_to_fit();
         m_indices.clear();
+        m_indices.shrink_to_fit();
         m_subMeshes.clear();
     }
 

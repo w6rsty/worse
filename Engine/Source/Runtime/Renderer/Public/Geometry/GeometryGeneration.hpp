@@ -15,6 +15,7 @@ namespace worse::geometry
         Sphere,
         Cylinder,
         Capsule,
+        Frustum,
         Max
     };
 
@@ -528,6 +529,100 @@ namespace worse::geometry
                 indices.emplace_back(i3);
             }
         }
+    }
+
+    static void generateFrustum(std::vector<RHIVertexPosUvNrmTan>& vertices,
+                                std::vector<std::uint32_t>& indices,
+                                float topWidth = 1.0f, float bottomWidth = 1.0f,
+                                float height = 1.0f, std::uint32_t segments = 4)
+    {
+        using worse::math::Vector2;
+        using worse::math::Vector3;
+
+        vertices.clear();
+        indices.clear();
+        vertices.reserve((segments + 1) * 2);
+        indices.reserve(segments * 6);
+
+        // Top vertices
+        for (std::uint32_t s = 0; s <= segments; ++s)
+        {
+            float theta = 2.0f * math::PI * static_cast<float>(s) /
+                          static_cast<float>(segments);
+            float x = (topWidth / 2.0f) * std::cos(theta);
+            float z = (topWidth / 2.0f) * std::sin(theta);
+            Vector3 position(x, height, z);
+            Vector2 uv(static_cast<float>(s) / static_cast<float>(segments),
+                       0.0f);
+            Vector3 normal(0.0f, 1.0f, 0.0f);
+            Vector3 tangent(1.0f, 0.0f, 0.0f);
+
+            vertices.emplace_back(position, uv, normal, tangent);
+        }
+
+        // Bottom vertices
+        for (std::uint32_t s = 0; s <= segments; ++s)
+        {
+            float theta = 2.0f * math::PI * static_cast<float>(s) /
+                          static_cast<float>(segments);
+            float x = (bottomWidth / 2.0f) * std::cos(theta);
+            float z = (bottomWidth / 2.0f) * std::sin(theta);
+            Vector3 position(x, 0.0f, z);
+            Vector2 uv(static_cast<float>(s) / static_cast<float>(segments),
+                       1.0f);
+            Vector3 normal(0.0f, -1.0f, 0.0f);
+            Vector3 tangent(1.0f, 0.0f, 0.0f);
+
+            vertices.emplace_back(position, uv, normal, tangent);
+        }
+
+        // Indices for the sides
+        for (std::uint32_t s = 0; s < segments; ++s)
+        {
+            std::uint32_t topIndex        = s;
+            std::uint32_t bottomIndex     = segments + 1 + s;
+            std::uint32_t nextTopIndex    = (s + 1) % (segments + 1);
+            std::uint32_t nextBottomIndex = segments + 1 + nextTopIndex;
+
+            indices.emplace_back(topIndex);
+            indices.emplace_back(bottomIndex);
+            indices.emplace_back(nextTopIndex);
+
+            indices.emplace_back(nextTopIndex);
+            indices.emplace_back(bottomIndex);
+            indices.emplace_back(nextBottomIndex);
+        }
+
+        // Indices for the top and bottom faces
+        for (std::uint32_t s = 0; s < segments; ++s)
+        {
+            std::uint32_t topIndex        = s;
+            std::uint32_t nextTopIndex    = (s + 1) % (segments + 1);
+            std::uint32_t bottomIndex     = segments + 1 + s;
+            std::uint32_t nextBottomIndex = segments + 1 + nextTopIndex;
+
+            // Top face
+            indices.emplace_back(topIndex);
+            indices.emplace_back(nextTopIndex);
+            indices.emplace_back(segments + 1);
+
+            // Bottom face
+            indices.emplace_back(bottomIndex);
+            indices.emplace_back(nextBottomIndex);
+            indices.emplace_back(2 * (segments + 1));
+        }
+
+        // Add the center vertices for top and bottom faces
+        vertices.emplace_back(Vector3(0.0f, height, 0.0f),
+                              Vector2(0.5f, 0.0f),
+                              Vector3(0.0f, 1.0f, 0.0f),
+                              Vector3(1.0f, 0.0f, 0.0f)); // Top center
+        vertices.emplace_back(Vector3(0.0f, 0.0f, 0.0f),
+                              Vector2(0.5f, 1.0f),
+                              Vector3(0.0f, -1.0f, 0.0f),
+                              Vector3(1.0f, 0.0f, 0.0f)); // Bottom center
+        indices.emplace_back(segments + 1);               // Top center index
+        indices.emplace_back(2 * (segments + 1));         // Bottom center index
     }
 
 } // namespace worse::geometry
