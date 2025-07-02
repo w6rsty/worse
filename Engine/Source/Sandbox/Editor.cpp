@@ -267,6 +267,99 @@ void World::editorLayout(ecs::Commands commands,
             }
         }
 
+        // PCL处理模块（如果有点云加载）
+        if (hasPointCloud &&
+            ImGui::CollapsingHeader("PCL处理", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            ImGui::Text("点云库(PCL)处理工具");
+            ImGui::Separator();
+
+            // 显示当前活跃文件
+            if (!currentActiveFile.empty())
+            {
+                ImGui::Text("当前文件: %s", currentActiveFile.c_str());
+                ImGui::Spacing();
+            }
+
+            // 显示PCL处理进度条（如果正在处理）
+            if (isProcessingWithPCL)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text,
+                                      ImVec4(0.0f, 0.8f, 1.0f, 1.0f)); // 蓝色
+                ImGui::Text("正在处理: %s", currentProcessingFile.c_str());
+                ImGui::PopStyleColor();
+                ImGui::ProgressBar(pclProcessingProgress, ImVec2(-1.0f, 0.0f));
+                ImGui::Spacing();
+            }
+            else
+            {
+                // PCL处理按钮
+                ImGui::PushStyleColor(
+                    ImGuiCol_Button,
+                    ImVec4(0.2f, 0.6f, 0.8f, 1.0f)); // 蓝色背景
+                ImGui::PushStyleColor(
+                    ImGuiCol_ButtonHovered,
+                    ImVec4(0.3f, 0.7f, 0.9f, 1.0f)); // 悬停时更亮
+                ImGui::PushStyleColor(
+                    ImGuiCol_ButtonActive,
+                    ImVec4(0.1f, 0.5f, 0.7f, 1.0f)); // 按下时更深
+
+                if (ImGui::Button("开始PCL处理", ImVec2(-1.0f, 0.0f)))
+                {
+                    if (!currentActiveFile.empty())
+                    {
+                        bool success =
+                            processMeshWithPCL(currentActiveFile, commands);
+                        if (success)
+                        {
+                            WS_LOG_INFO("UI",
+                                        "Started PCL processing for: {}",
+                                        currentActiveFile);
+                        }
+                        else
+                        {
+                            WS_LOG_ERROR(
+                                "UI",
+                                "Failed to start PCL processing for: {}",
+                                currentActiveFile);
+                        }
+                    }
+                    else
+                    {
+                        WS_LOG_WARN(
+                            "UI",
+                            "No active point cloud found for PCL processing");
+                    }
+                }
+
+                ImGui::PopStyleColor(3);
+
+                ImGui::Spacing();
+
+                // PCL处理选项
+                ImGui::Text("处理选项:");
+                static bool enableVoxelFilter      = true;
+                static bool enableNormalEstimation = false;
+                static bool enableSegmentation     = false;
+
+                ImGui::Checkbox("体素滤波", &enableVoxelFilter);
+                ImGui::Checkbox("法线估计", &enableNormalEstimation);
+                ImGui::Checkbox("平面分割", &enableSegmentation);
+
+                if (enableVoxelFilter)
+                {
+                    static float voxelSize = 0.01f;
+                    ImGui::SliderFloat("体素大小",
+                                       &voxelSize,
+                                       0.001f,
+                                       0.1f,
+                                       "%.3f");
+                }
+
+                ImGui::Spacing();
+            }
+        }
+
         // 对象变换属性（如果有点云Entity）
         if (hasPointCloud &&
             ImGui::CollapsingHeader("变换属性", ImGuiTreeNodeFlags_DefaultOpen))

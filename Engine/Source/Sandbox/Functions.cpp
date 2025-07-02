@@ -276,6 +276,14 @@ void World::clearAllLoadedMeshes(ecs::Commands& commands)
     currentLoadingFile = "";
     loadingProgress    = 0.0f;
 
+    // 重置PCL处理状态
+    isProcessingWithPCL   = false;
+    currentProcessingFile = "";
+    pclProcessingProgress = 0.0f;
+
+    // 重置当前活跃文件
+    currentActiveFile = "";
+
     WS_LOG_INFO("PointCloud",
                 "Successfully cleared {} loaded meshes",
                 clearedCount);
@@ -351,7 +359,8 @@ bool World::switchToPointCloud(const std::string& filename,
                    RHIPrimitiveTopology::PointList}, // 使用预加载的网格索引
             MeshMaterial{defaultPointMaterialIndex});
 
-        hasPointCloud = true;
+        hasPointCloud     = true;
+        currentActiveFile = filename; // 设置当前活跃文件
 
         // 自动调整相机到最佳观察位置
         if (currentCamera != nullptr)

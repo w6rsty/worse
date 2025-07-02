@@ -49,6 +49,14 @@ public:
     inline static std::string currentLoadingFile = "";
     inline static float loadingProgress          = 0.0f;
 
+    // PCL处理相关
+    inline static bool isProcessingWithPCL          = false;
+    inline static std::string currentProcessingFile = "";
+    inline static float pclProcessingProgress       = 0.0f;
+
+    // 当前活跃的点云文件名
+    inline static std::string currentActiveFile = "";
+
     // 固定的点云文件目录
     inline static const std::string POINT_CLOUD_DIRECTORY =
         "/Users/w6rsty/dev/Cpp/worse_pc/Engine/Binary/LAS/";
@@ -89,6 +97,9 @@ public:
                                    ecs::Commands& commands);
     // 清理所有已加载的网格的函数
     static void clearAllLoadedMeshes(ecs::Commands& commands);
+    // PCL处理相关函数
+    static bool processMeshWithPCL(const std::string& filename,
+                                   ecs::Commands& commands);
     // 通过文件名切换点云Entity的函数（支持运行时加载）
     static bool switchToPointCloud(const std::string& filename,
                                    ecs::Commands& commands);
