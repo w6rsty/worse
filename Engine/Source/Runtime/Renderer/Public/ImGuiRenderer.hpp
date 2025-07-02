@@ -72,20 +72,22 @@ namespace worse
                          ecs::Resource<GlobalContext> globalContext);
 
         template <StateTraits State>
-        static void registerStates(ecs::Commands commands,
-                                   State startState = State::Begin)
+        static PageRouter<State>&
+        registerStates(ecs::Commands commands, State startState = State::Begin)
         {
-            PageRouter<State>& rounter =
+            PageRouter<State>& router =
                 commands.emplaceResource<PageRouter<State>>();
 
-            rounter.transfer(startState);
+            router.transfer(startState);
 
-            activePage = [&rounter](ecs::Commands commands,
-                                    ecs::Resource<GlobalContext>
-                                        globalContext)
+            activePage = [&router](ecs::Commands commands,
+                                   ecs::Resource<GlobalContext>
+                                       globalContext)
             {
-                rounter.renderPage(commands, globalContext);
+                router.renderPage(commands, globalContext);
             };
+
+            return router;
         }
 
     private:
