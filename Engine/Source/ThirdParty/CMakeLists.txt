@@ -2,6 +2,7 @@ include(FetchContent)
 
 add_subdirectory(dxc)
 add_subdirectory(imgui)
+add_subdirectory(pcl)
 add_subdirectory(SDL3)
 add_subdirectory(SPIRV-Cross)
 add_subdirectory(stb)
