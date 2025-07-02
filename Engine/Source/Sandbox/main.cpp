@@ -19,12 +19,20 @@
 #include "ECS/Registry.hpp"
 #include "ECS/Schedule.hpp"
 
-#include <random>
+#include "imgui.h"
 
 using namespace worse;
 
 struct PlayerTag
 {
+};
+
+enum class AppState
+{
+    Undefined,
+    Begin,
+    Main,
+    End
 };
 
 class World
@@ -33,7 +41,10 @@ public:
     inline static ecs::Entity root   = ecs::Entity::null();
     inline static ecs::Entity player = ecs::Entity::null();
 
-    static void initialize(ecs::Commands commands)
+    static void initialize(ecs::Commands commands,
+                           ecs::ResourceArray<StandardMaterial> materials,
+                           ecs::Resource<AssetServer> assetServer,
+                           ecs::ResourceArray<Mesh> meshes)
     {
         // clang-format off
         Camera& camera = commands.emplaceResource<Camera>()
@@ -46,6 +57,36 @@ public:
             camera.setAspectRatio(
                 static_cast<float>(Window::getWidth()) / static_cast<float>(Window::getHeight())
             );
+        });
+
+        auto defaultMaterial = materials->add(StandardMaterial{
+            .albedo = math::Vector4{0.8f, 0.2f, 0.4f, 1.0f},
+        });
+
+        PageRouter<AppState>& router = ImGuiRenderer::registerStates<AppState>(commands, AppState::Begin);
+        router.registerPage(AppState::Begin, [defaultMaterial](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        {
+            ImGui::Begin("Welcome to Worse Engine!");
+
+            if (ImGui::Button("Spawn"))
+            {
+                auto meshes = commands.getResourceArray<Mesh>();
+                auto meshIndex = meshes.add(Sphere{.segments = 64, .rings = 64});
+                meshes->get(meshIndex)->createGPUBuffers();
+                commands.spawn(
+                    LocalTransform{
+                        .position = math::Vector3{
+                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f,
+                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f,
+                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f
+                        },
+                    },
+                    Mesh3D{meshIndex},
+                    MeshMaterial{defaultMaterial}
+                );
+            }
+
+            ImGui::End();
         });
         // clang-format on
     }
