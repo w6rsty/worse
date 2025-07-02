@@ -1,15 +1,15 @@
 #pragma once
+#include "Prefab.hpp"
 #include "ECS/Commands.hpp"
 #include "ECS/Resource.hpp"
-#include "Prefab.hpp"
-
-#include "imgui.h"
 
 #include <functional>
 #include <type_traits>
 
 namespace worse
 {
+
+    void defaultPage(int state);
 
     template <typename State>
     concept StateTraits = std::is_enum_v<State> && requires {
@@ -45,24 +45,7 @@ namespace worse
             }
             else
             {
-                // clang-format off
-                ImVec2 windowSize = ImGui::GetIO().DisplaySize;
-                ImGui::SetNextWindowPos(
-                    ImVec2(windowSize.x * 0.5f, windowSize.y * 0.5f),
-                    ImGuiCond_Always,
-                    ImVec2(0.5f, 0.5f));
-                ImGui::Begin("#",
-                             nullptr,
-                             ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove |
-                             ImGuiWindowFlags_AlwaysAutoResize |
-                             ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoTitleBar
-                        );
-                ImGui::Text("No page registered for state: %d",
-                            static_cast<int>(m_currState));
-                ImGui::End();
-                // clang-format on
+                defaultPage(static_cast<int>(m_currState));
             }
         }
 
