@@ -1,10 +1,9 @@
-#include "Event.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
 
+#include "Event.hpp"
 #include "Window.hpp"
-#include "RHIDefinitions.hpp"
 #include "RHIDevice.hpp"
 #include "Renderer.hpp"
 #include "ImGuiRenderer.hpp"
@@ -34,38 +33,87 @@ namespace worse
             io.Fonts->GetGlyphRangesChineseSimplifiedCommon()
         );
 
-        ImGui::StyleColorsLight();
-        
         ImGuiStyle& style = ImGui::GetStyle();
-        // Modern rounded corners
-        style.WindowRounding    = 8.0f;
-        style.ChildRounding     = 6.0f;
+
+        // === Rounding ===
+        style.WindowRounding    = 5.0f;
+        style.ChildRounding     = 5.0f;
         style.FrameRounding     = 4.0f;
-        style.PopupRounding     = 6.0f;
-        style.ScrollbarRounding = 4.0f;
+        style.PopupRounding     = 5.0f;
+        style.ScrollbarRounding = 12.0f;
         style.GrabRounding      = 4.0f;
         style.TabRounding       = 4.0f;
-        
-        // 1px borders/outlines
+
+        // === Borders ===
         style.WindowBorderSize = 1.0f;
         style.ChildBorderSize  = 1.0f;
         style.PopupBorderSize  = 1.0f;
         style.FrameBorderSize  = 1.0f;
         style.TabBorderSize    = 1.0f;
-        
-        // Modern spacing
-        style.WindowPadding    = ImVec2(12, 12);
-        style.FramePadding     = ImVec2(8, 4);
-        style.ItemSpacing      = ImVec2(8, 6);
-        style.ItemInnerSpacing = ImVec2(6, 4);
-        
-        // Light theme color adjustments
+
+        // === Spacing ===
+        style.WindowPadding    = ImVec2(10.0f, 10.0f);
+        style.FramePadding     = ImVec2(8.0f, 6.0f);
+        style.ItemSpacing      = ImVec2(8.0f, 4.0f);
+        style.ItemInnerSpacing = ImVec2(6.0f, 6.0f);
+
+        // === Colors ===
         ImVec4* colors = style.Colors;
-        colors[ImGuiCol_Border]         = ImVec4(0.70f, 0.70f, 0.70f, 1.00f);
-        colors[ImGuiCol_WindowBg]       = ImVec4(0.88f, 0.88f, 0.88f, 1.00f);
-        colors[ImGuiCol_FrameBg]        = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
-        colors[ImGuiCol_FrameBgHovered] = ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
-        colors[ImGuiCol_FrameBgActive]  = ImVec4(0.75f, 0.75f, 0.75f, 1.00f);
+
+        // Main
+        colors[ImGuiCol_Text]                 = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+        colors[ImGuiCol_WindowBg]             = ImVec4(0.96f, 0.96f, 0.96f, 1.00f);
+        colors[ImGuiCol_ChildBg]              = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
+        colors[ImGuiCol_PopupBg]              = ImVec4(0.94f, 0.94f, 0.94f, 1.00f);
+
+        // Borders
+        colors[ImGuiCol_Border]               = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
+        colors[ImGuiCol_BorderShadow]         = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
+
+        // Frame controls (input fields, etc.)
+        colors[ImGuiCol_FrameBg]              = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImGuiCol_FrameBgHovered]       = ImVec4(0.92f, 0.92f, 0.92f, 1.00f);
+        colors[ImGuiCol_FrameBgActive]        = ImVec4(0.88f, 0.88f, 0.88f, 1.00f);
+
+        // Title, Headers, and Menus
+        colors[ImGuiCol_TitleBg]              = ImVec4(0.94f, 0.94f, 0.94f, 1.00f);
+        colors[ImGuiCol_TitleBgActive]        = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+        colors[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
+        colors[ImGuiCol_MenuBarBg]            = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
+
+        // Scrollbar
+        colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.98f, 0.98f, 0.98f, 0.53f);
+        colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
+        colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
+        colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
+
+        // Check Mark & Sliders
+        colors[ImGuiCol_CheckMark]            = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        colors[ImGuiCol_SliderGrab]           = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
+        colors[ImGuiCol_SliderGrabActive]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+
+        // Buttons
+        colors[ImGuiCol_Button]               = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
+        colors[ImGuiCol_ButtonHovered]        = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
+        colors[ImGuiCol_ButtonActive]         = ImVec4(0.70f, 0.70f, 0.70f, 1.00f);
+
+        // Headers (CollapsingHeader, etc.)
+        colors[ImGuiCol_Header]               = ImVec4(0.92f, 0.92f, 0.92f, 1.00f);
+        colors[ImGuiCol_HeaderHovered]        = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+        colors[ImGuiCol_HeaderActive]         = ImVec4(0.78f, 0.78f, 0.78f, 1.00f);
+
+        // Tabs
+        colors[ImGuiCol_Tab]                  = colors[ImGuiCol_Button];
+        colors[ImGuiCol_TabHovered]           = colors[ImGuiCol_ButtonHovered];
+        colors[ImGuiCol_TabActive]            = colors[ImGuiCol_HeaderActive];
+        colors[ImGuiCol_TabUnfocused]         = ImVec4(0.92f, 0.92f, 0.92f, 0.97f);
+        colors[ImGuiCol_TabUnfocusedActive]   = colors[ImGuiCol_TabActive];
+        
+        // Other elements
+        colors[ImGuiCol_Separator]            = colors[ImGuiCol_Border];
+        colors[ImGuiCol_ResizeGrip]           = ImVec4(0.8f, 0.8f, 0.8f, 0.5f);
+        colors[ImGuiCol_ResizeGripHovered]    = ImVec4(0.8f, 0.8f, 0.8f, 0.7f);
+        colors[ImGuiCol_ResizeGripActive]     = ImVec4(0.8f, 0.8f, 0.8f, 0.9f);
 
         WS_ASSERT(ImGui_ImplSDL3_InitForVulkan(static_cast<SDL_Window*>(Window::getHandleSDL())));
     
@@ -77,7 +125,6 @@ namespace worse
             },
             RHIContext::instance
         );
-
 
         ImGui_ImplVulkan_InitInfo infoInit = {};
         infoInit.Instance            = RHIContext::instance;
@@ -134,64 +181,12 @@ namespace worse
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        createBasicLayout(globalContext);
-
-        ImGui::Render();
-    }
-
-    void
-    ImGuiRenderer::createBasicLayout(ecs::Resource<GlobalContext> globalContext)
-    {
-        // clang-format off
-        ImGuiViewport const* viewport = ImGui::GetMainViewport();
-        ImVec2 viewportPadding(5.0f, 5.0f);
-
-        // Define panel dimensions
-        float hierarchyWidth  = viewport->WorkSize.x * 0.20f;
-        float propertiesWidth = viewport->WorkSize.x * 0.25f;
-
-        // Hierarchy panel (left side)
-        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewportPadding.x, viewport->WorkPos.y + viewportPadding.y));
-        ImGui::SetNextWindowSize(ImVec2(hierarchyWidth - viewportPadding.x, viewport->WorkSize.y - viewportPadding.y * 2));
-        createHierarchyPanel();
-
-        // Properties panel (right side)
-        ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - propertiesWidth, viewport->WorkPos.y + viewportPadding.y));
-        ImGui::SetNextWindowSize(ImVec2(propertiesWidth - viewportPadding.x, viewport->WorkSize.y - viewportPadding.y * 2));
-
-        createPropertiesPanel();
-        // clang-format on
-    }
-
-    void ImGuiRenderer::createHierarchyPanel()
-    {
-        ImGui::Begin("场景层级");
-
-        if (ImGui::TreeNode("Scene Root"))
+        if (activePage)
         {
-            if (ImGui::TreeNode("Lighting"))
-            {
-            }
-
-            if (ImGui::TreeNode("Geometry"))
-            {
-            }
-
-            if (ImGui::TreeNode("Characters"))
-            {
-            }
-
-            ImGui::TreePop();
+            activePage(commands, globalContext);
         }
 
-        ImGui::End();
-    }
-
-    void ImGuiRenderer::createPropertiesPanel()
-    {
-        ImGui::Begin("属性");
-
-        ImGui::End();
+        ImGui::Render();
     }
 
 } // namespace worse
