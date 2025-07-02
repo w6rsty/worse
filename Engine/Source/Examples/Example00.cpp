@@ -28,6 +28,14 @@ struct PlayerTag
 {
 };
 
+enum class AppState
+{
+    Undefined,
+    Begin,
+    Main,
+    End
+};
+
 class World
 {
 public:
@@ -45,7 +53,10 @@ public:
     inline static math::Vector3 cameraOffset =
         math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
 
-    static void initialize(ecs::Commands commands)
+    static void initialize(ecs::Commands commands,
+                           ecs::ResourceArray<StandardMaterial> materials,
+                           ecs::Resource<AssetServer> assetServer,
+                           ecs::ResourceArray<Mesh> meshes)
     {
         // clang-format off
         Camera& camera = commands.emplaceResource<Camera>()
@@ -60,43 +71,33 @@ public:
             );
         });
 
-        PageRouter<State>& router = ImGuiRenderer::registerStates<State>(commands, State::Begin);
-        router.registerPage(State::Begin, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> context) {
-            ImGui::Begin("Welcome to the Sandbox");
-            ImGui::Text("This is a simple sandbox environment.");
-            ImGui::Text("Use WASD to move around, Q/E to go up/down.");
-            ImGui::Text("Press P to toggle wireframe mode.");
-
-            if (ImGui::Button("Next page"))
-            {
-                router.transfer(State::Main);
-            }
-
-            ImGui::SliderFloat("camera move speed", &cameraMoveSpeed, 0.1f, 20.0f, "%.1f");
-            ImGui::SliderFloat("camera look speed", &cameraLookSpeed, 0.1f, 20.0f, "%.1f");
-            float cameraOffsetArray[3] = {cameraOffset.x, cameraOffset.y, cameraOffset.z};
-            if (ImGui::SliderFloat3("camera offset", cameraOffsetArray, -20.0f, 20.0f, "%.1f"))
-            {
-                cameraOffset = math::Vector3{cameraOffsetArray[0], cameraOffsetArray[1], cameraOffsetArray[2]};
-            }
-
-
-            ImGui::End();
+        auto defaultMaterial = materials->add(StandardMaterial{
+            .albedo = math::Vector4{0.8f, 0.2f, 0.4f, 1.0f},
         });
-        router.registerPage(State::Main, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> context) {
-            ImGui::Begin("Main Page");
-            ImGui::Text("You are now in the main sandbox area.");
-            ImGui::Text("Use the controls to navigate around.");
-            
-            if (ImGui::Button("Back to Welcome"))
+
+        PageRouter<AppState>& router = ImGuiRenderer::registerStates<AppState>(commands, AppState::Begin);
+        router.registerPage(AppState::Begin, [defaultMaterial](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        {
+            ImGui::Begin("Welcome to Worse Engine!");
+
+            if (ImGui::Button("Spawn"))
             {
-                router.transfer(State::Begin);
+                auto meshes = commands.getResourceArray<Mesh>();
+                auto meshIndex = meshes.add(Sphere{.segments = 64, .rings = 64});
+                meshes->get(meshIndex)->createGPUBuffers();
+                commands.spawn(
+                    LocalTransform{
+                        .position = math::Vector3{
+                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f,
+                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f,
+                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f
+                        },
+                    },
+                    Mesh3D{meshIndex},
+                    MeshMaterial{defaultMaterial}
+                );
             }
 
-            if (ImGui::Button("Exit"))
-            {
-                Window::close();
-            }
             ImGui::End();
         });
         // clang-format on
