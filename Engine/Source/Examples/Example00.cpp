@@ -1,3 +1,6 @@
+#include "imgui.h"
+
+#include "ECS/Commands.hpp"
 #include "Log.hpp"
 #include "Event.hpp"
 #include "Math/Math.hpp"
@@ -19,8 +22,6 @@
 #include "ECS/Registry.hpp"
 #include "ECS/Schedule.hpp"
 
-#include <random>
-
 using namespace worse;
 
 struct PlayerTag
@@ -30,8 +31,19 @@ struct PlayerTag
 class World
 {
 public:
-    inline static ecs::Entity root   = ecs::Entity::null();
-    inline static ecs::Entity player = ecs::Entity::null();
+    enum class State
+    {
+        Undefined,
+        Begin,
+        Main,
+        End,
+    };
+
+    inline static ecs::Entity player    = ecs::Entity::null();
+    inline static float cameraMoveSpeed = 5.0f;
+    inline static float cameraLookSpeed = 4.0f;
+    inline static math::Vector3 cameraOffset =
+        math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
 
     static void initialize(ecs::Commands commands)
     {
@@ -46,6 +58,46 @@ public:
             camera.setAspectRatio(
                 static_cast<float>(Window::getWidth()) / static_cast<float>(Window::getHeight())
             );
+        });
+
+        PageRouter<State>& router = ImGuiRenderer::registerStates<State>(commands, State::Begin);
+        router.registerPage(State::Begin, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> context) {
+            ImGui::Begin("Welcome to the Sandbox");
+            ImGui::Text("This is a simple sandbox environment.");
+            ImGui::Text("Use WASD to move around, Q/E to go up/down.");
+            ImGui::Text("Press P to toggle wireframe mode.");
+
+            if (ImGui::Button("Next page"))
+            {
+                router.transfer(State::Main);
+            }
+
+            ImGui::SliderFloat("camera move speed", &cameraMoveSpeed, 0.1f, 20.0f, "%.1f");
+            ImGui::SliderFloat("camera look speed", &cameraLookSpeed, 0.1f, 20.0f, "%.1f");
+            float cameraOffsetArray[3] = {cameraOffset.x, cameraOffset.y, cameraOffset.z};
+            if (ImGui::SliderFloat3("camera offset", cameraOffsetArray, -20.0f, 20.0f, "%.1f"))
+            {
+                cameraOffset = math::Vector3{cameraOffsetArray[0], cameraOffsetArray[1], cameraOffsetArray[2]};
+            }
+
+
+            ImGui::End();
+        });
+        router.registerPage(State::Main, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> context) {
+            ImGui::Begin("Main Page");
+            ImGui::Text("You are now in the main sandbox area.");
+            ImGui::Text("Use the controls to navigate around.");
+            
+            if (ImGui::Button("Back to Welcome"))
+            {
+                router.transfer(State::Begin);
+            }
+
+            if (ImGui::Button("Exit"))
+            {
+                Window::close();
+            }
+            ImGui::End();
         });
         // clang-format on
     }
@@ -66,7 +118,7 @@ public:
         LocalTransform& playerTransform = commands.getComponent<LocalTransform>(player);
         math::Vector3 playerPosition = playerTransform.position;
 
-        float const moveSpeed = 5.0f * globalContext->deltaTime;
+        float const moveSpeed = cameraMoveSpeed * globalContext->deltaTime;
 
         // WASD控制player移动（水平面）
         math::Vector3 moveDirection = math::Vector3::ZERO();
@@ -107,11 +159,6 @@ public:
         // 更新 player 位置
         playerTransform.position = playerPosition;
 
-        // 相机追踪设置
-        math::Vector3 const cameraOffset = math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
-        float const followSpeed          = 4.0f; // 相机跟随速度
-        float const lookSpeed            = 4.0f; // 相机看向 player 的速度
-
         // 检查是否有手动相机控制
         bool const manualCameraControl = Input::isKey(KeyCode::ClickLeft) || Input::getThumbStickRightDistance() > 0.01f;
 
@@ -135,7 +182,7 @@ public:
             // 保持相机位置跟随，但不强制看向player
             math::Vector3 targetCameraPos  = playerPosition + cameraOffset;
             math::Vector3 currentCameraPos = camera->getPosition();
-            math::Vector3 newCameraPos     = math::lerp(currentCameraPos, targetCameraPos, followSpeed * globalContext->deltaTime);
+            math::Vector3 newCameraPos     = math::lerp(currentCameraPos, targetCameraPos, cameraLookSpeed * globalContext->deltaTime);
             camera->setPosition(newCameraPos);
         }
         else
@@ -146,7 +193,7 @@ public:
             math::Vector3 const newCameraPos = math::lerp(
                 camera->getPosition(), // 当前相机位置
                 playerPosition + cameraOffset, // 目标相机位置
-                followSpeed * globalContext->deltaTime // lerp 增量
+                cameraLookSpeed * globalContext->deltaTime // lerp 增量
             );
             camera->setPosition(newCameraPos);
 
@@ -160,7 +207,7 @@ public:
             math::Quaternion const newOrientation = math::sLerp(
                 camera->getOrientation(), // 当前相机朝向
                 math::Quaternion::fromMat3(math::Matrix3{right, up, -lookDirection}), // 目标相机朝向
-                lookSpeed * globalContext->deltaTime // sLerp 增量
+                cameraLookSpeed * globalContext->deltaTime // sLerp 增量
             );
             camera->setOrientation(newOrientation);
         }
@@ -184,27 +231,72 @@ public:
         ecs::ResourceArray<Mesh> meshes
     )
     {
-        root = commands.spawn(Children{});
+        auto vegetation = materials->add(StandardMaterial{
+            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_albedo.png"),
+            .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_normal-ogl.png"),
+            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_roughness.png"),
+            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_ao.png"),
+        });
+
+        auto marble = materials->add(StandardMaterial{
+            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_albedo.png"),
+            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_Roughness.png"),
+            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_ao.png"),
+        });
+
+        auto gold = materials->add(StandardMaterial{
+            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_albedo.png"),
+            .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_normal-ogl.png"),
+            .metallic                = 1.0f,
+            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_roughness.png"),
+            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_ao.png"),
+        });
 
         assetServer->load();
         
         // floor
         commands.spawn(
             LocalTransform{
-                .position = math::Vector3{5.0f, 0.0f, 0.0f},
-                .scale = math::Vector3{10.0f, 0.1f, 10.0f}
+                .position = math::Vector3{-5.0f, 0.0f, 0.0f},
+                .scale = math::Vector3{10.0f, 1.0f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{materials->add(StandardMaterial{})}
+            MeshMaterial{vegetation}
         );
         commands.spawn(
             LocalTransform{
-                .position = math::Vector3{-5.0f, 0.0f, 0.0f},
-                .scale = math::Vector3{10.0f, 0.1f, 10.0f}
+                .position = math::Vector3{5.0f, 0.0f, 0.0f},
+                .scale = math::Vector3{10.0f, 1.0f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{materials->add(StandardMaterial{})}
+            MeshMaterial{marble}
         );
+
+        commands.spawn(
+            LocalTransform{
+                .position = math::Vector3{-2.5f, 2.0f, 0.0f},
+                .rotation = math::Quaternion::fromAxisAngle(math::Vector3::Y(), math::toRadians(30.0f)),
+                .scale = math::Vector3{4.0f, 4.0f, 4.0f},
+            },
+            Mesh3D{meshes.add(Cube{})},
+            MeshMaterial{gold}
+        );
+
+        commands.spawn(
+            LocalTransform{
+                .position = math::Vector3{2.5f, 2.0f, 0.0f},
+            },
+            Mesh3D{meshes.add(Sphere{
+                .radius = 2.0f,
+                .segments = 64,
+                .rings = 64,
+            }),
+            RHIPrimitiveTopology::PointList},
+            MeshMaterial{materials->add(StandardMaterial{
+                .albedo = math::Vector4(0.8f, 0.5f, 0.5f, 1.0f),
+            })}
+        );
+
 
         player = commands.spawn(
             LocalTransform{
@@ -213,7 +305,11 @@ public:
             Mesh3D{meshes.add(Capsule3D{
                 .segments = 16,
             })},
-            MeshMaterial{materials->add(StandardMaterial{})}
+            MeshMaterial{materials->add(StandardMaterial{
+                .metallic = 0.1f,
+                .roughness = 0.8f,
+                .emissive = math::Vector4(0.0f, 0.2f, 0.0f, 1.0f),
+            })}
         );
     }
     // clang-format on

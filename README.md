@@ -1,3 +1,22 @@
+# Worse Engine
+
+An experimental game engine for exploring rendering engine architecture, graphics. Built with modern C++, currently focused on rendering capabilities.
+
+## Preview
+
+![Preview](./Pics/Preview.jpeg)
+
+- ImGui with custom page router
+- PBR rendering
+- PointList mehsh rendering
+- PostProcessing, Vignette, Kuwahara Filtering, ACES Tonemapping
+
+## Point Cloud Editor
+
+ see [`point_cloud_process`](https://github.com/w6rsty/worse/tree/point_cloud_process) branch
+
+![Editor](./Pics/PointCloudEditor.jpeg)
+
 # Features
 
 ## Rendering
@@ -131,15 +150,8 @@ void endPage(
 ```cpp
 void initialize(ecs::Commands commands)
 {
-    ImGuiRenderer::registerStates<PageState>(commands, PageState::Begin);
-}
+    PageRounter<PageState>& router = ImGuiRenderer::registerStates<PageState>(commands, PageState::Begin);
 
-void setupUI(
-    ecs::Commands commands,
-    ecs::Resource<GlobalContext> globalContext,
-    ecs::Resource<PageRounter<PageState>> router
-)
-{
     router->registerPage(PageState::Begin, beginPage);
     router->registerPage(PageState::Game, gamePage);
     router->registerPage(PageState::End, endPage);
