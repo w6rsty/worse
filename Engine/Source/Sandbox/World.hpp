@@ -54,6 +54,25 @@ public:
     inline static std::string currentProcessingFile = "";
     inline static float pclProcessingProgress       = 0.0f;
 
+    // 电力线参数弹出窗口相关
+    struct PowerLineParameter
+    {
+        int id;                          // 线路ID
+        std::string name;                // 线路名称 (UUID)
+        float start_x, start_y, start_z; // 起点坐标 (m)
+        float end_x, end_y, end_z;       // 终点坐标 (m)
+        float length;                    // 线路长度 (m)
+        float width;                     // 线路宽度/直径 (mm)
+        float max_sag;                   // 最大弧垂 (m)
+        float catenary_a;                // 悬链线方程系数a
+        float catenary_h;                // 悬链线方程水平位移h
+        float catenary_k;                // 悬链线方程垂直位移k
+    };
+
+    inline static bool showPowerLineParamsPopup = false;
+    inline static std::vector<PowerLineParameter> powerLineParams;
+    inline static std::string lastProcessedFile = "";
+
     // 当前活跃的点云文件名
     inline static std::string currentActiveFile = "";
 
@@ -66,10 +85,10 @@ public:
         math::Vector3{0.0f, 0.0f, 5.0f};
     // 顶视图相机位置
     static constexpr math::Vector3 downwardCameraPosition =
-        math::Vector3{0.0f, 20.0f, 0.0f};
+        math::Vector3{0.0f, 10.0f, 0.0f};
     // 侧视图相机位置
     static constexpr math::Vector3 sideCameraPosition =
-        math::Vector3{20.0f, 0.0f, 0.0f};
+        math::Vector3{10.0f, 0.0f, 0.0f};
 
     // 相机跟随速度
     static constexpr float cameraFollowSpeed = 5.0f;
@@ -98,8 +117,8 @@ public:
     // 清理所有已加载的网格的函数
     static void clearAllLoadedMeshes(ecs::Commands& commands);
     // PCL处理相关函数
-    static bool processMeshWithPCL(const std::string& filename,
-                                   ecs::Commands& commands);
+    static bool processMesh(const std::string& filename,
+                            ecs::Commands& commands);
     // 通过文件名切换点云Entity的函数（支持运行时加载）
     static bool switchToPointCloud(const std::string& filename,
                                    ecs::Commands& commands);
