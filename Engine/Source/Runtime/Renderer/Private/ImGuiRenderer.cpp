@@ -207,6 +207,11 @@ namespace worse
             activePage(commands, globalContext);
         }
 
+        for (Page const& page : alwaysRenderPages)
+        {
+            page(commands, globalContext);
+        }
+
         ImGui::Render();
     }
 

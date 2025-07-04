@@ -110,8 +110,14 @@ namespace worse
             return router;
         }
 
+        static void registerAlwaysRenderPage(Page page)
+        {
+            alwaysRenderPages.push_back(std::move(page));
+        }
+
     private:
         inline static Page activePage = nullptr;
+        inline static std::vector<Page> alwaysRenderPages;
     };
 
 } // namespace worse
