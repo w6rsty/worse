@@ -383,7 +383,6 @@ namespace worse
     void
     Renderer::createMaterialBuffers(std::span<StandardMaterialGPU> materials)
     {
-
         materialBuffer =
             std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Storage,
                                         sizeof(StandardMaterialGPU),

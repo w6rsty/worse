@@ -34,10 +34,10 @@ namespace worse
 
     // clang-format off
     void buildMaterials(
-        ecs::QueryView<MeshMaterial> materialView,
-        ecs::Resource<AssetServer> assetServer,
-        ecs::ResourceArray<TextureWrite> textureWrites,
-        ecs::ResourceArray<StandardMaterial> materials,
+        ecs::QueryView<MeshMaterial> materialView, // in
+        ecs::Resource<AssetServer> assetServer, // in
+        ecs::ResourceArray<TextureWrite> textureWrites, // out
+        ecs::ResourceArray<StandardMaterial> materials, // in
         ecs::ResourceArray<StandardMaterialGPU> materialGPUs
     )
     {
@@ -46,6 +46,11 @@ namespace worse
         {
             WS_LOG_ERROR("Material", "Invalid resource parameters in buildMaterials");
             return;
+        }
+        if (materials->empty())
+        {
+            // if no materials are defined, create a default material
+            materials.add(StandardMaterial{});
         }
 
         // make sure material textures are loaded
