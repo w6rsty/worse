@@ -6,12 +6,6 @@ target_link_libraries(Example00 PRIVATE
     Worse::ECS
 )
 
-add_executable(math math.cpp)
-target_compile_features(math PRIVATE cxx_std_20)
-target_link_libraries(math PRIVATE
-    Worse::Core
-)
-
 add_executable(ecs_perf ECS/ecs_perf.cpp)
 target_compile_features(ecs_perf PRIVATE cxx_std_20)
 target_link_libraries(ecs_perf PRIVATE
