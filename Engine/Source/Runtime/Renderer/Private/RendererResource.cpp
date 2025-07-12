@@ -45,9 +45,11 @@ namespace worse
     {
         // clang-format off
         //                                                                                                test  | write  | compare
-        depthStencilStates[RendererDepthStencilState::Off]       = std::make_shared<RHIDepthStencilState>(false,  false,   RHICompareOperation::Never);
-        depthStencilStates[RendererDepthStencilState::ReadWrite] = std::make_shared<RHIDepthStencilState>(true,   true,    RHICompareOperation::GreaterEqual);
-        depthStencilStates[RendererDepthStencilState::ReadEqual] = std::make_shared<RHIDepthStencilState>(true,   false,   RHICompareOperation::Equal);
+        depthStencilStates[RendererDepthStencilState::Off]              = std::make_shared<RHIDepthStencilState>(false,  false,   RHICompareOperation::Never);
+        depthStencilStates[RendererDepthStencilState::ReadWrite]        = std::make_shared<RHIDepthStencilState>(true,   true,    RHICompareOperation::GreaterEqual);
+        depthStencilStates[RendererDepthStencilState::ReadEqual]        = std::make_shared<RHIDepthStencilState>(true,   false,   RHICompareOperation::Equal);
+        depthStencilStates[RendererDepthStencilState::ReadGreaterEqual] = std::make_shared<RHIDepthStencilState>(true,   false,   RHICompareOperation::GreaterEqual);
+        depthStencilStates[RendererDepthStencilState::ReadLessEqual]    = std::make_shared<RHIDepthStencilState>(true,   false,   RHICompareOperation::LessEqual);
         // clang-format on
     }
 
@@ -321,7 +323,7 @@ namespace worse
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PBRV))
                 .addShader(Renderer::getShader(RendererShader::PBRP))
@@ -330,7 +332,7 @@ namespace worse
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
                 .setClearColor(Color{0.2f, 0.2f, 0.2f, 1.0f})
-                .setClearDepth(0.0f)
+                .setClearDepth(2.0f)
                 .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PBR]);
 
@@ -345,7 +347,6 @@ namespace worse
                 .addShader(Renderer::getShader(RendererShader::LineV))
                 .addShader(Renderer::getShader(RendererShader::LineP))
                 .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
                 .build();
@@ -357,7 +358,7 @@ namespace worse
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::PointList)
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadEqual))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PointV))
                 .addShader(Renderer::getShader(RendererShader::PointP))
@@ -365,7 +366,7 @@ namespace worse
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
-                .setClearDepth(0.0f)
+                .setClearDepth(2.0f)
                 .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::Point]);
 
@@ -376,7 +377,6 @@ namespace worse
                 .addShader(Renderer::getShader(RendererShader::KuwaharaC))
                 .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PostProcessing]);
-
         // clang-format on
     }
 

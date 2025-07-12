@@ -49,7 +49,6 @@ namespace worse
         // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PBR));
 
-
         std::array updates = {
             RHIDescriptorWrite{.reg      = 0, // t0
                                .resource = {Renderer::getMaterialBuffer()},
@@ -166,12 +165,18 @@ namespace worse
     {
         Renderer::writeBindlessTextures(textureWrites);
 
-        // passDpethPrepass(cmdList, drawcalls, meshes);
+        passDpethPrepass(cmdList, drawcalls, meshes);
+
+        Renderer::getRenderTarget(RendererTarget::Depth)
+            ->convertImageLayout(cmdList, RHIImageLayout::DepthReadOnly);
+
         passColor(cmdList, drawcalls, meshes);
+
         if (globalContext->isWireFrameMode)
         {
             passWireFrame(cmdList, drawcalls, meshes);
         }
+
         passPostProcessing(cmdList);
 
         passImGui(cmdList);

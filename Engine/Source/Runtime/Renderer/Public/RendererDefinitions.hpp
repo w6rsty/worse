@@ -19,6 +19,8 @@ namespace worse
         Off,
         ReadWrite,
         ReadEqual,
+        ReadGreaterEqual,
+        ReadLessEqual,
         Max
     };
 

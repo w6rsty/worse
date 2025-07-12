@@ -19,16 +19,16 @@ namespace worse
             bool const depthClampEnable      = false,
             float const depthBias            = 0.0f,
             float const depthBiasClamp       = 0.0f,
-            float const depthBiaSlopeFactor  = 0.0f)
+            float const depthBiasSlopeFactor = 0.0f)
         {
-            m_polygonMode         = polygonMode;
-            m_cullMode            = cullMode;
-            m_frontFace           = frontFace;
-            m_lineWidth           = lineWidth;
-            m_depthClampEnable    = depthClampEnable;
-            m_depthBias           = depthBias;
-            m_depthBiasClamp      = depthBiasClamp;
-            m_depthBiaSlopeFactor = depthBiaSlopeFactor;
+            m_polygonMode          = polygonMode;
+            m_cullMode             = cullMode;
+            m_frontFace            = frontFace;
+            m_lineWidth            = lineWidth;
+            m_depthClampEnable     = depthClampEnable;
+            m_depthBias            = depthBias;
+            m_depthBiasClamp       = depthBiasClamp;
+            m_depthBiadSlopeFactor = depthBiasSlopeFactor;
 
             std::hash<float> hasher;
 
@@ -39,7 +39,7 @@ namespace worse
             m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthClampEnable));
             m_hash = math::hashCombine(m_hash, hasher(depthBias));
             m_hash = math::hashCombine(m_hash, hasher(depthBiasClamp));
-            m_hash = math::hashCombine(m_hash, hasher(depthBiaSlopeFactor));
+            m_hash = math::hashCombine(m_hash, hasher(depthBiasSlopeFactor));
         }
 
         RHIPolygonMode getPolygonMode() const          { return m_polygonMode; }
@@ -49,7 +49,7 @@ namespace worse
         bool           getDepthClampEnable() const     { return m_depthClampEnable; }
         float          getDepthBias() const            { return m_depthBias; }
         float          getDepthBiasClamp() const       { return m_depthBiasClamp; }
-        float          getDepthBiasSlopeFactor() const { return m_depthBiaSlopeFactor; }
+        float          getDepthBiasSlopeFactor() const { return m_depthBiadSlopeFactor; }
         std::uint64_t  getHash() const                 { return m_hash; }
 
         bool operator==(RHIRasterizerState const& other) const { return m_hash == other.m_hash; }
@@ -64,7 +64,7 @@ namespace worse
         bool m_depthClampEnable;
         float m_depthBias;
         float m_depthBiasClamp;
-        float m_depthBiaSlopeFactor;
+        float m_depthBiadSlopeFactor;
 
         std::uint64_t m_hash = 0;
     };

@@ -348,8 +348,8 @@ int main()
     schedule.addSystem<ecs::CoreStage::Update, &Engine::tick>();
     schedule.addSystem<ecs::CoreStage::Update, &World::inputControll>();
     schedule.addSystem<ecs::CoreStage::Update, &World::update>();
-    schedule.addSystem<ecs::CoreStage::Update, buildDrawcalls>();
     schedule.addSystem<ecs::CoreStage::Update, &ImGuiRenderer::tick>();
+    schedule.addSystem<ecs::CoreStage::Update, buildDrawcalls>();
     schedule.addSystem<ecs::CoreStage::Update, &Renderer::tick>();
 
     schedule.addSystem<ecs::CoreStage::CleanUp, &ImGuiRenderer::shutdown>();

@@ -120,7 +120,7 @@ namespace worse
             RHIImageLayout layout = RHIImageLayout::Max;
             if (m_usage & RHITextureViewUsageFlagBits::Rtv)
             {
-                layout = RHIImageLayout::ColorAttachment;
+                layout = RHIImageLayout::Attachment;
             }
             if (m_usage & RHITextureViewUsageFlagBits::Uav)
             {

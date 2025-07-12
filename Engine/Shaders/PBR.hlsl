@@ -29,6 +29,8 @@ VertexOutput main_vs(VertexPosUvNrmTan input)
     output.tangent = normalize(mul(input.tangent, normalMatrix));
     output.bitangent = normalize(cross(output.normal, output.tangent));
 
+    output.position.z += 1e-6;
+
     return output;
 }
 
@@ -171,7 +173,7 @@ PixelOutput main_ps(VertexOutput input)
     // Gamma correction
     color = pow(color, float3(1.0/2.2, 1.0/2.2, 1.0/2.2));
 
-    output.color = float4(color, material.albedo.a);
+    output.color = float4(color, material.albedo.a);    
 
     return output;
 }

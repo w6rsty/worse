@@ -168,7 +168,7 @@ namespace worse
                 break;
             }
 
-            texture->convertImageLayout(this, RHIImageLayout::ColorAttachment);
+            texture->convertImageLayout(this, RHIImageLayout::Attachment);
 
             // clang-format off
             VkRenderingAttachmentInfo colorAttachment = {};
@@ -192,13 +192,12 @@ namespace worse
             // clang-format off
             RHITexture* depthTexture = m_pso.renderTargetDepthTexture;
 
-            depthTexture->convertImageLayout(this, RHIImageLayout::DepthStencilAttachment);
+            depthTexture->convertImageLayout(this, RHIImageLayout::Attachment);
 
             depthAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             depthAttachment.imageView   = depthTexture->getView().asValue<VkImageView>();
             depthAttachment.imageLayout = vulkanImageLayout(depthTexture->getImageLayout());
-            depthAttachment.loadOp      = (m_pso.clearDepth == std::numeric_limits<float>::max() ||
-                                           (m_pso.primitiveTopology == RHIPrimitiveTopology::PointList))
+            depthAttachment.loadOp      = m_pso.clearDepth == 2.0f // means just load
                                              ? VK_ATTACHMENT_LOAD_OP_LOAD
                                              : VK_ATTACHMENT_LOAD_OP_CLEAR;
             depthAttachment.storeOp     = (m_pso.depthStencilState->getDepthWriteEnabled() ||
@@ -418,6 +417,7 @@ namespace worse
         // clang-format off
         VkDependencyInfo infoDependency        = {};
         infoDependency.sType                   = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        // infoDependency.dependencyFlags         = VK_DEPENDENCY_BY_REGION_BIT;
         infoDependency.imageMemoryBarrierCount = 1;
         infoDependency.pImageMemoryBarriers    = &imageBarrier;
         // clang-format on
