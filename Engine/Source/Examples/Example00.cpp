@@ -76,14 +76,14 @@ public:
         });
 
         PageRouter<AppState>& router = ImGuiRenderer::registerStates<AppState>(commands, AppState::Begin);
-        router.registerPage(AppState::Begin, [defaultMaterial](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        router.registerPage(AppState::Begin, [defaultMaterial, &router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
         {
             ImGui::Begin("Welcome to Worse Engine!");
 
             if (ImGui::Button("Spawn"))
             {
                 auto meshes = commands.getResourceArray<Mesh>();
-                auto meshIndex = meshes.add(Sphere{.segments = 64, .rings = 64});
+                auto meshIndex = meshes.add(Sphere{});
                 meshes->get(meshIndex)->createGPUBuffers();
                 commands.spawn(
                     LocalTransform{
@@ -93,10 +93,41 @@ public:
                             static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f
                         },
                     },
-                    Mesh3D{meshIndex},
+                    Mesh3D{.index = meshIndex, .primitiveTopology = RHIPrimitiveTopology::PointList},
                     MeshMaterial{defaultMaterial}
                 );
             }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Next page"))
+            {
+                router.transfer(AppState::Main);
+            }
+
+            ImGui::End();
+        });
+
+        router.registerPage(AppState::Main, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        {
+            ImGui::Begin("Main Page");
+
+            ImGui::Text("This is the main page of the example application.");
+            ImGui::Text("You can add more functionality here.");
+
+            if (ImGui::Button("Back"))
+            {
+                router.transfer(AppState::Begin);
+            }
+
+            ImGui::SameLine();
+
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+            if (ImGui::Button("Exit"))
+            {
+                Window::close();
+            }
+            ImGui::PopStyleColor();
 
             ImGui::End();
         });

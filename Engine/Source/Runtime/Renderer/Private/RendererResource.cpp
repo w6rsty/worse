@@ -358,7 +358,7 @@ namespace worse
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::PointList)
                 .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadEqual))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PointV))
                 .addShader(Renderer::getShader(RendererShader::PointP))
