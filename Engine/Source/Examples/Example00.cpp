@@ -148,11 +148,11 @@ public:
         }
 
         // 垂直移动
-        if (Input::isKey(KeyCode::Q))
+        if (Input::isKey(KeyCode::E))
         {
             playerPosition.y += moveSpeed; // 向上
         }
-        if (Input::isKey(KeyCode::E))
+        if (Input::isKey(KeyCode::Q))
         {
             playerPosition.y -= moveSpeed; // 向下
         }
