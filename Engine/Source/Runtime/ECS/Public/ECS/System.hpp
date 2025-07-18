@@ -7,6 +7,8 @@
 #include "Registry.hpp"
 
 #include <functional>
+#include <type_traits>
+#include <typeindex>
 
 namespace worse::ecs
 {
@@ -64,7 +66,7 @@ namespace worse::ecs
         }
 
         // =====================================================================
-        // QuerView traits
+        // QueryView traits
         // =====================================================================
 
         template <typename> struct IsQueryView
@@ -182,6 +184,7 @@ namespace worse::ecs
                 typename ResourceArrayTraits<Type>::ResourceType;
             return registry.getResourceArray<ResourceType>();
         }
+
         // =====================================================================
         // System wrapper
         // =====================================================================
@@ -211,48 +214,74 @@ namespace worse::ecs
             }
             else
             {
-                // try using a default constructor, this may failed
+                // 尝试默认构造
+                static_assert(
+                    std::is_default_constructible_v<Type>,
+                    "Type must be default constructible or a valid ECS type.");
                 return Type{};
             }
         }
 
     } // namespace detail
 
-    /**
-     * @brief Convert functions to unified form and assgin parameters
-     */
     class SystemWrapper
     {
+        // clang-format off
         /**
-         * @brief Assign ECS data for given parameters
+         * @brief 依据参数类型从 Registry 中获取实参后调用原始函数
          */
         template <auto Func, typename ParamList, std::size_t... Idx>
         static constexpr void
-        invokeWithResolvedParameters(Registry& registry,
-                                     std::index_sequence<Idx...>) noexcept
+        invokeWithResolvedParameters(Registry& registry, std::index_sequence<Idx...>) noexcept
         {
             std::invoke(
                 Func,
-                detail::ResolveParameter<TypeListElementAt_t<Idx, ParamList>>(
-                    registry)...);
+                detail::ResolveParameter<TypeListElementAt_t<Idx, ParamList>>(registry)...
+            );
         }
 
     public:
-        using FunctionType = void (*)(Registry&);
-
-        template <auto Func>
-        [[nodiscard]] static constexpr FunctionType wrap() noexcept
+        struct Function
         {
-            using param_list =
-                typename SystemTraits<typename FunctionPointerTraits<
-                    std::decay_t<decltype(Func)>>::type>::arg_list;
-            return [](Registry& registry)
+            using Type = void (*)(Registry&);
+
+            Type ptr;
+            std::uintptr_t index;
+
+            void operator()(Registry& registry) const
             {
-                invokeWithResolvedParameters<Func, param_list>(
-                    registry,
-                    makeIndexRange<0, param_list::size>{});
-            };
+                ptr(registry);
+            }
+        };
+
+        /**
+         * @brief 将函数包装为统一的 Function 类型
+         */
+        template <auto Func>
+        [[nodiscard]] static Function wrap() noexcept
+        {
+            // 1. 获取 Func 退化类型
+            using decayedFuncType = std::decay_t<decltype(Func)>;
+            // 2. 转化为标准函数指针类型
+            using functionPtrType = typename FunctionPointerTraits<decayedFuncType>::type;
+            // 3. 获取参数列表
+            using paramList = typename SystemTraits<functionPtrType>::arg_list;
+
+            return Function{
+                .ptr = [](Registry& registry)
+                    {
+                        // 解析参数，通过 Registry 获取实参
+                        invokeWithResolvedParameters<Func, paramList>(
+                            registry,
+                            // 构建 index sequence 来遍历参数列表
+                            makeIndexRange<0, paramList::size>{}
+                        );
+                    },
+                // 保存类型
+                .index = reinterpret_cast<std::uintptr_t>(Func)};
         }
+
+        // clang-format on
     };
 
 } // namespace worse::ecs

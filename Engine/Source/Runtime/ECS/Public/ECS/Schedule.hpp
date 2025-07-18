@@ -8,6 +8,7 @@
 #include <typeindex>
 #include <algorithm>
 #include <string_view>
+#include <unordered_set>
 #include <unordered_map>
 
 namespace worse::ecs
@@ -15,14 +16,51 @@ namespace worse::ecs
 
     class Stage
     {
-        using SystemType = SystemWrapper::FunctionType;
+        using SystemType = SystemWrapper::Function;
 
     public:
         Stage() = default;
 
         void addSystem(SystemType&& system)
         {
-            m_systems.push_back(std::move(system));
+            if (m_systemTypes.count(system.index) > 0)
+            {
+                for (auto& existingSystem : m_systems)
+                {
+                    if (existingSystem.index == system.index)
+                    {
+                        existingSystem.ptr = system.ptr;
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                m_systemTypes.insert(system.index);
+                m_systems.push_back(std::move(system));
+            }
+        }
+
+        // 昂贵的操作，不要在每帧调用
+        void removeSystem(std::uintptr_t index)
+        {
+            if (m_systemTypes.count(index) == 0)
+            {
+                return;
+            }
+
+            // clang-format off
+            m_systems.erase(
+                std::remove_if(m_systems.begin(), m_systems.end(),
+                    [index](SystemType const& system)
+                    {
+                        return system.index == index;
+                    }
+                ),
+                m_systems.end()
+            );
+            // clang-format on
+            m_systemTypes.erase(index);
         }
 
         void run(Registry& registry) const
@@ -35,6 +73,7 @@ namespace worse::ecs
 
     private:
         std::vector<SystemType> m_systems;
+        std::unordered_set<std::uintptr_t> m_systemTypes;
     };
 
     namespace CoreStage
@@ -55,7 +94,7 @@ namespace worse::ecs
     class Schedule
     {
         using StageLabelType = std::type_index;
-        using SystemType     = SystemWrapper::FunctionType;
+        using SystemType     = SystemWrapper::Function;
 
     public:
         Schedule(std::string_view name = "DefaultSchedule")
@@ -118,6 +157,34 @@ namespace worse::ecs
 
                 m_stages.at(label)->addSystem(SystemWrapper::wrap<Func>());
                 return *this;
+            }
+        }
+
+        template <typename StageLabel, auto Func> void removeSystem()
+        {
+            if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp>)
+            {
+                m_startUpStage->removeSystem(
+                    reinterpret_cast<std::uintptr_t>(Func));
+            }
+            else if constexpr (std::is_same_v<StageLabel, CoreStage::CleanUp>)
+            {
+                m_cleanUpStage->removeSystem(
+                    reinterpret_cast<std::uintptr_t>(Func));
+            }
+            else
+            {
+                std::type_index const label(typeid(StageLabel));
+                if (!m_stages.count(label))
+                {
+                    WS_LOG_WARN("ECS",
+                                "Stage {} does not exist.",
+                                label.name());
+                    return;
+                }
+
+                m_stages.at(label)->removeSystem(
+                    reinterpret_cast<std::uintptr_t>(Func));
             }
         }
 
