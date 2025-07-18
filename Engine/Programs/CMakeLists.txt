@@ -1,15 +1,13 @@
 add_subdirectory(PointCloud)
 
-add_executable(main
-    Entry.cpp
-    World.hpp
-    Editor.cpp
-    Functions.cpp
-    Keys.cpp
-    Process.cpp
+file(GLOB PC_SOURCES
+    "*.cpp"
+    "*.hpp"
 )
-target_compile_features(main PRIVATE cxx_std_20)
-target_link_libraries(main PRIVATE
+
+add_executable(pc ${PC_SOURCES})
+target_compile_features(pc PRIVATE cxx_std_20)
+target_link_libraries(pc PRIVATE
     Worse::Engine
     Worse::Renderer
     Worse::ECS
