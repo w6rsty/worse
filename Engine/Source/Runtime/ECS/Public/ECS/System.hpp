@@ -8,7 +8,6 @@
 
 #include <functional>
 #include <type_traits>
-#include <typeindex>
 
 namespace worse::ecs
 {
