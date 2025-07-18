@@ -233,9 +233,9 @@ void World::editorLayout(ecs::Commands commands,
                 ImGui::Text("点数量: %zu", pointCloudData.points.size());
 
                 // 包围盒信息
-                math::Vector3 bbMin  = pointCloudData.boundingBox.getMin();
-                math::Vector3 bbMax  = pointCloudData.boundingBox.getMax();
-                math::Vector3 bbSize = pointCloudData.boundingBox.getSize();
+                math::Vector3 bbMin  = pointCloudData.volume.getMin();
+                math::Vector3 bbMax  = pointCloudData.volume.getMax();
+                math::Vector3 bbSize = pointCloudData.volume.getSize();
 
                 ImGui::Text("包围盒:");
                 ImGui::Text("  最小: (%.3f, %.3f, %.3f)",

@@ -15,10 +15,3 @@ target_link_libraries(main PRIVATE
     Worse::ECS
     Worse::PointCloud
 )
-
-add_executable(ecs_perf ECS/ecs_perf.cpp)
-target_compile_features(ecs_perf PRIVATE cxx_std_20)
-target_link_libraries(ecs_perf PRIVATE
-    Worse::Core
-    Worse::ECS
-)

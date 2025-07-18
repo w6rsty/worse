@@ -39,3 +39,4 @@ endif()
 set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR})
 
 add_subdirectory(Engine/Source)
+add_subdirectory(Engine/Programs)

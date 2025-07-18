@@ -2,6 +2,8 @@
 #include "Log.hpp"
 #include "Window.hpp"
 #include "Event.hpp"
+#include "Profiling/Stopwatch.hpp"
+
 #include "ImGuiRenderer.hpp"
 #include "Camera.hpp"
 #include "Mesh.hpp"
@@ -11,7 +13,7 @@
 #include "ECS/QueryView.hpp"
 #include "ECS/Resource.hpp"
 
-#include "PointCloud/PreProcess.hpp"
+#include "PointCloud/Cloud.hpp"
 
 #include <string>
 #include <vector>
@@ -36,7 +38,7 @@ public:
     inline static Camera* currentCamera = nullptr;
 
     // 点云相关的静态成员
-    inline static pc::PointCloud pointCloudData;
+    inline static pc::Cloud pointCloudData;
     inline static ecs::Entity pointCloudEntity = ecs::Entity::null();
     inline static bool hasPointCloud           = false;
 

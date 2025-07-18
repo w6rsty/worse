@@ -170,8 +170,8 @@ bool World::loadPointCloudMesh(const std::string& filename,
         WS_LOG_INFO("PointCloud", "Loading point cloud mesh: {}", filename);
 
         // 加载点云数据
-        loadingProgress           = 0.2f;
-        pc::PointCloud pointCloud = pc::load(std::filesystem::path(fullPath));
+        loadingProgress      = 0.2f;
+        pc::Cloud pointCloud = pc::load(fullPath);
 
         if (!pointCloud.points.empty())
         {
@@ -267,7 +267,7 @@ void World::clearAllLoadedMeshes(ecs::Commands& commands)
     loadedMeshes.clear();
 
     // 重置点云相关状态
-    pointCloudData           = pc::PointCloud{}; // 重置为空
+    pointCloudData           = pc::Cloud{}; // 重置为空
     pointCloudCenter         = math::Vector3{0.0f, 0.0f, 0.0f};
     pointCloudBoundingRadius = 5.0f;
 
@@ -325,16 +325,13 @@ bool World::switchToPointCloud(const std::string& filename,
     try
     {
         // 重新加载点云数据以获取包围盒信息（只用于计算，不生成网格）
-        pointCloudData =
-            pc::load(std::filesystem::path(POINT_CLOUD_DIRECTORY + filename));
+        pointCloudData = pc::load(POINT_CLOUD_DIRECTORY + filename);
 
         // 更新点云中心和包围半径
         // 注意：这里的包围盒是变换前的原始数据，需要应用相同的变换
-        math::Vector3 originalCenter =
-            pointCloudData.boundingBoxOrigin.getCenter();
-        math::Vector3 originalExtent =
-            pointCloudData.boundingBoxOrigin.getExtent();
-        float maxExtent = originalExtent.elementMax();
+        math::Vector3 originalCenter = pointCloudData.volume.getCenter();
+        math::Vector3 originalExtent = pointCloudData.volume.getExtent();
+        float maxExtent              = originalExtent.elementMax();
 
         // 应用与PreProcess.hpp中相同的变换来计算变换后的中心
         // 1. 平移到原点：center - center = (0,0,0)

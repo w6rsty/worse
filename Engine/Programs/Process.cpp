@@ -13,7 +13,6 @@
 #include <ctime>
 #include <random>
 #include <sstream>
-#include <iomanip>
 
 // Forward declarations
 static void spawnReconstructedInfrastructure(
@@ -918,8 +917,7 @@ bool World::processMesh(const std::string& filename, ecs::Commands& commands)
         auto o3d_cloud = std::make_shared<open3d::geometry::PointCloud>();
 
         // 首先用原有方法加载点云数据以保持兼容性
-        pc::PointCloud originalCloud =
-            pc::load(std::filesystem::path(fullPath));
+        pc::Cloud originalCloud = pc::load(fullPath);
 
         if (originalCloud.points.empty())
         {
