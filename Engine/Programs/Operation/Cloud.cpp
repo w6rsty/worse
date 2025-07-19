@@ -1,0 +1,438 @@
+#include "../PointCloud/Process.hpp"
+#include "../Application/World.hpp"
+
+// 初始化可用文件列表的函数
+void World::initializeAvailableFiles()
+{
+    availableFiles.clear();
+
+    WS_LOG_INFO("PointCloud",
+                "Scanning point cloud directory: {}",
+                POINT_CLOUD_DIRECTORY);
+
+    // 获取所有.las文件
+    for (const auto& entry :
+         std::filesystem::directory_iterator(POINT_CLOUD_DIRECTORY))
+    {
+        if (entry.is_regular_file() && entry.path().extension() == ".las")
+        {
+            std::string filename = entry.path().filename().string();
+            availableFiles.push_back(filename);
+        }
+    }
+
+    // 按文件名排序以获得一致的顺序
+    std::sort(availableFiles.begin(), availableFiles.end());
+
+    WS_LOG_INFO("PointCloud",
+                "Found {} point cloud files",
+                availableFiles.size());
+}
+
+// 运行时加载点云网格的函数
+bool World::loadPointCloudMesh(std::string const& filename,
+                               ecs::Commands commands)
+{
+    // 检查是否已加载
+    if (loadedMeshes.find(filename) != loadedMeshes.end())
+    {
+        WS_LOG_INFO("PointCloud", "Mesh for {} already loaded", filename);
+        return true;
+    }
+
+    isLoadingMesh      = true;
+    currentLoadingFile = filename;
+    loadingProgress    = 0.0f;
+
+    try
+    {
+        std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
+
+        WS_LOG_INFO("PointCloud", "Loading point cloud mesh: {}", filename);
+
+        // 加载点云数据
+        loadingProgress      = 0.2f;
+        pc::Cloud pointCloud = pc::load(fullPath);
+
+        if (!pointCloud.points.empty())
+        {
+            loadingProgress = 0.6f;
+
+            // 创建网格并保存索引
+            auto meshes = commands.getResourceArray<Mesh>();
+            std::size_t meshIndex =
+                meshes.add(CustomMesh3D{.vertices = pointCloud.points});
+
+            loadingProgress = 0.8f;
+
+            // 关键：创建GPU缓冲区
+            meshes.get(meshIndex)->createGPUBuffers();
+
+            loadingProgress = 1.0f;
+
+            loadedMeshes[filename] = meshIndex;
+
+            WS_LOG_INFO("PointCloud",
+                        "Loaded mesh for {}: {} points, mesh index: {}",
+                        filename,
+                        pointCloud.points.size(),
+                        meshIndex);
+
+            isLoadingMesh      = false;
+            currentLoadingFile = "";
+            return true;
+        }
+        else
+        {
+            WS_LOG_WARN("PointCloud", "Empty point cloud: {}", filename);
+            isLoadingMesh      = false;
+            currentLoadingFile = "";
+            return false;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        WS_LOG_ERROR("PointCloud",
+                     "Failed to load mesh for {}: {}",
+                     filename,
+                     e.what());
+        isLoadingMesh      = false;
+        currentLoadingFile = "";
+        return false;
+    }
+}
+
+// 清理所有已加载的网格的函数
+void World::clearAllLoadedMeshes(ecs::Commands commands)
+{
+    WS_LOG_INFO("PointCloud", "Clearing all loaded meshes...");
+
+    // 如果有当前活跃的点云Entity，先销毁
+    if (cloudEntity != ecs::Entity::null())
+    {
+        commands.destroy(cloudEntity);
+        cloudEntity   = ecs::Entity::null();
+        hasPointCloud = false;
+        WS_LOG_INFO("PointCloud", "Destroyed current point cloud entity");
+    }
+
+    // 获取网格资源数组
+    auto meshes = commands.getResourceArray<Mesh>();
+
+    // 遍历所有已加载的网格并释放
+    for (const auto& [filename, meshIndex] : loadedMeshes)
+    {
+        try
+        {
+            // 尝试获取并清理网格
+            if (auto* mesh = meshes.get(meshIndex))
+            {
+                mesh->clear();
+                WS_LOG_INFO("PointCloud",
+                            "Cleared mesh for {}: index {}",
+                            filename,
+                            meshIndex);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            WS_LOG_WARN("PointCloud",
+                        "Failed to clear mesh for {}: {}",
+                        filename,
+                        e.what());
+        }
+    }
+
+    // 清空映射表
+    size_t clearedCount = loadedMeshes.size();
+    loadedMeshes.clear();
+
+    // 重置点云相关状态
+    cloudData           = pc::Cloud{}; // 重置为空
+    pointCloudCenter    = math::Vector3{0.0f, 0.0f, 0.0f};
+    cloudBoundingRadius = 5.0f;
+
+    // 重置加载状态
+    isLoadingMesh      = false;
+    currentLoadingFile = "";
+    loadingProgress    = 0.0f;
+
+    // 重置PCL处理状态
+    isProcessing          = false;
+    currentProcessingFile = "";
+
+    // 重置当前活跃文件
+    currentActiveFile = "";
+
+    WS_LOG_INFO("PointCloud",
+                "Successfully cleared {} loaded meshes",
+                clearedCount);
+}
+
+// 通过文件名切换点云Entity的函数（支持运行时加载）
+bool World::switchToPointCloud(std::string const& filename,
+                               ecs::Commands commands)
+{
+    // 如果网格未加载，先加载
+    if (loadedMeshes.find(filename) == loadedMeshes.end())
+    {
+        if (!loadPointCloudMesh(filename, commands))
+        {
+            WS_LOG_ERROR("PointCloud", "Failed to load mesh for {}", filename);
+            return false;
+        }
+    }
+
+    // 获取网格索引
+    auto it = loadedMeshes.find(filename);
+    if (it == loadedMeshes.end())
+    {
+        WS_LOG_ERROR("PointCloud",
+                     "Mesh for {} not found after loading",
+                     filename);
+        return false;
+    }
+
+    // 如果已有点云Entity，先销毁
+    if (cloudEntity != ecs::Entity::null())
+    {
+        commands.destroy(cloudEntity);
+        cloudEntity   = ecs::Entity::null();
+        hasPointCloud = false;
+        WS_LOG_INFO("PointCloud", "Destroyed previous point cloud entity");
+    }
+
+    try
+    {
+        // 重新加载点云数据以获取包围盒信息（只用于计算，不生成网格）
+        cloudData = pc::load(POINT_CLOUD_DIRECTORY + filename);
+
+        // 更新点云中心和包围半径
+        // 注意：这里的包围盒是变换前的原始数据，需要应用相同的变换
+        math::Vector3 originalCenter = cloudData.volume.getCenter();
+        math::Vector3 originalExtent = cloudData.volume.getExtent();
+        float maxExtent              = originalExtent.elementMax();
+
+        // 应用与PreProcess.hpp中相同的变换来计算变换后的中心
+        // 1. 平移到原点：center - center = (0,0,0)
+        // 2. 缩放：(0,0,0) * scale = (0,0,0)
+        // 3. 旋转：应用X轴-90度旋转到(0,0,0) = (0,0,0)
+        // 所以变换后的中心应该是原点
+        pointCloudCenter = math::Vector3{0.0f, 0.0f, 0.0f};
+
+        cloudBoundingRadius = cloudData.volume.getExtent().elementMax() * 0.5f;
+
+        // 获取必要的资源
+        auto materials = commands.getResourceArray<StandardMaterial>();
+
+        // 创建新的点云Entity，使用预加载的网格索引
+        cloudEntity = commands.spawn(
+            LocalTransform{.position = math::Vector3{0.0f, 0.0f, 0.0f},
+                           .rotation = math::Quaternion::IDENTITY(),
+                           .scale    = math::Vector3::ONE()},
+            Mesh3D{it->second,
+                   RHIPrimitiveTopology::PointList}, // 使用预加载的网格索引
+            MeshMaterial{defaultPointMaterialIndex});
+
+        hasPointCloud     = true;
+        currentActiveFile = filename; // 设置当前活跃文件
+
+        // 自动调整相机到最佳观察位置
+        if (currentCamera != nullptr)
+        {
+            fitCameraToPointCloud(currentCamera);
+        }
+
+        WS_LOG_INFO("PointCloud",
+                    "Switched to point cloud {}: {} points, entity: {}, "
+                    "center: ({:.3f}, {:.3f}, {:.3f}), radius: {:.3f}",
+                    filename,
+                    cloudData.points.size(),
+                    cloudEntity.toEntity(),
+                    pointCloudCenter.x,
+                    pointCloudCenter.y,
+                    pointCloudCenter.z,
+                    cloudBoundingRadius);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        WS_LOG_ERROR("PointCloud",
+                     "Failed to switch to point cloud {}: {}",
+                     filename,
+                     e.what());
+        return false;
+    }
+}
+
+bool World::processMesh(std::string const& filename, ecs::Commands commands)
+{
+    // 检查文件是否已加载
+    auto it = loadedMeshes.find(filename);
+    if (it == loadedMeshes.end())
+    {
+        WS_LOG_ERROR("Open3D", "Process failed. {} not loaded", filename);
+        return false;
+    }
+
+    isProcessing          = true;
+    currentProcessingFile = filename;
+
+    // 1.加载点云数据
+    std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
+
+    // 使用Open3D加载点云
+    auto o3dCloud           = std::make_shared<open3d::geometry::PointCloud>();
+    pc::Cloud originalCloud = pc::load(fullPath);
+
+    if (originalCloud.points.empty())
+    {
+        WS_LOG_ERROR("Open3D", "No points in {}", filename);
+        isProcessing          = false;
+        currentProcessingFile = "";
+        return false;
+    }
+
+    // 2. 转换为Open3D点云格式
+    o3dCloud->points_.reserve(originalCloud.points.size());
+    for (RHIVertexPosUvNrmTan const& point : originalCloud.points)
+    {
+        o3dCloud->points_.emplace_back(point.position.x,
+                                       point.position.y,
+                                       point.position.z);
+    }
+
+    // 3.1 SOR 降噪
+    auto [cleanCloud, indices] = o3dCloud->RemoveStatisticalOutliers(20, 2.0);
+    WS_LOG_INFO("Open3D",
+                "SOR : {} -> {} points",
+                o3dCloud->points_.size(),
+                cleanCloud->points_.size());
+
+    // 3.2 地面分割
+    auto groundResult = segmentGround(cleanCloud, 0.2, 3, 1000);
+
+    WS_LOG_INFO("Open3D",
+                "Ground segmentation: {} ground points, {} non-ground points",
+                groundResult.groundPoints->points_.size(),
+                groundResult.nonGroundPoints->points_.size());
+
+    // 3.3 非地面点聚类分析
+    auto clusteringResult =
+        performClustering(groundResult.nonGroundPoints, 1.0, 50);
+
+    WS_LOG_INFO("Open3D",
+                "Found {} clusters",
+                clusteringResult.clusters.size());
+
+    // 3.4 电力基础设施分类
+    WS_LOG_INFO("Open3D", "Classifying power infrastructure...");
+    auto infra = classifyInfrastructure(clusteringResult.clusters,
+                                        groundResult.groundPoints);
+
+    // 3.5 电力线曲线拟合
+    WS_LOG_INFO("Open3D", "Fitting power line curves...");
+    for (const auto& power_line : infra.powerLines)
+    {
+        auto curve = fitPowerLineCurve(power_line);
+        infra.powerLineCurves.push_back(curve);
+    }
+
+    // 记录分析结果
+    if (infra.towerPoints)
+    {
+        WS_LOG_INFO("Open3D",
+                    "Identified power tower with {} points",
+                    infra.towerPoints->points_.size());
+        WS_LOG_INFO("Open3D",
+                    "Tower bounding box: ({:.2f}, {:.2f}, {:.2f}) to "
+                    "({:.2f}, {:.2f}, {:.2f})",
+                    infra.towerBbox.getMin().x,
+                    infra.towerBbox.getMin().y,
+                    infra.towerBbox.getMin().z,
+                    infra.towerBbox.getMax().x,
+                    infra.towerBbox.getMax().y,
+                    infra.towerBbox.getMax().z);
+    }
+
+    WS_LOG_INFO("Open3D", "Identified {} power lines", infra.powerLines.size());
+    for (size_t i = 0; i < infra.powerLines.size(); ++i)
+    {
+        WS_LOG_INFO("Open3D",
+                    "Power line {}: {} points, {} curve control points",
+                    i + 1,
+                    infra.powerLines[i]->points_.size(),
+                    infra.powerLineCurves[i].size());
+    }
+
+    // 4. 转换回项目格式并更新网格
+
+    // 创建处理后的点云数据 - 合并所有识别的结构
+    std::vector<RHIVertexPosUvNrmTan> processedPoints;
+
+    // 添加地面点（简化表示）
+    std::size_t groundSampleCount =
+        std::min(size_t(1000), groundResult.groundPoints->points_.size());
+    for (size_t i = 0; i < groundSampleCount;
+         i += groundResult.groundPoints->points_.size() / groundSampleCount)
+    {
+        const auto& point = groundResult.groundPoints->points_[i];
+
+        RHIVertexPosUvNrmTan vtx;
+        vtx.position = math::Vector3(static_cast<float>(point.x()),
+                                     static_cast<float>(point.y()),
+                                     static_cast<float>(point.z()));
+        vtx.normal   = math::Vector3(0.0f, 0.0f, 1.0f); // 地面法线向上
+        vtx.uv       = math::Vector2(0.0f, 0.0f);
+        vtx.tangent  = math::Vector3(1.0f, 0.0f, 0.0f);
+
+        processedPoints.push_back(vtx);
+    }
+
+    // 添加电力塔点
+    if (infra.towerPoints)
+    {
+        for (const auto& point : infra.towerPoints->points_)
+        {
+            RHIVertexPosUvNrmTan vtx;
+            vtx.position = math::Vector3(static_cast<float>(point.x()),
+                                         static_cast<float>(point.y()),
+                                         static_cast<float>(point.z()));
+            vtx.normal   = math::Vector3(0.0f, 0.0f, 1.0f);
+            vtx.uv       = math::Vector2(0.0f, 0.0f);
+            vtx.tangent  = math::Vector3(1.0f, 0.0f, 0.0f);
+
+            processedPoints.push_back(vtx);
+        }
+    }
+
+    // 添加电力线点
+    for (auto const& power_line : infra.powerLines)
+    {
+        for (auto const& point : power_line->points_)
+        {
+            RHIVertexPosUvNrmTan vtx;
+            vtx.position = math::Vector3(static_cast<float>(point.x()),
+                                         static_cast<float>(point.y()),
+                                         static_cast<float>(point.z()));
+            vtx.normal   = math::Vector3(0.0f, 0.0f, 1.0f);
+            vtx.uv       = math::Vector2(0.0f, 0.0f);
+            vtx.tangent  = math::Vector3(1.0f, 0.0f, 0.0f);
+
+            processedPoints.push_back(vtx);
+        }
+    }
+
+    // 生成电力线参数并触发弹出窗口
+    // generatePowerLineParameters(infra, filename, commands);
+
+    // 绘制重建的基础设施
+    // spawnReconstructedInfrastructure(infra, commands);
+
+    WS_LOG_INFO("Open3D", "{} processing completed ", filename);
+
+    isProcessing          = false;
+    currentProcessingFile = "";
+    return true;
+}

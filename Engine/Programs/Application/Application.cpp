@@ -1,19 +1,19 @@
 #include "Profiling/Stopwatch.hpp"
 
+#include "Window.hpp"
 #include "Engine.hpp"
 #include "Renderer.hpp"
+#include "ImGuiRenderer.hpp"
 
 #include "World.hpp"
 #include "Application.hpp"
 
-namespace worse::pc
+Application::Application(int argc, char** argv)
 {
-    Application::Application(int argc, char** argv)
-    {
-        (void)argc;
-        (void)argv;
+    (void)argc;
+    (void)argv;
 
-        // clang-format off
+    // clang-format off
         m_schedule.addSystem<ecs::CoreStage::StartUp, Engine::initialize>();
         m_schedule.addSystem<ecs::CoreStage::StartUp, Renderer::initialize>();
         m_schedule.addSystem<ecs::CoreStage::StartUp, ImGuiRenderer::initialize>();
@@ -32,28 +32,26 @@ namespace worse::pc
         m_schedule.addSystem<ecs::CoreStage::CleanUp, ImGuiRenderer::shutdown>();
         m_schedule.addSystem<ecs::CoreStage::CleanUp, Renderer::shutdown>();
         m_schedule.addSystem<ecs::CoreStage::CleanUp, Engine::shutdown>();
-        // clang-format on
+    // clang-format on
 
-        {
-            profiling::Stopwatch timer;
-            m_schedule.initialize(m_registry);
-            WS_LOG_INFO("Application",
-                        "Initialization took {} ms",
-                        timer.elapsedMs());
-        }
-    }
-
-    Application::~Application()
     {
-        m_schedule.shutdown(m_registry);
+        profiling::Stopwatch timer;
+        m_schedule.initialize(m_registry);
+        WS_LOG_INFO("Application",
+                    "Initialization took {} ms",
+                    timer.elapsedMs());
     }
+}
 
-    void Application::run()
+Application::~Application()
+{
+    m_schedule.shutdown(m_registry);
+}
+
+void Application::run()
+{
+    while (!Window::shouldClose())
     {
-        while (!Window::shouldClose())
-        {
-            m_schedule.run(m_registry);
-        }
+        m_schedule.run(m_registry);
     }
-
-} // namespace worse::pc
+}

@@ -14,6 +14,8 @@ target_include_directories(PointCloud PUBLIC
 
 target_link_libraries(PointCloud PUBLIC
     Worse::Core
+    Worse::ECS
+    Worse::Renderer
     LASlib
     Open3D::Open3D
 )

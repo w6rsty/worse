@@ -1,6 +1,9 @@
 #include "Input/Input.hpp"
+#include "Window.hpp"
 #include "Renderer.hpp"
 #include "World.hpp"
+
+using namespace worse;
 
 // clang-format off
 void World::updateInput(
@@ -82,3 +85,8 @@ void World::updateInput(
     Renderer::setCameraForward(camera->getForward());
 }
 // clang-format on
+
+void World::update(ecs::Resource<GlobalContext> globalContext)
+{
+    globalContext->tick();
+}
