@@ -56,6 +56,11 @@ namespace worse::ecs
                 std::forward<Args>(args)...);
         }
 
+        template <typename Resource> Resource& getResource()
+        {
+            return m_registry.getResource<Resource>();
+        }
+
         template <typename Resource> void removeResource()
         {
             m_registry.removeResource<Resource>();
