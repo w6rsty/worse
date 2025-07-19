@@ -1,4 +1,5 @@
 #pragma once
+#include "Profiling/Stopwatch.hpp"
 #include "Math/Math.hpp"
 #include "ECS/Entity.hpp"
 
@@ -12,6 +13,15 @@ namespace worse
         float deltaTime      = 0.0f;
         float time           = 0.0f;
         bool isWireFrameMode = false;
+
+        float tick()
+        {
+            static profiling::Stopwatch frameTimer;
+            deltaTime = frameTimer.elapsedSec();
+            time += deltaTime;
+            frameTimer.reset();
+            return deltaTime;
+        }
     };
 
     struct Object
