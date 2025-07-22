@@ -28,7 +28,7 @@ namespace worse::ecs
             {
             }
             IndexSetIterator(PackedContainerType const& packed,
-                             std::size_t const offset)
+                             usize const offset)
                 : packed(&packed), offset(offset)
             {
             }
@@ -72,7 +72,7 @@ namespace worse::ecs
 
             reference operator[](difference_type const value) const
             {
-                return (*packed)[static_cast<std::size_t>(index() - value)];
+                return (*packed)[static_cast<usize>(index() - value)];
             }
             pointer operator->() const
             {
@@ -138,7 +138,7 @@ namespace worse::ecs
     class IndexSet
     {
         // clang-format off
-        static constexpr std::size_t PAGE_SIZE = SPARSE_PAGE_SIZE;
+        static constexpr usize PAGE_SIZE = SPARSE_PAGE_SIZE;
         using ValueType                        = Entity;
         using SparseContainerType              = std::vector<ValueType*>;
         using PackedContainerType              = std::vector<ValueType>;
@@ -150,7 +150,7 @@ namespace worse::ecs
         using ConstIterator  = Iterator;
         using DifferenceType = typename Iterator::difference_type;
 
-        std::size_t positionToPage(std::size_t const position) const
+        usize positionToPage(usize const position) const
         {
             return position / PAGE_SIZE;
         }
@@ -164,9 +164,8 @@ namespace worse::ecs
         // return nullptr when page does not exist
         ValueType* sparePtr(Entity const entity) const
         {
-            std::size_t const position =
-                static_cast<std::size_t>(entity.toEntity());
-            std::size_t const page = positionToPage(position);
+            usize const position = static_cast<usize>(entity.toEntity());
+            usize const page     = positionToPage(position);
             return (page < m_sparse.size() && m_sparse[page])
                        ? &m_sparse[page][fast_mod(position, PAGE_SIZE)]
                        : nullptr;
@@ -176,17 +175,15 @@ namespace worse::ecs
         ValueType& spareRef(Entity const entity) const
         {
             assert(sparePtr(entity) && "Sparse page fault");
-            std::size_t const position =
-                static_cast<std::size_t>(entity.toEntity());
+            usize const position = static_cast<usize>(entity.toEntity());
             return m_sparse[positionToPage(position)]
                            [fast_mod(position, PAGE_SIZE)];
         }
 
         ValueType& assureMemory(Entity const entity)
         {
-            std::size_t const position =
-                static_cast<std::size_t>(entity.toEntity());
-            std::size_t const page = positionToPage(position);
+            usize const position = static_cast<usize>(entity.toEntity());
+            usize const page     = positionToPage(position);
 
             // adujst page
             if (page >= m_sparse.size())
@@ -227,7 +224,7 @@ namespace worse::ecs
                 return entityToIterator(entity);
             }
 
-            std::size_t const position = m_packed.size();
+            usize const position = m_packed.size();
             // Ensure the sparse page exists and is initialized
             ValueType& ref = assureMemory(entity);
 
@@ -270,9 +267,9 @@ namespace worse::ecs
                 return; // not exists
             }
 
-            ValueType& removed             = spareRef(entity);
-            std::size_t const removedIndex = removed.toEntity();
-            ValueType const lastEntity     = m_packed.back();
+            ValueType& removed         = spareRef(entity);
+            usize const removedIndex   = removed.toEntity();
+            ValueType const lastEntity = m_packed.back();
 
             m_packed[removedIndex] = lastEntity; // swap with last element
             if (lastEntity != entity)
@@ -293,7 +290,7 @@ namespace worse::ecs
             }
         }
 
-        std::size_t packedIndex(Entity const entity) const
+        usize packedIndex(Entity const entity) const
         {
             assert(contains(entity));
             // take out packed index stored in sparse container
@@ -310,7 +307,7 @@ namespace worse::ecs
             m_packed.clear();
         }
 
-        std::size_t size() const
+        usize size() const
         {
             return m_packed.size();
         }

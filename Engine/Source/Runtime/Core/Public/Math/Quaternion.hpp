@@ -11,10 +11,10 @@ namespace worse::math
     {
         union
         {
-            struct { float w, x, y, z; };
+            struct { f32 w, x, y, z; };
             struct
             {
-                float s;
+                f32 s;
                 Vector3 v3;
             };
             Vector4 v4; // to simplify internal operation
@@ -22,16 +22,16 @@ namespace worse::math
 
         constexpr Quaternion()
             : w(1.0f), x(0.0f), y(0.0f), z(0.0f) {}
-        constexpr Quaternion(float w, float x, float y, float z)
+        constexpr Quaternion(f32 w, f32 x, f32 y, f32 z)
             : w(w), x(x), y(y), z(z) {}
-        constexpr Quaternion(float s, Vector3 const& v)
+        constexpr Quaternion(f32 s, Vector3 const& v)
             : s(s), v3(v) {}
         /// Notice the order of the elements is different from Vec4
         constexpr explicit Quaternion(Vector4 const& v)
             : v4(v) {}
-        Quaternion(float* raw) : v4(raw) {}
+        Quaternion(f32* raw) : v4(raw) {}
 
-        float scalar() const   { return s; }
+        f32 scalar() const   { return s; }
         Vector3 vector() const { return v3; }
 
         Quaternion operator*(Quaternion const& rhs) const
@@ -49,18 +49,18 @@ namespace worse::math
         // Convert to 3x3 rotation matrix
         Matrix3 toMat3() const
         {
-            float x2 = x + x;
-            float y2 = y + y;
-            float z2 = z + z;
-            float xx = x * x2;
-            float xy = x * y2;
-            float xz = x * z2;
-            float yy = y * y2;
-            float yz = y * z2;
-            float zz = z * z2;
-            float wx = w * x2;
-            float wy = w * y2;
-            float wz = w * z2;
+            f32 x2 = x + x;
+            f32 y2 = y + y;
+            f32 z2 = z + z;
+            f32 xx = x * x2;
+            f32 xy = x * y2;
+            f32 xz = x * z2;
+            f32 yy = y * y2;
+            f32 yz = y * z2;
+            f32 zz = z * z2;
+            f32 wx = w * x2;
+            f32 wy = w * y2;
+            f32 wz = w * z2;
 
             return Matrix3{
                 Vector3(1.0f - (yy + zz),          xy + wz,          xz - wy),
@@ -73,77 +73,77 @@ namespace worse::math
         Vector3 toEuler() const
         {
             // Convert quaternion to Euler angles (in radians)
-            float sinr_cosp = 2.0f * (w * x + y * z);
-            float cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
-            float roll      = std::atan2(sinr_cosp, cosr_cosp);
+            f32 sinr_cosp = 2.0f * (w * x + y * z);
+            f32 cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
+            f32 roll      = std::atan2(sinr_cosp, cosr_cosp);
 
-            float sinp = 2.0f * (w * y - z * x);
-            float pitch = std::abs(sinp) >= 1.0f ? std::copysign(M_PI / 2, sinp) : std::asin(sinp);
+            f32 sinp = 2.0f * (w * y - z * x);
+            f32 pitch = std::abs(sinp) >= 1.0f ? std::copysign(M_PI / 2, sinp) : std::asin(sinp);
 
-            float siny_cosp = 2.0f * (w * z + x * y);
-            float cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
-            float yaw       = std::atan2(siny_cosp, cosy_cosp);
+            f32 siny_cosp = 2.0f * (w * z + x * y);
+            f32 cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
+            f32 yaw       = std::atan2(siny_cosp, cosy_cosp);
 
             return Vector3(roll, pitch, yaw);
         }
 
         Quaternion  operator+(Quaternion const& rhs) const { return Quaternion(v4 + rhs.v4); }
         Quaternion  operator-(Quaternion const& rhs) const { return Quaternion(v4 - rhs.v4); }
-        Quaternion  operator*(float const rhs) const       { return Quaternion(v4 * rhs); }
-        Quaternion  operator/(float const rhs) const       { return Quaternion(v4 / rhs); }
+        Quaternion  operator*(f32 const rhs) const       { return Quaternion(v4 * rhs); }
+        Quaternion  operator/(f32 const rhs) const       { return Quaternion(v4 / rhs); }
         Quaternion  operator-() const                      { return Quaternion(-v4); }
         Quaternion& operator+=(Quaternion const& rhs)      { v4 += rhs.v4; return *this; }
         Quaternion& operator-=(Quaternion const& rhs)      { v4 -= rhs.v4; return *this; }
-        Quaternion& operator*=(float const rhs)            { v4 *= rhs; return *this; }
-        Quaternion& operator/=(float const rhs)            { v4 /= rhs; return *this; }
+        Quaternion& operator*=(f32 const rhs)            { v4 *= rhs; return *this; }
+        Quaternion& operator/=(f32 const rhs)            { v4 /= rhs; return *this; }
 
         /// From 3x3 rotation matrix
         static Quaternion fromMat3(Matrix3 const& mat)
         {
-            /// Copy from glam-0.27.0/src/float/sse2/quat.rs
+            /// Copy from glam-0.27.0/src/f32/sse2/quat.rs
             auto [m00, m01, m02] = mat.col0.data;
             auto [m10, m11, m12] = mat.col1.data;
             auto [m20, m21, m22] = mat.col2.data;
             if (m22 <= 0.0f)
             {
-                float dif10 = m11 - m00;
-                float omm22 = 1.0f - m22;
+                f32 dif10 = m11 - m00;
+                f32 omm22 = 1.0f - m22;
                 if (dif10 <= 0.0f)
                 {
-                    float four_xsq = omm22 - dif10;
-                    float inv4x    = 0.5f / std::sqrt(four_xsq);
+                    f32 four_xsq = omm22 - dif10;
+                    f32 inv4x    = 0.5f / std::sqrt(four_xsq);
                     return Quaternion{(m12 - m21) * inv4x, four_xsq * inv4x, (m01 + m10) * inv4x, (m02 + m20) * inv4x};
                 }
                 else
                 {
-                    float four_ysq = omm22 + dif10;
-                    float inv4y    = 0.5f / std::sqrt(four_ysq);
+                    f32 four_ysq = omm22 + dif10;
+                    f32 inv4y    = 0.5f / std::sqrt(four_ysq);
                     return Quaternion{(m20 - m02) * inv4y, (m01 + m10) * inv4y, four_ysq * inv4y, (m12 + m21) * inv4y};
                 }
             }
             else
             {
-                float sum10 = m11 + m00;
-                float opm22 = 1.0f + m22;
+                f32 sum10 = m11 + m00;
+                f32 opm22 = 1.0f + m22;
                 if (sum10 <= 0.0f)
                 {
-                    float four_zsq = opm22 - sum10;
-                    float inv4z    = 0.5f / std::sqrt(four_zsq);
+                    f32 four_zsq = opm22 - sum10;
+                    f32 inv4z    = 0.5f / std::sqrt(four_zsq);
                     return Quaternion{(m01 - m10) * inv4z, (m02 + m20) * inv4z, (m12 + m21) * inv4z, four_zsq * inv4z};
                 }
                 else
                 {
-                    float four_wsq = opm22 + sum10;
-                    float inv4w    = 0.5f / std::sqrt(four_wsq);
+                    f32 four_wsq = opm22 + sum10;
+                    f32 inv4w    = 0.5f / std::sqrt(four_wsq);
                     return Quaternion{four_wsq * inv4w, (m12 - m21) * inv4w, (m20 - m02) * inv4w, (m01 - m10) * inv4w};
                 }
             }
         }
         /// From 4x4 rotation matrix
         static Quaternion fromMat4(Matrix4 const& mat) { return fromMat3(mat.toMat3()); }
-        static Quaternion fromAxisAngle(Vector3 const& axis, float angle)
+        static Quaternion fromAxisAngle(Vector3 const& axis, f32 angle)
         {
-            float halfAngle = angle * 0.5f;
+            f32 halfAngle = angle * 0.5f;
             return Quaternion(std::cos(halfAngle), normalize(axis) * std::sin(halfAngle));
         }
         static Quaternion fromEuler(Vector3 const& euler)
@@ -158,8 +158,8 @@ namespace worse::math
         static constexpr Quaternion ZERO()     { return Quaternion(0.0f, 0.0f, 0.0f, 0.0f); }
     };
     
-    inline float magnitudeSquared(Quaternion const& q) { return lengthSquared(q.v4); }
-    inline float magnitude(Quaternion const& q) { return length(q.v4); }
+    inline f32 magnitudeSquared(Quaternion const& q) { return lengthSquared(q.v4); }
+    inline f32 magnitude(Quaternion const& q) { return length(q.v4); }
     inline Quaternion normalize(Quaternion const& q) { return Quaternion(normalize(q.v4)); }
     inline Quaternion conjugate(Quaternion const& q) { return Quaternion(q.s, -q.v3); }
     inline Quaternion inverse(Quaternion const& q)

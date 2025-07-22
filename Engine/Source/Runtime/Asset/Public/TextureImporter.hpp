@@ -1,4 +1,5 @@
 #pragma once
+#include "Types.hpp"
 #include "RHITypes.hpp"
 
 #include <memory>
@@ -10,16 +11,16 @@ namespace worse
     // Holds texture properties and a deferred copy function
     struct DeferredTextureCopy
     {
-        using CopyFn = std::function<void(std::byte*)>;
+        using CopyFn = std::function<void(byte*)>;
 
         CopyFn deferredCopyFn;
-        std::int32_t width;
-        std::int32_t height;
-        std::int32_t depth;
-        std::int32_t layers;
-        std::int32_t mipLevels;
+        i32 width;
+        i32 height;
+        i32 depth;
+        i32 layers;
+        i32 mipLevels;
 
-        std::size_t size; // Size in bytes
+        usize size; // Size in bytes
 
         RHITextureType type;
         RHIFormat format;

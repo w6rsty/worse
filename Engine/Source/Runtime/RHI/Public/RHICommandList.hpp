@@ -22,14 +22,14 @@ namespace worse
 
     struct ImageBarrierInfo
     {
-        void* image               = nullptr;
-        std::uint32_t aspectMask  = 0;
-        std::uint32_t mipIndex    = 0;
-        std::uint32_t mipRange    = 0;
-        std::uint32_t arrayLength = 0;
-        RHIImageLayout layoutOld  = RHIImageLayout::Max;
-        RHIImageLayout layoutNew  = RHIImageLayout::Max;
-        bool isDepth              = false;
+        void* image              = nullptr;
+        u32 aspectMask           = 0;
+        u32 mipIndex             = 0;
+        u32 mipRange             = 0;
+        u32 arrayLength          = 0;
+        RHIImageLayout layoutOld = RHIImageLayout::Max;
+        RHIImageLayout layoutNew = RHIImageLayout::Max;
+        bool isDepth             = false;
     };
 
     class RHICommandList : public RHIResource
@@ -50,16 +50,13 @@ namespace worse
                             math::Rectangle const& scissor);
         void imguiPassEnd(void* drawData);
 
-        void draw(std::uint32_t const vertexCount,
-                  std::uint32_t const vertexOffset = 0);
-        void drawIndexed(std::uint32_t const indexCount,
-                         std::uint32_t const indexOffset   = 0,
-                         std::uint32_t const vertexOffset  = 0,
-                         std::uint32_t const instanceIndex = 0,
-                         std::uint32_t const instanceCount = 1);
+        void draw(u32 const vertexCount, u32 const vertexOffset = 0);
+        void drawIndexed(u32 const indexCount, u32 const indexOffset = 0,
+                         u32 const vertexOffset  = 0,
+                         u32 const instanceIndex = 0,
+                         u32 const instanceCount = 1);
 
-        void dispatch(std::uint32_t const x, std::uint32_t const y,
-                      std::uint32_t const z = 1);
+        void dispatch(u32 const x, u32 const y, u32 const z = 1);
 
         // bind pipeline specific resources and begin render pass make sure pso
         // has been called `finalize()`
@@ -81,14 +78,14 @@ namespace worse
         void copy(RHITexture const* source, RHITexture const* destination);
         void copy(RHITexture const* source, RHISwapchain const* destination);
 
-        void pushConstants(
-            std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
+        void
+        pushConstants(std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
 
         void setBufferVertex(RHIBuffer* buffer);
         void setBufferIndex(RHIBuffer* buffer);
 
-        void updateBuffer(RHIBuffer* buffer, std::uint32_t const offset,
-                          std::uint32_t const size, void const* data);
+        void updateBuffer(RHIBuffer* buffer, u32 const offset, u32 const size,
+                          void const* data);
 
         // get global set 0 and bind
         void bindGlobalSet();

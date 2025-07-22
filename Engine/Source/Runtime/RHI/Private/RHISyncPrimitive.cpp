@@ -2,7 +2,7 @@
 
 namespace worse
 {
-    std::uint64_t RHISyncPrimitive::getNextSignalValue()
+    u64 RHISyncPrimitive::getNextSignalValue()
     {
         return ++m_value;
     }

@@ -17,8 +17,8 @@ namespace worse
         return *this;
     }
 
-    Camera& Camera::setPerspectiveParams(float fovY, float aspect, float nearZ,
-                                         float farZ)
+    Camera& Camera::setPerspectiveParams(f32 fovY, f32 aspect, f32 nearZ,
+                                         f32 farZ)
     {
         // Validate parameters
         if (fovY <= 0.0f || fovY >= math::PI || aspect <= 0.0f ||
@@ -38,8 +38,8 @@ namespace worse
         return *this;
     }
 
-    Camera& Camera::setOrthoParams(float left, float right, float bottom,
-                                   float top, float nearZ, float farZ)
+    Camera& Camera::setOrthoParams(f32 left, f32 right, f32 bottom, f32 top,
+                                   f32 nearZ, f32 farZ)
     {
         // Validate parameters
         if (right <= left || top <= bottom || farZ <= nearZ)

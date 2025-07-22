@@ -41,17 +41,17 @@ namespace worse
 
     bool Input::isKey(KeyCode const key)
     {
-        return s_keymap[static_cast<std::size_t>(key)];
+        return s_keymap[static_cast<usize>(key)];
     }
 
     bool Input::isKeyDown(KeyCode const key)
     {
-        return isKey(key) && !s_keymapLastFrame[static_cast<std::size_t>(key)];
+        return isKey(key) && !s_keymapLastFrame[static_cast<usize>(key)];
     }
 
     bool Input::isKeyUp(KeyCode const key)
     {
-        return !isKey(key) && s_keymapLastFrame[static_cast<std::size_t>(key)];
+        return !isKey(key) && s_keymapLastFrame[static_cast<usize>(key)];
     }
 
 } // namespace worse

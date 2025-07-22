@@ -13,8 +13,8 @@ namespace worse
         std::shared_ptr<Controller> s_controller = nullptr;
         math::Vector2 s_thumbStickLeft{0.0f, 0.0f};
         math::Vector2 s_thumbStickRight{0.0f, 0.0f};
-        float s_triggerLeft{0.0f};
-        float s_triggerRight{0.0f};
+        f32 s_triggerLeft{0.0f};
+        f32 s_triggerRight{0.0f};
 
         std::vector<ControllerDescriptor> fetchInfos()
         {
@@ -94,12 +94,12 @@ namespace worse
         }
 
         // TODO: Support individual dead zones for each axis
-        float analogValue(SDL_Gamepad* gamepad, SDL_GamepadAxis const axis)
+        f32 analogValue(SDL_Gamepad* gamepad, SDL_GamepadAxis const axis)
         {
-            float normalized = 0.0f;
+            f32 normalized = 0.0f;
 
-            static const std::int16_t k_defaultThumbStickDeadZone = 8000;
-            static const std::int16_t k_defaultTriggerDeadZone    = 0;
+            static const i16 k_defaultThumbStickDeadZone = 8000;
+            static const i16 k_defaultTriggerDeadZone    = 0;
 
             // For thumbsticks, value ranging from -32768 (up/left) to
             // 32767 (down/right). Triggers range from 0 when released
@@ -113,7 +113,7 @@ namespace worse
             case SDL_GAMEPAD_AXIS_RIGHTX:
             case SDL_GAMEPAD_AXIS_RIGHTY:
             {
-                std::int16_t value = SDL_GetGamepadAxis(gamepad, axis);
+                i16 value = SDL_GetGamepadAxis(gamepad, axis);
                 if (std::abs(value) < k_defaultThumbStickDeadZone)
                 {
                     value = 0.0f;
@@ -124,18 +124,17 @@ namespace worse
                                          : -k_defaultThumbStickDeadZone;
                 }
 
-                float const range_negative = 32768.0f;
-                float const range_positive = 32767.0f;
-                float const range =
-                    (value < 0) ? range_negative : range_positive;
-                normalized = static_cast<float>(value) /
+                f32 const range_negative = 32768.0f;
+                f32 const range_positive = 32767.0f;
+                f32 const range = (value < 0) ? range_negative : range_positive;
+                normalized      = static_cast<f32>(value) /
                              (range - k_defaultThumbStickDeadZone);
                 break;
             }
             case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
             case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
             {
-                std::int16_t value = SDL_GetGamepadAxis(gamepad, axis);
+                i16 value = SDL_GetGamepadAxis(gamepad, axis);
                 if (value < k_defaultTriggerDeadZone)
                 {
                     value = 0.0f;
@@ -144,8 +143,8 @@ namespace worse
                 {
                     value -= k_defaultTriggerDeadZone;
                 }
-                float const range = 32767.0f - k_defaultTriggerDeadZone;
-                normalized        = static_cast<float>(value) / range;
+                f32 const range = 32767.0f - k_defaultTriggerDeadZone;
+                normalized      = static_cast<f32>(value) / range;
                 break;
             }
             default:
@@ -178,23 +177,23 @@ namespace worse
         s_triggerRight      = analogValue(gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
 
         KeyMap& keyMap = GetKeyMap();
-        keyMap[static_cast<std::size_t>(KeyCode::DPadUp)]        = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_UP);
-        keyMap[static_cast<std::size_t>(KeyCode::DPadDown)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
-        keyMap[static_cast<std::size_t>(KeyCode::DPadLeft)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
-        keyMap[static_cast<std::size_t>(KeyCode::DPadRight)]     = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
-        keyMap[static_cast<std::size_t>(KeyCode::ButtonNorth)]   = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_NORTH);
-        keyMap[static_cast<std::size_t>(KeyCode::ButtonSouth)]   = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_SOUTH);
-        keyMap[static_cast<std::size_t>(KeyCode::ButtonWest)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_WEST);
-        keyMap[static_cast<std::size_t>(KeyCode::ButtonEast)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_EAST);
-        keyMap[static_cast<std::size_t>(KeyCode::Back)]          = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_BACK);
-        keyMap[static_cast<std::size_t>(KeyCode::Start)]         = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_START);
-        keyMap[static_cast<std::size_t>(KeyCode::Guide)]         = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_GUIDE);
-        keyMap[static_cast<std::size_t>(KeyCode::Touchpad)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_TOUCHPAD);
-        keyMap[static_cast<std::size_t>(KeyCode::LeftStick)]     = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK);
-        keyMap[static_cast<std::size_t>(KeyCode::RightStick)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK);
-        keyMap[static_cast<std::size_t>(KeyCode::LeftShoulder)]  = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
-        keyMap[static_cast<std::size_t>(KeyCode::RightShoulder)] = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
-        keyMap[static_cast<std::size_t>(KeyCode::Misc)]          = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_MISC1);
+        keyMap[static_cast<usize>(KeyCode::DPadUp)]        = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_UP);
+        keyMap[static_cast<usize>(KeyCode::DPadDown)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+        keyMap[static_cast<usize>(KeyCode::DPadLeft)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+        keyMap[static_cast<usize>(KeyCode::DPadRight)]     = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+        keyMap[static_cast<usize>(KeyCode::ButtonNorth)]   = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_NORTH);
+        keyMap[static_cast<usize>(KeyCode::ButtonSouth)]   = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_SOUTH);
+        keyMap[static_cast<usize>(KeyCode::ButtonWest)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_WEST);
+        keyMap[static_cast<usize>(KeyCode::ButtonEast)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_EAST);
+        keyMap[static_cast<usize>(KeyCode::Back)]          = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_BACK);
+        keyMap[static_cast<usize>(KeyCode::Start)]         = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_START);
+        keyMap[static_cast<usize>(KeyCode::Guide)]         = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_GUIDE);
+        keyMap[static_cast<usize>(KeyCode::Touchpad)]      = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_TOUCHPAD);
+        keyMap[static_cast<usize>(KeyCode::LeftStick)]     = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK);
+        keyMap[static_cast<usize>(KeyCode::RightStick)]    = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+        keyMap[static_cast<usize>(KeyCode::LeftShoulder)]  = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+        keyMap[static_cast<usize>(KeyCode::RightShoulder)] = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+        keyMap[static_cast<usize>(KeyCode::Misc)]          = SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_MISC1);
         // clang-format on
     }
 
@@ -256,22 +255,22 @@ namespace worse
         return s_thumbStickRight;
     }
 
-    float Input::getThumbStickLeftDistance()
+    f32 Input::getThumbStickLeftDistance()
     {
         return length(s_thumbStickLeft);
     }
 
-    float Input::getThumbStickRightDistance()
+    f32 Input::getThumbStickRightDistance()
     {
         return length(s_thumbStickRight);
     }
 
-    float Input::getTriggerLeft()
+    f32 Input::getTriggerLeft()
     {
         return s_triggerLeft;
     }
 
-    float Input::getTriggerRight()
+    f32 Input::getTriggerRight()
     {
         return s_triggerRight;
     }

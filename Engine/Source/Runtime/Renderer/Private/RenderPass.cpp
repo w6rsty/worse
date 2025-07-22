@@ -13,7 +13,7 @@ namespace worse
         PushConstantData pushConstantData = {};
     }
 
-    void Renderer::setPushParameters(float a, float b)
+    void Renderer::setPushParameters(f32 a, f32 b)
     {
         pushConstantData.setPadding(a, b);
     }
@@ -151,8 +151,8 @@ namespace worse
             math::Rectangle{
                 0,
                 0,
-                static_cast<std::uint32_t>(Renderer::getResolutionOutput().x),
-                static_cast<std::uint32_t>(Renderer::getResolutionOutput().y)});
+                static_cast<u32>(Renderer::getResolutionOutput().x),
+                static_cast<u32>(Renderer::getResolutionOutput().y)});
 
         cmdList->imguiPassEnd(ImGui::GetDrawData());
     }

@@ -21,7 +21,7 @@ namespace worse
 
         // clang-format off
         bool isValidated() const      { return m_validated; }
-        std::uint64_t getHash() const { return m_hash; }
+        u64 getHash() const { return m_hash; }
         // clang-format on
 
         std::string name = "pso";
@@ -39,12 +39,12 @@ namespace worse
 
         math::Rectangle scissor = {};
         RHIViewport viewport    = {};
-        float clearDepth        = std::numeric_limits<float>::max();
+        f32 clearDepth          = std::numeric_limits<f32>::max();
         Color clearColor        = Color::Black();
 
     private:
-        bool m_validated     = false;
-        std::uint64_t m_hash = 0;
+        bool m_validated = false;
+        u64 m_hash       = 0;
     };
 
     class RHIPipelineStateBuilder
@@ -60,11 +60,11 @@ namespace worse
         RHIPipelineStateBuilder& setDepthStencilState(RHIDepthStencilState* state);
         RHIPipelineStateBuilder& setBlendState(RHIBlendState* state);
         RHIPipelineStateBuilder& addShader(RHIShader* shader);
-        RHIPipelineStateBuilder& setRenderTargetColorTexture(std::size_t index, RHITexture* texture);
+        RHIPipelineStateBuilder& setRenderTargetColorTexture(usize index, RHITexture* texture);
         RHIPipelineStateBuilder& setRenderTargetDepthTexture(RHITexture* texture);
         RHIPipelineStateBuilder& setScissor(math::Rectangle const& scissor);
         RHIPipelineStateBuilder& setViewport(RHIViewport const& viewport);
-        RHIPipelineStateBuilder& setClearDepth(float depth);
+        RHIPipelineStateBuilder& setClearDepth(f32 depth);
         RHIPipelineStateBuilder& setClearColor(Color const& color);
         // clang-format on
 

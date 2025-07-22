@@ -36,8 +36,8 @@ namespace worse
     {
         RHINativeHandle nativeCompile();
         // extract descriptor from spirv
-        void reflect(RHIShaderType const shaderType, std::uint32_t* spirvData,
-                     std::size_t const spirvSize);
+        void reflect(RHIShaderType const shaderType, u32* spirvData,
+                     usize const spirvSize);
 
     public:
         RHIShader(std::string_view name);
@@ -54,7 +54,7 @@ namespace worse
         RHIShaderType                     getShaderType() const  { return m_shaderType; }
         RHIVertexType                     getVertexType() const  { return m_vertexType; }
         RHIInputLayout const&             getInputLayout() const { return m_inputLayout; }
-        std::uint64_t                     getHash() const        { return m_hash; }
+        u64                     getHash() const        { return m_hash; }
         RHINativeHandle                   getHandle() const      { return m_shaderModule; }
         // clang-format on
 
@@ -70,7 +70,7 @@ namespace worse
         RHIVertexType m_vertexType        = RHIVertexType::None;
         RHIInputLayout m_inputLayout;
 
-        std::uint64_t m_hash           = 0;
+        u64 m_hash                     = 0;
         RHINativeHandle m_shaderModule = {};
     };
 

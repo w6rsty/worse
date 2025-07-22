@@ -20,7 +20,7 @@ namespace worse
             RHIBlendFactor const srcAlphaBlend   = RHIBlendFactor::One,
             RHIBlendFactor const dstAlphaBlend   = RHIBlendFactor::One,
             RHIBlendOperation const alphaBlendOp = RHIBlendOperation::Add,
-            float const blendFactor              = 1.0f
+            f32 const blendFactor              = 1.0f
         )
         {
             m_blendEnable   = blendEnable;
@@ -32,14 +32,14 @@ namespace worse
             m_alphaBlendOp  = alphaBlendOp;
             m_blendFactor   = blendFactor;
 
-            std::hash<float> hasher;
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(blendEnable));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(srcBlend));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(dstBlend));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(blendOp));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(srcAlphaBlend));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(dstAlphaBlend));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(alphaBlendOp));
+            std::hash<f32> hasher;
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(blendEnable));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(srcBlend));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(dstBlend));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(blendOp));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(srcAlphaBlend));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(dstAlphaBlend));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(alphaBlendOp));
             m_hash = math::hashCombine(m_hash, hasher(blendFactor));
         }
 
@@ -50,8 +50,8 @@ namespace worse
         RHIBlendFactor    getSrcAlphaBlend() const { return m_srcAlphaBlend; }
         RHIBlendFactor    getDstAlphaBlend() const { return m_dstAlphaBlend; }
         RHIBlendOperation getAlphaBlendOp() const  { return m_alphaBlendOp; }
-        float             getBlendFactor() const   { return m_blendFactor; }
-        std::uint64_t     getHash() const          { return m_hash; }
+        f32             getBlendFactor() const   { return m_blendFactor; }
+        u64     getHash() const          { return m_hash; }
 
         bool operator==(RHIBlendState const& other) const { return m_hash == other.m_hash; }
         bool operator!=(RHIBlendState const& other) const { return m_hash != other.m_hash; }
@@ -65,9 +65,9 @@ namespace worse
         RHIBlendFactor m_srcAlphaBlend;
         RHIBlendFactor m_dstAlphaBlend;
         RHIBlendOperation m_alphaBlendOp;
-        float m_blendFactor;
+        f32 m_blendFactor;
 
-        std::uint64_t m_hash = 0;
+        u64 m_hash = 0;
     };
 
 } // namespace worse

@@ -21,8 +21,8 @@ namespace worse
             RHIStencilOperation const stencilFailOp      = RHIStencilOperation::Keep,
             RHIStencilOperation const stencilDepthFailOp = RHIStencilOperation::Keep,
             RHIStencilOperation const stencilPassOp      = RHIStencilOperation::Replace,
-            std::uint8_t const stencilReadMask           = 0x1,
-            std::uint8_t const stencilWriteMask          = 0x1
+            u8 const stencilReadMask           = 0x1,
+            u8 const stencilWriteMask          = 0x1
         )
         {
             m_depthTestEnable    = depthTestEnable;
@@ -37,17 +37,17 @@ namespace worse
             m_stencilReadMask    = stencilReadMask;
             m_stencilWriteMask   = stencilWriteMask;
 
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthTestEnable));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthWriteEnable));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(depthCompareOp));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilTestEnable));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilWriteEnable));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilCompareOp));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilFailOp));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilDepthFailOp));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilPassOp));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilReadMask));
-            m_hash = math::hashCombine(m_hash, static_cast<std::uint64_t>(stencilWriteMask));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(depthTestEnable));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(depthWriteEnable));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(depthCompareOp));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilTestEnable));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilWriteEnable));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilCompareOp));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilFailOp));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilDepthFailOp));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilPassOp));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilReadMask));
+            m_hash = math::hashCombine(m_hash, static_cast<u64>(stencilWriteMask));
         }
 
         bool                getDepthTestEnabled() const    { return m_depthTestEnable; }
@@ -59,9 +59,9 @@ namespace worse
         RHIStencilOperation getStencilFailOp() const       { return m_stencilFailOp; }
         RHIStencilOperation getStencilDepthFailOp() const  { return m_stencilDepthFailOp; }
         RHIStencilOperation getStencilPassOp() const       { return m_stencilPassOp; }
-        std::uint8_t        getStencilReadMask() const     { return m_stencilReadMask; }
-        std::uint8_t        getStencilWriteMask() const    { return m_stencilWriteMask; }
-        std::uint64_t       getHash() const                { return m_hash; }
+        u8        getStencilReadMask() const     { return m_stencilReadMask; }
+        u8        getStencilWriteMask() const    { return m_stencilWriteMask; }
+        u64       getHash() const                { return m_hash; }
 
         bool operator==(RHIDepthStencilState const& other) const { return m_hash == other.m_hash; }
         bool operator!=(RHIDepthStencilState const& other) const { return m_hash != other.m_hash; }
@@ -77,10 +77,10 @@ namespace worse
         RHIStencilOperation m_stencilFailOp;
         RHIStencilOperation m_stencilDepthFailOp;
         RHIStencilOperation m_stencilPassOp;
-        std::uint8_t m_stencilReadMask;
-        std::uint8_t m_stencilWriteMask;
+        u8 m_stencilReadMask;
+        u8 m_stencilWriteMask;
 
-        std::uint64_t m_hash = 0;
+        u64 m_hash = 0;
     };
 
 } // namespace worse

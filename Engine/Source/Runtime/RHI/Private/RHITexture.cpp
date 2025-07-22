@@ -6,9 +6,8 @@
 namespace worse
 {
 
-    RHITexture::RHITexture(RHITextureType const type, std::uint32_t const width,
-                           std::uint32_t const height,
-                           std::uint32_t const depth, std::uint32_t mipCount,
+    RHITexture::RHITexture(RHITextureType const type, u32 const width,
+                           u32 const height, u32 const depth, u32 mipCount,
                            RHIFormat const format,
                            RHITextureViewUsageFlags const usage,
                            std::vector<RHITextureSlice> data,
@@ -52,7 +51,7 @@ namespace worse
         m_slices[0].mips[0].bytes.resize(data->size);
 
         data->deferredCopyFn(
-            reinterpret_cast<std::byte*>(m_slices[0].mips[0].bytes.data()));
+            reinterpret_cast<byte*>(m_slices[0].mips[0].bytes.data()));
 
         WS_ASSERT(nativeCreate());
     }
@@ -97,16 +96,15 @@ namespace worse
                 !m_slices[0].mips[0].bytes.empty());
     }
 
-    RHITextureSlice const&
-    RHITexture::getSlice(std::size_t const arrayIndex) const
+    RHITextureSlice const& RHITexture::getSlice(usize const arrayIndex) const
     {
         WS_ASSERT(arrayIndex < m_slices.size());
 
         return m_slices[arrayIndex];
     }
 
-    RHITextureMip const& RHITexture::getMip(std::size_t const arrayIndex,
-                                            std::size_t const mipIndex) const
+    RHITextureMip const& RHITexture::getMip(usize const arrayIndex,
+                                            usize const mipIndex) const
     {
         WS_ASSERT(arrayIndex < m_slices.size());
         WS_ASSERT(mipIndex < m_mipCount);

@@ -210,7 +210,7 @@ namespace worse
         Compute,
     };
 
-    WS_DEFINE_FLAGS(RHIShaderStage, std::uint32_t);
+    WS_DEFINE_FLAGS(RHIShaderStage, u32);
     // clang-format off
     struct RHIShaderStageFlagBits
     {
@@ -680,7 +680,7 @@ namespace worse
     {
 #ifdef WS_RHI_BACKEND_VULKAN
 
-        static inline std::uint32_t version           = VK_API_VERSION_1_3;
+        static inline u32 version                     = VK_API_VERSION_1_3;
         static inline VkInstance instance             = VK_NULL_HANDLE;
         static inline VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         static inline VkDevice device                 = VK_NULL_HANDLE;
@@ -694,19 +694,19 @@ namespace worse
         static bool enableVSync            = true;
         static bool enableValidationLayers = true;
 
-        constexpr std::size_t MAX_RENDER_TARGET = 8;
+        constexpr usize MAX_RENDER_TARGET = 8;
         // Minimum descriptor for initial descriptor pool
-        constexpr std::uint32_t MIN_DESCRIPTORS             = 512;
-        constexpr std::uint32_t MAX_DESCRIPTORS             = 2048;
-        constexpr std::uint32_t MAX_DESCRIPTOR_SETS         = 512;
-        constexpr std::uint32_t MAX_DESCRIPTOR_SET_BINDINGS = 256;
-        constexpr std::size_t MAX_BUFFER_UPDATE_SIZE = 64 * 1024; // 64 KB
-        constexpr std::size_t MAX_PUSH_CONSTANT_SIZE = 128;       // 128 bytes
+        constexpr u32 MIN_DESCRIPTORS             = 512;
+        constexpr u32 MAX_DESCRIPTORS             = 2048;
+        constexpr u32 MAX_DESCRIPTOR_SETS         = 512;
+        constexpr u32 MAX_DESCRIPTOR_SET_BINDINGS = 256;
+        constexpr usize MAX_BUFFER_UPDATE_SIZE    = 64 * 1024; // 64 KB
+        constexpr usize MAX_PUSH_CONSTANT_SIZE    = 128;       // 128 bytes
 
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_B = 0;
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_S = 100;
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_U = 200;
-        constexpr std::uint32_t HLSL_REGISTER_SHIFT_T = 300;
+        constexpr u32 HLSL_REGISTER_SHIFT_B = 0;
+        constexpr u32 HLSL_REGISTER_SHIFT_S = 100;
+        constexpr u32 HLSL_REGISTER_SHIFT_U = 200;
+        constexpr u32 HLSL_REGISTER_SHIFT_T = 300;
     } // namespace RHIConfig
 
 } // namespace worse

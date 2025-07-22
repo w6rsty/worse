@@ -23,15 +23,15 @@ namespace worse
     }
 
     void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,
-                           std::vector<std::uint32_t> const& indices)
+                           std::vector<u32> const& indices)
     {
         SubMesh subMesh;
 
         MeshLod lod0;
-        lod0.vertexCount  = static_cast<std::uint32_t>(vertices.size());
-        lod0.vertexOffset = static_cast<std::uint32_t>(m_vertices.size());
-        lod0.indexCount   = static_cast<std::uint32_t>(indices.size());
-        lod0.indexOffset  = static_cast<std::uint32_t>(m_indices.size());
+        lod0.vertexCount  = static_cast<u32>(vertices.size());
+        lod0.vertexOffset = static_cast<u32>(m_vertices.size());
+        lod0.indexCount   = static_cast<u32>(indices.size());
+        lod0.indexOffset  = static_cast<u32>(m_indices.size());
         lod0.boundingBox  = math::BoundingBox(vertices);
 
         subMesh.lods.push_back(lod0);
@@ -62,7 +62,7 @@ namespace worse
         {
             m_indexBuffer =
                 std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
-                                            sizeof(std::uint32_t),
+                                            sizeof(u32),
                                             m_indices.size(),
                                             m_indices.data(),
                                             false,

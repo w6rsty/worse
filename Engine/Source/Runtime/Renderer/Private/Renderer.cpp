@@ -80,8 +80,8 @@ namespace worse
             // render resolution
             resolutionRender = {1200, 720};
             // output resolution
-            resolutionOutput = {static_cast<float>(Window::getWidth()),
-                                static_cast<float>(Window::getHeight())};
+            resolutionOutput = {static_cast<f32>(Window::getWidth()),
+                                static_cast<f32>(Window::getHeight())};
 
             Renderer::setViewport(resolutionRender.x, resolutionRender.y);
         }
@@ -216,7 +216,7 @@ namespace worse
         ecs::ResourceArray<TextureWrite> textureWrites)
     {
         std::vector<RHIDescriptorWrite> updates;
-        updates.reserve(static_cast<std::size_t>(RendererTexture::Max) +
+        updates.reserve(static_cast<usize>(RendererTexture::Max) +
                         textureWrites->data().size());
 
         // builtin textures (0-6)
@@ -265,7 +265,7 @@ namespace worse
         RHIDevice::resetSpecificDescriptorSets();
     }
 
-    void Renderer::setViewport(float const width, float const height)
+    void Renderer::setViewport(f32 const width, f32 const height)
     {
         WS_ASSERT((width != 0.0f) && (height != 0.0f));
 

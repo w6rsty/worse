@@ -7,9 +7,9 @@ namespace worse::ecs
 
     struct Entity
     {
-        using ValueType   = std::uint64_t;
-        using EntityType  = std::uint64_t;
-        using VersionType = std::uint32_t;
+        using ValueType   = u64;
+        using EntityType  = u64;
+        using VersionType = u32;
 
         ValueType value;
 

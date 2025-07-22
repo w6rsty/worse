@@ -10,14 +10,14 @@ namespace worse
     class FrameConstantData
     {
     public:
-        float deltaTime = 0.0f;
-        float time      = 0.0f;
+        f32 deltaTime = 0.0f;
+        f32 time      = 0.0f;
         math::Vector2 padding0; // align to 16 bytes
 
         math::Vector3 cameraPosition;
-        float cameraNear;
+        f32 cameraNear;
         math::Vector3 cameraForward;
-        float cameraFar;
+        f32 cameraFar;
         math::Vector4 padding1; // align to 16 bytes
 
         math::Matrix4 view;
@@ -36,17 +36,17 @@ namespace worse
             math::Vector3 f30 = math::Vector3::ZERO();
             math::Vector3 f31 = math::Vector3::ZERO();
             math::Vector4 f4  = math::Vector4::ZERO();
-            float materialId  = 0;
-            float transparent = 0; // 0 = false, 1 = true
-            float padding[2];
+            f32 materialId    = 0;
+            f32 transparent   = 0; // 0 = false, 1 = true
+            f32 padding[2];
         } values;
 
         PushConstantData() = default;
 
-        std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> asSpan()
+        std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> asSpan()
         {
-            return std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE>(
-                reinterpret_cast<std::byte*>(this),
+            return std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE>(
+                reinterpret_cast<byte*>(this),
                 sizeof(PushConstantData));
         }
 
@@ -56,9 +56,9 @@ namespace worse
         PushConstantData& setF30(math::Vector3 const& f30)            { values.f30 = f30; return *this; }
         PushConstantData& setF31(math::Vector3 const& f31)            { values.f31 = f31; return *this; }
         PushConstantData& setF4(math::Vector4 const& f4)              { values.f4 = f4; return *this; }
-        PushConstantData& setMaterialId(std::uint32_t const id) { values.materialId = static_cast<std::uint32_t>(id); return *this; }
+        PushConstantData& setMaterialId(u32 const id) { values.materialId = static_cast<u32>(id); return *this; }
         PushConstantData& setTransparent(bool const enable)     { values.transparent = enable ? 1.0f : 0.0f; return *this; }
-        PushConstantData& setPadding(float const p0, float const p1)
+        PushConstantData& setPadding(f32 const p0, f32 const p1)
         {
             values.padding[0] = p0;
             values.padding[1] = p1;

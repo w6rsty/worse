@@ -1,4 +1,5 @@
 #pragma once
+#include "Types.hpp"
 
 #include <limits>
 #include <cmath>
@@ -10,17 +11,17 @@ namespace worse::math
 // for performance concerns, we use assert directly instead of logging
 #define WS_ASSERT_MATH(condition, message) assert((condition) && (message))
 
-    constexpr float F32MIN     = std::numeric_limits<float>::min();
-    constexpr float F32MAX     = std::numeric_limits<float>::max();
-    constexpr float F32INF     = std::numeric_limits<float>::infinity();
-    constexpr float F32NAN     = std::numeric_limits<float>::quiet_NaN();
-    constexpr float F32EPSILON = std::numeric_limits<float>::epsilon();
+    constexpr f32 F32MIN     = std::numeric_limits<f32>::min();
+    constexpr f32 F32MAX     = std::numeric_limits<f32>::max();
+    constexpr f32 F32INF     = std::numeric_limits<f32>::infinity();
+    constexpr f32 F32NAN     = std::numeric_limits<f32>::quiet_NaN();
+    constexpr f32 F32EPSILON = std::numeric_limits<f32>::epsilon();
 
-    constexpr float PI = 3.14159265359f;
+    constexpr f32 PI = 3.14159265359f;
 
     // clang-format off
-    constexpr float toRadians(float const degrees) { return degrees * PI / 180.0f; }
-    constexpr float toDegrees(float const radians) { return radians * 180.0f / PI; }
+    constexpr f32 toRadians(f32 const degrees) { return degrees * PI / 180.0f; }
+    constexpr f32 toDegrees(f32 const radians) { return radians * 180.0f / PI; }
 
     template <typename T>
     concept Arithmetic = std::is_arithmetic_v<T>;
@@ -42,7 +43,7 @@ namespace worse::math
 
     /// Liner interpolation
     template <Arithmetic T>
-    inline constexpr T lerp(T const& a, T const& b, float const t)
+    inline constexpr T lerp(T const& a, T const& b, f32 const t)
     {
         return a + (b - a) * t;
     }

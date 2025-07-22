@@ -7,7 +7,7 @@
 namespace worse
 {
 
-    WS_DEFINE_FLAGS(FileStreamUsage, std::uint32_t);
+    WS_DEFINE_FLAGS(FileStreamUsage, u32);
     struct FileStreamUsageFlagBits
     {
         static constexpr FileStreamUsageFlags Read{1 << 0};

@@ -39,7 +39,7 @@ namespace worse
         static void
         writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites);
 
-        static void setViewport(float const width, float const height);
+        static void setViewport(f32 const width, f32 const height);
         static RHIViewport const& getViewport();
 
         static RHIFormat getSwapchainFormat();
@@ -60,7 +60,7 @@ namespace worse
         static math::Vector2 getResolutionRender();
         static math::Vector2 getResolutionOutput();
 
-        static void setPushParameters(float a, float b);
+        static void setPushParameters(f32 a, f32 b);
         static void setCameraPosition(math::Vector3 const& position);
         static void setCameraForward(math::Vector3 const& forward);
 
@@ -110,7 +110,7 @@ namespace worse
                      ecs::ResourceArray<TextureWrite> textureWrites);
 
     private:
-        static inline std::uint64_t s_frameCount = 0;
+        static inline u64 s_frameCount = 0;
     };
 
 } // namespace worse

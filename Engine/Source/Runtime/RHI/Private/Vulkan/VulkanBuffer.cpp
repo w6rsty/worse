@@ -14,9 +14,9 @@ namespace worse
         // prevent duplicate creation
         nativeDestroy();
 
-        static constexpr std::uint8_t VII_BIT       = 0b0001'0000;
-        static constexpr std::uint8_t VII_MASK      = 0b0000'1111;
-        static constexpr std::uint8_t VII_ONLT_MASK = 0b0011'1111;
+        static constexpr u8 VII_BIT       = 0b0001'0000;
+        static constexpr u8 VII_MASK      = 0b0000'1111;
+        static constexpr u8 VII_ONLT_MASK = 0b0011'1111;
 
         bool isVIIOnly     = false;
         bool isStorageOnly = false;
@@ -45,7 +45,7 @@ namespace worse
             // contain vertex/index/instance
             if (m_usage & VII_BIT)
             {
-                WS_ASSERT_MSG(std::popcount(static_cast<std::uint8_t>(m_usage & VII_MASK)) == 1,
+                WS_ASSERT_MSG(std::popcount(static_cast<u8>(m_usage & VII_MASK)) == 1,
                    "RHIBuffer usage must specify exactly one of: Vertex, Index, or Instance");
 
                 // vertex/index/instance only (check if no storage flag)
@@ -69,10 +69,10 @@ namespace worse
         {
             // correct alignment
             // TODO: query this from device
-            static constexpr std::size_t MIN_ALIGNMENT = 0x10;
+            static constexpr usize MIN_ALIGNMENT = 0x10;
             if (m_stride != MIN_ALIGNMENT)
             {
-                m_stride = static_cast<std::uint32_t>((m_stride + MIN_ALIGNMENT - 1) & ~(MIN_ALIGNMENT - 1));
+                m_stride = static_cast<u32>((m_stride + MIN_ALIGNMENT - 1) & ~(MIN_ALIGNMENT - 1));
                 m_size = m_stride * m_elementCount;
             }
         }
@@ -172,7 +172,7 @@ namespace worse
     }
 
     void RHIBuffer::update(RHICommandList* cmdList, void const* cpuData,
-                           std::uint32_t const size)
+                           u32 const size)
     {
         if (!cmdList)
         {

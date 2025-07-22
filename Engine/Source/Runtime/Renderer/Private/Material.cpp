@@ -10,9 +10,9 @@ namespace worse
     namespace
     {
         // Helper function to get texture index with fallback
-        std::size_t getTextureIndex(
+        usize getTextureIndex(
             const std::optional<AssetHandle>& handle,
-            const std::unordered_map<AssetHandle, std::size_t>& textureIndexMap,
+            const std::unordered_map<AssetHandle, usize>& textureIndexMap,
             RendererTexture defaultTexture)
         {
             if (handle.has_value())
@@ -28,7 +28,7 @@ namespace worse
                     "Texture handle {} not found in texture map, using default",
                     handle.value());
             }
-            return static_cast<std::size_t>(defaultTexture);
+            return static_cast<usize>(defaultTexture);
         }
     } // namespace
 
@@ -57,13 +57,13 @@ namespace worse
         assetServer->load();
 
         // generate material indices map and descritpor write data
-        std::unordered_map<AssetHandle, std::size_t> textureIndexMap;
+        std::unordered_map<AssetHandle, usize> textureIndexMap;
         {
             textureWrites->clear();
             textureWrites->data().reserve(assetServer->getLoadedCount());
 
             // skip renderer builtin textures
-            std::size_t index = static_cast<std::size_t>(RendererTexture::Max);
+            usize index = static_cast<usize>(RendererTexture::Max);
             assetServer->eachAsset(
             [&index, &textureWrites, &textureIndexMap]
             (AssetHandle handle, RHITexture* texture)
@@ -78,7 +78,7 @@ namespace worse
         materialGPUs->data().resize(materials->size());
 
         // Convert each CPU material to GPU format, maintaining index correspondence
-        for (std::size_t i = 0; i < materials->size(); ++i)
+        for (usize i = 0; i < materials->size(); ++i)
         {
             StandardMaterial* material = materials.get(i);
             if (!material)

@@ -28,21 +28,21 @@ namespace worse
 
         static void setWindowMode(WindowMode mode);
         static WindowMode getWindowMode();
-        static void setSize(std::uint32_t const w, std::uint32_t const h);
-        static std::uint32_t getWidth();
-        static std::uint32_t getHeight();
-        static void setPosition(std::int32_t const x, std::int32_t const y);
+        static void setSize(u32 const w, u32 const h);
+        static u32 getWidth();
+        static u32 getHeight();
+        static void setPosition(i32 const x, i32 const y);
         static std::pair<int, int> getPosition();
 
         static void* getHandleSDL();
         static void* getHandleNative();
 
     private:
-        static inline std::uint32_t s_width  = 1200;
-        static inline std::uint32_t s_height = 720;
-        static inline std::string s_title    = "Window";
-        static inline WindowMode s_mode      = WindowMode::Windowed;
-        static inline bool s_shouldClose     = false;
+        static inline u32 s_width         = 1200;
+        static inline u32 s_height        = 720;
+        static inline std::string s_title = "Window";
+        static inline WindowMode s_mode   = WindowMode::Windowed;
+        static inline bool s_shouldClose  = false;
     };
 
 } // namespace worse

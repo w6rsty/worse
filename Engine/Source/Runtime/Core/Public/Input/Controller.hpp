@@ -15,9 +15,9 @@ namespace worse
 
     struct ControllerDescriptor
     {
-        std::uint32_t joystickID = 0;
-        std::string guid         = "";
-        std::string name         = "Unknown Controller";
+        u32 joystickID   = 0;
+        std::string guid = "";
+        std::string name = "Unknown Controller";
         // between 0 and 100, or NULL to ignore. This will be filled in with -1
         // if can not determine a value or there is no battery.
         int powerPercentage = -1;
@@ -30,16 +30,15 @@ namespace worse
         explicit Controller(ControllerDescriptor const& descriptor);
         ~Controller();
 
-        std::optional<std::uint32_t> getPowerPercentage() const;
-        void setLEDColor(std::uint8_t const red, std::uint8_t const green,
-                         std::uint8_t const blue) const;
+        std::optional<u32> getPowerPercentage() const;
+        void setLEDColor(u8 const red, u8 const green, u8 const blue) const;
         // frequency 0-1
-        void vibrate(float const lowFrequency, float const highFrequency,
-                     std::uint32_t const durationMs) const;
+        void vibrate(f32 const lowFrequency, f32 const highFrequency,
+                     u32 const durationMs) const;
 
         bool isConnected() const;
         void* getHandleSDL() const;
-        std::uint32_t getJoystickID() const;
+        u32 getJoystickID() const;
         std::string const& getGUID() const;
         std::string const& getName() const;
         ControllerType getType() const;
@@ -51,12 +50,12 @@ namespace worse
         bool operator!=(ControllerDescriptor const& other) const;
 
     private:
-        void* m_handle                  = nullptr;
-        std::uint32_t m_joystickID      = 0;
-        std::string m_guid              = "";
-        std::string m_name              = "Unknown Controller";
-        ControllerType m_type           = ControllerType::Common;
-        std::uint16_t m_firmwareVersion = 0;
+        void* m_handle        = nullptr;
+        u32 m_joystickID      = 0;
+        std::string m_guid    = "";
+        std::string m_name    = "Unknown Controller";
+        ControllerType m_type = ControllerType::Common;
+        u16 m_firmwareVersion = 0;
     };
 
 } // namespace worse

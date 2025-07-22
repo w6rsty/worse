@@ -126,7 +126,7 @@ namespace worse
         }
     }
 
-    std::size_t AssetServer::getLoadedCount() const
+    usize AssetServer::getLoadedCount() const
     {
         std::lock_guard<std::mutex> lock(m_mtx);
         return std::count_if(m_assets.begin(),

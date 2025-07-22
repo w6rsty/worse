@@ -10,7 +10,8 @@ namespace worse
         WindowResized,
         Max
     };
-    static constexpr std::size_t k_eventTypeCount = static_cast<std::size_t>(EventType::Max);
+    static constexpr usize k_eventTypeCount =
+        static_cast<usize>(EventType::Max);
 
     using Event            = std::variant<std::monostate, int, void*>;
     using EventSubscribeFn = std::function<void(Event const&)>;
@@ -19,6 +20,7 @@ namespace worse
     {
     public:
         static void subscribe(EventType const type, EventSubscribeFn&& fn);
-        static void fire(EventType const type, Event const& payload = std::monostate{});
+        static void fire(EventType const type,
+                         Event const& payload = std::monostate{});
     };
 } // namespace worse

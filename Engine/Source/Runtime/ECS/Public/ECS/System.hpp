@@ -226,7 +226,7 @@ namespace worse::ecs
         /**
          * @brief Assign ECS data for given parameters
          */
-        template <auto Func, typename ParamList, std::size_t... Idx>
+        template <auto Func, typename ParamList, usize... Idx>
         static constexpr void
         invokeWithResolvedParameters(Registry& registry,
                                      std::index_sequence<Idx...>) noexcept

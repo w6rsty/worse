@@ -20,7 +20,7 @@ namespace worse
         ~RHIPipeline();
 
         // clang-format off
-        std::uint64_t     getDescriptorHash() const { return m_descriptorHash; }
+        u64     getDescriptorHash() const { return m_descriptorHash; }
         RHIPipelineState* getState()                { return &m_state; }
         RHINativeHandle   getHandle() const         { return m_pipeline; }
         RHINativeHandle   getLayout() const         { return m_pipelineLayout; }
@@ -28,7 +28,7 @@ namespace worse
 
     private:
         // use this hash to retrieve descriptor set layout
-        std::uint64_t m_descriptorHash = 0;
+        u64 m_descriptorHash = 0;
 
         RHIPipelineState m_state;
         RHINativeHandle m_pipeline;
@@ -47,7 +47,7 @@ namespace worse
     private:
         // clang-format off
         // hash by pso
-        std::unordered_map<std::uint64_t, std::shared_ptr<RHIPipeline>> m_pipelines;
+        std::unordered_map<u64, std::shared_ptr<RHIPipeline>> m_pipelines;
         // clang-format on
     };
 

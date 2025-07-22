@@ -7,14 +7,14 @@
 namespace worse
 {
 
-    enum class RendererRasterizerState : std::size_t
+    enum class RendererRasterizerState : usize
     {
         Solid,
         Wireframe,
         Max
     };
 
-    enum class RendererDepthStencilState : std::size_t
+    enum class RendererDepthStencilState : usize
     {
         Off,
         ReadWrite,
@@ -24,13 +24,13 @@ namespace worse
         Max
     };
 
-    enum class RendererBlendState : std::size_t
+    enum class RendererBlendState : usize
     {
         Off,
         Max
     };
 
-    enum class RendererShader : std::size_t
+    enum class RendererShader : usize
     {
         PlaceholderV,
         PlaceholderP,
@@ -48,7 +48,7 @@ namespace worse
         Max
     };
 
-    enum class RendererTarget : std::size_t
+    enum class RendererTarget : usize
     {
         Render,
         Output,
@@ -57,7 +57,7 @@ namespace worse
     };
 
     // builtin textures
-    enum class RendererTexture : std::size_t
+    enum class RendererTexture : usize
     {
         Placeholder,
         DefaultAlbedo,
@@ -86,7 +86,7 @@ namespace worse
     }
 
     // builtin pipeline
-    enum class RendererPSO : std::size_t
+    enum class RendererPSO : usize
     {
         DepthPrepass,
         PBR,
@@ -99,7 +99,7 @@ namespace worse
     struct TextureWrite
     {
         RHITexture* texture;
-        std::size_t index;
+        usize index;
     };
 
 } // namespace worse

@@ -11,7 +11,7 @@
 namespace worse
 {
 
-    using AssetHandle = std::uint64_t;
+    using AssetHandle = u64;
 
     enum class AssetState
     {
@@ -46,7 +46,7 @@ namespace worse
         bool isLoaded(AssetHandle const handle) const;
         AssetState getState(AssetHandle const handle) const;
         RHITexture* getTexture(AssetHandle handle) const;
-        std::size_t getLoadedCount() const;
+        usize getLoadedCount() const;
 
         void eachAsset(std::function<void(AssetHandle, RHITexture*)> const&
                            callback) const;

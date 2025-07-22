@@ -2,6 +2,7 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
 
+#include "Types.hpp"
 #include "Event.hpp"
 #include "Window.hpp"
 #include "RHIDevice.hpp"

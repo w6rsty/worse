@@ -72,7 +72,7 @@ namespace worse::ecs
             std::vector<Event<T>> newEvents;
             newEvents.reserve(m_eventQueue->size() - m_cursor);
 
-            for (std::size_t i = m_cursor; i < m_eventQueue->size(); ++i)
+            for (usize i = m_cursor; i < m_eventQueue->size(); ++i)
             {
                 Event<T> const& event = (*m_eventQueue)[i];
 
@@ -132,19 +132,19 @@ namespace worse::ecs
         }
 
         // Get statistics
-        std::size_t getEventsRead() const
+        usize getEventsRead() const
         {
             return m_eventsRead;
         }
-        std::size_t getPendingEvents() const
+        usize getPendingEvents() const
         {
             return m_eventQueue ? (m_eventQueue->size() - m_cursor) : 0;
         }
 
     private:
         std::vector<Event<T>>* m_eventQueue = nullptr;
-        std::size_t m_cursor                = 0;
-        std::size_t m_eventsRead            = 0;
+        usize m_cursor                      = 0;
+        usize m_eventsRead                  = 0;
         std::vector<EventFilter<T>> m_filters;
     };
 
@@ -153,11 +153,11 @@ namespace worse::ecs
     {
         struct IEventChannel
         {
-            virtual ~IEventChannel()                    = default;
-            virtual void swapBuffer()                   = 0;
-            virtual std::size_t getPendingCount() const = 0;
-            virtual std::size_t getTotalSent() const    = 0;
-            virtual void cleanupExpiredReaders()        = 0;
+            virtual ~IEventChannel()              = default;
+            virtual void swapBuffer()             = 0;
+            virtual usize getPendingCount() const = 0;
+            virtual usize getTotalSent() const    = 0;
+            virtual void cleanupExpiredReaders()  = 0;
         };
 
         template <typename T> struct EventChannel : public IEventChannel
@@ -166,7 +166,7 @@ namespace worse::ecs
             std::vector<Event<T>> queues[2];
             std::atomic<int> activeQueueIndex{0};
             std::vector<std::weak_ptr<EventReader<T>>> readers;
-            std::atomic<std::size_t> totalEventsSent{0};
+            std::atomic<usize> totalEventsSent{0};
 
             // Priority queue for immediate dispatch
             // clang-format off
@@ -216,13 +216,13 @@ namespace worse::ecs
                 queues[newActive].clear();
             }
 
-            std::size_t getPendingCount() const override
+            usize getPendingCount() const override
             {
                 std::lock_guard<std::mutex> lock(mutex);
                 return queues[activeQueueIndex.load()].size();
             }
 
-            std::size_t getTotalSent() const override
+            usize getTotalSent() const override
             {
                 return totalEventsSent.load();
             }
@@ -354,20 +354,20 @@ namespace worse::ecs
         // =========================================================================
         // Statistics
         // =========================================================================
-        template <typename T> std::size_t getPendingEvents() const
+        template <typename T> usize getPendingEvents() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getPendingCount();
         }
 
-        template <typename T> std::size_t getTotalEventsSent() const
+        template <typename T> usize getTotalEventsSent() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getTotalSent();
         }
 
         // get amount of registered event type
-        std::size_t getEventTypeCount() const
+        usize getEventTypeCount() const
         {
             std::lock_guard<std::mutex> lock(m_mtxChannels);
             return m_channels.size();

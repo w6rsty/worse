@@ -52,7 +52,7 @@ namespace worse
                 if ((descriptorType == RHIDescriptorType::PushConstant) ||
                     (descriptorType == RHIDescriptorType::UniformBuffer))
                 {
-                    descriptor.size = static_cast<std::uint32_t>(hlsl.get_declared_struct_size(spirvType));
+                    descriptor.size = static_cast<u32>(hlsl.get_declared_struct_size(spirvType));
                 }
                 descriptor.isArray     = spirvType.array.size() > 0;
                 descriptor.arrayLength = descriptor.isArray ? spirvType.array[0] : 0;
@@ -124,7 +124,7 @@ namespace worse
         // clang-format off
         VkShaderModuleCreateInfo infoShader = {};
         infoShader.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        infoShader.pCode                    = static_cast<std::uint32_t*>(codeBlob->GetBufferPointer());
+        infoShader.pCode                    = static_cast<u32*>(codeBlob->GetBufferPointer());
         infoShader.codeSize                 = codeBlob->GetBufferSize();
         // clang-format on
 
@@ -137,17 +137,16 @@ namespace worse
         RHIDevice::setResourceName(shader, m_name);
 
         reflect(m_shaderType,
-                static_cast<std::uint32_t*>(codeBlob->GetBufferPointer()),
-                codeBlob->GetBufferSize() / sizeof(std::uint32_t));
+                static_cast<u32*>(codeBlob->GetBufferPointer()),
+                codeBlob->GetBufferSize() / sizeof(u32));
 
         codeBlob.Release();
 
         return shader;
     }
 
-    void RHIShader::reflect(RHIShaderType const shaderType,
-                            std::uint32_t* spirvData,
-                            std::size_t const spirvSize)
+    void RHIShader::reflect(RHIShaderType const shaderType, u32* spirvData,
+                            usize const spirvSize)
     {
         WS_ASSERT(spirvData != nullptr);
         WS_ASSERT(spirvSize > 0);

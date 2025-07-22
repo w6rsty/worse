@@ -14,7 +14,7 @@ namespace worse
     // ECS index
     struct Mesh3D
     {
-        std::size_t index;
+        usize index;
         RHIPrimitiveTopology primitiveTopology =
             RHIPrimitiveTopology::TriangleList;
     };
@@ -27,50 +27,50 @@ namespace worse
     struct CustomMesh3D : StandardMesh3D
     {
         std::vector<RHIVertexPosUvNrmTan> vertices;
-        std::optional<std::vector<std::uint32_t>> indices = std::nullopt;
+        std::optional<std::vector<u32>> indices = std::nullopt;
     };
 
     struct Quad3D : StandardMesh3D
     {
-        float width  = 1.0f;
-        float height = 1.0f;
+        f32 width  = 1.0f;
+        f32 height = 1.0f;
     };
 
     struct Cube : StandardMesh3D
     {
-        float width  = 1.0f;
-        float height = 1.0f;
-        float depth  = 1.0f;
+        f32 width  = 1.0f;
+        f32 height = 1.0f;
+        f32 depth  = 1.0f;
     };
 
     struct Sphere : StandardMesh3D
     {
-        float radius           = 0.5f;
-        std::uint32_t segments = 32; // horizontal segments
-        std::uint32_t rings    = 16; // vertical segments
+        f32 radius   = 0.5f;
+        u32 segments = 32; // horizontal segments
+        u32 rings    = 16; // vertical segments
     };
 
     struct Cylinder : StandardMesh3D
     {
-        float radius           = 0.5f;
-        float height           = 1.0f;
-        std::uint32_t segments = 32; // horizontal segments
+        f32 radius   = 0.5f;
+        f32 height   = 1.0f;
+        u32 segments = 32; // horizontal segments
     };
 
     struct Capsule3D : StandardMesh3D
     {
-        float radius           = 0.5f;
-        float height           = 2.0f;
-        std::uint32_t segments = 32; // horizontal segments
-        std::uint32_t rings    = 16; // vertical segments
+        f32 radius   = 0.5f;
+        f32 height   = 2.0f;
+        u32 segments = 32; // horizontal segments
+        u32 rings    = 16; // vertical segments
     };
 
     struct MeshLod
     {
-        std::uint32_t vertexCount;
-        std::uint32_t vertexOffset;
-        std::uint32_t indexCount;
-        std::uint32_t indexOffset;
+        u32 vertexCount;
+        u32 vertexOffset;
+        u32 indexCount;
+        u32 indexOffset;
 
         math::BoundingBox boundingBox;
     };
@@ -92,13 +92,12 @@ namespace worse
             if constexpr (std::is_same_v<T, CustomMesh3D>)
             {
                 addGeometry(standardMesh.vertices,
-                            standardMesh.indices.value_or(
-                                std::vector<std::uint32_t>{}));
+                            standardMesh.indices.value_or(std::vector<u32>{}));
                 return;
             }
 
             std::vector<RHIVertexPosUvNrmTan> vertices;
-            std::vector<std::uint32_t> indices;
+            std::vector<u32> indices;
 
             if constexpr (std::is_same_v<T, Quad3D>)
             {
@@ -151,7 +150,7 @@ namespace worse
 
         // TODO: Now just lod0
         void addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,
-                         std::vector<std::uint32_t> const& indices);
+                         std::vector<u32> const& indices);
 
         void createGPUBuffers();
 
@@ -162,7 +161,7 @@ namespace worse
 
     private:
         std::vector<RHIVertexPosUvNrmTan> m_vertices;
-        std::vector<std::uint32_t> m_indices;
+        std::vector<u32> m_indices;
         std::vector<SubMesh> m_subMeshes;
 
         std::shared_ptr<RHIBuffer> m_vertexBuffer = nullptr;

@@ -17,13 +17,13 @@ namespace worse::ecs
         // Optimized: Cache the minimum storage and use direct intersection
         auto findMinimumSizeStorage()
         {
-            std::size_t minSize = m_entityStorage.size();
-            std::size_t minIndex = std::numeric_limits<std::size_t>::max();
+            usize minSize = m_entityStorage.size();
+            usize minIndex = std::numeric_limits<usize>::max();
 
             std::apply(
                 [&minSize, &minIndex](auto&... storages)
                 {
-                    std::size_t currentIndex = 0;
+                    usize currentIndex = 0;
                     (((storages.size() < minSize) ? (minSize = storages.size(), minIndex = currentIndex, 0) : 0, ++currentIndex), ...);
                 },
                 m_storages);
@@ -47,7 +47,7 @@ namespace worse::ecs
             // Find minimum storage for iteration
             auto [minSize, minIndex] = findMinimumSizeStorage();
             
-            if (minIndex == std::numeric_limits<std::size_t>::max()) {
+            if (minIndex == std::numeric_limits<usize>::max()) {
                 // Entity storage is smallest, check against all component storages
                 for (auto it = m_entityStorage.IndexSet::begin(); it != m_entityStorage.IndexSet::end(); ++it) {
                     Entity entity = *it;
@@ -73,8 +73,8 @@ namespace worse::ecs
                 m_storages);
         }
 
-        template<std::size_t Index = 0>
-        void intersectWithMinStorage(std::vector<Entity>& validEntities, std::size_t targetIndex)
+        template<usize Index = 0>
+        void intersectWithMinStorage(std::vector<Entity>& validEntities, usize targetIndex)
         {
             if constexpr (Index < sizeof...(Components)) {
                 if (Index == targetIndex) {
@@ -91,13 +91,13 @@ namespace worse::ecs
             }
         }
 
-        template<std::size_t SkipIndex>
+        template<usize SkipIndex>
         bool hasAllOtherComponents(Entity entity) const
         {
             return hasAllOtherComponentsImpl<0, SkipIndex>(entity);
         }
 
-        template<std::size_t Index, std::size_t SkipIndex>
+        template<usize Index, usize SkipIndex>
         bool hasAllOtherComponentsImpl(Entity entity) const
         {
             if constexpr (Index < sizeof...(Components)) {
@@ -112,11 +112,11 @@ namespace worse::ecs
         }
 
         template <typename Func>
-        void iterateOverStorage(Func&& func, const std::pair<std::size_t, std::size_t>& minStorageInfo)
+        void iterateOverStorage(Func&& func, const std::pair<usize, usize>& minStorageInfo)
         {
-            std::size_t minIndex = minStorageInfo.second;
+            usize minIndex = minStorageInfo.second;
 
-            if (minIndex == std::numeric_limits<std::size_t>::max())
+            if (minIndex == std::numeric_limits<usize>::max())
             {
                 // Entity storage is the smallest, iterate over it
                 iterateOverEntityStorage(std::forward<Func>(func));
@@ -153,14 +153,14 @@ namespace worse::ecs
         }
 
         template <typename Func>
-        void iterateOverComponentStorage(Func&& func, std::size_t storageIndex)
+        void iterateOverComponentStorage(Func&& func, usize storageIndex)
         {
             // Use index-based approach to iterate over the specific storage
             iterateOverStorageAtIndex(std::forward<Func>(func), storageIndex, std::index_sequence_for<Components...>{});
         }
 
-        template <typename Func, std::size_t... Is>
-        void iterateOverStorageAtIndex(Func&& func, std::size_t targetIndex, std::index_sequence<Is...>)
+        template <typename Func, usize... Is>
+        void iterateOverStorageAtIndex(Func&& func, usize targetIndex, std::index_sequence<Is...>)
         {
             // Find and iterate over the storage at the target index
             (((Is == targetIndex) ? iterateOverSpecificStorage(std::forward<Func>(func), std::get<Is>(m_storages)) : void()), ...);
@@ -207,7 +207,7 @@ namespace worse::ecs
         void callWithEntityAndFilteredComponents(Func&& func, Entity entity)
         {
             // Count number of non-empty components
-            constexpr std::size_t numNonEmpty = ((!std::is_empty_v<Components>)+...);
+            constexpr usize numNonEmpty = ((!std::is_empty_v<Components>)+...);
 
             if constexpr (numNonEmpty == 0)
             {
@@ -228,7 +228,7 @@ namespace worse::ecs
         void callWithFilteredComponents(Func&& func, Entity entity)
         {
             // Count number of non-empty components
-            constexpr std::size_t numNonEmpty = ((!std::is_empty_v<Components>)+...);
+            constexpr usize numNonEmpty = ((!std::is_empty_v<Components>)+...);
 
             if constexpr (numNonEmpty == 0)
             {
@@ -243,7 +243,7 @@ namespace worse::ecs
             }
         }
 
-        template <std::size_t... Is>
+        template <usize... Is>
         auto buildNonEmptyTuple(Entity entity, std::index_sequence<Is...>)
         {
             // Helper to get component if not empty, otherwise return nothing
@@ -285,10 +285,10 @@ namespace worse::ecs
         }
 
         // size of view at this moment
-        std::size_t size() const
+        usize size() const
         {
             // Use the size of the entity storage as the base size
-            std::size_t minSize = m_entityStorage.size();
+            usize minSize = m_entityStorage.size();
 
             // Check all component storages to find the minimum size
             std::apply(

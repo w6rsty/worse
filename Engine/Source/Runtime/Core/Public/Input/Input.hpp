@@ -42,8 +42,7 @@ namespace worse
         Max
         // clang-format on
     };
-    static constexpr std::size_t k_keyCodeCount =
-        static_cast<std::size_t>(KeyCode::Max);
+    static constexpr usize k_keyCodeCount = static_cast<usize>(KeyCode::Max);
 
     class Input : public NonCopyable, public NonMovable
     {
@@ -86,10 +85,10 @@ namespace worse
         // safe to call even if no controller is connected
         static math::Vector2 const& getThumbStickLeft();
         static math::Vector2 const& getThumbStickRight();
-        static float getThumbStickLeftDistance();
-        static float getThumbStickRightDistance();
-        static float getTriggerLeft();
-        static float getTriggerRight();
+        static f32 getThumbStickLeftDistance();
+        static f32 getThumbStickRightDistance();
+        static f32 getTriggerLeft();
+        static f32 getTriggerRight();
         // must validate that a controller is connected before deferencing
         static Controller* getConnectedController();
 

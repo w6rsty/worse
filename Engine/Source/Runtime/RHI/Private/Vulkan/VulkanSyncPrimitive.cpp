@@ -17,7 +17,7 @@ namespace worse
             resource = RHINativeHandle{fence, RHINativeHandleType::Fence};
         }
 
-        void wait(RHINativeHandle& resource, std::uint64_t const timeoutNs)
+        void wait(RHINativeHandle& resource, u64 const timeoutNs)
         {
             VkFence fence = resource.asValue<VkFence>();
             WS_ASSERT_VK(vkWaitForFences(RHIContext::device,
@@ -68,8 +68,8 @@ namespace worse
                 RHINativeHandle{semaphore, RHINativeHandleType::Semaphore};
         }
 
-        void wait(RHINativeHandle& resource, std::uint64_t const value,
-                  std::uint64_t const timeoutNs)
+        void wait(RHINativeHandle& resource, u64 const value,
+                  u64 const timeoutNs)
         {
             VkSemaphore semaphore = resource.asValue<VkSemaphore>();
 
@@ -84,7 +84,7 @@ namespace worse
                 vkWaitSemaphores(RHIContext::device, &infoWait, timeoutNs));
         }
 
-        void signal(RHINativeHandle& resource, std::uint64_t const value)
+        void signal(RHINativeHandle& resource, u64 const value)
         {
             // clang-format off
             VkSemaphoreSignalInfo infoSignal = {};
@@ -95,9 +95,9 @@ namespace worse
             WS_ASSERT_VK(vkSignalSemaphore(RHIContext::device, &infoSignal));
         }
 
-        std::uint64_t getValue(RHINativeHandle& resource)
+        u64 getValue(RHINativeHandle& resource)
         {
-            std::uint64_t value = 0;
+            u64 value = 0;
             WS_ASSERT_VK(
                 vkGetSemaphoreCounterValue(RHIContext::device,
                                            resource.asValue<VkSemaphore>(),
@@ -130,7 +130,7 @@ namespace worse
         m_handle = {};
     }
 
-    void RHISyncPrimitive::wait(std::uint64_t const timeoutNs)
+    void RHISyncPrimitive::wait(u64 const timeoutNs)
     {
         WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) ||
                   (m_type == RHISyncPrimitiveType::TimelineSemaphore));
@@ -145,7 +145,7 @@ namespace worse
         }
     }
 
-    void RHISyncPrimitive::signal(std::uint64_t const value)
+    void RHISyncPrimitive::signal(u64 const value)
     {
         WS_ASSERT(m_type == RHISyncPrimitiveType::TimelineSemaphore);
 

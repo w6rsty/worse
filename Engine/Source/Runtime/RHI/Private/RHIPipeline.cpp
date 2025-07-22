@@ -12,12 +12,12 @@ namespace worse
         std::vector<RHIDescriptor> descriptors =
             pipelineState.collectDescriptors();
 
-        std::uint64_t hash = 0;
+        u64 hash = 0;
         for (RHIDescriptor const& descriptor : descriptors)
         {
             // clang-format off
-            hash = math::hashCombine(hash, static_cast<std::uint64_t>(descriptor.slot));
-            hash = math::hashCombine(hash, static_cast<std::uint64_t>(descriptor.stageFlags));
+            hash = math::hashCombine(hash, static_cast<u64>(descriptor.slot));
+            hash = math::hashCombine(hash, static_cast<u64>(descriptor.stageFlags));
             // clang-format on
         }
         m_descriptorHash = hash;
@@ -45,8 +45,8 @@ namespace worse
 
     RHIPipeline* RHIPipelinePool::getPipeline(RHIPipelineState const& pso)
     {
-        std::uint64_t hash = pso.getHash();
-        auto it            = m_pipelines.find(hash);
+        u64 hash = pso.getHash();
+        auto it  = m_pipelines.find(hash);
         if (it != m_pipelines.end())
         {
             return it->second.get();

@@ -64,8 +64,8 @@ namespace worse
     {
         // clang-format off
         math::Vector2 renderResolution = getResolutionRender();
-        std::uint32_t renderWidth  = static_cast<std::uint32_t>(renderResolution.x);
-        std::uint32_t renderHeight = static_cast<std::uint32_t>(renderResolution.y);
+        u32 renderWidth  = static_cast<u32>(renderResolution.x);
+        u32 renderHeight = static_cast<u32>(renderResolution.y);
 
         RHIFormat standardFormat = RHIFormat::B8R8G8A8Unorm;
 
@@ -122,20 +122,20 @@ namespace worse
         // clang-format off
 
         {
-            std::uint32_t const width = 4;
-            std::uint32_t const height = 4;
-            std::uint32_t const white = 0xFFFFFFFF;
-            std::uint32_t const grey = 0xFF808080;
-            std::uint32_t pixels[static_cast<std::size_t>(width * height)];
-            for (std::size_t i = 0; i < static_cast<std::size_t>(width * height); ++i)
+            u32 const width = 4;
+            u32 const height = 4;
+            u32 const white = 0xFFFFFFFF;
+            u32 const grey = 0xFF808080;
+            u32 pixels[static_cast<usize>(width * height)];
+            for (usize i = 0; i < static_cast<usize>(width * height); ++i)
             {
-                std::size_t x = i % width;
-                std::size_t y = i / width;
+                usize x = i % width;
+                usize y = i / width;
                 pixels[i] = ((x + y) % 2 == 0) ? white : grey;
             }
             RHITextureMip mip;
-            mip.bytes.resize(sizeof(std::uint32_t) * static_cast<std::size_t>(width * height));
-            std::memcpy(mip.bytes.data(), pixels, sizeof(std::uint32_t) * static_cast<std::size_t>(width * height));
+            mip.bytes.resize(sizeof(u32) * static_cast<usize>(width * height));
+            std::memcpy(mip.bytes.data(), pixels, sizeof(u32) * static_cast<usize>(width * height));
             RHITextureSlice slice;
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
@@ -145,7 +145,7 @@ namespace worse
         }
         // Default Albedo Map: (1.0, 1.0, 1.0, 1.0) = (255, 255, 255, 255) in RGBA8
         {
-            std::uint32_t albedo = 0xFFFFFFFF; // ABGR format: A=255, B=255, G=255, R=255
+            u32 albedo = 0xFFFFFFFF; // ABGR format: A=255, B=255, G=255, R=255
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &albedo, 4);
@@ -158,7 +158,7 @@ namespace worse
         }
         // Default Normal Map: (0.5, 0.5, 1.0, 1.0) in tangent space = (128, 128, 255, 255) in RGBA8
         {
-            std::uint32_t normal = 0xFFFF8080; // ABGR format: A=255, B=128, G=128, R=255
+            u32 normal = 0xFFFF8080; // ABGR format: A=255, B=128, G=128, R=255
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &normal, 4);
@@ -171,7 +171,7 @@ namespace worse
         }
         // Default Metallic: 0.0 (non-metallic) = (0, 0, 0, 255) in RGBA8
         {
-            std::uint32_t metallic = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
+            u32 metallic = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &metallic, 4);
@@ -184,7 +184,7 @@ namespace worse
         }
         // Default Roughness: 0.5 (medium roughness) = (128, 128, 128, 255) in RGBA8
         {
-            std::uint32_t roughness = 0xFF808080; // ABGR format: A=255, B=128, G=128, R=128
+            u32 roughness = 0xFF808080; // ABGR format: A=255, B=128, G=128, R=128
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &roughness, 4);
@@ -197,7 +197,7 @@ namespace worse
         }
         // Default Ambient Occlusion: 1.0 (no occlusion) = (255, 255, 255, 255) in RGBA8
         {
-            std::uint32_t ambientOcclusion = 0xFFFFFFFF; // ABGR format: A=255, B=255, G=255, R=255
+            u32 ambientOcclusion = 0xFFFFFFFF; // ABGR format: A=255, B=255, G=255, R=255
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &ambientOcclusion, 4);
@@ -210,7 +210,7 @@ namespace worse
         }
         // Default Emissive: (0.0, 0.0, 0.0) (no emission) = (0, 0, 0, 255) in RGBA8
         {
-            std::uint32_t emissive = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
+            u32 emissive = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &emissive, 4);
@@ -223,7 +223,7 @@ namespace worse
         }
 
         // clang-format on
-        for (std::size_t i = 0; i < textures.size(); ++i)
+        for (usize i = 0; i < textures.size(); ++i)
         {
             if (auto& texture = textures[i]; !texture || !texture->isValid())
             {
@@ -255,7 +255,7 @@ namespace worse
     void Renderer::createStandardMeshes()
     {
         std::vector<RHIVertexPosUvNrmTan> vertices;
-        std::vector<std::uint32_t> indices;
+        std::vector<u32> indices;
 
         // clang-format off
         geometry::generateQuad3D(vertices, indices);

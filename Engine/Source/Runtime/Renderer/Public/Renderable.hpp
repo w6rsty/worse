@@ -13,8 +13,8 @@ namespace worse
 
     struct Drawcall
     {
-        std::uint32_t meshIndex     = 0;
-        std::uint32_t materialIndex = 0;
+        u32 meshIndex     = 0;
+        u32 materialIndex = 0;
         math::Matrix4 transform;
     };
 
@@ -51,8 +51,8 @@ namespace worse
             if (mesh.primitiveTopology == RHIPrimitiveTopology::PointList)
             {
                 drawcalls->point.emplace_back(
-                    static_cast<std::uint32_t>(mesh.index),
-                    static_cast<std::uint32_t>(material.index),
+                    static_cast<u32>(mesh.index),
+                    static_cast<u32>(material.index),
                     math::makeSRT(transform.scale,
                                 transform.rotation,
                                 transform.position)
@@ -61,8 +61,8 @@ namespace worse
             else
             {
                 drawcalls->solid.emplace_back(
-                    static_cast<std::uint32_t>(mesh.index),
-                    static_cast<std::uint32_t>(material.index),
+                    static_cast<u32>(mesh.index),
+                    static_cast<u32>(material.index),
                     math::makeSRT(transform.scale,
                                 transform.rotation,
                                 transform.position)

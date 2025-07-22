@@ -246,7 +246,7 @@ namespace worse::ecs
             return hasStage(label);
         }
 
-        std::size_t getStageCount() const
+        usize getStageCount() const
         {
             return m_stages.size();
         }

@@ -16,22 +16,22 @@ namespace worse
         ~RHIQueue();
 
         void wait();
-        void submit(void* cmdBuffer, std::uint32_t const waitFlags,
+        void submit(void* cmdBuffer, u32 const waitFlags,
                     RHISyncPrimitive* semaphoreWait,
                     RHISyncPrimitive* semaphoreSignal,
                     RHISyncPrimitive* semaphoreTimeline);
-        void present(RHINativeHandle swapchain, std::uint32_t const imageIndex,
+        void present(RHINativeHandle swapchain, u32 const imageIndex,
                      RHISyncPrimitive* semaphoreWait);
         RHICommandList* nextCommandList();
 
         // clang-format off
-        std::uint32_t getIndex() const { return m_index; }
+        u32 getIndex() const { return m_index; }
         RHIQueueType  getType() const  { return m_type; }
         // clang-format on
 
     private:
         std::array<std::shared_ptr<RHICommandList>, 2> m_cmdLists = {nullptr};
-        std::atomic<std::uint32_t> m_index                        = 0;
+        std::atomic<u32> m_index                                  = 0;
         RHIQueueType m_type = RHIQueueType::Max;
         RHINativeHandle m_handle; // command pool
     };

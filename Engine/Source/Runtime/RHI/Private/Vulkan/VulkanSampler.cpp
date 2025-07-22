@@ -22,7 +22,7 @@ namespace worse
         infoSampler.compareEnable           = m_enableCompare;
         infoSampler.compareOp               = vulkanCompareOp(m_compareOp);
         infoSampler.minLod                  = 0.0f;
-        infoSampler.maxLod                  = std::numeric_limits<float>::max();
+        infoSampler.maxLod                  = std::numeric_limits<f32>::max();
         infoSampler.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
         // clang-format on
 

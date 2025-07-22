@@ -8,7 +8,7 @@
 namespace worse
 {
 
-    WS_DEFINE_FLAGS(RHITextureViewUsage, std::uint32_t);
+    WS_DEFINE_FLAGS(RHITextureViewUsage, u32);
     struct RHITextureViewUsageFlagBits
     {
         // shader resource view, for shader read only
@@ -24,7 +24,7 @@ namespace worse
 
     struct RHITextureMip
     {
-        std::vector<std::byte> bytes;
+        std::vector<byte> bytes;
     };
 
     struct RHITextureSlice
@@ -42,9 +42,8 @@ namespace worse
     public:
         RHITexture() = default;
         // only accept mip 0 texture or texture array
-        RHITexture(RHITextureType const type, std::uint32_t const width,
-                   std::uint32_t const height, std::uint32_t const depth,
-                   std::uint32_t const mipCount, RHIFormat const format,
+        RHITexture(RHITextureType const type, u32 const width, u32 const height,
+                   u32 const depth, u32 const mipCount, RHIFormat const format,
                    RHITextureViewUsageFlags const usage,
                    std::vector<RHITextureSlice> data, std::string const& name);
         RHITexture(std::filesystem::path const& path);
@@ -58,18 +57,18 @@ namespace worse
         bool isFormatStencil() const;
 
         bool hasShaderReadData() const;
-        RHITextureSlice const& getSlice(std::size_t const arrayIndex) const;
-        RHITextureMip const& getMip(std::size_t const arrayIndex,
-                                    std::size_t const mipIndex) const;
+        RHITextureSlice const& getSlice(usize const arrayIndex) const;
+        RHITextureMip const& getMip(usize const arrayIndex,
+                                    usize const mipIndex) const;
 
         bool isValid() const;
 
         // clang-format off
         RHITextureType           getType() const     { return m_type; }
-        std::uint32_t            getWidth() const    { return m_width; }
-        std::uint32_t            getHeight() const   { return m_height; }
-        std::uint32_t            getDepth() const    { return m_depth; }
-        std::uint32_t            getMipCount() const { return m_mipCount; }
+        u32            getWidth() const    { return m_width; }
+        u32            getHeight() const   { return m_height; }
+        u32            getDepth() const    { return m_depth; }
+        u32            getMipCount() const { return m_mipCount; }
         RHIFormat                getFormat() const   { return m_format; }
         RHITextureViewUsageFlags getUsage() const    { return m_usage; }
         RHINativeHandle          getView() const     { return m_rtv; }
@@ -77,12 +76,12 @@ namespace worse
         // clang-format on
 
     private:
-        RHITextureType m_type    = RHITextureType::Max;
-        std::uint32_t m_width    = 0;
-        std::uint32_t m_height   = 0;
-        std::uint32_t m_depth    = 1;
-        std::uint32_t m_mipCount = 1;
-        RHIFormat m_format       = RHIFormat::Max;
+        RHITextureType m_type = RHITextureType::Max;
+        u32 m_width           = 0;
+        u32 m_height          = 0;
+        u32 m_depth           = 1;
+        u32 m_mipCount        = 1;
+        RHIFormat m_format    = RHIFormat::Max;
         RHITextureViewUsageFlags m_usage;
 
         // For texture array and cube map, we have multiple slices

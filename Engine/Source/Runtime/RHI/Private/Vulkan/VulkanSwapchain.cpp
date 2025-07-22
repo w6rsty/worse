@@ -30,7 +30,7 @@ namespace worse
         VkSurfaceFormatKHR getSurfaceFormat(VkSurfaceKHR const surface)
         {
             // TODO: support HDR format
-            std::uint32_t surfaceFormatCount = 0;
+            u32 surfaceFormatCount = 0;
             WS_ASSERT_VK(
                 vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice,
                                                      surface,
@@ -43,7 +43,7 @@ namespace worse
                                                      &surfaceFormatCount,
                                                      surfaceFormats.data()));
 
-            auto formatSelector = [](VkFormat format) -> std::uint32_t
+            auto formatSelector = [](VkFormat format) -> u32
             {
                 switch (format)
                 {
@@ -110,7 +110,7 @@ namespace worse
                 defaultPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
             }
 
-            std::uint32_t presentModeCount = 0;
+            u32 presentModeCount = 0;
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(
                 RHIContext::physicalDevice,
                 surface,
@@ -139,8 +139,8 @@ namespace worse
 
     } // namespace
 
-    RHISwapchain::RHISwapchain(void* sdlWindow, std::uint32_t const width,
-                               std::uint32_t const height,
+    RHISwapchain::RHISwapchain(void* sdlWindow, u32 const width,
+                               u32 const height,
                                RHIPresentMode const presentMode,
                                std::string_view name)
         : RHIResource(name)
@@ -210,7 +210,7 @@ namespace worse
         }
     }
 
-    void RHISwapchain::resize(std::uint32_t width, std::uint32_t height)
+    void RHISwapchain::resize(u32 width, u32 height)
     {
         if (width == m_width && height == m_height)
         {
@@ -239,7 +239,7 @@ namespace worse
             return;
         }
 
-        static std::uint64_t semaphoreIndex = 0;
+        static u64 semaphoreIndex = 0;
         RHISyncPrimitive* semaphoreSignal = m_imageAcquireSemaphores[semaphoreIndex].get();
 
         if (RHICommandList* cmdList = semaphoreSignal->getBelongingCmdList())
@@ -251,8 +251,8 @@ namespace worse
             WS_ASSERT(cmdList->getState() == RHICommandListState::Idle);
         }
 
-        std::uint32_t retryCount          = 0;
-        std::uint32_t const maxRetryCount = 10;
+        u32 retryCount          = 0;
+        u32 const maxRetryCount = 10;
 
         while (retryCount < maxRetryCount)
         {
@@ -362,7 +362,7 @@ namespace worse
 
         // get images
         {
-            std::uint32_t imageCount = 0;
+            u32 imageCount = 0;
             WS_ASSERT_VK(
                 vkGetSwapchainImagesKHR(RHIContext::device,
                                         m_swapchain.asValue<VkSwapchainKHR>(),
@@ -374,9 +374,7 @@ namespace worse
                                         m_swapchain.asValue<VkSwapchainKHR>(),
                                         &imageCount,
                                         swapchainImages.data()));
-            for (std::uint32_t i = 0;
-                 i < static_cast<std::uint32_t>(swapchainImages.size());
-                 ++i)
+            for (u32 i = 0; i < static_cast<u32>(swapchainImages.size()); ++i)
             {
                 m_rts[i] = RHINativeHandle{swapchainImages[i],
                                            RHINativeHandleType::Image};
@@ -385,7 +383,7 @@ namespace worse
 
         // create image views
         {
-            for (std::uint32_t i = 0; i < s_bufferCount; ++i)
+            for (u32 i = 0; i < s_bufferCount; ++i)
             {
                 // destroy old one
                 if (m_rtvs[i])
@@ -419,8 +417,7 @@ namespace worse
         }
 
         // create sync primtives
-        for (std::uint32_t i = 0;
-             i < static_cast<std::uint32_t>(m_imageAcquireSemaphores.size());
+        for (u32 i = 0; i < static_cast<u32>(m_imageAcquireSemaphores.size());
              ++i)
         {
             m_imageAcquireSemaphores[i] = std::make_shared<RHISyncPrimitive>(

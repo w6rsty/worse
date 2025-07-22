@@ -30,7 +30,7 @@ namespace worse
         return true;
     }
 
-    std::size_t RingBuffer::size() const noexcept
+    usize RingBuffer::size() const noexcept
     {
         return m_head.load(std::memory_order_acquire) -
                m_tail.load(std::memory_order_acquire);
@@ -84,7 +84,7 @@ namespace worse
         waitShutdown();
     }
 
-    void Logger::formatOutput(Message const& msg, char* line, std::size_t size)
+    void Logger::formatOutput(Message const& msg, char* line, usize size)
     {
         auto t  = std::chrono::system_clock::to_time_t(msg.time);
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(

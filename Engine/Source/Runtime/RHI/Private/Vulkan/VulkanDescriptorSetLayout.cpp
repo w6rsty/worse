@@ -11,7 +11,7 @@ namespace worse
         std::vector<VkDescriptorSetLayoutBinding> bindings(m_descriptors.size());
         std::vector<VkDescriptorBindingFlags> bindingFlags(m_descriptors.size());
 
-        for (std::size_t i = 0; i < m_descriptors.size(); ++i)
+        for (usize i = 0; i < m_descriptors.size(); ++i)
         {
             RHIDescriptor const& descriptor       = m_descriptors[i];
             VkDescriptorSetLayoutBinding& layoutBinding = bindings[i];
@@ -29,14 +29,14 @@ namespace worse
 
         VkDescriptorSetLayoutBindingFlagsCreateInfo infoBindingFlags = {};
         infoBindingFlags.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-        infoBindingFlags.bindingCount  = static_cast<std::uint32_t>(bindingFlags.size());
+        infoBindingFlags.bindingCount  = static_cast<u32>(bindingFlags.size());
         infoBindingFlags.pBindingFlags = bindingFlags.data();
 
         VkDescriptorSetLayoutCreateInfo infoLayout = {};
         infoLayout.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         infoLayout.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
         infoLayout.pNext        = &infoBindingFlags;
-        infoLayout.bindingCount = static_cast<std::uint32_t>(bindings.size());
+        infoLayout.bindingCount = static_cast<u32>(bindings.size());
         infoLayout.pBindings    = bindings.data();
 
         VkDescriptorSetLayout vkLayout = VK_NULL_HANDLE;

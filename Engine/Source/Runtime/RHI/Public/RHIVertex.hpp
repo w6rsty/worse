@@ -19,10 +19,10 @@ namespace worse
     struct RHIVertexAttribute
     {
         std::string name;
-        std::uint32_t location;
-        std::uint32_t binding;
+        u32 location;
+        u32 binding;
         RHIFormat format;
-        std::uint32_t offset;
+        u32 offset;
     };
 
     class RHIInputLayout : public RHIResource
@@ -73,7 +73,7 @@ namespace worse
         // clang-format off
         RHIVertexType                          getType() const       { return m_type; }
         std::vector<RHIVertexAttribute> const& getAttributes() const { return m_attributes; }
-        std::uint32_t                          getStride() const     { return m_stride; }
+        u32                          getStride() const     { return m_stride; }
         
         bool operator==(RHIInputLayout const& other) const { return m_type == other.m_type; }
         bool operator!=(RHIInputLayout const& other) const { return !(*this == other); }
@@ -82,7 +82,7 @@ namespace worse
     private:
         RHIVertexType m_type = RHIVertexType::None;
         std::vector<RHIVertexAttribute> m_attributes;
-        std::uint32_t m_stride = 0;
+        u32 m_stride = 0;
     };
 
 } // namespace worse

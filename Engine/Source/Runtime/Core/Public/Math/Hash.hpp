@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Types.hpp"
 #include <cstdint>
 #include <concepts>
 
@@ -8,11 +8,11 @@ namespace worse::math
 
     template <typename T>
     concept Hashable = requires(T a) {
-        { a.hash() } -> std::convertible_to<std::uint64_t>;
+        { a.hash() } -> std::convertible_to<u64>;
     } || requires(T a) {
-        { hash(a) } -> std::convertible_to<std::uint64_t>;
+        { hash(a) } -> std::convertible_to<u64>;
     } || requires(T a) {
-        { std::hash<T>{}(a) } -> std::convertible_to<std::uint64_t>;
+        { std::hash<T>{}(a) } -> std::convertible_to<u64>;
     };
 
     class Hash
@@ -35,17 +35,16 @@ namespace worse::math
             return m_hash != other.m_hash;
         }
 
-        constexpr std::uint64_t getValue() const
+        constexpr u64 getValue() const
         {
             return m_hash;
         }
 
     private:
-        std::uint64_t m_hash = 0;
+        u64 m_hash = 0;
     };
 
-    static constexpr std::uint64_t hashCombine(std::uint64_t seed,
-                                               std::uint64_t x)
+    static constexpr u64 hashCombine(u64 seed, u64 x)
     {
         return seed ^ (x + 0x9e3779b9 + (seed << 6) + (seed >> 2));
     }

@@ -13,12 +13,12 @@ namespace worse
                          std::string_view name);
         ~RHISyncPrimitive();
 
-        void wait(std::uint64_t const timeoutNs);
-        void signal(std::uint64_t const value);
+        void wait(u64 const timeoutNs);
+        void signal(u64 const value);
         bool isSignaled();
         void reset();
 
-        std::uint64_t getNextSignalValue();
+        u64 getNextSignalValue();
         RHINativeHandle getHandle() const;
         void setBelongingCmdList(RHICommandList* cmdList);
         RHICommandList* getBelongingCmdList() const;
@@ -27,7 +27,7 @@ namespace worse
 
     private:
         RHISyncPrimitiveType m_type        = RHISyncPrimitiveType::Max;
-        std::uint64_t m_value              = 0; // timeline counter
+        u64 m_value                        = 0; // timeline counter
         RHICommandList* m_belongingCmdList = nullptr;
         RHINativeHandle m_handle;
     };

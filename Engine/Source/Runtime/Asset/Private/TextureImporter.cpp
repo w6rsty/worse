@@ -43,7 +43,7 @@ namespace worse
             // Now size matches the format (always 4 channels)
             textureData->size = width * height * desiredChannels;
             textureData->deferredCopyFn =
-                [data, size = textureData->size](std::byte* dst)
+                [data, size = textureData->size](byte* dst)
             {
                 std::memcpy(dst, data, size);
                 stbi_image_free(data);

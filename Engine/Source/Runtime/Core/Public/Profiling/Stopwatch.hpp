@@ -20,17 +20,17 @@ namespace worse::profiling
             m_start = std::chrono::high_resolution_clock::now();
         }
 
-        float elapsedMs() const
+        f32 elapsedMs() const
         {
             auto end = std::chrono::high_resolution_clock::now();
-            return std::chrono::duration<float, std::milli>(end - m_start)
+            return std::chrono::duration<f32, std::milli>(end - m_start)
                 .count();
         }
 
-        float elapsedSec() const
+        f32 elapsedSec() const
         {
             auto end = std::chrono::high_resolution_clock::now();
-            return std::chrono::duration<float>(end - m_start).count();
+            return std::chrono::duration<f32>(end - m_start).count();
         }
 
     private:

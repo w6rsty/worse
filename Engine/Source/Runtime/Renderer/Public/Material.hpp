@@ -12,7 +12,7 @@ namespace worse
     // ECS index
     struct MeshMaterial
     {
-        std::size_t index;
+        usize index;
     };
 
     // Renderer texture
@@ -23,10 +23,10 @@ namespace worse
 
         std::optional<AssetHandle> normalTexture = std::nullopt;
 
-        float metallic                             = 1.0f;
+        f32 metallic                               = 1.0f;
         std::optional<AssetHandle> metallicTexture = std::nullopt;
 
-        float roughness                             = 1.0f;
+        f32 roughness                               = 1.0f;
         std::optional<AssetHandle> roughnessTexture = std::nullopt;
 
         std::optional<AssetHandle> ambientOcclusionTexture = std::nullopt;
@@ -37,14 +37,14 @@ namespace worse
 
     struct StandardMaterialGPU
     {
-        std::uint32_t albedoTextureIndex;
-        std::uint32_t normalTextureIndex;
-        std::uint32_t metallicTextureIndex;
-        std::uint32_t roughnessTextureIndex;
-        std::uint32_t ambientOcclusionTextureIndex;
-        std::uint32_t emissiveTextureIndex;
-        float metallic;
-        float roughness;
+        u32 albedoTextureIndex;
+        u32 normalTextureIndex;
+        u32 metallicTextureIndex;
+        u32 roughnessTextureIndex;
+        u32 ambientOcclusionTextureIndex;
+        u32 emissiveTextureIndex;
+        f32 metallic;
+        f32 roughness;
         math::Vector4 albedo;
         math::Vector4 emissive;
     };

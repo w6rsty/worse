@@ -1,4 +1,6 @@
 #pragma once
+#include "Types.hpp"
+
 #include <utility>
 #include <vector>
 
@@ -65,25 +67,25 @@ namespace worse::ecs
     public:
         ResourceArrayWrapper() = default;
 
-        template <typename... Args> std::size_t add(Args&&... args)
+        template <typename... Args> usize add(Args&&... args)
         {
             resources.emplace_back(std::forward<Args>(args)...);
             return resources.size() - 1;
         }
 
-        std::size_t add(T&& resource)
+        usize add(T&& resource)
         {
             resources.push_back(std::move(resource));
             return resources.size() - 1;
         }
 
-        std::size_t add(T const& resource)
+        usize add(T const& resource)
         {
             resources.push_back(resource);
             return resources.size() - 1;
         }
 
-        bool remove(std::size_t const index)
+        bool remove(usize const index)
         {
             if (index >= resources.size())
             {
@@ -93,7 +95,7 @@ namespace worse::ecs
             return true;
         }
 
-        T const* get(std::size_t const index) const
+        T const* get(usize const index) const
         {
             if (index >= resources.size())
             {
@@ -102,7 +104,7 @@ namespace worse::ecs
             return &resources[index];
         }
 
-        T* get(std::size_t const index)
+        T* get(usize const index)
         {
             if (index >= resources.size())
             {
@@ -111,7 +113,7 @@ namespace worse::ecs
             return &resources[index];
         }
 
-        std::size_t size() const
+        usize size() const
         {
             return resources.size();
         }
@@ -147,37 +149,37 @@ namespace worse::ecs
         {
         }
 
-        template <typename... Args> std::size_t add(Args&&... args)
+        template <typename... Args> usize add(Args&&... args)
         {
             return m_ptr ? m_ptr->add(std::forward<Args>(args)...) : 0;
         }
 
-        std::size_t add(T&& resource)
+        usize add(T&& resource)
         {
             return m_ptr ? m_ptr->add(std::move(resource)) : 0;
         }
 
-        std::size_t add(T const& resource)
+        usize add(T const& resource)
         {
             return m_ptr ? m_ptr->add(resource) : 0;
         }
 
-        bool remove(std::size_t const index)
+        bool remove(usize const index)
         {
             return m_ptr ? m_ptr->remove(index) : false;
         }
 
-        T const* get(std::size_t const index) const
+        T const* get(usize const index) const
         {
             return m_ptr ? m_ptr->get(index) : nullptr;
         }
 
-        T* get(std::size_t const index)
+        T* get(usize const index)
         {
             return m_ptr ? m_ptr->get(index) : nullptr;
         }
 
-        std::size_t size() const
+        usize size() const
         {
             return m_ptr ? m_ptr->size() : 0;
         }

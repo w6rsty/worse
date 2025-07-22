@@ -49,7 +49,7 @@ namespace worse
         }
     }
 
-    std::optional<std::uint32_t> Controller::getPowerPercentage() const
+    std::optional<u32> Controller::getPowerPercentage() const
     {
         if (!isConnected())
         {
@@ -73,9 +73,8 @@ namespace worse
         }
     }
 
-    void Controller::setLEDColor(std::uint8_t const red,
-                                 std::uint8_t const green,
-                                 std::uint8_t const blue) const
+    void Controller::setLEDColor(u8 const red, u8 const green,
+                                 u8 const blue) const
     {
         if (!isConnected())
         {
@@ -93,21 +92,20 @@ namespace worse
         }
     }
 
-    void Controller::vibrate(float const lowFrequency,
-                             float const highFrequency,
-                             std::uint32_t const durationMs) const
+    void Controller::vibrate(f32 const lowFrequency, f32 const highFrequency,
+                             u32 const durationMs) const
     {
         if (!isConnected())
         {
             return;
         }
 
-        float low  = std::clamp(lowFrequency, 0.0f, 1.0f);
-        float high = std::clamp(highFrequency, 0.0f, 1.0f);
+        f32 low  = std::clamp(lowFrequency, 0.0f, 1.0f);
+        f32 high = std::clamp(highFrequency, 0.0f, 1.0f);
 
         if (!SDL_RumbleGamepad(static_cast<SDL_Gamepad*>(m_handle),
-                               static_cast<std::uint16_t>(low * 65535.0f),
-                               static_cast<std::uint16_t>(high * 65535.0f),
+                               static_cast<u16>(low * 65535.0f),
+                               static_cast<u16>(high * 65535.0f),
                                durationMs))
         {
             WS_LOG_ERROR("Controller",
@@ -131,7 +129,7 @@ namespace worse
         return m_handle;
     }
 
-    std::uint32_t Controller::getJoystickID() const
+    u32 Controller::getJoystickID() const
     {
         return m_joystickID;
     }

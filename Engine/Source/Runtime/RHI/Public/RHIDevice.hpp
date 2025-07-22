@@ -24,7 +24,7 @@ namespace worse
 
         // wait graphics and compute queues
         static void queueWaitAll();
-        static std::uint32_t getQueueIndex(RHIQueueType const type);
+        static u32 getQueueIndex(RHIQueueType const type);
         static RHIQueue* getQueue(RHIQueueType const type);
         static RHINativeHandle getQueueHandle(RHIQueueType const type);
 
@@ -44,13 +44,11 @@ namespace worse
         // used by RHIPipelinePool to create pipeline layout
         static RHIDescriptorSetLayout*
         getSpecificDescriptorSetLayout(RHIPipelineState const& pso);
-        static RHINativeHandle
-        getSpecificDescriptorSet(std::uint64_t descriptorHash);
+        static RHINativeHandle getSpecificDescriptorSet(u64 descriptorHash);
         static void resetSpecificDescriptorSets();
 
-        static RHINativeHandle
-        createImGuiPool(std::uint32_t descriptorCount = 512,
-                        std::uint32_t maxSets         = 512);
+        static RHINativeHandle createImGuiPool(u32 descriptorCount = 512,
+                                               u32 maxSets         = 512);
 
         // get descriptor set layout from pool or create a new one
         static RHIPipeline* getPipeline(RHIPipelineState const& pso);
@@ -61,9 +59,8 @@ namespace worse
 
         static void memoryTextureCreate(RHITexture* texture);
         static void memoryTextureDestroy(RHINativeHandle handle);
-        static RHINativeHandle memoryBufferCreate(std::uint32_t size,
-                                                  std::uint32_t bufferUsage,
-                                                  std::uint32_t memoryProperty,
+        static RHINativeHandle memoryBufferCreate(u32 size, u32 bufferUsage,
+                                                  u32 memoryProperty,
                                                   void const* data,
                                                   std::string_view name);
         static void memoryBufferDestroy(RHINativeHandle handle);

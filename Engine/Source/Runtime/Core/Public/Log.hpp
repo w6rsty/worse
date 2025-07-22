@@ -1,4 +1,5 @@
 #pragma once
+#include "Types.hpp"
 
 #include <atomic>
 #include <array>
@@ -12,7 +13,7 @@
 namespace worse
 {
 
-    enum class Level : std::uint8_t
+    enum class Level : u8
     {
         Trace,
         Debug,
@@ -51,12 +52,12 @@ namespace worse
     class RingBuffer
     {
     public:
-        static constexpr std::size_t k_size = 1024;
-        static constexpr std::size_t k_mask = k_size - 1;
+        static constexpr usize k_size = 1024;
+        static constexpr usize k_mask = k_size - 1;
 
         bool push(Message const& msg) noexcept;
         bool pop(Message& out) noexcept;
-        [[nodiscard]] std::size_t size() const noexcept;
+        [[nodiscard]] usize size() const noexcept;
         [[nodiscard]] bool empty() const noexcept;
 
     private:
@@ -70,8 +71,7 @@ namespace worse
     {
         Logger();
         ~Logger();
-        static void formatOutput(Message const& msg, char* line,
-                                 std::size_t size);
+        static void formatOutput(Message const& msg, char* line, usize size);
 
     public:
         static void initialize();

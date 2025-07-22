@@ -45,10 +45,10 @@ namespace worse
 
         std::vector<char const*> getExtensionsInstance()
         {
-            std::uint32_t sdlExtensionCount{0};
+            u32 sdlExtensionCount{0};
             auto sdlExtensions =
                 SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
-            for (std::uint32_t i = 0; i < sdlExtensionCount; ++i)
+            for (u32 i = 0; i < sdlExtensionCount; ++i)
             {
                 extensionsInstance.emplace_back(sdlExtensions[i]);
             }
@@ -131,7 +131,7 @@ namespace worse
     {
         void select()
         {
-            std::uint32_t gpuCount{0};
+            u32 gpuCount{0};
             WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance,
                                                     &gpuCount,
                                                     nullptr));
@@ -198,9 +198,9 @@ namespace worse
         RHINativeHandle compute  = {};
         RHINativeHandle transfer = {};
 
-        std::uint32_t indexGraphics = std::numeric_limits<std::uint32_t>::max();
-        std::uint32_t indexCompute  = std::numeric_limits<std::uint32_t>::max();
-        std::uint32_t indexTransfer = std::numeric_limits<std::uint32_t>::max();
+        u32 indexGraphics = std::numeric_limits<u32>::max();
+        u32 indexCompute  = std::numeric_limits<u32>::max();
+        u32 indexTransfer = std::numeric_limits<u32>::max();
 
         EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> regular;
 
@@ -210,16 +210,14 @@ namespace worse
         RHIQueue* activeQueue = nullptr;
         EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
 
-        std::uint32_t getQueueFamilyIndex(
+        u32 getQueueFamilyIndex(
             std::vector<VkQueueFamilyProperties> const& queueFamilies,
             VkQueueFlags flags, bool dedicated = true)
         {
             // compute only
             if ((flags & VK_QUEUE_COMPUTE_BIT) == VK_QUEUE_COMPUTE_BIT)
             {
-                for (std::uint32_t i = 0;
-                     i < static_cast<std::uint32_t>(queueFamilies.size());
-                     ++i)
+                for (u32 i = 0; i < static_cast<u32>(queueFamilies.size()); ++i)
                 {
                     if (i == indexGraphics)
                     {
@@ -238,9 +236,7 @@ namespace worse
             // transfer only
             if ((flags & VK_QUEUE_TRANSFER_BIT) == VK_QUEUE_TRANSFER_BIT)
             {
-                for (std::uint32_t i = 0;
-                     i < static_cast<std::uint32_t>(queueFamilies.size());
-                     ++i)
+                for (u32 i = 0; i < static_cast<u32>(queueFamilies.size()); ++i)
                 {
                     if (i == indexGraphics || i == indexCompute)
                     {
@@ -256,9 +252,7 @@ namespace worse
                 }
             }
 
-            for (std::uint32_t i = 0;
-                 i < static_cast<std::uint32_t>(queueFamilies.size());
-                 ++i)
+            for (u32 i = 0; i < static_cast<u32>(queueFamilies.size()); ++i)
             {
                 if ((queueFamilies[i].queueFlags & flags) == flags)
                 {
@@ -277,12 +271,12 @@ namespace worse
             WS_ASSERT_MSG(
                 false,
                 "Failed to find a queue family with the requested flags");
-            return std::numeric_limits<std::uint32_t>::max();
+            return std::numeric_limits<u32>::max();
         }
 
         void detectQueueFamilyIndex(VkPhysicalDevice physicalDevice)
         {
-            std::uint32_t queueFamilyCount{0};
+            u32 queueFamilyCount{0};
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice,
                                                      &queueFamilyCount,
                                                      nullptr);
@@ -341,7 +335,7 @@ namespace worse
         };
 
         std::mutex mtxAllocation;
-        std::unordered_map<std::uint64_t, AllocationData> allocations;
+        std::unordered_map<u64, AllocationData> allocations;
 
         void create()
         {
@@ -453,7 +447,7 @@ namespace worse
             infoInst.ppEnabledLayerNames     = &validation::name;
 
             std::vector<char const*> extensionsInst = extensions::getExtensionsInstance();
-            infoInst.enabledExtensionCount   = static_cast<std::uint32_t>(extensionsInst.size());
+            infoInst.enabledExtensionCount   = static_cast<u32>(extensionsInst.size());
             infoInst.ppEnabledExtensionNames = extensionsInst.data();
             // clang-format on
 
@@ -474,7 +468,7 @@ namespace worse
 
             // queues
             std::vector<VkDeviceQueueCreateInfo> queueInfos;
-            float queuePriority{1.0f};
+            f32 queuePriority{1.0f};
             {
                 queues::detectQueueFamilyIndex(RHIContext::physicalDevice);
                 std::vector queueFamilyIndices{
@@ -502,12 +496,12 @@ namespace worse
             VkDeviceCreateInfo infoDevice      = {};
             infoDevice.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
             infoDevice.pNext                   = deviceFeatures::featureChain;
-            infoDevice.queueCreateInfoCount    = static_cast<std::uint32_t>(queueInfos.size());
+            infoDevice.queueCreateInfoCount    = static_cast<u32>(queueInfos.size());
             infoDevice.pQueueCreateInfos       = queueInfos.data();
             infoDevice.pEnabledFeatures        = &deviceFeatures::featureCore;
 
             std::vector<char const*> extensionsDevice = extensions::getExtensionsDevice();
-            infoDevice.enabledExtensionCount   = static_cast<std::uint32_t>(extensionsDevice.size());
+            infoDevice.enabledExtensionCount   = static_cast<u32>(extensionsDevice.size());
             infoDevice.ppEnabledExtensionNames = extensionsDevice.data();
             // clang-format on
 
@@ -608,7 +602,7 @@ namespace worse
         queues::regular[RHIQueueType::Compute]->wait();
     }
 
-    std::uint32_t RHIDevice::getQueueIndex(RHIQueueType const type)
+    u32 RHIDevice::getQueueIndex(RHIQueueType const type)
     {
         if (type == RHIQueueType::Graphics)
         {
@@ -699,8 +693,7 @@ namespace worse
         return descriptor::specificSet->getDescriptorSetLayout(pso);
     }
 
-    RHINativeHandle
-    RHIDevice::getSpecificDescriptorSet(std::uint64_t descriptorHash)
+    RHINativeHandle RHIDevice::getSpecificDescriptorSet(u64 descriptorHash)
     {
         WS_ASSERT(descriptor::specificSet);
         return descriptor::specificSet->getDescriptorSet(descriptorHash);
@@ -712,8 +705,7 @@ namespace worse
         descriptor::specificSet->resetSets();
     }
 
-    RHINativeHandle RHIDevice::createImGuiPool(std::uint32_t descriptorCount,
-                                               std::uint32_t maxSets)
+    RHINativeHandle RHIDevice::createImGuiPool(u32 descriptorCount, u32 maxSets)
     {
         // Create a new descriptor pool for ImGui
         VkDescriptorPoolSize poolSizes[] = {
@@ -733,9 +725,8 @@ namespace worse
         infoPool.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         infoPool.flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         infoPool.maxSets = maxSets;
-        infoPool.poolSizeCount =
-            static_cast<std::uint32_t>(std::size(poolSizes));
-        infoPool.pPoolSizes = poolSizes;
+        infoPool.poolSizeCount = static_cast<u32>(std::size(poolSizes));
+        infoPool.pPoolSizes    = poolSizes;
 
         VkDescriptorPool pool = VK_NULL_HANDLE;
         WS_ASSERT_VK(vkCreateDescriptorPool(RHIContext::device,
@@ -824,9 +815,8 @@ namespace worse
         }
     }
 
-    RHINativeHandle RHIDevice::memoryBufferCreate(std::uint32_t size,
-                                                  std::uint32_t bufferUsage,
-                                                  std::uint32_t memoryProperty,
+    RHINativeHandle RHIDevice::memoryBufferCreate(u32 size, u32 bufferUsage,
+                                                  u32 memoryProperty,
                                                   void const* data,
                                                   std::string_view name)
     {
@@ -996,7 +986,7 @@ namespace worse
         VkDebugUtilsObjectNameInfoEXT info{};
         info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         info.objectType   = vulkanObjectType(resource.getType());
-        info.objectHandle = resource.asValue<std::uint64_t>();
+        info.objectHandle = resource.asValue<u64>();
         info.pObjectName  = name.data();
         // clang-format on
 

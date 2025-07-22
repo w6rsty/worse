@@ -12,12 +12,11 @@ namespace worse
     {
     public:
         RHISwapchain() = default;
-        RHISwapchain(void* sdlWindow, std::uint32_t const width,
-                     std::uint32_t const height,
+        RHISwapchain(void* sdlWindow, u32 const width, u32 const height,
                      RHIPresentMode const presentMode, std::string_view name);
         ~RHISwapchain();
 
-        void resize(std::uint32_t width, std::uint32_t height);
+        void resize(u32 width, u32 height);
         // response window resize event
         void resizeFitWindow();
 
@@ -25,8 +24,8 @@ namespace worse
         void present(RHICommandList* cmdList);
 
         // clang-format off
-        std::uint32_t getWidth() const                     { return m_width; }
-        std::uint32_t getHeight() const                    { return m_height; }
+        u32 getWidth() const                     { return m_width; }
+        u32 getHeight() const                    { return m_height; }
         RHIFormat getFormat() const                        { return m_format; }
         RHINativeHandle getCurrentRt() const               { return m_rts[m_imageIndex]; }
         RHINativeHandle getCurrentRtv() const              { return m_rtvs[m_imageIndex]; }
@@ -38,16 +37,16 @@ namespace worse
         void create();
 
     private:
-        static inline constexpr std::uint32_t s_bufferCount = 2;
+        static inline constexpr u32 s_bufferCount = 2;
 
-        std::uint32_t m_width        = 0;
-        std::uint32_t m_height       = 0;
+        u32 m_width                  = 0;
+        u32 m_height                 = 0;
         RHIFormat m_format           = RHIFormat::Max;
         RHIPresentMode m_presentMode = RHIPresentMode::Max;
 
-        void* m_sdlWindow          = nullptr;
-        bool m_isDirty             = false;
-        std::uint32_t m_imageIndex = 0;
+        void* m_sdlWindow = nullptr;
+        bool m_isDirty    = false;
+        u32 m_imageIndex  = 0;
         std::array<std::shared_ptr<RHISyncPrimitive>, s_bufferCount * 2>
             m_imageAcquireSemaphores;
 

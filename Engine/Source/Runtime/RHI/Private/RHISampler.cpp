@@ -7,7 +7,7 @@ namespace worse
                            RHIFilter filterMipmap,
                            RHISamplerAddressMode addressMode,
                            RHICompareOperation compareOp, bool enableCompare,
-                           float anisotroy, float mipLodBias)
+                           f32 anisotroy, f32 mipLodBias)
     {
         m_filterMin     = filterMin;
         m_filterMag     = filterMag;

@@ -21,10 +21,10 @@ namespace worse
         // clang-format off
 
         Camera& setProjectionType(ProjectionType type);
-        Camera& setPerspectiveParams(float fovY, float aspect, float nearZ, float farZ);
-        Camera& setOrthoParams(float left, float right, float bottom, float top, float nearZ, float farZ);
-        Camera& setFovY(float fovY) { m_fovV = fovY; recalcProjection(); return *this; }
-        Camera& setAspectRatio(float aspect) { m_aspectRatio = aspect; recalcProjection(); return *this; }
+        Camera& setPerspectiveParams(f32 fovY, f32 aspect, f32 nearZ, f32 farZ);
+        Camera& setOrthoParams(f32 left, f32 right, f32 bottom, f32 top, f32 nearZ, f32 farZ);
+        Camera& setFovY(f32 fovY) { m_fovV = fovY; recalcProjection(); return *this; }
+        Camera& setAspectRatio(f32 aspect) { m_aspectRatio = aspect; recalcProjection(); return *this; }
 
         Camera& setPosition(math::Vector3 const& pos)            { m_position = pos; return *this;}
         Camera& setOrientation(math::Quaternion const& rotation) { m_orientation = rotation; return *this; }
@@ -38,18 +38,18 @@ namespace worse
         math::Matrix4           getViewProjectionMatrix() const { return m_projection * getViewMatrix(); }
         
         // Perspective parameter getters
-        float getFovY() const        { return m_fovV; }
-        float getAspectRatio() const { return m_aspectRatio; }
-        float getNearPlane() const   { return m_nearPlane; }
-        float getFarPlane() const    { return m_farPlane; }
+        f32 getFovY() const        { return m_fovV; }
+        f32 getAspectRatio() const { return m_aspectRatio; }
+        f32 getNearPlane() const   { return m_nearPlane; }
+        f32 getFarPlane() const    { return m_farPlane; }
         
         // Orthographic parameter getters
-        float getOrthoLeft() const   { return m_orthoLeft; }
-        float getOrthoRight() const  { return m_orthoRight; }
-        float getOrthoBottom() const { return m_orthoBottom; }
-        float getOrthoTop() const    { return m_orthoTop; }
-        float getOrthoNear() const   { return m_orthoNearPlane; }
-        float getOrthoFar() const    { return m_orthoFarPlane; }
+        f32 getOrthoLeft() const   { return m_orthoLeft; }
+        f32 getOrthoRight() const  { return m_orthoRight; }
+        f32 getOrthoBottom() const { return m_orthoBottom; }
+        f32 getOrthoTop() const    { return m_orthoTop; }
+        f32 getOrthoNear() const   { return m_orthoNearPlane; }
+        f32 getOrthoFar() const    { return m_orthoFarPlane; }
         
         // Utility methods
         math::Vector3 getForward() const;
@@ -64,17 +64,17 @@ namespace worse
         math::Vector3 m_position       = math::Vector3::ZERO();
         math::Quaternion m_orientation = math::Quaternion::IDENTITY();
 
-        float m_fovV        = math::toRadians(45.f);
-        float m_aspectRatio = 8.0f / 6.0f;
-        float m_nearPlane   = 0.1f;
-        float m_farPlane    = 100.f;
+        f32 m_fovV        = math::toRadians(45.f);
+        f32 m_aspectRatio = 8.0f / 6.0f;
+        f32 m_nearPlane   = 0.1f;
+        f32 m_farPlane    = 100.f;
 
-        float m_orthoLeft      = -10.0f;
-        float m_orthoRight     = 10.0f;
-        float m_orthoBottom    = -10.0f;
-        float m_orthoTop       = 10.0f;
-        float m_orthoNearPlane = -10.0f;
-        float m_orthoFarPlane  = 10.0f;
+        f32 m_orthoLeft      = -10.0f;
+        f32 m_orthoRight     = 10.0f;
+        f32 m_orthoBottom    = -10.0f;
+        f32 m_orthoTop       = 10.0f;
+        f32 m_orthoNearPlane = -10.0f;
+        f32 m_orthoFarPlane  = 10.0f;
 
         math::Matrix4 m_projection = math::Matrix4::IDENTITY();
     };

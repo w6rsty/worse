@@ -13,8 +13,8 @@ namespace worse
     {
         void validate(RHIPipelineState const& pso)
         {
-            std::uint32_t width  = 0;
-            std::uint32_t height = 0;
+            u32 width  = 0;
+            u32 height = 0;
 
             if (pso.renderTargetColorTextures[0])
             {
@@ -64,13 +64,12 @@ namespace worse
             // clang-format on
         }
 
-        std::uint64_t computeHash(RHIPipelineState const& pso)
+        u64 computeHash(RHIPipelineState const& pso)
         {
-            std::uint64_t hash = 0;
+            u64 hash = 0;
 
-            hash = math::hashCombine(
-                hash,
-                static_cast<std::uint64_t>(pso.primitiveTopology));
+            hash = math::hashCombine(hash,
+                                     static_cast<u64>(pso.primitiveTopology));
 
             if (pso.rasterizerState)
             {
@@ -248,13 +247,12 @@ namespace worse
     RHIPipelineStateBuilder&
     RHIPipelineStateBuilder::addShader(RHIShader* shader)
     {
-        m_pso.shaders[static_cast<std::size_t>(shader->getShaderType())] =
-            shader;
+        m_pso.shaders[static_cast<usize>(shader->getShaderType())] = shader;
         return *this;
     }
 
     RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setRenderTargetColorTexture(std::size_t index,
+    RHIPipelineStateBuilder::setRenderTargetColorTexture(usize index,
                                                          RHITexture* texture)
     {
         m_pso.renderTargetColorTextures[index] = texture;
@@ -282,7 +280,7 @@ namespace worse
         return *this;
     }
 
-    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setClearDepth(float depth)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setClearDepth(f32 depth)
     {
         m_pso.clearDepth = depth;
         return *this;

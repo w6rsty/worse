@@ -19,7 +19,7 @@ namespace worse
 
     void Input::pollMouse()
     {
-        float x{0.0f}, y{0.0f};
+        f32 x{0.0f}, y{0.0f};
         SDL_MouseButtonFlags mouseStates = SDL_GetGlobalMouseState(&x, &y);
         math::Vector2 position{x, y};
 
@@ -28,16 +28,16 @@ namespace worse
 
         KeyMap& keymap = Input::GetKeyMap();
         // clang-format off
-        keymap[static_cast<std::size_t>(KeyCode::ClickLeft)]   = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0;
-        keymap[static_cast<std::size_t>(KeyCode::ClickMiddle)] = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE)) != 0;
-        keymap[static_cast<std::size_t>(KeyCode::ClickRight)]  = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0;
+        keymap[static_cast<usize>(KeyCode::ClickLeft)]   = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0;
+        keymap[static_cast<usize>(KeyCode::ClickMiddle)] = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE)) != 0;
+        keymap[static_cast<usize>(KeyCode::ClickRight)]  = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0;
         // clang-format on
     }
 
     void Input::onEventMouse(void* event)
     {
-        SDL_Event* sdlEvent     = static_cast<SDL_Event*>(event);
-        std::uint32_t eventType = sdlEvent->type;
+        SDL_Event* sdlEvent = static_cast<SDL_Event*>(event);
+        u32 eventType       = sdlEvent->type;
 
         if (eventType == SDL_EVENT_MOUSE_WHEEL)
         {
@@ -95,8 +95,8 @@ namespace worse
     math::Vector2 Input::getMousePositionRelativeToWindow()
     {
         auto [windowX, windowY] = Window::getPosition();
-        return math::Vector2{static_cast<float>(s_mousePosition.x - windowX),
-                             static_cast<float>(s_mousePosition.y - windowY)};
+        return math::Vector2{static_cast<f32>(s_mousePosition.x - windowX),
+                             static_cast<f32>(s_mousePosition.y - windowY)};
     }
 
     math::Vector2 Input::getMousePositionRelativeToViewport()

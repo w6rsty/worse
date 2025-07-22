@@ -14,16 +14,16 @@ namespace worse::math
     // Quaternion operations
     // =========================================================================
 
-    inline Vector3 rotateAxisAngle(Vector3 const& v, Vector3 const& axis, float angle)
+    inline Vector3 rotateAxisAngle(Vector3 const& v, Vector3 const& axis, f32 angle)
     {
         Quaternion q = Quaternion::fromAxisAngle(axis, angle);
         Quaternion result = q * Quaternion(0.0f, v) * conjugate(q);
         return result.vector();
     }
 
-    inline Vector3 rotationXAngle(Vector3 const& v, float const angle) { return rotateAxisAngle(v, Vector3::X(), angle); }
-    inline Vector3 rotationYAngle(Vector3 const& v, float const angle) { return rotateAxisAngle(v, Vector3::Y(), angle); }
-    inline Vector3 rotationZAngle(Vector3 const& v, float const angle) { return rotateAxisAngle(v, Vector3::Z(), angle); }
+    inline Vector3 rotationXAngle(Vector3 const& v, f32 const angle) { return rotateAxisAngle(v, Vector3::X(), angle); }
+    inline Vector3 rotationYAngle(Vector3 const& v, f32 const angle) { return rotateAxisAngle(v, Vector3::Y(), angle); }
+    inline Vector3 rotationZAngle(Vector3 const& v, f32 const angle) { return rotateAxisAngle(v, Vector3::Z(), angle); }
 
     inline Vector3 rotationEuler(Vector3 const& v, Vector3 const& euler)
     {
@@ -33,13 +33,13 @@ namespace worse::math
     }
 
     /// Linear interpolation
-    inline Quaternion lerp(Quaternion const& q0, Quaternion const& q1, float const t)
+    inline Quaternion lerp(Quaternion const& q0, Quaternion const& q1, f32 const t)
     {
         return q0 * (1.0f - t) + q1 * t;
     }
 
     /// Normalized linear interpolation
-    inline Quaternion nLerp(Quaternion const& q0, Quaternion const& q1, float const t)
+    inline Quaternion nLerp(Quaternion const& q0, Quaternion const& q1, f32 const t)
     {
         Quaternion q = lerp(q0, q1, t);
         q = normalize(q);
@@ -48,13 +48,13 @@ namespace worse::math
 
     /// Spherical linear interpolation
     /// Slerp will fallback to Nlerp when quaternions are close enough
-    inline Quaternion sLerp(Quaternion const& q0, Quaternion const& q1, float const t)
+    inline Quaternion sLerp(Quaternion const& q0, Quaternion const& q1, f32 const t)
     {
         WS_ASSERT_MATH(isNormalized(q0), "Quat q0 not normalized");
         WS_ASSERT_MATH(isNormalized(q1), "Quat q1 not normalized");
 
-        const float threshold = 0.9995f;
-        float dot = q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+        const f32 threshold = 0.9995f;
+        f32 dot = q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
         
         // If the dot product is negative, take the shorter path by negating one quaternion
         Quaternion q1_corrected = q1;
@@ -69,8 +69,8 @@ namespace worse::math
             return nLerp(q0, q1_corrected, t);
         }
         
-        float angle = std::acos(std::clamp(dot, 0.0f, 1.0f));
-        float sinAngle = std::sin(angle);
+        f32 angle = std::acos(std::clamp(dot, 0.0f, 1.0f));
+        f32 sinAngle = std::sin(angle);
         return (q0 * std::sin(angle * (1.0f - t)) + q1_corrected * std::sin(angle * t)) / sinAngle;
     }
 
@@ -120,7 +120,7 @@ namespace worse::math
 
     inline Vector3 decomposeScale(Matrix4 const& mat)
     {
-        float det = determinant(mat);
+        f32 det = determinant(mat);
         WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
 
         Vector3 scale{
@@ -135,7 +135,7 @@ namespace worse::math
 
     inline Quaternion decomposeRotation(Matrix4 const& mat)
     {
-        float det = determinant(mat);
+        f32 det = determinant(mat);
         WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
 
         Vector3 inv_scale = reciprocal(decomposeScale(mat));
@@ -158,7 +158,7 @@ namespace worse::math
     inline std::tuple<Vector3, Quaternion, Vector3>
     decomposeSRT(Matrix4 const& mat)
     {
-        float det = determinant(mat);
+        f32 det = determinant(mat);
         WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
 
         Vector3 scale{length(mat.col0) * worse::math::signum(det), length(mat.col1), length(mat.col2)};
@@ -183,15 +183,15 @@ namespace worse::math
 
   /// Right-handed Perspective projection matrix
     /// Depth range from [0, 1] (near = 1, far = 0)
-    inline Matrix4 projectionPerspective(float verticalFov, float aspectRatio, float near, float far)
+    inline Matrix4 projectionPerspective(f32 verticalFov, f32 aspectRatio, f32 near, f32 far)
     {
         // Compute the scale factors for x and y directions
-        float f = 1.0f / std::tanf(verticalFov * 0.5f); // Assumes verticalFov is in radians
-        float a = f / aspectRatio;
+        f32 f = 1.0f / std::tanf(verticalFov * 0.5f); // Assumes verticalFov is in radians
+        f32 a = f / aspectRatio;
 
         // Depth scaling and translation terms
-        float b = near / (far - near);
-        float c = near * far / (far - near); 
+        f32 b = near / (far - near);
+        f32 c = near * far / (far - near); 
 
         return Matrix4{
                a, 0.0f,  0.0f,  0.0f,
@@ -203,16 +203,16 @@ namespace worse::math
 
     /// Right-handed Orthographic projection matrix
     /// REVERSED-Z with depth range from [1, 0] (near=1, far=0)
-    inline Matrix4 projectionOrtho(float left, float right, float bottom, float top, float near, float far)
+    inline Matrix4 projectionOrtho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far)
     {
-        float recipW = 1.0f / (right - left);
-        float recipH = 1.0f / (top - bottom);
-        float a      = 2.0f * recipW;
-        float b      = 2.0f * recipH;
-        float tx     = -(right + left) * recipW;
-        float ty     = -(top + bottom) * recipH;   
-        float c      = 1.0f / (far - near);
-        float tz     = far * c;
+        f32 recipW = 1.0f / (right - left);
+        f32 recipH = 1.0f / (top - bottom);
+        f32 a      = 2.0f * recipW;
+        f32 b      = 2.0f * recipH;
+        f32 tx     = -(right + left) * recipW;
+        f32 ty     = -(top + bottom) * recipH;   
+        f32 c      = 1.0f / (far - near);
+        f32 tz     = far * c;
 
         return Matrix4{
             a,    0.0f, 0.0f,   tx,
@@ -224,12 +224,12 @@ namespace worse::math
     /// Right-handed Orthographic projection matrix
     /// With x-y symmetry
     /// REVERSED-Z with depth range from [1, 0] (near=1, far=0)
-    inline Matrix4 projectionOrtho(float right, float top, float near, float far)
+    inline Matrix4 projectionOrtho(f32 right, f32 top, f32 near, f32 far)
     {
-        float a  = 1.0f / right;
-        float b  = 1.0f / top;
-        float c  = 1.0f / (far - near);
-        float tz = far * c;
+        f32 a  = 1.0f / right;
+        f32 b  = 1.0f / top;
+        f32 c  = 1.0f / (far - near);
+        f32 tz = far * c;
 
         return Matrix4{
             a,    0.0f, 0.0f, 0.0f,

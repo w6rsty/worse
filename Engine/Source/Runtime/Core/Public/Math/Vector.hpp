@@ -1,4 +1,5 @@
 #pragma once
+#include "Types.hpp"
 #include "Base.hpp"
 
 #include <cmath>
@@ -18,41 +19,41 @@ namespace worse::math
     public:
         union
         {
-            struct { float x, y; };
-            float data[2];
+            struct { f32 x, y; };
+            f32 data[2];
         };
 
         constexpr Vector2()
             : x(0.0f), y(0.0f) {}
-        constexpr Vector2(float const x, float const y)
+        constexpr Vector2(f32 const x, f32 const y)
             : x(x), y(y) {}
-        explicit Vector2(float const* raw) { std::memcpy(data, raw, sizeof(float) * 2); }
+        explicit Vector2(f32 const* raw) { std::memcpy(data, raw, sizeof(f32) * 2); }
 
-        constexpr float elementSum() const     { return x + y; }
-        constexpr float elementProduct() const { return x * y; }
-        constexpr float elementMax() const     { return std::fmax(x, y); }
-        constexpr float elementMin() const     { return std::fmin(x, y); }
+        constexpr f32 elementSum() const     { return x + y; }
+        constexpr f32 elementProduct() const { return x * y; }
+        constexpr f32 elementMax() const     { return std::fmax(x, y); }
+        constexpr f32 elementMin() const     { return std::fmin(x, y); }
         
         constexpr Vector2  operator+(Vector2 const& other) const { return Vector2(x + other.x, y + other.y); }
         constexpr Vector2  operator-(Vector2 const& other) const { return Vector2(x - other.x, y - other.y); }
-        constexpr Vector2  operator*(float const scalar) const   { return Vector2(x * scalar, y * scalar); }
-        constexpr Vector2  operator/(float const scalar) const {
+        constexpr Vector2  operator*(f32 const scalar) const   { return Vector2(x * scalar, y * scalar); }
+        constexpr Vector2  operator/(f32 const scalar) const {
             WS_ASSERT_MATH(scalar != 0.0f, "Division by zero in Vector2 division");
-            float invScalar = 1.0f / scalar;
+            f32 invScalar = 1.0f / scalar;
             return this->operator*(invScalar);
         }
         constexpr Vector2  operator-() const                     { return Vector2(-x, -y); }
         constexpr Vector2& operator+=(Vector2 const& other)      { x += other.x; y += other.y; return *this; }
         constexpr Vector2& operator-=(Vector2 const& other)      { x -= other.x; y -= other.y; return *this; }
-        constexpr Vector2& operator*=(float const scalar)        { x *= scalar; y *= scalar; return *this; }
-        constexpr Vector2& operator/=(float const scalar) {
+        constexpr Vector2& operator*=(f32 const scalar)        { x *= scalar; y *= scalar; return *this; }
+        constexpr Vector2& operator/=(f32 const scalar) {
             WS_ASSERT_MATH(scalar != 0.0f, "Division by zero in Vector2 division");
-            float invScalar = 1.0f / scalar;
+            f32 invScalar = 1.0f / scalar;
             this->operator*=(invScalar);
             return *this;
         }
         
-        static constexpr Vector2 splat(float const v) { return Vector2(v, v); }
+        static constexpr Vector2 splat(f32 const v) { return Vector2(v, v); }
         static constexpr Vector2 X()       { return Vector2(1.0f, 0.0f); }
         static constexpr Vector2 Y()       { return Vector2(0.0f, 1.0f); }
         static constexpr Vector2 ZERO()    { return splat(0.0f); }
@@ -76,47 +77,47 @@ namespace worse::math
     public:
         union
         {
-            struct { float x, y, z; };
-            float data[3];
+            struct { f32 x, y, z; };
+            f32 data[3];
         };
 
         constexpr Vector3()
             : x(0.0f), y(0.0f), z(0.0f) {}
-        constexpr Vector3(float x, float y, float z)
+        constexpr Vector3(f32 x, f32 y, f32 z)
             : x(x), y(y), z(z) {}
-        explicit Vector3(float const* raw) { std::memcpy(data, raw, sizeof(float) * 3); }
+        explicit Vector3(f32 const* raw) { std::memcpy(data, raw, sizeof(f32) * 3); }
 
-        constexpr Vector3(Vector2 const& v2, float const z) : x(v2.x), y(v2.y), z(z) {}
-        constexpr Vector3(float const x, Vector2 const& v2) : x(x), y(v2.x), z(v2.y) {}
+        constexpr Vector3(Vector2 const& v2, f32 const z) : x(v2.x), y(v2.y), z(z) {}
+        constexpr Vector3(f32 const x, Vector2 const& v2) : x(x), y(v2.x), z(v2.y) {}
 
         constexpr Vector2 xy() const { return Vector2(x, y); }
         constexpr Vector2 yz() const { return Vector2(y, z); }
 
-        constexpr float elementSum() const     { return x + y + z; }
-        constexpr float elementProduct() const { return x * y * z; }
-        constexpr float elementMax() const     { return std::fmax(x, std::fmax(y, z)); }
-        constexpr float elementMin() const     { return std::fmin(x, std::fmin(y, z)); }
+        constexpr f32 elementSum() const     { return x + y + z; }
+        constexpr f32 elementProduct() const { return x * y * z; }
+        constexpr f32 elementMax() const     { return std::fmax(x, std::fmax(y, z)); }
+        constexpr f32 elementMin() const     { return std::fmin(x, std::fmin(y, z)); }
 
         constexpr Vector3 operator+(Vector3 const& other) const { return Vector3(x + other.x, y + other.y, z + other.z); }
         constexpr Vector3 operator-(Vector3 const& other) const { return Vector3(x - other.x, y - other.y, z - other.z); }
-        constexpr Vector3 operator*(float const scalar) const   { return Vector3(x * scalar, y * scalar, z * scalar); }
-        constexpr Vector3 operator/(float const scalar) const {
+        constexpr Vector3 operator*(f32 const scalar) const   { return Vector3(x * scalar, y * scalar, z * scalar); }
+        constexpr Vector3 operator/(f32 const scalar) const {
             WS_ASSERT_MATH(scalar != 0.0f, "Division by zero in Vector3 division");
-            float invScalar = 1.0f / scalar;
+            f32 invScalar = 1.0f / scalar;
             return this->operator*(invScalar);
         }
         constexpr Vector3  operator-() const                { return Vector3(-x, -y, -z); }
         constexpr Vector3& operator+=(Vector3 const& other) { x += other.x; y += other.y; z += other.z; return *this; }
         constexpr Vector3& operator-=(Vector3 const& other) { x -= other.x; y -= other.y; z -= other.z; return *this; }
-        constexpr Vector3& operator*=(float const scalar)   { x *= scalar; y *= scalar; z *= scalar; return *this; }
-        constexpr Vector3& operator/=(float const scalar) {
+        constexpr Vector3& operator*=(f32 const scalar)   { x *= scalar; y *= scalar; z *= scalar; return *this; }
+        constexpr Vector3& operator/=(f32 const scalar) {
             WS_ASSERT_MATH(scalar != 0.0f, "Division by zero in Vector3 division");
-            float invScalar = 1.0f / scalar;
+            f32 invScalar = 1.0f / scalar;
             this->operator*=(invScalar); 
             return *this;
         }
 
-        static constexpr Vector3 splat(float const v) { return Vector3(v, v, v); }
+        static constexpr Vector3 splat(f32 const v) { return Vector3(v, v, v); }
         static constexpr Vector3 X()       { return Vector3(1.0f, 0.0f, 0.0f); }
         static constexpr Vector3 Y()       { return Vector3(0.0f, 1.0f, 0.0f); }
         static constexpr Vector3 Z()       { return Vector3(0.0f, 0.0f, 1.0f); }
@@ -140,50 +141,50 @@ namespace worse::math
     public:
         union
         {
-            struct { float x, y, z, w; };
-            float data[4];
+            struct { f32 x, y, z, w; };
+            f32 data[4];
         };
 
         constexpr Vector4()
             : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
-        constexpr Vector4(float const x, float const y, float const z, float const w)
+        constexpr Vector4(f32 const x, f32 const y, f32 const z, f32 const w)
             : x(x), y(y), z(z), w(w) {}
-        explicit Vector4(float const* raw) { std::memcpy(data, raw, sizeof(float) * 4); }
+        explicit Vector4(f32 const* raw) { std::memcpy(data, raw, sizeof(f32) * 4); }
 
         constexpr Vector4(Vector2 const& v, Vector2 const& u) : x(v.x), y(v.y), z(u.x), w(u.y) {}
-        constexpr Vector4(Vector2 const& v, float const z, float const w) : x(v.x), y(v.y), z(z), w(w) {}
-        constexpr Vector4(Vector3 const& v3, float const w) : x(v3.x), y(v3.y), z(v3.z), w(w) {}
+        constexpr Vector4(Vector2 const& v, f32 const z, f32 const w) : x(v.x), y(v.y), z(z), w(w) {}
+        constexpr Vector4(Vector3 const& v3, f32 const w) : x(v3.x), y(v3.y), z(v3.z), w(w) {}
 
         constexpr Vector3 truncate() const { return Vector3(x, y, z); }
         constexpr Vector3 xyz() const      { return Vector3(x, y, z); }
         constexpr Vector2 xy() const       { return Vector2(x, y); }
         constexpr Vector2 zw() const       { return Vector2(z, w); }
         
-        constexpr float elementSum() const     { return x + y + z + w; }
-        constexpr float elementProduct() const { return x * y * z * w; }
-        constexpr float elementMax() const     { return std::fmax(x, std::fmax(y, std::fmax(z, w))); }
-        constexpr float elementMin() const     { return std::fmin(x, std::fmin(y, std::fmin(z, w))); }
+        constexpr f32 elementSum() const     { return x + y + z + w; }
+        constexpr f32 elementProduct() const { return x * y * z * w; }
+        constexpr f32 elementMax() const     { return std::fmax(x, std::fmax(y, std::fmax(z, w))); }
+        constexpr f32 elementMin() const     { return std::fmin(x, std::fmin(y, std::fmin(z, w))); }
         
         constexpr Vector4  operator+(Vector4 const& other) const { return Vector4(x + other.x, y + other.y, z + other.z, w + other.w); }
         constexpr Vector4  operator-(Vector4 const& other) const { return Vector4(x - other.x, y - other.y, z - other.z, w - other.w); }
-        constexpr Vector4  operator*(float const scalar) const   { return Vector4(x * scalar, y * scalar, z * scalar, w * scalar); }
-        constexpr Vector4  operator/(float const scalar) const {
+        constexpr Vector4  operator*(f32 const scalar) const   { return Vector4(x * scalar, y * scalar, z * scalar, w * scalar); }
+        constexpr Vector4  operator/(f32 const scalar) const {
             WS_ASSERT_MATH(scalar != 0.0f, "Division by zero in Vector4 division");
-            float invScalar = 1.0f / scalar;
+            f32 invScalar = 1.0f / scalar;
             return this->operator*(invScalar);
         }
         constexpr Vector4  operator-()const                 { return Vector4(-x, -y, -z, -w); }
         constexpr Vector4& operator+=(Vector4 const& other) { x += other.x; y += other.y; z += other.z; w += other.w; return *this; }
         constexpr Vector4& operator-=(Vector4 const& other) { x -= other.x; y -= other.y; z -= other.z; w -= other.w; return *this; }
-        constexpr Vector4& operator*=(float const scalar)   { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
-        constexpr Vector4& operator/=(float const scalar) {
+        constexpr Vector4& operator*=(f32 const scalar)   { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
+        constexpr Vector4& operator/=(f32 const scalar) {
             WS_ASSERT_MATH(scalar != 0.0f, "Division by zero in Vector4 division");
-            float invScalar = 1.0f / scalar;
+            f32 invScalar = 1.0f / scalar;
             this->operator*=(invScalar);
             return *this;
         }
 
-        static constexpr Vector4 Splat(float const v) { return Vector4(v, v, v, v); }
+        static constexpr Vector4 Splat(f32 const v) { return Vector4(v, v, v, v); }
         static constexpr Vector4 X()       { return Vector4(1.0f, 0.0f, 0.0f, 0.0f); }
         static constexpr Vector4 Y()       { return Vector4(0.0f, 1.0f, 0.0f, 0.0f); }
         static constexpr Vector4 Z()       { return Vector4(0.0f, 0.0f, 1.0f, 0.0f); }
@@ -211,25 +212,25 @@ namespace worse::math
     public:
         union
         {
-            struct { std::int32_t x, y; };
-            std::int32_t data[2];
+            struct { i32 x, y; };
+            i32 data[2];
         };
 
         constexpr Vector2i()
             : x(0), y(0) {}
-        constexpr Vector2i(std::int32_t const x, std::int32_t const y)
+        constexpr Vector2i(i32 const x, i32 const y)
             : x(x), y(y) {}
-        explicit Vector2i(std::int32_t const* raw) { std::memcpy(data, raw, sizeof(std::int32_t) * 2); }
+        explicit Vector2i(i32 const* raw) { std::memcpy(data, raw, sizeof(i32) * 2); }
 
-        constexpr std::int32_t elementSum() const     { return x + y; }
-        constexpr std::int32_t elementProduct() const { return x * y; }
-        constexpr std::int32_t elementMax() const     { return std::max(x, y); }
-        constexpr std::int32_t elementMin() const     { return std::min(x, y); }
+        constexpr i32 elementSum() const     { return x + y; }
+        constexpr i32 elementProduct() const { return x * y; }
+        constexpr i32 elementMax() const     { return std::max(x, y); }
+        constexpr i32 elementMin() const     { return std::min(x, y); }
 
         constexpr Vector2i operator+(Vector2i const& other) const     { return Vector2i(x + other.x, y + other.y); }
         constexpr Vector2i operator-(Vector2i const& other) const     { return Vector2i(x - other.x, y - other.y); }
-        constexpr Vector2i operator*(std::int32_t const scalar) const { return Vector2i(x * scalar, y * scalar); }
-        constexpr Vector2i operator/(std::int32_t const scalar) const {
+        constexpr Vector2i operator*(i32 const scalar) const { return Vector2i(x * scalar, y * scalar); }
+        constexpr Vector2i operator/(i32 const scalar) const {
             WS_ASSERT_MATH(scalar != 0, "Division by zero in Vector2i division");
             return Vector2i(x / scalar, y / scalar);
         }
@@ -240,25 +241,25 @@ namespace worse::math
     public:
         union
         {
-            struct{ std::int32_t x, y, z; };
-            std::int32_t data[3];
+            struct{ i32 x, y, z; };
+            i32 data[3];
         };
 
         constexpr Vector3i()
             : x(0), y(0), z(0) {}
-        constexpr Vector3i(std::int32_t const x, std::int32_t const y, std::int32_t const z)
+        constexpr Vector3i(i32 const x, i32 const y, i32 const z)
             : x(x), y(y), z(z) {}
-        explicit Vector3i(std::int32_t const* raw) { std::memcpy(data, raw, sizeof(std::int32_t) * 3); }
+        explicit Vector3i(i32 const* raw) { std::memcpy(data, raw, sizeof(i32) * 3); }
 
-        constexpr std::int32_t elementSum() const     { return x + y + z; }
-        constexpr std::int32_t elementProduct() const { return x * y * z; }
-        constexpr std::int32_t elementMax() const     { return std::max(x, std::max(y, z)); }
-        constexpr std::int32_t elementMin() const     { return std::min(x, std::min(y, z)); }
+        constexpr i32 elementSum() const     { return x + y + z; }
+        constexpr i32 elementProduct() const { return x * y * z; }
+        constexpr i32 elementMax() const     { return std::max(x, std::max(y, z)); }
+        constexpr i32 elementMin() const     { return std::min(x, std::min(y, z)); }
 
         constexpr Vector3i operator+(Vector3i const& other) const     { return Vector3i(x + other.x, y + other.y, z + other.z); }
         constexpr Vector3i operator-(Vector3i const& other) const     { return Vector3i(x - other.x, y - other.y, z - other.z); }
-        constexpr Vector3i operator*(std::int32_t const scalar) const { return Vector3i(x * scalar, y * scalar, z * scalar); }
-        constexpr Vector3i operator/(std::int32_t const scalar) const {
+        constexpr Vector3i operator*(i32 const scalar) const { return Vector3i(x * scalar, y * scalar, z * scalar); }
+        constexpr Vector3i operator/(i32 const scalar) const {
             WS_ASSERT_MATH(scalar != 0, "Division by zero in Vector3i division");
             return Vector3i(x / scalar, y / scalar, z / scalar);
         }
@@ -270,25 +271,25 @@ namespace worse::math
     public:
         union
         {
-            struct { std::int32_t x, y, z, w; };
-            std::int32_t data[4];
+            struct { i32 x, y, z, w; };
+            i32 data[4];
         };
 
         constexpr Vector4i()
             : x(0), y(0), z(0), w(0) {}
-        constexpr Vector4i(std::int32_t const x, std::int32_t const y, std::int32_t const z, std::int32_t const w)
+        constexpr Vector4i(i32 const x, i32 const y, i32 const z, i32 const w)
             : x(x), y(y), z(z), w(w) {}
-        explicit Vector4i(std::int32_t const* raw) { std::memcpy(data, raw, sizeof(std::int32_t) * 4); }
+        explicit Vector4i(i32 const* raw) { std::memcpy(data, raw, sizeof(i32) * 4); }
 
-        constexpr std::int32_t elementSum() const     { return x + y + z + w; }
-        constexpr std::int32_t elementProduct() const { return x * y * z * w; }
-        constexpr std::int32_t elementMax() const     { return std::max(x, std::max(y, std::max(z, w))); }
-        constexpr std::int32_t elementMin() const     { return std::min(x, std::min(y, std::min(z, w))); }
+        constexpr i32 elementSum() const     { return x + y + z + w; }
+        constexpr i32 elementProduct() const { return x * y * z * w; }
+        constexpr i32 elementMax() const     { return std::max(x, std::max(y, std::max(z, w))); }
+        constexpr i32 elementMin() const     { return std::min(x, std::min(y, std::min(z, w))); }
 
         constexpr Vector4i operator+(Vector4i const& other) const     { return Vector4i(x + other.x, y + other.y, z + other.z, w + other.w); }
         constexpr Vector4i operator-(Vector4i const& other) const     { return Vector4i(x - other.x, y - other.y, z - other.z, w - other.w); }
-        constexpr Vector4i operator*(std::int32_t const scalar) const { return Vector4i(x * scalar, y * scalar, z * scalar, w * scalar); }
-        constexpr Vector4i operator/(std::int32_t const scalar) const {
+        constexpr Vector4i operator*(i32 const scalar) const { return Vector4i(x * scalar, y * scalar, z * scalar, w * scalar); }
+        constexpr Vector4i operator/(i32 const scalar) const {
             WS_ASSERT_MATH(scalar != 0, "Division by zero in Vector4i division");
             return Vector4i(x / scalar, y / scalar, z / scalar, w / scalar);
         }
@@ -298,13 +299,13 @@ namespace worse::math
     inline constexpr Vector3 mul(Vector3 const& a, Vector3 const& b) { return Vector3(a.x * b.x, a.y * b.y, a.z * b.z); }
     inline constexpr Vector4 mul(Vector4 const& a, Vector4 const& b) { return Vector4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w); }
 
-    inline constexpr float lengthSquared(Vector2 const& v) { return v.x * v.x + v.y * v.y; }
-    inline constexpr float lengthSquared(Vector3 const& v) { return v.x * v.x + v.y * v.y + v.z * v.z; }
-    inline constexpr float lengthSquared(Vector4 const& v) { return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w; }
+    inline constexpr f32 lengthSquared(Vector2 const& v) { return v.x * v.x + v.y * v.y; }
+    inline constexpr f32 lengthSquared(Vector3 const& v) { return v.x * v.x + v.y * v.y + v.z * v.z; }
+    inline constexpr f32 lengthSquared(Vector4 const& v) { return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w; }
     
-    inline constexpr float length(Vector2 const& v) { return std::sqrt(lengthSquared(v)); }
-    inline constexpr float length(Vector3 const& v) { return std::sqrt(lengthSquared(v)); }
-    inline constexpr float length(Vector4 const& v) { return std::sqrt(lengthSquared(v)); }
+    inline constexpr f32 length(Vector2 const& v) { return std::sqrt(lengthSquared(v)); }
+    inline constexpr f32 length(Vector3 const& v) { return std::sqrt(lengthSquared(v)); }
+    inline constexpr f32 length(Vector4 const& v) { return std::sqrt(lengthSquared(v)); }
 
     inline constexpr Vector2 normalize(Vector2 const& v) { return v / length(v); }
     inline constexpr Vector3 normalize(Vector3 const& v) { return v / length(v); }
@@ -332,18 +333,18 @@ namespace worse::math
     inline constexpr bool neq(Vector3i const& a, Vector3i const& b) { return !eq(a, b); }
     inline constexpr bool neq(Vector4i const& a, Vector4i const& b) { return !eq(a, b); }
 
-    inline constexpr float dot(Vector2 const& a, Vector2 const& b) { return a.x * b.x + a.y * b.y; }
-    inline constexpr float dot(Vector3 const& a, Vector3 const& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
-    inline constexpr float dot(Vector4 const& a, Vector4 const& b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
+    inline constexpr f32 dot(Vector2 const& a, Vector2 const& b) { return a.x * b.x + a.y * b.y; }
+    inline constexpr f32 dot(Vector3 const& a, Vector3 const& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+    inline constexpr f32 dot(Vector4 const& a, Vector4 const& b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 
-    inline constexpr float cross(Vector2 const& a, Vector2 const& b) { return a.x * b.y - a.y * b.x; }
+    inline constexpr f32 cross(Vector2 const& a, Vector2 const& b) { return a.x * b.y - a.y * b.x; }
     inline constexpr Vector3 cross(Vector3 const& a, Vector3 const& b) { return Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
 
-    inline constexpr float distanceSquared(Vector2 const& a, Vector2 const& b) { return lengthSquared(a - b); }
-    inline constexpr float distanceSquared(Vector3 const& a, Vector3 const& b) { return lengthSquared(a - b); }
+    inline constexpr f32 distanceSquared(Vector2 const& a, Vector2 const& b) { return lengthSquared(a - b); }
+    inline constexpr f32 distanceSquared(Vector3 const& a, Vector3 const& b) { return lengthSquared(a - b); }
 
-    inline constexpr float distance(Vector2 const& a, Vector2 const& b) { return length(a - b); }
-    inline constexpr float distance(Vector3 const& a, Vector3 const& b) { return length(a - b); }
+    inline constexpr f32 distance(Vector2 const& a, Vector2 const& b) { return length(a - b); }
+    inline constexpr f32 distance(Vector3 const& a, Vector3 const& b) { return length(a - b); }
 
     inline constexpr bool isNormalized(Vector2 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
     inline constexpr bool isNormalized(Vector3 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
@@ -378,8 +379,8 @@ namespace worse::math
     inline constexpr Vector2 clamp(Vector2 const& value, Vector2 const& min, Vector2 const& max) { return Vector2(worse::math::clamp(value.x, min.x, max.x), worse::math::clamp(value.y, min.y, max.y)); }
     inline constexpr Vector3 clamp(Vector3 const& value, Vector3 const& min, Vector3 const& max) { return Vector3(worse::math::clamp(value.x, min.x, max.x), worse::math::clamp(value.y, min.y, max.y), worse::math::clamp(value.z, min.z, max.z)); }
 
-    inline constexpr Vector2 lerp(Vector2 const& a, Vector2 const& b, float const t) { return a + (b - a) * t; }
-    inline constexpr Vector3 lerp(Vector3 const& a, Vector3 const& b, float const t) { return a + (b - a) * t; }
+    inline constexpr Vector2 lerp(Vector2 const& a, Vector2 const& b, f32 const t) { return a + (b - a) * t; }
+    inline constexpr Vector3 lerp(Vector3 const& a, Vector3 const& b, f32 const t) { return a + (b - a) * t; }
 
     inline constexpr Vector2 saturate(Vector2 const& v) { return Vector2(worse::math::clamp(v.x, 0.0f, 1.0f), worse::math::clamp(v.y, 0.0f, 1.0f)); }
     inline constexpr Vector3 saturate(Vector3 const& v) { return Vector3(worse::math::clamp(v.x, 0.0f, 1.0f), worse::math::clamp(v.y, 0.0f, 1.0f), worse::math::clamp(v.z, 0.0f, 1.0f)); }

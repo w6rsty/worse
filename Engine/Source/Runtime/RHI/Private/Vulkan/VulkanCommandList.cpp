@@ -22,7 +22,7 @@ namespace worse
     {
         std::mutex mtxImageLayoutMap;
         // cache image transition layouts
-        std::unordered_map<std::uint64_t, RHIImageLayout> imageLayoutMap;
+        std::unordered_map<u64, RHIImageLayout> imageLayoutMap;
 
         void setImageLayout(RHINativeHandle image, RHIImageLayout layout)
         {
@@ -215,7 +215,7 @@ namespace worse
         infoRender.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
         infoRender.renderArea           = {m_pso.scissor.x, m_pso.scissor.y, m_pso.scissor.width, m_pso.scissor.height};
         infoRender.layerCount           = 1;
-        infoRender.colorAttachmentCount = static_cast<std::uint32_t>(colorAttachments.size());
+        infoRender.colorAttachmentCount = static_cast<u32>(colorAttachments.size());
         infoRender.pColorAttachments    = colorAttachments.data();
         // clang-format on
 
@@ -269,8 +269,7 @@ namespace worse
         vkCmdEndRenderingKHR(m_handle.asValue<VkCommandBuffer>());
     }
 
-    void RHICommandList::draw(std::uint32_t const vertexCount,
-                              std::uint32_t const vertexOffset)
+    void RHICommandList::draw(u32 const vertexCount, u32 const vertexOffset)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
 
@@ -281,11 +280,11 @@ namespace worse
                   0); // first instance
     }
 
-    void RHICommandList::drawIndexed(std::uint32_t const indexCount,
-                                     std::uint32_t const indexOffset,
-                                     std::uint32_t const vertexOffset,
-                                     std::uint32_t const instanceIndex,
-                                     std::uint32_t const instanceCount)
+    void RHICommandList::drawIndexed(u32 const indexCount,
+                                     u32 const indexOffset,
+                                     u32 const vertexOffset,
+                                     u32 const instanceIndex,
+                                     u32 const instanceCount)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         vkCmdDrawIndexed(m_handle.asValue<VkCommandBuffer>(),
@@ -346,8 +345,7 @@ namespace worse
         m_pso = {};
     }
 
-    void RHICommandList::dispatch(std::uint32_t const x, std::uint32_t const y,
-                                  std::uint32_t const z)
+    void RHICommandList::dispatch(u32 const x, u32 const y, u32 const z)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
 
@@ -445,12 +443,12 @@ namespace worse
                                : RHIFilter::Linear;
 
         VkOffset3D srcOffset = {};
-        srcOffset.x          = static_cast<std::int32_t>(source->getWidth());
-        srcOffset.y          = static_cast<std::int32_t>(source->getHeight());
+        srcOffset.x          = static_cast<i32>(source->getWidth());
+        srcOffset.y          = static_cast<i32>(source->getHeight());
         srcOffset.z          = 1;
         VkOffset3D dstOffset = {};
-        dstOffset.x          = static_cast<std::int32_t>(destination->getWidth());
-        dstOffset.y          = static_cast<std::int32_t>(destination->getHeight());
+        dstOffset.x          = static_cast<i32>(destination->getWidth());
+        dstOffset.y          = static_cast<i32>(destination->getHeight());
         dstOffset.z          = 1;
 
         VkImageBlit2 region = {};
@@ -505,12 +503,12 @@ namespace worse
 
         // clang-format off
         VkOffset3D srcOffset = {};
-        srcOffset.x          = static_cast<std::int32_t>(source->getWidth());
-        srcOffset.y          = static_cast<std::int32_t>(source->getHeight());
+        srcOffset.x          = static_cast<i32>(source->getWidth());
+        srcOffset.y          = static_cast<i32>(source->getHeight());
         srcOffset.z          = 1;
         VkOffset3D dstOffset = {};
-        dstOffset.x          = static_cast<std::int32_t>(destination->getWidth());
-        dstOffset.y          = static_cast<std::int32_t>(destination->getHeight());
+        dstOffset.x          = static_cast<i32>(destination->getWidth());
+        dstOffset.y          = static_cast<i32>(destination->getHeight());
         dstOffset.z          = 1;
         
         VkImageBlit2 region  = {};
@@ -642,7 +640,7 @@ namespace worse
     }
 
     void RHICommandList::pushConstants(
-        std::span<std::byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data)
+        std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(m_pipeline);
@@ -689,7 +687,7 @@ namespace worse
 
         VkBuffer indexBuffer  = buffer->getHandle().asValue<VkBuffer>();
         VkDeviceSize offset   = 0;
-        VkIndexType indexType = (buffer->getStride() == sizeof(std::uint16_t))
+        VkIndexType indexType = (buffer->getStride() == sizeof(u16))
                                     ? VK_INDEX_TYPE_UINT16
                                     : VK_INDEX_TYPE_UINT32;
         vkCmdBindIndexBuffer(m_handle.asValue<VkCommandBuffer>(),
@@ -698,10 +696,8 @@ namespace worse
                              indexType);
     }
 
-    void RHICommandList::updateBuffer(RHIBuffer* buffer,
-                                      std::uint32_t const offset,
-                                      std::uint32_t const size,
-                                      void const* data)
+    void RHICommandList::updateBuffer(RHIBuffer* buffer, u32 const offset,
+                                      u32 const size, void const* data)
     {
         // clang-format off
         bool synchronizeUpdate = true;
@@ -744,7 +740,7 @@ namespace worse
         }
         else
         {
-            void* mappedData = static_cast<std::byte*>(buffer->getMappedData()) + offset;
+            void* mappedData = static_cast<byte*>(buffer->getMappedData()) + offset;
             std::memcpy(mappedData, data, size);
         }
         // clang-format on
@@ -779,7 +775,7 @@ namespace worse
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(m_pipeline);
 
-        std::uint64_t hash = m_pipeline->getDescriptorHash();
+        u64 hash = m_pipeline->getDescriptorHash();
 
         RHINativeHandle set = RHIDevice::getSpecificDescriptorSet(hash);
         WS_ASSERT(set);
@@ -813,7 +809,7 @@ namespace worse
             return; // Early exit if no writes
         }
 
-        std::uint64_t hash  = m_pipeline->getDescriptorHash();
+        u64 hash  = m_pipeline->getDescriptorHash();
         RHINativeHandle set = RHIDevice::getSpecificDescriptorSet(hash);
         WS_ASSERT(set);
 
@@ -846,7 +842,7 @@ namespace worse
                         ? VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
                         : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
-                std::uint32_t shift = (desc.type == RHIDescriptorType::Texture)
+                u32 shift = (desc.type == RHIDescriptorType::Texture)
                                           ? RHIConfig::HLSL_REGISTER_SHIFT_T
                                           : RHIConfig::HLSL_REGISTER_SHIFT_U;
 
@@ -879,7 +875,7 @@ namespace worse
                         ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
                         : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
-                std::uint32_t shift = 0;
+                u32 shift = 0;
                 if (desc.type == RHIDescriptorType::UniformBuffer)
                 {
                     shift = RHIConfig::HLSL_REGISTER_SHIFT_B;
@@ -916,7 +912,7 @@ namespace worse
         }
 
         vkUpdateDescriptorSets(RHIContext::device,
-                               static_cast<std::uint32_t>(vkWrites.size()),
+                               static_cast<u32>(vkWrites.size()),
                                vkWrites.data(),
                                0,
                                nullptr);

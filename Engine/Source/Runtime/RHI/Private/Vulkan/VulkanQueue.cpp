@@ -43,9 +43,7 @@ namespace worse
 
         // command lists
         {
-            for (std::uint32_t i = 0;
-                 i < static_cast<std::uint32_t>(m_cmdLists.size());
-                 ++i)
+            for (u32 i = 0; i < static_cast<u32>(m_cmdLists.size()); ++i)
             {
                 m_cmdLists[i] = std::make_shared<RHICommandList>(
                     this,
@@ -79,7 +77,7 @@ namespace worse
             RHIDevice::getQueueHandle(m_type).asValue<VkQueue>()));
     }
 
-    void RHIQueue::submit(void* cmdBuffer, std::uint32_t const waitFlags,
+    void RHIQueue::submit(void* cmdBuffer, u32 const waitFlags,
                           RHISyncPrimitive* semaphoreWait,
                           RHISyncPrimitive* semaphoreSignal,
                           RHISyncPrimitive* semaphoreTimeline)
@@ -132,8 +130,7 @@ namespace worse
             nullptr));
     }
 
-    void RHIQueue::present(RHINativeHandle swapchain,
-                           std::uint32_t const imageIndex,
+    void RHIQueue::present(RHINativeHandle swapchain, u32 const imageIndex,
                            RHISyncPrimitive* semaphoreWait)
     {
         // TODO: lock

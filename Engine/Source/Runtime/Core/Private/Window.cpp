@@ -60,8 +60,8 @@ namespace worse
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
             {
-                s_width  = static_cast<std::uint32_t>(event.window.data1);
-                s_height = static_cast<std::uint32_t>(event.window.data2);
+                s_width  = static_cast<u32>(event.window.data1);
+                s_height = static_cast<u32>(event.window.data2);
 
                 EventBus::fire(EventType::WindowResized);
                 break;
@@ -134,7 +134,7 @@ namespace worse
         return s_mode;
     }
 
-    void Window::setSize(std::uint32_t const w, std::uint32_t const h)
+    void Window::setSize(u32 const w, u32 const h)
     {
         WS_ASSERT(s_window);
         SDL_SetWindowSize(s_window, static_cast<int>(w), static_cast<int>(h));
@@ -142,17 +142,17 @@ namespace worse
         s_height = h;
     }
 
-    std::uint32_t Window::getWidth()
+    u32 Window::getWidth()
     {
         return s_width;
     }
 
-    std::uint32_t Window::getHeight()
+    u32 Window::getHeight()
     {
         return s_height;
     }
 
-    void Window::setPosition(std::int32_t const x, std::int32_t const y)
+    void Window::setPosition(i32 const x, i32 const y)
     {
         SDL_SetWindowPosition(s_window,
                               static_cast<int>(x),

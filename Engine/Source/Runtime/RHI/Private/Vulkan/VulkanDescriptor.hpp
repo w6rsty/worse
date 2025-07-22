@@ -55,9 +55,9 @@ namespace worse
         getDescriptorSetLayout(RHIPipelineState const& pso);
         // get descriptor set layout for specific hash, return nullptr if not
         // found
-        RHIDescriptorSetLayout* getDescriptorSetLayout(std::uint64_t hash);
+        RHIDescriptorSetLayout* getDescriptorSetLayout(u64 hash);
         // get descriptor set, or allocate a new one
-        RHINativeHandle getDescriptorSet(std::uint64_t hash);
+        RHINativeHandle getDescriptorSet(u64 hash);
 
         // sets will be reset every frame, must invalidate cache
         void resetSets();
@@ -65,8 +65,8 @@ namespace worse
     private:
         RHIDescriptorAllocator* m_allocator = nullptr;
         // clang-format off
-        std::unordered_map<std::uint64_t, std::shared_ptr<RHIDescriptorSetLayout>> m_descriptorSetLayouts;
-        std::unordered_map<std::uint64_t, RHINativeHandle> m_descriptorSets;
+        std::unordered_map<u64, std::shared_ptr<RHIDescriptorSetLayout>> m_descriptorSetLayouts;
+        std::unordered_map<u64, RHINativeHandle> m_descriptorSets;
         // clang-format on
     };
 

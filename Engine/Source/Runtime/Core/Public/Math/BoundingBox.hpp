@@ -20,7 +20,7 @@ namespace worse::math
         Vector3 getSize() const   { return m_max - m_min; }
         // half size
         Vector3 getExtent() const { return getSize() * 0.5f; }
-        float   getVolume() const { Vector3 size = getSize(); return size.x * size.y * size.z; }
+        f32   getVolume() const { Vector3 size = getSize(); return size.x * size.y * size.z; }
 
         Vector3 const& getMin() const { return m_min; }
         Vector3 const& getMax() const { return m_max; }
