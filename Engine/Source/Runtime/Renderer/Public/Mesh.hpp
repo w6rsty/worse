@@ -4,18 +4,16 @@
 #include "RHIBuffer.hpp"
 #include "RHIVertex.hpp"
 
-#include "ECS/Resource.hpp"
-#include "ECS/QueryView.hpp"
-
 #include <concepts>
 #include <memory>
 
 namespace worse
 {
-    // ECS index
+    class Mesh;
+
     struct Mesh3D
     {
-        std::size_t index;
+        std::shared_ptr<Mesh> mesh;
         RHIPrimitiveTopology primitiveTopology =
             RHIPrimitiveTopology::TriangleList;
     };
@@ -149,8 +147,9 @@ namespace worse
 
         ~Mesh();
 
-        // Release CPU resources
-        void clear();
+        void clearCPU();
+        void clearGPU();
+        void clearAll();
 
         // TODO: Now just lod0
         void addGeometry(RHIVertexType vertexType, std::span<std::byte> vertices,
@@ -172,12 +171,5 @@ namespace worse
         std::shared_ptr<RHIBuffer> m_vertexBuffer = nullptr;
         std::shared_ptr<RHIBuffer> m_indexBuffer  = nullptr;
     };
-
-    // clang-format off
-    void buildMeshes(
-        ecs::QueryView<Mesh3D> view,
-        ecs::ResourceArray<Mesh> meshes
-    );
-    // clang-format on
 
 } // namespace worse

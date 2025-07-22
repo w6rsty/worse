@@ -122,7 +122,6 @@ namespace worse
 
         commands.emplaceResource<GlobalContext>();
         commands.emplaceResource<DrawcallStorage>();
-        commands.emplaceResourceArray<Mesh>();
         commands.emplaceResourceArray<StandardMaterial>();
         commands.emplaceResourceArray<StandardMaterialGPU>();
         commands.emplaceResourceArray<TextureWrite>();
@@ -140,7 +139,6 @@ namespace worse
 
             commands.removeResource<GlobalContext>();
             commands.removeResource<DrawcallStorage>();
-            commands.removeResourceArray<Mesh>();
             commands.removeResourceArray<StandardMaterial>();
             commands.removeResourceArray<StandardMaterialGPU>();
             commands.removeResourceArray<TextureWrite>();
@@ -156,7 +154,6 @@ namespace worse
     void Renderer::tick(ecs::Resource<DrawcallStorage> drawcalls,
                         ecs::Resource<Camera> camera,
                         ecs::Resource<GlobalContext> globalContext,
-                        ecs::ResourceArray<Mesh> meshes,
                         ecs::ResourceArray<TextureWrite> textureWrites)
     {
         // signal image acquire semaphore(swapchain)
@@ -177,7 +174,6 @@ namespace worse
         produceFrame(m_cmdList,
                      globalContext,
                      drawcalls,
-                     meshes,
                      textureWrites);
 
         blitToBackBuffer(m_cmdList);

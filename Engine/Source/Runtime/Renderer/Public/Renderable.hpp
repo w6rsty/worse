@@ -8,12 +8,14 @@
 #include "ECS/QueryView.hpp"
 #include "ECS/Resource.hpp"
 
+#include <memory>
+
 namespace worse
 {
 
     struct Drawcall
     {
-        std::uint32_t meshIndex     = 0;
+        std::weak_ptr<Mesh> mesh;
         std::uint32_t materialIndex = 0;
         math::Matrix4 transform;
     };
@@ -51,7 +53,7 @@ namespace worse
             if (mesh.primitiveTopology == RHIPrimitiveTopology::PointList)
             {
                 drawcalls->point.emplace_back(
-                    static_cast<std::uint32_t>(mesh.index),
+                    mesh.mesh,
                     static_cast<std::uint32_t>(material.index),
                     math::makeSRT(transform.scale,
                                 transform.rotation,
@@ -61,7 +63,7 @@ namespace worse
             else
             {
                 drawcalls->solid.emplace_back(
-                    static_cast<std::uint32_t>(mesh.index),
+                    mesh.mesh,
                     static_cast<std::uint32_t>(material.index),
                     math::makeSRT(transform.scale,
                                 transform.rotation,

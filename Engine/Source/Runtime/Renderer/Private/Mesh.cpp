@@ -15,13 +15,25 @@ namespace worse
         m_vertexBuffer.reset();
     }
 
-    void Mesh::clear()
+    void Mesh::clearCPU()
     {
         m_vertices.clear();
         m_vertices.shrink_to_fit();
         m_indices.clear();
         m_indices.shrink_to_fit();
         m_subMeshes.clear();
+    }
+
+    void Mesh::clearGPU()
+    {
+        m_vertexBuffer.reset();
+        m_indexBuffer.reset();
+    }
+
+    void Mesh::clearAll()
+    {
+        clearCPU();
+        clearGPU();
     }
 
     void Mesh::addGeometry(RHIVertexType vertexType, std::span<std::byte> vertices,
@@ -74,18 +86,4 @@ namespace worse
         }
     }
 
-    // clang-format off
-    void buildMeshes(
-        ecs::QueryView<Mesh3D> view,
-        ecs::ResourceArray<Mesh> meshes
-    )
-    {
-        view.each(
-        [&meshes]
-        (ecs::Entity entity, Mesh3D const& mesh3D)
-        {
-            meshes->get(mesh3D.index)->createGPUBuffers();
-        });
-    }
-    // clang-format on
 } // namespace worse

@@ -24,7 +24,6 @@ namespace worse
         static void tick(ecs::Resource<DrawcallStorage> drawcalls,
                          ecs::Resource<Camera> camera,
                          ecs::Resource<GlobalContext> globalContext,
-                         ecs::ResourceArray<Mesh> meshes,
                          ecs::ResourceArray<TextureWrite> textureWrites);
 
         // swapchain
@@ -90,14 +89,11 @@ namespace worse
         // =====================================================================
 
         static void passDpethPrepass(RHICommandList* cmdList,
-                                     ecs::Resource<DrawcallStorage> drawcalls,
-                                     ecs::ResourceArray<Mesh> meshes);
+                                     ecs::Resource<DrawcallStorage> drawcalls);
         static void passColor(RHICommandList* cmdList,
-                              ecs::Resource<DrawcallStorage> drawcalls,
-                              ecs::ResourceArray<Mesh> meshes);
+                              ecs::Resource<DrawcallStorage> drawcalls);
         static void passWireFrame(RHICommandList* cmdList,
-                                  ecs::Resource<DrawcallStorage> drawcalls,
-                                  ecs::ResourceArray<Mesh> meshes);
+                                  ecs::Resource<DrawcallStorage> drawcalls);
         static void passPostProcessing(RHICommandList* cmdList);
 
         static void passImGui(RHICommandList* cmdList);
@@ -106,7 +102,6 @@ namespace worse
         produceFrame(RHICommandList* cmdList,
                      ecs::Resource<GlobalContext> globalContext,
                      ecs::Resource<DrawcallStorage> drawcalls,
-                     ecs::ResourceArray<Mesh> meshes,
                      ecs::ResourceArray<TextureWrite> textureWrites);
 
     private:
