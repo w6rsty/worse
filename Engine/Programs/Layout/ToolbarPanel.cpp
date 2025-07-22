@@ -16,8 +16,9 @@ void World::toolbarPanel(ecs::Commands commands,
     float const centerStartX = leftPanelWidth;
     float const centerWidth  = viewport.x - leftPanelWidth - rightPanelWidth;
 
-    Camera* camera         = commands.getResource<Camera>().get();
-    CameraData* cameraData = commands.getResource<CameraData>().get();
+    Camera* camera             = commands.getResource<Camera>().get();
+    CameraData* cameraData     = commands.getResource<CameraData>().get();
+    pc::Cloud const& cloudData = cloudStorageManager.get(POINT_CLOUD_DIRECTORY + currentActiveFile)->getMasterCloud();
 
     // =========================================================================
     // Layout

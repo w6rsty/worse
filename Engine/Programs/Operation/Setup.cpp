@@ -56,7 +56,7 @@ void setupLayout(ecs::Commands commands)
 
 void World::setupScene(ecs::Commands commands, ecs::Resource<Camera> camera,
                        ecs::ResourceArray<StandardMaterial> materials,
-                       ecs::Resource<AssetServer> assetServer, ecs::ResourceArray<Mesh> meshes)
+                       ecs::Resource<AssetServer> assetServer)
 {
     defaultMaterial = materials->add(StandardMaterial{});
 

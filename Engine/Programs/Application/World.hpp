@@ -1,6 +1,5 @@
 #pragma once
 #include "Camera.hpp"
-#include "Mesh.hpp"
 #include "Material.hpp"
 #include "AssetServer.hpp"
 
@@ -8,11 +7,10 @@
 #include "ECS/Resource.hpp"
 #include "Prefab.hpp"
 
-#include "../PointCloud/Cloud.hpp"
+#include "../Operation/CloudStorage.hpp"
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 using namespace worse;
 
@@ -71,12 +69,10 @@ class World
 {
 public:
     // 选中的点云
-    inline static pc::Cloud cloudData;
     inline static ecs::Entity cloudEntity = ecs::Entity::null();
     inline static bool hasCloud           = false;
 
-    // 运行时加载的点云网格映射 - 文件名到网格索引的映射
-    inline static std::unordered_map<std::string, std::size_t> loadedMeshes;
+    inline static CloudStorageManager cloudStorageManager;
     inline static std::vector<std::string> availableFiles;
 
     inline static std::vector<PowerLineParameter> powerLineParams;
@@ -92,10 +88,11 @@ public:
     inline static std::size_t defaultMaterial = 0;
 
     static void initializeLASFiles();
-    static bool loadCloudMesh(std::string const& filename,
-                              ecs::Commands commands);
+    static bool assureCloudMesh(std::string const& filename,
+                                ecs::Commands commands);
     static void clearAllLoadedMeshes(ecs::Commands commands);
 
+    // 点云分析入口
     static bool processMesh(std::string const& filename,
                             ecs::Commands commands);
     static bool switchToPointCloud(std::string const& filename,
@@ -120,8 +117,7 @@ public:
 
     static void setupScene(ecs::Commands commands, ecs::Resource<Camera> camera,
                            ecs::ResourceArray<StandardMaterial> materials,
-                           ecs::Resource<AssetServer> assetServer,
-                           ecs::ResourceArray<Mesh> meshes);
+                           ecs::Resource<AssetServer> assetServer);
 
     // 控制按键输入
     static void updateInput(ecs::Commands commands, ecs::Resource<GlobalContext> globalContext);

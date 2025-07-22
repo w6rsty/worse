@@ -27,108 +27,60 @@ void World::initializeLASFiles()
 }
 
 // 运行时加载点云网格的函数
-bool World::loadCloudMesh(std::string const& filename,
-                          ecs::Commands commands)
+bool World::assureCloudMesh(std::string const& filepath,
+                            ecs::Commands commands)
 {
     // 检查是否已加载
-    if (loadedMeshes.find(filename) != loadedMeshes.end())
+    if (cloudStorageManager.has(filepath))
     {
-        WS_LOG_INFO("PointCloud", "{} already loaded", filename);
+        WS_LOG_INFO("PointCloud", "{} already loaded", filepath);
         return true;
     }
 
-    std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
+    CloudStorage& cloudStorage = cloudStorageManager.load(filepath);
+    cloudStorage.createSubCloud("main", [](pc::Cloud const& cloud)
+                                {
+                                    return std::vector<RHIVertexPos>(cloud.points.begin(), cloud.points.end());
+                                });
 
-    cloudData = pc::load(fullPath);
+    WS_LOG_INFO("PointCloud", "Loaded {}", filepath);
 
-    if (!cloudData.points.empty())
-    {
-        // 创建网格并保存索引
-        auto meshes           = commands.getResourceArray<Mesh>();
-        std::size_t meshIndex = meshes.add(CustomMesh3D{
-            .vertexType = RHIVertexType::Pos,
-            .vertices   = {reinterpret_cast<std::byte*>(cloudData.points.data()),
-                           cloudData.points.size() * sizeof(RHIVertexPos)},
-        });
-
-        meshes.get(meshIndex)->createGPUBuffers();
-
-        loadedMeshes[filename] = meshIndex;
-
-        WS_LOG_INFO("PointCloud", "Loaded mesh for {}: {} points, mesh index: {}", filename, cloudData.points.size(), meshIndex);
-
-        return true;
-    }
-    else
-    {
-        WS_LOG_WARN("PointCloud", "Empty point cloud: {}", filename);
-        return false;
-    }
+    return true;
 }
 
 // 清理所有已加载的网格的函数
 void World::clearAllLoadedMeshes(ecs::Commands commands)
 {
-    WS_LOG_INFO("PointCloud", "Clearing all loaded meshes...");
-
     // 如果有当前活跃的点云Entity，先销毁
     if (cloudEntity != ecs::Entity::null())
     {
         commands.destroy(cloudEntity);
         cloudEntity = ecs::Entity::null();
         hasCloud    = false;
-        WS_LOG_INFO("PointCloud", "Destroyed current point cloud entity");
     }
 
-    // 获取网格资源数组
-    auto meshes = commands.getResourceArray<Mesh>();
-
-    // 遍历所有已加载的网格并释放
-    for (const auto& [filename, meshIndex] : loadedMeshes)
-    {
-
-        // 尝试获取并清理网格
-        if (auto* mesh = meshes.get(meshIndex))
-        {
-            mesh->clear();
-            WS_LOG_INFO("PointCloud", "Cleared mesh for {}: index {}", filename, meshIndex);
-        }
-    }
-
-    // 清空映射表
-    std::size_t clearedCount = loadedMeshes.size();
-    loadedMeshes.clear();
-
-    // 重置点云相关状态
-    cloudData = pc::Cloud{}; // 重置为空
+    std::size_t clearedCount = cloudStorageManager.size();
+    cloudStorageManager.clear();
 
     // 重置当前活跃文件
     currentActiveFile = "";
 
-    WS_LOG_INFO("PointCloud", "Successfully cleared {} loaded meshes", clearedCount);
+    WS_LOG_INFO("PointCloud", "Cleared {} loaded meshes", clearedCount);
 }
 
 // 通过文件名切换点云Entity的函数（支持运行时加载）
 bool World::switchToPointCloud(std::string const& filename,
                                ecs::Commands commands)
 {
-    // 如果网格未加载，先加载
-    if (loadedMeshes.find(filename) == loadedMeshes.end())
-    {
-        if (!loadCloudMesh(filename, commands))
-        {
-            WS_LOG_ERROR("PointCloud", "Failed to load mesh for {}", filename);
-            return false;
-        }
-    }
+    std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
 
-    // 获取网格索引
-    auto it = loadedMeshes.find(filename);
-    if (it == loadedMeshes.end())
+    if (!assureCloudMesh(fullPath, commands))
     {
-        WS_LOG_ERROR("PointCloud", "Mesh for {} not found after loading", filename);
+        WS_LOG_ERROR("PointCloud", "Failed to load {}", filename);
         return false;
     }
+
+    WS_ASSERT(cloudStorageManager.has(fullPath));
 
     // 如果已有点云Entity，先销毁
     if (cloudEntity != ecs::Entity::null())
@@ -139,29 +91,29 @@ bool World::switchToPointCloud(std::string const& filename,
         WS_LOG_INFO("PointCloud", "Destroyed previous point cloud entity");
     }
 
-    // 获取必要的资源
-    auto materials = commands.getResourceArray<StandardMaterial>();
+    // 提交点云绘制
+    {
+        // clang-format off
+        static constexpr math::Matrix3 tranform = {
+            1.0f,  0.0f, 0.0f,
+            0.0f,  0.0f, 1.0f,
+            0.0f, -1.0f, 0.0f,
+        };
+        // clang-format on
 
-    // clang-format off
-    static constexpr math::Matrix3 tranform = {
-        1.0f,  0.0f, 0.0f,
-        0.0f,  0.0f, 1.0f,
-        0.0f, -1.0f, 0.0f,
-    };
-    // clang-format on
-
-    // 创建新的点云Entity，使用预加载的网格索引
-    cloudEntity = commands.spawn(
-        LocalTransform{
-            .rotation = math::Quaternion::fromMat3(tranform)},
-        Mesh3D{it->second,
-               RHIPrimitiveTopology::PointList}, // 使用预加载的网格索引
-        MeshMaterial{defaultMaterial});
+        // 创建新的点云Entity，使用预加载的网格索引
+        cloudEntity = commands.spawn(
+            LocalTransform{
+                .rotation = math::Quaternion::fromMat3(tranform)},
+            Mesh3D{cloudStorageManager.get(fullPath)->getSubCloud("main").mesh,
+                   RHIPrimitiveTopology::PointList}, // 使用预加载的网格索引
+            MeshMaterial{defaultMaterial});
+    }
 
     hasCloud          = true;
     currentActiveFile = filename; // 设置当前活跃文件
 
-    float const scale      = cloudData.volume.getExtent().elementMax();
+    float const scale      = cloudStorageManager.get(POINT_CLOUD_DIRECTORY + currentActiveFile)->getMasterCloud().volume.getExtent().elementMax();
     Camera* camera         = commands.getResource<Camera>().get();
     CameraData* cameraData = commands.getResource<CameraData>().get();
     fitView(camera, cameraData, math::Vector3::ZERO(), scale);
@@ -171,19 +123,18 @@ bool World::switchToPointCloud(std::string const& filename,
 
 bool World::processMesh(std::string const& filename, ecs::Commands commands)
 {
-    auto it = loadedMeshes.find(filename);
-    if (it == loadedMeshes.end())
+    std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
+    if (!cloudStorageManager.has(fullPath))
     {
         WS_LOG_ERROR("Open3D", "Process failed. {} not loaded", filename);
         return false;
     }
 
     // 1.加载点云数据
-    std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
 
     // 使用Open3D加载点云
     std::shared_ptr<open3d::geometry::PointCloud> o3dCloud = std::make_shared<open3d::geometry::PointCloud>();
-    pc::Cloud originalCloud                                = pc::load(fullPath);
+    pc::Cloud const& originalCloud                         = cloudStorageManager.get(fullPath)->getMasterCloud();
 
     if (originalCloud.points.empty())
     {

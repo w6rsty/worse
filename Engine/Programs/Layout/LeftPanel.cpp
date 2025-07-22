@@ -44,7 +44,7 @@ void World::leftPanel(ecs::Commands commands)
 
         if (ImGui::Button("清理所有网格", ImVec2(-1.0f, 0.0f)))
         {
-            if (loadedMeshes.empty())
+            if (cloudStorageManager.empty())
             {
                 WS_LOG_INFO("UI", "No meshes to clear");
             }
@@ -68,7 +68,7 @@ void World::leftPanel(ecs::Commands commands)
                                        ImGuiWindowFlags_AlwaysAutoResize))
             {
                 ImGui::Text("确定要清理所有已加载的网格吗？");
-                ImGui::Text("这将释放 %zu 个已加载的网格。", loadedMeshes.size());
+                ImGui::Text("这将释放 %zu 个已加载的网格。", cloudStorageManager.size());
                 ImGui::Separator();
 
                 if (ImGui::Button("确定", ImVec2(120, 0)))
@@ -86,34 +86,6 @@ void World::leftPanel(ecs::Commands commands)
                 }
                 ImGui::EndPopup();
             }
-        }
-
-        // 显示已加载网格的统计信息
-        if (!loadedMeshes.empty())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, loadedMeshTxFg);
-            ImGui::Text("已加载 %zu 个网格", loadedMeshes.size());
-            ImGui::PopStyleColor();
-        }
-
-        ImGui::Spacing();
-        ImGui::Separator();
-
-        // 显示固定的文件夹路径
-        ImGui::Text("数据目录:");
-        ImGui::PushStyleColor(ImGuiCol_Text, normalTxFg);
-        ImGui::TextWrapped("%s", World::POINT_CLOUD_DIRECTORY.c_str());
-        ImGui::PopStyleColor();
-
-        ImGui::Spacing();
-
-        // 点云状态显示
-        if (hasCloud)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, loadedCloudTxFg);
-            ImGui::Text("点云已加载");
-            ImGui::PopStyleColor();
-            ImGui::Text("点数量: %zu", cloudData.points.size());
         }
 
         ImGui::Separator();
@@ -136,8 +108,7 @@ void World::leftPanel(ecs::Commands commands)
                 }
 
                 // 检查文件是否已加载网格
-                bool isMeshLoaded =
-                    (loadedMeshes.find(filename) != loadedMeshes.end());
+                bool isMeshLoaded = cloudStorageManager.has(filename);
 
                 // 高亮当前加载的文件
                 if (isCurrentFile)

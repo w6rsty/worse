@@ -28,6 +28,7 @@ Application::Application(int argc, char** argv)
         m_schedule.addSystem<ecs::CoreStage::Update, ImGuiRenderer::tick>();
         m_schedule.addSystem<ecs::CoreStage::Update, Renderer::tick>();
 
+        m_schedule.addSystem<ecs::CoreStage::CleanUp, World::clearAllLoadedMeshes>();
         m_schedule.addSystem<ecs::CoreStage::CleanUp, ImGuiRenderer::shutdown>();
         m_schedule.addSystem<ecs::CoreStage::CleanUp, Renderer::shutdown>();
         m_schedule.addSystem<ecs::CoreStage::CleanUp, Engine::shutdown>();

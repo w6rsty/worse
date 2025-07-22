@@ -3,7 +3,7 @@
 #include "../Application/World.hpp"
 
 void property(ecs::Commands commands, ecs::Entity cloudEntity,
-              pc::Cloud& cloudData)
+              pc::Cloud const& cloudData)
 {
     LocalTransform& xform      = commands.getComponent<LocalTransform>(cloudEntity);
     math::Vector3 const eulers = xform.rotation.toEuler();
@@ -65,6 +65,7 @@ void World::rightPanel(ecs::Commands commands)
         if (hasCloud &&
             ImGui::CollapsingHeader("属性", ImGuiTreeNodeFlags_DefaultOpen))
         {
+            pc::Cloud const& cloudData = cloudStorageManager.get(POINT_CLOUD_DIRECTORY + currentActiveFile)->getMasterCloud();
             property(commands, cloudEntity, cloudData);
         }
 
