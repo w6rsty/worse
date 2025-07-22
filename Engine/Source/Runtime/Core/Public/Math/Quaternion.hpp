@@ -70,6 +70,22 @@ namespace worse::math
         }
         /// Convert to 4x4 rotation matrix
         Matrix4 toMat4() const { return Matrix4{toMat3()}; }
+        Vector3 toEuler() const
+        {
+            // Convert quaternion to Euler angles (in radians)
+            float sinr_cosp = 2.0f * (w * x + y * z);
+            float cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
+            float roll      = std::atan2(sinr_cosp, cosr_cosp);
+
+            float sinp = 2.0f * (w * y - z * x);
+            float pitch = std::abs(sinp) >= 1.0f ? std::copysign(M_PI / 2, sinp) : std::asin(sinp);
+
+            float siny_cosp = 2.0f * (w * z + x * y);
+            float cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
+            float yaw       = std::atan2(siny_cosp, cosy_cosp);
+
+            return Vector3(roll, pitch, yaw);
+        }
 
         Quaternion  operator+(Quaternion const& rhs) const { return Quaternion(v4 + rhs.v4); }
         Quaternion  operator-(Quaternion const& rhs) const { return Quaternion(v4 - rhs.v4); }
