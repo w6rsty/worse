@@ -27,16 +27,4 @@ namespace worse::math
         }
     }
 
-    BoundingBox::BoundingBox(std::span<RHIVertexPosUvNrmTan const> vertices)
-    {
-        m_min = Vector3::MAX();
-        m_max = Vector3::MIN();
-
-        for (const auto& vertex : vertices)
-        {
-            m_min = min(m_min, vertex.position);
-            m_max = max(m_max, vertex.position);
-        }
-    }
-
 } // namespace worse::math

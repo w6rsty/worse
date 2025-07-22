@@ -1,7 +1,8 @@
 #pragma once
 #include "Math/BoundingBox.hpp"
-#include "RHIBuffer.hpp"
 #include "Geometry/GeometryGeneration.hpp"
+#include "RHIBuffer.hpp"
+#include "RHIVertex.hpp"
 
 #include "ECS/Resource.hpp"
 #include "ECS/QueryView.hpp"
@@ -26,7 +27,8 @@ namespace worse
 
     struct CustomMesh3D : StandardMesh3D
     {
-        std::vector<RHIVertexPosUvNrmTan> vertices;
+        RHIVertexType vertexType;
+        std::span<std::byte> vertices;
         std::optional<std::vector<std::uint32_t>> indices = std::nullopt;
     };
 
@@ -91,13 +93,14 @@ namespace worse
         {
             if constexpr (std::is_same_v<T, CustomMesh3D>)
             {
-                addGeometry(standardMesh.vertices,
-                            standardMesh.indices.value_or(
-                                std::vector<std::uint32_t>{}));
+                addGeometry(
+                    standardMesh.vertexType,
+                    standardMesh.vertices,
+                    standardMesh.indices.value_or(std::vector<std::uint32_t>{}));
                 return;
             }
 
-            std::vector<RHIVertexPosUvNrmTan> vertices;
+            std::vector<std::byte> vertices;
             std::vector<std::uint32_t> indices;
 
             if constexpr (std::is_same_v<T, Quad3D>)
@@ -141,7 +144,7 @@ namespace worse
                                           standardMesh.rings);
             }
 
-            addGeometry(vertices, indices);
+            addGeometry(RHIVertexType::PosUvNrmTan, vertices, indices);
         }
 
         ~Mesh();
@@ -150,7 +153,7 @@ namespace worse
         void clear();
 
         // TODO: Now just lod0
-        void addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,
+        void addGeometry(RHIVertexType vertexType, std::span<std::byte> vertices,
                          std::vector<std::uint32_t> const& indices);
 
         void createGPUBuffers();
@@ -161,7 +164,8 @@ namespace worse
         // clang-format on
 
     private:
-        std::vector<RHIVertexPosUvNrmTan> m_vertices;
+        RHIVertexType m_vertexType;
+        std::vector<std::byte> m_vertices;
         std::vector<std::uint32_t> m_indices;
         std::vector<SubMesh> m_subMeshes;
 

@@ -13,7 +13,19 @@ namespace worse::math
         BoundingBox();
         BoundingBox(Vector3 const& min, Vector3 const& max);
         BoundingBox(std::span<Vector3 const> points);
-        BoundingBox(std::span<RHIVertexPosUvNrmTan const> vertices);
+
+        template <RHIVertexConcept Vertex>
+        BoundingBox(std::span<Vertex> vertices)
+        {
+            m_min = Vector3::MAX();
+            m_max = Vector3::MIN();
+
+            for (const auto& vertex : vertices)
+            {
+                m_min = min(m_min, vertex.position);
+                m_max = max(m_max, vertex.position);
+            }
+        }
 
         // clang-format off
         Vector3 getCenter() const { return (m_min + m_max) * 0.5f; }

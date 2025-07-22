@@ -24,17 +24,19 @@ namespace worse
         m_subMeshes.clear();
     }
 
-    void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,
+    void Mesh::addGeometry(RHIVertexType vertexType, std::span<std::byte> vertices,
                            std::vector<std::uint32_t> const& indices)
     {
+        m_vertexType = vertexType;
+
         SubMesh subMesh;
 
         MeshLod lod0;
-        lod0.vertexCount  = static_cast<std::uint32_t>(vertices.size());
-        lod0.vertexOffset = static_cast<std::uint32_t>(m_vertices.size());
-        lod0.indexCount   = static_cast<std::uint32_t>(indices.size());
-        lod0.indexOffset  = static_cast<std::uint32_t>(m_indices.size());
-        lod0.boundingBox  = math::BoundingBox(vertices);
+        std::uint32_t vertexCount = vertices.size() / RHIVertexSize(vertexType);
+        lod0.vertexCount          = vertexCount;
+        lod0.vertexOffset         = vertexCount;
+        lod0.indexCount           = static_cast<std::uint32_t>(indices.size());
+        lod0.indexOffset          = static_cast<std::uint32_t>(m_indices.size());
 
         subMesh.lods.push_back(lod0);
 
@@ -52,13 +54,13 @@ namespace worse
             return;
         }
 
-        m_vertexBuffer =
-            std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Vertex,
-                                        sizeof(RHIVertexPosUvNrmTan),
-                                        m_vertices.size(),
-                                        m_vertices.data(),
-                                        false,
-                                        "MeshVertexBuffer");
+        m_vertexBuffer = std::make_shared<RHIBuffer>(
+            RHIBufferUsageFlagBits::Vertex,
+            RHIVertexSize(m_vertexType),
+            m_vertices.size() / RHIVertexSize(m_vertexType),
+            m_vertices.data(),
+            false,
+            "MeshVertexBuffer");
 
         if (m_indices.size() != 0)
         {

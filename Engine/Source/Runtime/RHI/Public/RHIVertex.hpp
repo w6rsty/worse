@@ -16,6 +16,23 @@ namespace worse
         PosUvNrmTan,
     };
 
+    inline std::uint32_t RHIVertexSize(RHIVertexType type)
+    {
+        switch (type)
+        {
+        case RHIVertexType::Pos:
+            return sizeof(RHIVertexPos);
+        case RHIVertexType::PosCol:
+            return sizeof(RHIVertexPosCol);
+        case RHIVertexType::PosUv:
+            return sizeof(RHIVertexPosUv);
+        case RHIVertexType::PosUvNrmTan:
+            return sizeof(RHIVertexPosUvNrmTan);
+        default:
+            return 0;
+        }
+    }
+
     struct RHIVertexAttribute
     {
         std::string name;

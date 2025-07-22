@@ -81,4 +81,10 @@ namespace worse
         math::Vector3 tangent  = {0.0, 0.0, 0.0};
     };
 
+    // 要求位置来构建包围盒
+    template <typename T>
+    concept RHIVertexConcept = requires(T t) {
+        { t.position } -> std::same_as<math::Vector3&>;
+    };
+
 } // namespace worse

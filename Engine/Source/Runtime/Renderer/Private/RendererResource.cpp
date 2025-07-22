@@ -77,7 +77,7 @@ namespace worse
     void Renderer::createShaders()
     {
         std::filesystem::path resourceRoot = "/Users/w6rsty/dev/Cpp/worse_pc";
-        std::filesystem::path shaderPath = resourceRoot / "Engine" / "Shaders";
+        std::filesystem::path shaderPath   = resourceRoot / "Engine" / "Shaders";
 
         // clang-format off
         shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("PlaceholderV");
@@ -99,7 +99,7 @@ namespace worse
         shaders[RendererShader::LineP]->compile(shaderPath / "Line.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::PointV] = std::make_shared<RHIShader>("PointV");
-        shaders[RendererShader::PointV]->compile(shaderPath / "Point.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::PointV]->compile(shaderPath / "Point.hlsl", RHIShaderType::Vertex, RHIVertexType::Pos);
         shaders[RendererShader::PointP] = std::make_shared<RHIShader>("PointP");
         shaders[RendererShader::PointP]->compile(shaderPath / "Point.hlsl", RHIShaderType::Pixel);
 
@@ -252,13 +252,13 @@ namespace worse
 
     void Renderer::createStandardMeshes()
     {
-        std::vector<RHIVertexPosUvNrmTan> vertices;
+        std::vector<std::byte> vertices;
         std::vector<std::uint32_t> indices;
 
         // clang-format off
         geometry::generateQuad3D(vertices, indices);
         standardMeshes[geometry::GeometryType::Quad3D] = std::make_shared<Mesh>();
-        standardMeshes[geometry::GeometryType::Quad3D]->addGeometry(vertices,indices);
+        standardMeshes[geometry::GeometryType::Quad3D]->addGeometry(RHIVertexType::PosUvNrmTan,vertices, indices);
         standardMeshes[geometry::GeometryType::Quad3D]->createGPUBuffers();
 
         vertices.clear();
@@ -266,7 +266,7 @@ namespace worse
 
         geometry::generateCube(vertices, indices);
         standardMeshes[geometry::GeometryType::Cube] = std::make_shared<Mesh>();
-        standardMeshes[geometry::GeometryType::Cube]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cube]->addGeometry(RHIVertexType::PosUvNrmTan,vertices, indices);
         standardMeshes[geometry::GeometryType::Cube]->createGPUBuffers();
 
         vertices.clear();
@@ -274,7 +274,7 @@ namespace worse
 
         geometry::generateSphere(vertices, indices);
         standardMeshes[geometry::GeometryType::Sphere] = std::make_shared<Mesh>();
-        standardMeshes[geometry::GeometryType::Sphere]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Sphere]->addGeometry(RHIVertexType::PosUvNrmTan,vertices, indices);
         standardMeshes[geometry::GeometryType::Sphere]->createGPUBuffers();
 
         vertices.clear();
@@ -282,7 +282,7 @@ namespace worse
 
         geometry::generateCylinder(vertices, indices);
         standardMeshes[geometry::GeometryType::Cylinder] = std::make_shared<Mesh>();
-        standardMeshes[geometry::GeometryType::Cylinder]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cylinder]->addGeometry(RHIVertexType::PosUvNrmTan,vertices, indices);
         standardMeshes[geometry::GeometryType::Cylinder]->createGPUBuffers();
 
         vertices.clear();
@@ -290,7 +290,7 @@ namespace worse
 
         geometry::generateCapsule(vertices, indices);
         standardMeshes[geometry::GeometryType::Capsule] = std::make_shared<Mesh>();
-        standardMeshes[geometry::GeometryType::Capsule]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Capsule]->addGeometry(RHIVertexType::PosUvNrmTan, vertices, indices);
         standardMeshes[geometry::GeometryType::Capsule]->createGPUBuffers();
         // clang-format on
     }

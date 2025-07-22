@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <cstring>
 
 namespace worse::geometry
 {
@@ -19,7 +20,7 @@ namespace worse::geometry
         Max
     };
 
-    static void generateQuad3D(std::vector<RHIVertexPosUvNrmTan>& vertices,
+    static void generateQuad3D(std::vector<std::byte>& vertices,
                                std::vector<std::uint32_t>& indices,
                                float width = 1.0f, float height = 1.0f)
     {
@@ -28,8 +29,10 @@ namespace worse::geometry
 
         vertices.clear();
         indices.clear();
-        vertices.reserve(4);
+        vertices.resize(4 * sizeof(RHIVertexPosUvNrmTan));
         indices.reserve(6);
+
+        auto* vertex_data = reinterpret_cast<RHIVertexPosUvNrmTan*>(vertices.data());
 
         // clang-format off
 
@@ -46,10 +49,10 @@ namespace worse::geometry
         //           2       /   |      3
         //                  -Z   -Y
 
-        vertices.emplace_back(Vector3(-0.5f * width,  0.0f,  0.5f * height), Vector2(0, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 0 top-left
-        vertices.emplace_back(Vector3( 0.5f * width,  0.0f,  0.5f * height), Vector2(1, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 1 top-right
-        vertices.emplace_back(Vector3(-0.5f * width,  0.0f, -0.5f * height), Vector2(0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 2 bottom-left
-        vertices.emplace_back(Vector3( 0.5f * width,  0.0f, -0.5f * height), Vector2(1, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 3 bottom-right
+        vertex_data[0] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.0f,  0.5f * height), Vector2(0, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 0 top-left
+        vertex_data[1] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.0f,  0.5f * height), Vector2(1, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 1 top-right
+        vertex_data[2] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.0f, -0.5f * height), Vector2(0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 2 bottom-left
+        vertex_data[3] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.0f, -0.5f * height), Vector2(1, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 3 bottom-right
 
         indices.emplace_back(3);
         indices.emplace_back(2);
@@ -60,7 +63,7 @@ namespace worse::geometry
         // clang-format on
     }
 
-    static void generateCube(std::vector<RHIVertexPosUvNrmTan>& vertices,
+    static void generateCube(std::vector<std::byte>& vertices,
                              std::vector<std::uint32_t>& indices,
                              float width = 1.0f, float height = 1.0f,
                              float depth = 1.0f)
@@ -70,8 +73,10 @@ namespace worse::geometry
 
         vertices.clear();
         indices.clear();
-        vertices.reserve(24);
+        vertices.resize(24 * sizeof(RHIVertexPosUvNrmTan));
         indices.reserve(36);
+
+        auto* vertex_data = reinterpret_cast<RHIVertexPosUvNrmTan*>(vertices.data());
 
         // clang-format off
     
@@ -95,40 +100,40 @@ namespace worse::geometry
         //                   -Z       -Y     
 
         // front
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 0
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 1
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 2
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 3
+        vertex_data[0] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 0, -1), Vector3(0, 1, 0)}; // 0
+        vertex_data[1] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)}; // 1
+        vertex_data[2] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 0, -1), Vector3(0, 1, 0)}; // 2
+        vertex_data[3] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)}; // 3
 
         // bottom
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 4
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 5
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 6
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 7
+        vertex_data[4] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, -1, 0), Vector3(1, 0, 0)}; // 4
+        vertex_data[5] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, -1, 0), Vector3(1, 0, 0)}; // 5
+        vertex_data[6] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, -1, 0), Vector3(1, 0, 0)}; // 6
+        vertex_data[7] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, -1, 0), Vector3(1, 0, 0)}; // 7
 
         // back
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 8
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 9
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 10
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 11
+        vertex_data[8] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, 0, 1), Vector3(0, 1, 0)}; // 8
+        vertex_data[9] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)}; // 9
+        vertex_data[10] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, 0, 1), Vector3(0, 1, 0)}; // 10
+        vertex_data[11] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)}; // 11
 
         // top
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 12
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 13
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 14
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 15
+        vertex_data[12] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 12
+        vertex_data[13] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 13
+        vertex_data[14] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 14
+        vertex_data[15] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)}; // 15
 
         // left
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 16
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 17
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 18
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 19
+        vertex_data[16] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(-1, 0, 0), Vector3(0, 1, 0)}; // 16
+        vertex_data[17] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0)}; // 17
+        vertex_data[18] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(-1, 0, 0), Vector3(0, 1, 0)}; // 18
+        vertex_data[19] = RHIVertexPosUvNrmTan{Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0)}; // 19
 
         // right
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 20
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 21
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 22
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 23
+        vertex_data[20] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)}; // 20
+        vertex_data[21] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)}; // 21
+        vertex_data[22] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)}; // 22
+        vertex_data[23] = RHIVertexPosUvNrmTan{Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)}; // 23
 
         // front
         indices.emplace_back(0); indices.emplace_back(1); indices.emplace_back(2);
@@ -157,7 +162,7 @@ namespace worse::geometry
         // clang-format on
     }
 
-    static void generateSphere(std::vector<RHIVertexPosUvNrmTan>& vertices,
+    static void generateSphere(std::vector<std::byte>& vertices,
                                std::vector<std::uint32_t>& indices,
                                float radius = 0.5f, std::uint32_t segments = 32,
                                std::uint32_t rings = 16)
@@ -169,16 +174,20 @@ namespace worse::geometry
         indices.clear();
 
         // +2 for the top and bottom pole vertices
-        vertices.reserve((segments + 1) * (rings - 1) + 2);
+        std::uint32_t vertex_count = (segments + 1) * (rings - 1) + 2;
+        vertices.resize(vertex_count * sizeof(RHIVertexPosUvNrmTan));
         indices.reserve(segments * rings * 6);
+
+        auto* vertex_data = reinterpret_cast<RHIVertexPosUvNrmTan*>(vertices.data());
+        std::uint32_t vertex_index = 0;
 
         // --- Vertices ---
 
         // Top pole
-        vertices.emplace_back(Vector3(0.0f, radius, 0.0f),
+        vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{Vector3(0.0f, radius, 0.0f),
                               Vector2(0.5f, 0.0f),
                               Vector3(0.0f, 1.0f, 0.0f),
-                              Vector3(1.0f, 0.0f, 0.0f));
+                              Vector3(1.0f, 0.0f, 0.0f)};
         const std::uint32_t topPoleIndex = 0;
 
         // Rings (excluding poles)
@@ -205,17 +214,16 @@ namespace worse::geometry
                 // A robust tangent calculation
                 Vector3 tangent = normalize(Vector3(-sinTheta, 0.0f, cosTheta));
 
-                vertices.emplace_back(position, uv, normal, tangent);
+                vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
             }
         }
 
         // Bottom pole
-        vertices.emplace_back(Vector3(0.0f, -radius, 0.0f),
+        vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{Vector3(0.0f, -radius, 0.0f),
                               Vector2(0.5f, 1.0f),
                               Vector3(0.0f, -1.0f, 0.0f),
-                              Vector3(1.0f, 0.0f, 0.0f));
-        const std::uint32_t bottomPoleIndex =
-            static_cast<std::uint32_t>(vertices.size() - 1);
+                              Vector3(1.0f, 0.0f, 0.0f)};
+        const std::uint32_t bottomPoleIndex = vertex_index - 1;
 
         // --- Indices ---
 
@@ -267,7 +275,7 @@ namespace worse::geometry
         }
     }
 
-    static void generateCylinder(std::vector<RHIVertexPosUvNrmTan>& vertices,
+    static void generateCylinder(std::vector<std::byte>& vertices,
                                  std::vector<std::uint32_t>& indices,
                                  float radius = 0.5f, float height = 1.0f,
                                  std::uint32_t segments       = 32,
@@ -286,13 +294,17 @@ namespace worse::geometry
             topCap ? (segments + 2) : 0; // 中心点 + 边缘点
         capVertices += bottomCap ? (segments + 2) : 0;
 
-        vertices.reserve(sideVertices + capVertices);
+        std::uint32_t vertex_count = sideVertices + capVertices;
+        vertices.resize(vertex_count * sizeof(RHIVertexPosUvNrmTan));
 
         // 计算索引数量
         std::uint32_t sideIndices = segments * heightSegments * 6;
         std::uint32_t capIndices =
             (topCap ? segments * 3 : 0) + (bottomCap ? segments * 3 : 0);
         indices.reserve(sideIndices + capIndices);
+
+        auto* vertex_data = reinterpret_cast<RHIVertexPosUvNrmTan*>(vertices.data());
+        std::uint32_t vertex_index = 0;
 
         float halfHeight = height * 0.5f;
 
@@ -318,7 +330,7 @@ namespace worse::geometry
                 Vector3 tangent =
                     normalize(Vector3(-std::sin(theta), 0.0f, std::cos(theta)));
 
-                vertices.emplace_back(position, uv, normal, tangent);
+                vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
             }
         }
 
@@ -352,10 +364,10 @@ namespace worse::geometry
             Vector3 topTangent(1.0f, 0.0f, 0.0f);
 
             std::uint32_t topCenterIndex = currentVertexIndex;
-            vertices.emplace_back(topCenter,
+            vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{topCenter,
                                   topCenterUv,
                                   topNormal,
-                                  topTangent);
+                                  topTangent};
             currentVertexIndex++;
 
             // 顶盖边缘点
@@ -372,7 +384,7 @@ namespace worse::geometry
                 Vector3 normal(0.0f, 1.0f, 0.0f);
                 Vector3 tangent(1.0f, 0.0f, 0.0f);
 
-                vertices.emplace_back(position, uv, normal, tangent);
+                vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
             }
 
             // 顶盖索引
@@ -395,10 +407,10 @@ namespace worse::geometry
             Vector3 bottomTangent(1.0f, 0.0f, 0.0f);
 
             std::uint32_t bottomCenterIndex = currentVertexIndex;
-            vertices.emplace_back(bottomCenter,
+            vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{bottomCenter,
                                   bottomCenterUv,
                                   bottomNormal,
-                                  bottomTangent);
+                                  bottomTangent};
             currentVertexIndex++;
 
             // 底盖边缘点
@@ -415,7 +427,7 @@ namespace worse::geometry
                 Vector3 normal(0.0f, -1.0f, 0.0f);
                 Vector3 tangent(1.0f, 0.0f, 0.0f);
 
-                vertices.emplace_back(position, uv, normal, tangent);
+                vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
             }
 
             // 底盖索引 (逆时针)
@@ -428,7 +440,7 @@ namespace worse::geometry
         }
     }
 
-    static void generateCapsule(std::vector<RHIVertexPosUvNrmTan>& vertices,
+    static void generateCapsule(std::vector<std::byte>& vertices,
                                 std::vector<std::uint32_t>& indices,
                                 float radius = 0.5f, float height = 2.0f,
                                 std::uint32_t segments   = 32,
@@ -457,6 +469,12 @@ namespace worse::geometry
             hemisphereRings * 2 + 1; // total rings for the whole shape
         if (cylinderHeight > 0)
             rings += 1; // an extra ring for the cylinder middle if it exists
+
+        std::uint32_t vertex_count = (rings + 1) * (segments + 1);
+        vertices.resize(vertex_count * sizeof(RHIVertexPosUvNrmTan));
+
+        auto* vertex_data = reinterpret_cast<RHIVertexPosUvNrmTan*>(vertices.data());
+        std::uint32_t vertex_index = 0;
 
         for (std::uint32_t r = 0; r <= rings; ++r)
         {
@@ -506,11 +524,12 @@ namespace worse::geometry
                     normalize(Vector3(x, 0.0f, z) + normal_y_dir * radius);
                 Vector3 tangent = normalize(Vector3(-sinTheta, 0.0f, cosTheta));
 
-                vertices.emplace_back(position, uv, normal, tangent);
+                vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
             }
         }
 
         // --- Indices ---
+        indices.reserve(rings * segments * 6);
         for (std::uint32_t r = 0; r < rings; ++r)
         {
             for (std::uint32_t s = 0; s < segments; ++s)
@@ -531,7 +550,7 @@ namespace worse::geometry
         }
     }
 
-    static void generateFrustum(std::vector<RHIVertexPosUvNrmTan>& vertices,
+    static void generateFrustum(std::vector<std::byte>& vertices,
                                 std::vector<std::uint32_t>& indices,
                                 float topWidth = 1.0f, float bottomWidth = 1.0f,
                                 float height = 1.0f, std::uint32_t segments = 4)
@@ -541,8 +560,13 @@ namespace worse::geometry
 
         vertices.clear();
         indices.clear();
-        vertices.reserve((segments + 1) * 2);
-        indices.reserve(segments * 6);
+        
+        std::uint32_t vertex_count = (segments + 1) * 2 + 2; // sides + 2 center vertices
+        vertices.resize(vertex_count * sizeof(RHIVertexPosUvNrmTan));
+        indices.reserve(segments * 6 + segments * 6); // sides + caps
+
+        auto* vertex_data = reinterpret_cast<RHIVertexPosUvNrmTan*>(vertices.data());
+        std::uint32_t vertex_index = 0;
 
         // Top vertices
         for (std::uint32_t s = 0; s <= segments; ++s)
@@ -557,7 +581,7 @@ namespace worse::geometry
             Vector3 normal(0.0f, 1.0f, 0.0f);
             Vector3 tangent(1.0f, 0.0f, 0.0f);
 
-            vertices.emplace_back(position, uv, normal, tangent);
+            vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
         }
 
         // Bottom vertices
@@ -573,7 +597,7 @@ namespace worse::geometry
             Vector3 normal(0.0f, -1.0f, 0.0f);
             Vector3 tangent(1.0f, 0.0f, 0.0f);
 
-            vertices.emplace_back(position, uv, normal, tangent);
+            vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{position, uv, normal, tangent};
         }
 
         // Indices for the sides
@@ -593,6 +617,19 @@ namespace worse::geometry
             indices.emplace_back(nextBottomIndex);
         }
 
+        // Add the center vertices for top and bottom faces
+        std::uint32_t topCenterIndex = vertex_index;
+        vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{Vector3(0.0f, height, 0.0f),
+                              Vector2(0.5f, 0.0f),
+                              Vector3(0.0f, 1.0f, 0.0f),
+                              Vector3(1.0f, 0.0f, 0.0f)}; // Top center
+        
+        std::uint32_t bottomCenterIndex = vertex_index;
+        vertex_data[vertex_index++] = RHIVertexPosUvNrmTan{Vector3(0.0f, 0.0f, 0.0f),
+                              Vector2(0.5f, 1.0f),
+                              Vector3(0.0f, -1.0f, 0.0f),
+                              Vector3(1.0f, 0.0f, 0.0f)}; // Bottom center
+
         // Indices for the top and bottom faces
         for (std::uint32_t s = 0; s < segments; ++s)
         {
@@ -604,25 +641,13 @@ namespace worse::geometry
             // Top face
             indices.emplace_back(topIndex);
             indices.emplace_back(nextTopIndex);
-            indices.emplace_back(segments + 1);
+            indices.emplace_back(topCenterIndex);
 
             // Bottom face
             indices.emplace_back(bottomIndex);
             indices.emplace_back(nextBottomIndex);
-            indices.emplace_back(2 * (segments + 1));
+            indices.emplace_back(bottomCenterIndex);
         }
-
-        // Add the center vertices for top and bottom faces
-        vertices.emplace_back(Vector3(0.0f, height, 0.0f),
-                              Vector2(0.5f, 0.0f),
-                              Vector3(0.0f, 1.0f, 0.0f),
-                              Vector3(1.0f, 0.0f, 0.0f)); // Top center
-        vertices.emplace_back(Vector3(0.0f, 0.0f, 0.0f),
-                              Vector2(0.5f, 1.0f),
-                              Vector3(0.0f, -1.0f, 0.0f),
-                              Vector3(1.0f, 0.0f, 0.0f)); // Bottom center
-        indices.emplace_back(segments + 1);               // Top center index
-        indices.emplace_back(2 * (segments + 1));         // Bottom center index
     }
 
 } // namespace worse::geometry
