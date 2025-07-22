@@ -18,6 +18,8 @@ using namespace worse;
 
 struct LayoutData
 {
+    bool isVisible = true;
+
     worse::math::Vector2 viewportSize;
 
     float leftPanelWidth;
@@ -50,6 +52,13 @@ struct PowerLineParameter
     float catenary_k;                // 悬链线方程垂直位移k
 };
 
+struct CameraData
+{
+    float moveSpeed;
+    float followSpeed;
+    math::Quaternion orientation;
+};
+
 enum class ApplicationState
 {
     Undefined,
@@ -61,11 +70,6 @@ enum class ApplicationState
 class World
 {
 public:
-    inline static float cameraMoveSpeed = 1.0f;
-
-    // 相机引用，在initialize中设置，在UI中使用
-    inline static Camera* currentCamera = nullptr;
-
     // 选中的点云
     inline static pc::Cloud cloudData;
     inline static ecs::Entity cloudEntity = ecs::Entity::null();
@@ -92,29 +96,7 @@ public:
     inline static const std::string POINT_CLOUD_DIRECTORY =
         "/Users/w6rsty/dev/Cpp/worse_pc/Engine/Binary/LAS/";
 
-    // 视角相关的静态变量
-    static constexpr math::Vector3 defaultCameraPosition =
-        math::Vector3{0.0f, 0.0f, 5.0f};
-    // 顶视图相机位置
-    static constexpr math::Vector3 downwardCameraPosition =
-        math::Vector3{0.0f, 10.0f, 0.0f};
-    // 侧视图相机位置
-    static constexpr math::Vector3 sideCameraPosition =
-        math::Vector3{10.0f, 0.0f, 0.0f};
-
-    // 相机跟随速度
-    static constexpr float cameraFollowSpeed = 5.0f;
-    // 相机朝向
-    inline static math::Quaternion cameraOrientation =
-        math::Quaternion::IDENTITY();
-
     inline static std::size_t defaultMaterial = 0;
-
-    static void setCameraPerspectiveView(Camera* camera, math::Vector3 const& focus, float scale);
-    static void setCameraOrthographicView(Camera* camera);
-    static void setCameraTopView(Camera* camera);
-    static void setCameraSideView(Camera* camera);
-    static void fitCameraCloud(Camera* camera, math::Vector3 const& focus, float scale);
 
     static void initializeLASFiles();
     static bool loadCloudMesh(std::string const& filename,
@@ -149,8 +131,7 @@ public:
                            ecs::ResourceArray<Mesh> meshes);
 
     // 控制按键输入
-    static void updateInput(ecs::Resource<Camera> camera,
-                            ecs::Resource<GlobalContext> globalContext);
+    static void updateInput(ecs::Commands commands, ecs::Resource<GlobalContext> globalContext);
 
     static void update(ecs::Resource<GlobalContext> globalContext);
     // clang-format on

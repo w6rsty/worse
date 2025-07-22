@@ -5,11 +5,15 @@
 void World::mainLayout(ecs::Commands commands,
                        ecs::Resource<GlobalContext> context)
 {
+    LayoutData* layoutData = commands.getResource<LayoutData>().get();
+    if (!layoutData->isVisible)
+    {
+        return;
+    }
+
     // 获取视口大小
     ImGuiIO& io     = ImGui::GetIO();
     ImVec2 viewport = io.DisplaySize;
-
-    LayoutData* layoutData = commands.getResource<LayoutData>().get();
 
     // clang-format off
     /*+--------------------------------------------------------------------------------------------+*/

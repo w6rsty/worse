@@ -14,6 +14,9 @@ void World::statusPanel(ecs::Commands commands)
     float const centerStartX = leftPanelWidth;
     float const centerWidth  = viewport.x - leftPanelWidth - rightPanelWidth;
 
+    ecs::Resource<Camera> camera         = commands.getResource<Camera>();
+    ecs::Resource<CameraData> cameraData = commands.getResource<CameraData>();
+
     // =========================================================================
     // Layout
     // =========================================================================
@@ -32,21 +35,21 @@ void World::statusPanel(ecs::Commands commands)
         ImGui::Columns(3, "StatusColumns", false);
 
         ImGui::SetNextItemWidth(120);
-        ImGui::SliderFloat("相机速度", &cameraMoveSpeed, 0.1f, 10.0f);
+        ImGui::SliderFloat("相机速度", &cameraData->moveSpeed, 0.1f, 50.0f);
 
         ImGui::NextColumn();
         {
-            math::Vector3 camPos = currentCamera->getPosition();
+            math::Vector3 camPos = camera->getPosition();
             ImGui::Text("相机位置:");
-            ImGui::Text("  (%.3f, %.3f, %.3f)", camPos.x, camPos.y, camPos.z);
+            ImGui::Text("(%.3f, %.3f, %.3f)", camPos.x, camPos.y, camPos.z);
         }
 
         ImGui::NextColumn();
         {
-            math::Vector3 camForward = currentCamera->getForward();
+            math::Vector3 camForward = camera->getForward();
 
             ImGui::Text("相机朝向:");
-            ImGui::Text("  (%.3f, %.3f, %.3f)",
+            ImGui::Text("(%.3f, %.3f, %.3f)",
                         camForward.x,
                         camForward.y,
                         camForward.z);

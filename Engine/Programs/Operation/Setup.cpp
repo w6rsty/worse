@@ -8,7 +8,7 @@ void setupCamera(ecs::Commands commands)
 {
     Camera& camera = commands.emplaceResource<Camera>();
 
-    camera.setPosition(World::defaultCameraPosition);
+    camera.setPosition(math::Vector3::ZERO());
     camera.setPerspectiveParams(math::toRadians(60.0f),
                                 static_cast<float>(Window::getWidth()) /
                                     static_cast<float>(Window::getHeight()),
@@ -22,8 +22,10 @@ void setupCamera(ecs::Commands commands)
                                                   static_cast<float>(Window::getHeight()));
                         });
 
-    // 设置camera引用供UI使用
-    World::currentCamera = &camera;
+    CameraData& cameraData = commands.emplaceResource<CameraData>();
+    cameraData.moveSpeed   = 1.0f;
+    cameraData.followSpeed = 5.0f;
+    cameraData.orientation = math::Quaternion::IDENTITY();
 }
 
 void setupLayout(ecs::Commands commands)

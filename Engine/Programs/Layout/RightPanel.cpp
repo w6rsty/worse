@@ -1,15 +1,17 @@
-#include "Cloud.hpp"
 #include "imgui.h"
+#include "Cloud.hpp"
 #include "../Application/World.hpp"
 
 void property(ecs::Commands commands, ecs::Entity cloudEntity,
               pc::Cloud& cloudData)
 {
-    static float pos[3] = {0.0f, 0.0f, 0.0f};
-    static float rot[3] = {0.0f, 0.0f, 0.0f};
-    static float scale  = 1.0f;
+    LocalTransform& xform      = commands.getComponent<LocalTransform>(cloudEntity);
+    math::Vector3 const eulers = xform.rotation.toEuler();
 
-    LocalTransform& xform = commands.getComponent<LocalTransform>(cloudEntity);
+    float pos[3] = {xform.position.x, xform.position.y, xform.position.z};
+    float rot[3] = {math::toDegrees(eulers.x), math::toDegrees(eulers.y), math::toDegrees(eulers.z)};
+    float scale  = xform.scale.x;
+
     ImGui::Text("变换:");
     if (ImGui::DragFloat3("位置", pos, 0.1f))
     {
@@ -17,10 +19,7 @@ void property(ecs::Commands commands, ecs::Entity cloudEntity,
     }
     if (ImGui::DragFloat3("旋转", rot, 0.1f, -180.0f, 180.0f))
     {
-        xform.rotation =
-            math::Quaternion::fromEuler(math::Vector3{math::toRadians(rot[0]),
-                                                      math::toRadians(rot[1]),
-                                                      math::toRadians(rot[2])});
+        xform.rotation = math::Quaternion::fromEuler({math::toRadians(rot[0]), math::toRadians(rot[1]), math::toRadians(rot[2])});
     }
     if (ImGui::DragFloat("缩放", &scale, 0.1f, 0.2f, 10.0f))
     {
@@ -99,17 +98,10 @@ void World::rightPanel(ecs::Commands commands)
                 {
                     if (!currentActiveFile.empty())
                     {
-                        bool success = processMesh(currentActiveFile, commands);
-                        if (success)
+                        if (!processMesh(currentActiveFile, commands))
                         {
-                            WS_LOG_INFO("UI",
-                                        "Started processing for: {}",
-                                        currentActiveFile);
-                        }
-                        else
-                        {
-                            WS_LOG_ERROR("UI",
-                                         "Failed to start processing for: {}",
+                            WS_LOG_ERROR("Process",
+                                         "Failed. {}",
                                          currentActiveFile);
                         }
                     }

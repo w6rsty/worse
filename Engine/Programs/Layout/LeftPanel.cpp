@@ -118,7 +118,7 @@ void World::leftPanel(ecs::Commands commands)
 
         ImGui::Separator();
 
-        // 文件列表s
+        // 文件列表
         ImGui::BeginChild("FileList", ImVec2(0, 0), false);
         {
             static int selectedFile = -1;

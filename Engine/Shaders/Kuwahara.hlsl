@@ -80,16 +80,16 @@ void main_cs(uint3 id : SV_DispatchThreadID)
     // filteredColor = pow(filteredColor, 1.0f / 2.2f);
 
     // Add vignette effect
-    float2 uv = float2(id.xy) / float2(dims);
-    float2 centered = uv - 0.5f;
-    float vignette = 1.0f - smoothstep(0.3f, 0.9f, length(centered));
-    filteredColor *= vignette;
+    // float2 uv = float2(id.xy) / float2(dims);
+    // float2 centered = uv - 0.5f;
+    // float vignette = 1.0f - smoothstep(0.3f, 0.9f, length(centered));
+    // filteredColor *= vignette;
 
     // Add dithering to prevent color banding
-    float2 ditherCoord = float2(id.xy);
-    float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
-    dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
-    filteredColor += dither;
+    // float2 ditherCoord = float2(id.xy);
+    // float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
+    // dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
+    // filteredColor += dither;
 
     output[id.xy] = float4(filteredColor, 1.0f);
 }

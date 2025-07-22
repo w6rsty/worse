@@ -7,16 +7,25 @@ using namespace worse;
 
 // clang-format off
 void World::updateInput(
-    ecs::Resource<Camera> camera,
+    ecs::Commands commands,
     ecs::Resource<GlobalContext> globalContext
 )
 {
+    ecs::Resource<Camera> camera         = commands.getResource<Camera>();
+    ecs::Resource<CameraData> cameraData = commands.getResource<CameraData>();
+
     if (Input::isKeyDown(KeyCode::Escape))
     {
         Window::close();
     }
 
-    float const moveSpeed = cameraMoveSpeed * globalContext->deltaTime;
+    if (Input::isKeyDown(KeyCode::H))
+    {
+        LayoutData* layoutData = commands.getResource<LayoutData>().get();
+        layoutData->isVisible = !layoutData->isVisible;
+    }
+
+    float const moveSpeed = cameraData->moveSpeed * globalContext->deltaTime;
     // WASD控制相机移动
     math::Vector3 moveDirection = math::Vector3::ZERO();
 
@@ -67,15 +76,15 @@ void World::updateInput(
         math::Quaternion const pitchRotation = math::Quaternion::fromAxisAngle(camera->getRight(), pitch);
         math::Quaternion const newOrientation = yawRotation * pitchRotation * currentOrientation;
         camera->setOrientation(math::normalize(newOrientation));
-        cameraOrientation = camera->getOrientation(); // 这会打断sLerp
+        cameraData->orientation = camera->getOrientation(); // 这会打断sLerp
     }
     else
     {
         // 平滑旋转相机
         math::Quaternion const realOrientation = math::sLerp(
             camera->getOrientation(),
-            cameraOrientation,
-            cameraFollowSpeed * globalContext->deltaTime // sLerp 增量
+            cameraData->orientation,
+            cameraData->followSpeed * globalContext->deltaTime // sLerp 增量
         );
         camera->setOrientation(realOrientation);
     }

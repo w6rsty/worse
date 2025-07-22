@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include "../Operation/View.hpp"
 #include "../Application/World.hpp"
 
 void World::toolbarPanel(ecs::Commands commands,
@@ -14,6 +15,9 @@ void World::toolbarPanel(ecs::Commands commands,
 
     float const centerStartX = leftPanelWidth;
     float const centerWidth  = viewport.x - leftPanelWidth - rightPanelWidth;
+
+    Camera* camera         = commands.getResource<Camera>().get();
+    CameraData* cameraData = commands.getResource<CameraData>().get();
 
     // =========================================================================
     // Layout
@@ -35,7 +39,7 @@ void World::toolbarPanel(ecs::Commands commands,
         ImGui::SameLine();
         if (ImGui::Button("适配视图"))
         {
-            fitCameraCloud(currentCamera, math::Vector3::ZERO(), cloudData.volume.getExtent().elementMax());
+            fitView(camera, cameraData, math::Vector3::ZERO(), cloudData.volume.getExtent().elementMax());
         }
         ImGui::SameLine();
 
@@ -68,20 +72,22 @@ void World::toolbarPanel(ecs::Commands commands,
                          viewModes,
                          IM_ARRAYSIZE(viewModes)))
         {
+            float const scale = cloudData.volume.getExtent().elementMax();
+
             // 检测到视角模式变化，切换相机视角
             switch (currentViewMode)
             {
             case 0: // 透视
-                setCameraPerspectiveView(currentCamera, math::Vector3::ZERO(), cloudData.volume.getExtent().elementMax());
+                setPerspectiveView(camera);
                 break;
             case 1: // 正交
-                setCameraOrthographicView(currentCamera);
+                setOrthographicView(camera, scale);
                 break;
             case 2: // 顶视
-                setCameraTopView(currentCamera);
+                setTopView(camera, cameraData, scale);
                 break;
             case 3: // 侧视
-                setCameraSideView(currentCamera);
+                setSideView(camera, cameraData, scale);
                 break;
             }
             previousViewMode = currentViewMode;

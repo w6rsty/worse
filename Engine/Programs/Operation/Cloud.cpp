@@ -1,3 +1,4 @@
+#include "View.hpp"
 #include "../Application/World.hpp"
 #include "../PointCloud/Process.hpp"
 
@@ -6,7 +7,7 @@ void World::initializeLASFiles()
 {
     availableFiles.clear();
 
-    WS_LOG_INFO("PointCloud", "Scanning point cloud directory: {}", POINT_CLOUD_DIRECTORY);
+    WS_LOG_INFO("PointCloud", "Scanning directory: {}", POINT_CLOUD_DIRECTORY);
 
     // 获取所有.las文件
     for (auto const& entry :
@@ -41,23 +42,23 @@ bool World::loadCloudMesh(std::string const& filename,
 
     std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
 
-    pc::Cloud cloud = pc::load(fullPath);
+    cloudData = pc::load(fullPath);
 
-    if (!cloud.points.empty())
+    if (!cloudData.points.empty())
     {
         // 创建网格并保存索引
         auto meshes           = commands.getResourceArray<Mesh>();
         std::size_t meshIndex = meshes.add(CustomMesh3D{
             .vertexType = RHIVertexType::Pos,
-            .vertices   = {reinterpret_cast<std::byte*>(cloud.points.data()),
-                           cloud.points.size() * sizeof(RHIVertexPos)},
+            .vertices   = {reinterpret_cast<std::byte*>(cloudData.points.data()),
+                           cloudData.points.size() * sizeof(RHIVertexPos)},
         });
 
         meshes.get(meshIndex)->createGPUBuffers();
 
         loadedMeshes[filename] = meshIndex;
 
-        WS_LOG_INFO("PointCloud", "Loaded mesh for {}: {} points, mesh index: {}", filename, cloud.points.size(), meshIndex);
+        WS_LOG_INFO("PointCloud", "Loaded mesh for {}: {} points, mesh index: {}", filename, cloudData.points.size(), meshIndex);
 
         isLoadingMesh      = false;
         currentLoadingFile = "";
@@ -153,25 +154,21 @@ bool World::switchToPointCloud(std::string const& filename,
         WS_LOG_INFO("PointCloud", "Destroyed previous point cloud entity");
     }
 
-    // 重新加载点云数据以获取包围盒信息（只用于计算，不生成网格）
-    cloudData = pc::load(POINT_CLOUD_DIRECTORY + filename);
-
-    // 更新点云中心和包围半径
-    // 注意：这里的包围盒是变换前的原始数据，需要应用相同的变换
-    math::Vector3 originalCenter = cloudData.volume.getCenter();
-    math::Vector3 originalExtent = cloudData.volume.getExtent();
-    float maxExtent              = originalExtent.elementMax();
-
-    // 应用与PreProcess.hpp中相同的变换来计算变换后的中心
-
     // 获取必要的资源
     auto materials = commands.getResourceArray<StandardMaterial>();
 
+    // clang-format off
+    static constexpr math::Matrix3 tranform = {
+        1.0f,  0.0f, 0.0f,
+        0.0f,  0.0f, 1.0f,
+        0.0f, -1.0f, 0.0f,
+    };
+    // clang-format on
+
     // 创建新的点云Entity，使用预加载的网格索引
     cloudEntity = commands.spawn(
-        LocalTransform{.position = math::Vector3{0.0f, 0.0f, 0.0f},
-                       .rotation = math::Quaternion::IDENTITY(),
-                       .scale    = math::Vector3::ONE()},
+        LocalTransform{
+            .rotation = math::Quaternion::fromMat3(tranform)},
         Mesh3D{it->second,
                RHIPrimitiveTopology::PointList}, // 使用预加载的网格索引
         MeshMaterial{defaultMaterial});
@@ -179,18 +176,16 @@ bool World::switchToPointCloud(std::string const& filename,
     hasCloud          = true;
     currentActiveFile = filename; // 设置当前活跃文件
 
-    // 自动调整相机到最佳观察位置
-    if (currentCamera != nullptr)
-    {
-        fitCameraCloud(currentCamera, math::Vector3::ZERO(), cloudData.volume.getExtent().elementMax());
-    }
+    float const scale      = cloudData.volume.getExtent().elementMax();
+    Camera* camera         = commands.getResource<Camera>().get();
+    CameraData* cameraData = commands.getResource<CameraData>().get();
+    fitView(camera, cameraData, math::Vector3::ZERO(), scale);
 
     return true;
 }
 
 bool World::processMesh(std::string const& filename, ecs::Commands commands)
 {
-    // 检查文件是否已加载
     auto it = loadedMeshes.find(filename);
     if (it == loadedMeshes.end())
     {
@@ -216,7 +211,7 @@ bool World::processMesh(std::string const& filename, ecs::Commands commands)
         return false;
     }
 
-    // 2. 转换为Open3D点云格式
+    // 2. 转换为 Open3D 点云格式
     o3dCloud->points_.reserve(originalCloud.points.size());
     for (RHIVertexPos const& point : originalCloud.points)
     {
@@ -273,64 +268,6 @@ bool World::processMesh(std::string const& filename, ecs::Commands commands)
     for (size_t i = 0; i < infra.powerLines.size(); ++i)
     {
         WS_LOG_INFO("Open3D", "Power line {}: {} points, {} curve control points", i + 1, infra.powerLines[i]->points_.size(), infra.powerLineCurves[i].size());
-    }
-
-    // 4. 转换回项目格式并更新网格
-
-    // 创建处理后的点云数据 - 合并所有识别的结构
-    std::vector<RHIVertexPosUvNrmTan> processedPoints;
-
-    // 添加地面点（简化表示）
-    std::size_t groundSampleCount =
-        std::min(size_t(1000), groundResult.groundPoints->points_.size());
-    for (size_t i = 0; i < groundSampleCount;
-         i += groundResult.groundPoints->points_.size() / groundSampleCount)
-    {
-        const auto& point = groundResult.groundPoints->points_[i];
-
-        RHIVertexPosUvNrmTan vtx;
-        vtx.position = math::Vector3(static_cast<float>(point.x()),
-                                     static_cast<float>(point.y()),
-                                     static_cast<float>(point.z()));
-        vtx.normal   = math::Vector3(0.0f, 0.0f, 1.0f); // 地面法线向上
-        vtx.uv       = math::Vector2(0.0f, 0.0f);
-        vtx.tangent  = math::Vector3(1.0f, 0.0f, 0.0f);
-
-        processedPoints.push_back(vtx);
-    }
-
-    // 添加电力塔点
-    if (infra.towerPoints)
-    {
-        for (const auto& point : infra.towerPoints->points_)
-        {
-            RHIVertexPosUvNrmTan vtx;
-            vtx.position = math::Vector3(static_cast<float>(point.x()),
-                                         static_cast<float>(point.y()),
-                                         static_cast<float>(point.z()));
-            vtx.normal   = math::Vector3(0.0f, 0.0f, 1.0f);
-            vtx.uv       = math::Vector2(0.0f, 0.0f);
-            vtx.tangent  = math::Vector3(1.0f, 0.0f, 0.0f);
-
-            processedPoints.push_back(vtx);
-        }
-    }
-
-    // 添加电力线点
-    for (auto const& powerLine : infra.powerLines)
-    {
-        for (auto const& point : powerLine->points_)
-        {
-            RHIVertexPosUvNrmTan vtx;
-            vtx.position = math::Vector3(static_cast<float>(point.x()),
-                                         static_cast<float>(point.y()),
-                                         static_cast<float>(point.z()));
-            vtx.normal   = math::Vector3(0.0f, 0.0f, 1.0f);
-            vtx.uv       = math::Vector2(0.0f, 0.0f);
-            vtx.tangent  = math::Vector3(1.0f, 0.0f, 0.0f);
-
-            processedPoints.push_back(vtx);
-        }
     }
 
     // 生成电力线参数并触发弹出窗口
