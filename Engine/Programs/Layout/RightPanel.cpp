@@ -80,43 +80,32 @@ void World::rightPanel(ecs::Commands commands)
                 ImGui::Spacing();
             }
 
-            if (isProcessing)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text,
-                                      ImVec4(0.0f, 0.8f, 1.0f, 1.0f)); // 蓝色
-                ImGui::Text("正在处理: %s", currentProcessingFile.c_str());
-                ImGui::PopStyleColor();
-                ImGui::Spacing();
-            }
-            else
-            {
-                ImGui::PushStyleColor(ImGuiCol_Button, processBtFg);
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, processBtHv);
-                ImGui::PushStyleColor(ImGuiCol_ButtonActive, processBtAc);
+            ImGui::PushStyleColor(ImGuiCol_Button, processBtFg);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, processBtHv);
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, processBtAc);
 
-                if (ImGui::Button("开始处理", ImVec2(-1.0f, 0.0f)))
+            if (ImGui::Button("开始处理", ImVec2(-1.0f, 0.0f)))
+            {
+                if (!currentActiveFile.empty())
                 {
-                    if (!currentActiveFile.empty())
+                    if (!processMesh(currentActiveFile, commands))
                     {
-                        if (!processMesh(currentActiveFile, commands))
-                        {
-                            WS_LOG_ERROR("Process",
-                                         "Failed. {}",
-                                         currentActiveFile);
-                        }
-                    }
-                    else
-                    {
-                        WS_LOG_WARN(
-                            "UI",
-                            "No active point cloud found for processing");
+                        WS_LOG_ERROR("Process",
+                                     "Failed. {}",
+                                     currentActiveFile);
                     }
                 }
-
-                ImGui::PopStyleColor(3);
-
-                ImGui::Spacing();
+                else
+                {
+                    WS_LOG_WARN(
+                        "UI",
+                        "No active point cloud found for processing");
+                }
             }
+
+            ImGui::PopStyleColor(3);
+
+            ImGui::Spacing();
         }
     }
     ImGui::End();

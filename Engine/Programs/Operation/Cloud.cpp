@@ -37,9 +37,6 @@ bool World::loadCloudMesh(std::string const& filename,
         return true;
     }
 
-    isLoadingMesh      = true;
-    currentLoadingFile = filename;
-
     std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
 
     cloudData = pc::load(fullPath);
@@ -60,15 +57,11 @@ bool World::loadCloudMesh(std::string const& filename,
 
         WS_LOG_INFO("PointCloud", "Loaded mesh for {}: {} points, mesh index: {}", filename, cloudData.points.size(), meshIndex);
 
-        isLoadingMesh      = false;
-        currentLoadingFile = "";
         return true;
     }
     else
     {
         WS_LOG_WARN("PointCloud", "Empty point cloud: {}", filename);
-        isLoadingMesh      = false;
-        currentLoadingFile = "";
         return false;
     }
 }
@@ -103,19 +96,11 @@ void World::clearAllLoadedMeshes(ecs::Commands commands)
     }
 
     // 清空映射表
-    size_t clearedCount = loadedMeshes.size();
+    std::size_t clearedCount = loadedMeshes.size();
     loadedMeshes.clear();
 
     // 重置点云相关状态
     cloudData = pc::Cloud{}; // 重置为空
-
-    // 重置加载状态
-    isLoadingMesh      = false;
-    currentLoadingFile = "";
-
-    // 重置PCL处理状态
-    isProcessing          = false;
-    currentProcessingFile = "";
 
     // 重置当前活跃文件
     currentActiveFile = "";
@@ -193,9 +178,6 @@ bool World::processMesh(std::string const& filename, ecs::Commands commands)
         return false;
     }
 
-    isProcessing          = true;
-    currentProcessingFile = filename;
-
     // 1.加载点云数据
     std::string fullPath = POINT_CLOUD_DIRECTORY + filename;
 
@@ -206,8 +188,6 @@ bool World::processMesh(std::string const& filename, ecs::Commands commands)
     if (originalCloud.points.empty())
     {
         WS_LOG_ERROR("Open3D", "No points in {}", filename);
-        isProcessing          = false;
-        currentProcessingFile = "";
         return false;
     }
 
@@ -275,7 +255,5 @@ bool World::processMesh(std::string const& filename, ecs::Commands commands)
 
     WS_LOG_INFO("Open3D", "{} processing completed ", filename);
 
-    isProcessing          = false;
-    currentProcessingFile = "";
     return true;
 }

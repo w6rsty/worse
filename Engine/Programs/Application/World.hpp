@@ -40,16 +40,16 @@ struct LayoutData
 // 电力线参数弹出窗口相关
 struct PowerLineParameter
 {
-    int id;                          // 线路ID
-    std::string name;                // 线路名称 (UUID)
-    float start_x, start_y, start_z; // 起点坐标 (m)
-    float end_x, end_y, end_z;       // 终点坐标 (m)
-    float length;                    // 线路长度 (m)
-    float width;                     // 线路宽度/直径 (mm)
-    float max_sag;                   // 最大弧垂 (m)
-    float catenary_a;                // 悬链线方程系数a
-    float catenary_h;                // 悬链线方程水平位移h
-    float catenary_k;                // 悬链线方程垂直位移k
+    int id;                       // 线路ID
+    std::string name;             // 线路名称 (UUID)
+    float startX, startY, startZ; // 起点坐标 (m)
+    float endX, endY, endZ;       // 终点坐标 (m)
+    float length;                 // 线路长度 (m)
+    float width;                  // 线路宽度/直径 (mm)
+    float maxSag;                 // 最大弧垂 (m)
+    float catenaryA;              // 悬链线方程系数a
+    float catenaryH;              // 悬链线方程水平位移h
+    float catenaryK;              // 悬链线方程垂直位移k
 };
 
 struct CameraData
@@ -76,15 +76,8 @@ public:
     inline static bool hasCloud           = false;
 
     // 运行时加载的点云网格映射 - 文件名到网格索引的映射
-    inline static std::unordered_map<std::string, size_t> loadedMeshes;
+    inline static std::unordered_map<std::string, std::size_t> loadedMeshes;
     inline static std::vector<std::string> availableFiles;
-
-    // 加载进度相关
-    inline static bool isLoadingMesh             = false;
-    inline static std::string currentLoadingFile = "";
-
-    inline static bool isProcessing                 = false;
-    inline static std::string currentProcessingFile = "";
 
     inline static std::vector<PowerLineParameter> powerLineParams;
     inline static std::string lastProcessedFile = "";

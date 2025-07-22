@@ -120,7 +120,7 @@ void World::mainLayout(ecs::Commands commands,
                         ImGui::Text("%.1f", param.width);
 
                         ImGui::TableSetColumnIndex(4);
-                        ImGui::Text("%.3f", param.max_sag);
+                        ImGui::Text("%.3f", param.maxSag);
                     }
                     ImGui::EndTable();
                 }
@@ -169,13 +169,13 @@ void World::mainLayout(ecs::Commands commands,
                             ImGui::Text("%d", param.id);
 
                             ImGui::TableSetColumnIndex(1);
-                            ImGui::Text("%.6f", param.catenary_a);
+                            ImGui::Text("%.6f", param.catenaryA);
 
                             ImGui::TableSetColumnIndex(2);
-                            ImGui::Text("%.3f", param.catenary_h);
+                            ImGui::Text("%.3f", param.catenaryH);
 
                             ImGui::TableSetColumnIndex(3);
-                            ImGui::Text("%.3f", param.catenary_k);
+                            ImGui::Text("%.3f", param.catenaryK);
                         }
                         ImGui::EndTable();
                     }
@@ -237,22 +237,22 @@ void World::mainLayout(ecs::Commands commands,
                             ImGui::Text("%d", param.id);
 
                             ImGui::TableSetColumnIndex(1);
-                            ImGui::Text("%.3f", param.start_x);
+                            ImGui::Text("%.3f", param.startX);
 
                             ImGui::TableSetColumnIndex(2);
-                            ImGui::Text("%.3f", param.start_y);
+                            ImGui::Text("%.3f", param.startY);
 
                             ImGui::TableSetColumnIndex(3);
-                            ImGui::Text("%.3f", param.start_z);
+                            ImGui::Text("%.3f", param.startZ);
 
                             ImGui::TableSetColumnIndex(4);
-                            ImGui::Text("%.3f", param.end_x);
+                            ImGui::Text("%.3f", param.endX);
 
                             ImGui::TableSetColumnIndex(5);
-                            ImGui::Text("%.3f", param.end_y);
+                            ImGui::Text("%.3f", param.endY);
 
                             ImGui::TableSetColumnIndex(6);
-                            ImGui::Text("%.3f", param.end_z);
+                            ImGui::Text("%.3f", param.endZ);
                         }
                         ImGui::EndTable();
                     }
@@ -293,18 +293,18 @@ void World::mainLayout(ecs::Commands commands,
                             "CREATE TABLE IF NOT EXISTS power_lines (");
                 WS_LOG_INFO("SQLite", "    id INTEGER PRIMARY KEY,");
                 WS_LOG_INFO("SQLite", "    name TEXT NOT NULL,");
-                WS_LOG_INFO("SQLite", "    start_x REAL,");
-                WS_LOG_INFO("SQLite", "    start_y REAL,");
-                WS_LOG_INFO("SQLite", "    start_z REAL,");
-                WS_LOG_INFO("SQLite", "    end_x REAL,");
-                WS_LOG_INFO("SQLite", "    end_y REAL,");
-                WS_LOG_INFO("SQLite", "    end_z REAL,");
+                WS_LOG_INFO("SQLite", "    startX REAL,");
+                WS_LOG_INFO("SQLite", "    startY REAL,");
+                WS_LOG_INFO("SQLite", "    startZ REAL,");
+                WS_LOG_INFO("SQLite", "    endX REAL,");
+                WS_LOG_INFO("SQLite", "    endY REAL,");
+                WS_LOG_INFO("SQLite", "    endZ REAL,");
                 WS_LOG_INFO("SQLite", "    length REAL,");
                 WS_LOG_INFO("SQLite", "    width REAL,");
-                WS_LOG_INFO("SQLite", "    max_sag REAL,");
-                WS_LOG_INFO("SQLite", "    catenary_a REAL,");
-                WS_LOG_INFO("SQLite", "    catenary_h REAL,");
-                WS_LOG_INFO("SQLite", "    catenary_k REAL");
+                WS_LOG_INFO("SQLite", "    maxSag REAL,");
+                WS_LOG_INFO("SQLite", "    catenaryA REAL,");
+                WS_LOG_INFO("SQLite", "    catenaryH REAL,");
+                WS_LOG_INFO("SQLite", "    catenaryK REAL");
                 WS_LOG_INFO("SQLite", ");");
                 WS_LOG_INFO("SQLite", "");
                 WS_LOG_INFO("SQLite", "-- 插入数据");
@@ -313,27 +313,27 @@ void World::mainLayout(ecs::Commands commands,
                 {
                     WS_LOG_INFO(
                         "SQLite",
-                        "INSERT INTO power_lines (id, name, start_x, start_y, "
-                        "start_z, end_x, end_y, end_z, "
-                        "length, width, max_sag, catenary_a, catenary_h, "
-                        "catenary_k) VALUES "
+                        "INSERT INTO power_lines (id, name, startX, startY, "
+                        "startZ, endX, endY, endZ, "
+                        "length, width, maxSag, catenaryA, catenaryH, "
+                        "catenaryK) VALUES "
                         "({}, '{}', {:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}, "
                         "{:.3f}, "
                         "{:.2f}, {:.1f}, {:.3f}, {:.6f}, {:.3f}, {:.3f});",
                         param.id,
                         param.name,
-                        param.start_x,
-                        param.start_y,
-                        param.start_z,
-                        param.end_x,
-                        param.end_y,
-                        param.end_z,
+                        param.startX,
+                        param.startY,
+                        param.startZ,
+                        param.endX,
+                        param.endY,
+                        param.endZ,
                         param.length,
                         param.width,
-                        param.max_sag,
-                        param.catenary_a,
-                        param.catenary_h,
-                        param.catenary_k);
+                        param.maxSag,
+                        param.catenaryA,
+                        param.catenaryH,
+                        param.catenaryK);
                 }
                 WS_LOG_INFO("SQLite", "=== SQLite语句生成完成 ===");
             }
@@ -361,18 +361,18 @@ void World::mainLayout(ecs::Commands commands,
                                 "1f},{:.3f},{:.6f},{:.3f},{:.3f}",
                                 param.id,
                                 param.name,
-                                param.start_x,
-                                param.start_y,
-                                param.start_z,
-                                param.end_x,
-                                param.end_y,
-                                param.end_z,
+                                param.startX,
+                                param.startY,
+                                param.startZ,
+                                param.endX,
+                                param.endY,
+                                param.endZ,
                                 param.length,
                                 param.width,
-                                param.max_sag,
-                                param.catenary_a,
-                                param.catenary_h,
-                                param.catenary_k);
+                                param.maxSag,
+                                param.catenaryA,
+                                param.catenaryH,
+                                param.catenaryK);
                 }
                 WS_LOG_INFO("CSV", "=== CSV导出完成 ===");
             }
@@ -400,7 +400,7 @@ void World::mainLayout(ecs::Commands commands,
                 {
                     totalLength += param.length;
                     avgWidth += param.width;
-                    avgSag += param.max_sag;
+                    avgSag += param.maxSag;
                 }
                 if (!World::powerLineParams.empty())
                 {

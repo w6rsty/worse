@@ -706,22 +706,22 @@ void generatePowerLineParameters(
         double relative_height = avg_height - ground_z;
 
         // 确定起点和终点坐标
-        float start_x, start_y, start_z, end_x, end_y, end_z;
+        float startX, startY, startZ, endX, endY, endZ;
         if (extent.x() > extent.y())
         {
             // X方向更长，起点终点在X方向
-            start_x = static_cast<float>(min_bound.x());
-            end_x   = static_cast<float>(max_bound.x());
-            start_y = end_y = static_cast<float>(center.y());
+            startX = static_cast<float>(min_bound.x());
+            endX   = static_cast<float>(max_bound.x());
+            startY = endY = static_cast<float>(center.y());
         }
         else
         {
             // Y方向更长，起点终点在Y方向
-            start_y = static_cast<float>(min_bound.y());
-            end_y   = static_cast<float>(max_bound.y());
-            start_x = end_x = static_cast<float>(center.x());
+            startY = static_cast<float>(min_bound.y());
+            endY   = static_cast<float>(max_bound.y());
+            startX = endX = static_cast<float>(center.x());
         }
-        start_z = end_z = static_cast<float>(avg_height);
+        startZ = endZ = static_cast<float>(avg_height);
 
         // 生成导线宽度（基于高度推断）
         float width; // 导线直径，单位mm
@@ -743,38 +743,38 @@ void generatePowerLineParameters(
         }
 
         // 计算最大弧垂（基于线路长度和高度的经验公式）
-        float max_sag =
+        float maxSag =
             static_cast<float>(line_length * line_length /
                                (8.0 * std::max(relative_height, 10.0)));
-        max_sag = std::max(0.5f, std::min(max_sag, 15.0f)); // 限制在合理范围内
+        maxSag = std::max(0.5f, std::min(maxSag, 15.0f)); // 限制在合理范围内
 
         // 悬链线方程参数计算
         // y = a * cosh((x - h) / a) + k
         // 其中a控制曲线的陡峭程度，h是水平位移，k是垂直位移
-        float catenary_a =
-            static_cast<float>(relative_height / 3.0);            // 经验公式
-        float catenary_h = static_cast<float>(line_length / 2.0); // 中点为原点
-        float catenary_k = static_cast<float>(ground_z);          // 基准高度
+        float catenaryA =
+            static_cast<float>(relative_height / 3.0);           // 经验公式
+        float catenaryH = static_cast<float>(line_length / 2.0); // 中点为原点
+        float catenaryK = static_cast<float>(ground_z);          // 基准高度
 
         // 添加随机变化使数据更真实
-        max_sag += std::uniform_real_distribution<float>(-0.5f, 0.5f)(gen);
+        maxSag += std::uniform_real_distribution<float>(-0.5f, 0.5f)(gen);
 
         // 创建电力线参数
         PowerLineParameter param;
-        param.id         = static_cast<int>(i + 1);
-        param.name       = generateUUID(gen);
-        param.start_x    = start_x;
-        param.start_y    = start_y;
-        param.start_z    = start_z;
-        param.end_x      = end_x;
-        param.end_y      = end_y;
-        param.end_z      = end_z;
-        param.length     = static_cast<float>(line_length);
-        param.width      = width;
-        param.max_sag    = std::max(0.1f, max_sag);
-        param.catenary_a = catenary_a;
-        param.catenary_h = catenary_h;
-        param.catenary_k = catenary_k;
+        param.id        = static_cast<int>(i + 1);
+        param.name      = generateUUID(gen);
+        param.startX    = startX;
+        param.startY    = startY;
+        param.startZ    = startZ;
+        param.endX      = endX;
+        param.endY      = endY;
+        param.endZ      = endZ;
+        param.length    = static_cast<float>(line_length);
+        param.width     = width;
+        param.maxSag    = std::max(0.1f, maxSag);
+        param.catenaryA = catenaryA;
+        param.catenaryH = catenaryH;
+        param.catenaryK = catenaryK;
 
         World::powerLineParams.push_back(param);
 
@@ -803,32 +803,32 @@ void generatePowerLineParameters(
             param.name = generateUUID(gen);
 
             // 生成随机坐标
-            param.start_x =
+            param.startX =
                 std::uniform_real_distribution<float>(-100.0f, 100.0f)(gen);
-            param.start_y =
+            param.startY =
                 std::uniform_real_distribution<float>(-100.0f, 100.0f)(gen);
-            param.start_z =
+            param.startZ =
                 std::uniform_real_distribution<float>(20.0f, 50.0f)(gen);
-            param.end_x =
-                param.start_x +
+            param.endX =
+                param.startX +
                 std::uniform_real_distribution<float>(50.0f, 200.0f)(gen);
-            param.end_y =
-                param.start_y +
+            param.endY =
+                param.startY +
                 std::uniform_real_distribution<float>(-20.0f, 20.0f)(gen);
-            param.end_z =
-                param.start_z +
+            param.endZ =
+                param.startZ +
                 std::uniform_real_distribution<float>(-5.0f, 5.0f)(gen);
 
-            param.length = std::sqrt(std::pow(param.end_x - param.start_x, 2) +
-                                     std::pow(param.end_y - param.start_y, 2));
+            param.length = std::sqrt(std::pow(param.endX - param.startX, 2) +
+                                     std::pow(param.endY - param.startY, 2));
             param.width  = std::uniform_real_distribution<float>(12.0f, 45.0f)(
                 gen); // 12-45mm
-            param.max_sag =
+            param.maxSag =
                 std::uniform_real_distribution<float>(1.0f,
                                                       15.0f)(gen); // 1-15m
-            param.catenary_a = param.start_z / 3.0f;
-            param.catenary_h = param.length / 2.0f;
-            param.catenary_k = 0.0f;
+            param.catenaryA = param.startZ / 3.0f;
+            param.catenaryH = param.length / 2.0f;
+            param.catenaryK = 0.0f;
 
             World::powerLineParams.push_back(param);
         }
