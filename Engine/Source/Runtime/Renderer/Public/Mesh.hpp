@@ -157,12 +157,19 @@ namespace worse
 
         void createGPUBuffers();
 
+        void setVisible(bool visible)
+        {
+            m_visible = visible;
+        }
+
         // clang-format off
+        bool isVisible() const { return m_visible; }
         RHIBuffer* getVertexBuffer() const { return m_vertexBuffer.get(); }
         RHIBuffer* getIndexBuffer() const { return m_indexBuffer.get(); }
         // clang-format on
 
     private:
+        bool m_visible = true;
         RHIVertexType m_vertexType;
         std::vector<std::byte> m_vertices;
         std::vector<std::uint32_t> m_indices;

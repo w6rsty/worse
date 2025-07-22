@@ -71,7 +71,7 @@ namespace worse
 
         for (Drawcall const& drawcall : drawcalls->point)
         {
-            if (std::shared_ptr<Mesh> mesh = drawcall.mesh.lock())
+            if (std::shared_ptr<Mesh> mesh = drawcall.mesh.lock(); mesh && mesh->isVisible())
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
 
