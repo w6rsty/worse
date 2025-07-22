@@ -57,33 +57,35 @@ void World::leftPanel(ecs::Commands commands)
         ImGui::PopStyleColor(3);
 
         // 确认对话框
-        if (showConfirmDialog)
         {
-            ImGui::OpenPopup("确认清理");
-        }
-
-        if (ImGui::BeginPopupModal("确认清理",
-                                   nullptr,
-                                   ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::Text("确定要清理所有已加载的网格吗？");
-            ImGui::Text("这将释放 %zu 个已加载的网格。", loadedMeshes.size());
-            ImGui::Separator();
-
-            if (ImGui::Button("确定", ImVec2(120, 0)))
+            if (showConfirmDialog)
             {
-                clearAllLoadedMeshes(commands);
-                WS_LOG_INFO("UI", "User confirmed mesh cleanup");
-                showConfirmDialog = false;
-                ImGui::CloseCurrentPopup();
+                ImGui::OpenPopup("确认清理");
             }
-            ImGui::SameLine();
-            if (ImGui::Button("取消", ImVec2(120, 0)))
+
+            if (ImGui::BeginPopupModal("确认清理",
+                                       nullptr,
+                                       ImGuiWindowFlags_AlwaysAutoResize))
             {
-                showConfirmDialog = false;
-                ImGui::CloseCurrentPopup();
+                ImGui::Text("确定要清理所有已加载的网格吗？");
+                ImGui::Text("这将释放 %zu 个已加载的网格。", loadedMeshes.size());
+                ImGui::Separator();
+
+                if (ImGui::Button("确定", ImVec2(120, 0)))
+                {
+                    clearAllLoadedMeshes(commands);
+                    WS_LOG_INFO("UI", "User confirmed mesh cleanup");
+                    showConfirmDialog = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("取消", ImVec2(120, 0)))
+                {
+                    showConfirmDialog = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
             }
-            ImGui::EndPopup();
         }
 
         // 显示已加载网格的统计信息
@@ -106,7 +108,7 @@ void World::leftPanel(ecs::Commands commands)
         ImGui::Spacing();
 
         // 点云状态显示
-        if (hasPointCloud)
+        if (hasCloud)
         {
             ImGui::PushStyleColor(ImGuiCol_Text, loadedCloudTxFg);
             ImGui::Text("点云已加载");
@@ -114,18 +116,9 @@ void World::leftPanel(ecs::Commands commands)
             ImGui::Text("点数量: %zu", cloudData.points.size());
         }
 
-        // 显示加载进度条（如果正在加载）
-        if (isLoadingMesh)
-        {
-            ImGui::Text("正在加载: %s", currentLoadingFile.c_str());
-            ImGui::ProgressBar(loadingProgress, ImVec2(-1.0f, 0.0f));
-            ImGui::Spacing();
-        }
-
         ImGui::Separator();
 
-        // 文件列表
-        ImGui::Text("可用文件 (%zu 个):", availableFiles.size());
+        // 文件列表s
         ImGui::BeginChild("FileList", ImVec2(0, 0), false);
         {
             static int selectedFile = -1;
@@ -136,7 +129,7 @@ void World::leftPanel(ecs::Commands commands)
 
                 // 检查当前是否是加载的文件
                 bool isCurrentFile = false;
-                if (hasPointCloud && cloudEntity != ecs::Entity::null())
+                if (hasCloud && cloudEntity != ecs::Entity::null())
                 {
                     // 可以通过检查filename来确定，这里简化处理
                     isCurrentFile = (selectedFile == i);
@@ -190,14 +183,6 @@ void World::leftPanel(ecs::Commands commands)
                 {
                     ImGui::PopStyleColor();
                 }
-            }
-
-            // 如果没有可用文件，显示提示
-            if (availableFiles.empty())
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, normalTxFg);
-                ImGui::Text("未找到点云文件...");
-                ImGui::PopStyleColor();
             }
         }
         ImGui::EndChild();

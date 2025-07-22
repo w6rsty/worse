@@ -3,9 +3,6 @@
 #include <open3d/io/PointCloudIO.h>
 
 #include "Process.hpp"
-#include "Material.hpp"
-#include "Mesh.hpp"
-#include "Prefab.hpp"
 #include "../Application/World.hpp"
 
 using namespace worse;
@@ -24,15 +21,15 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
     }
 
     // 1. 计算点云边界
-    auto bbox      = cloud->GetAxisAlignedBoundingBox();
-    auto min_bound = bbox.GetMinBound();
-    auto max_bound = bbox.GetMaxBound();
+    auto bbox     = cloud->GetAxisAlignedBoundingBox();
+    auto minBound = bbox.GetMinBound();
+    auto maxBound = bbox.GetMaxBound();
 
     // 2. 创建网格
     int gridWidth =
-        static_cast<int>((max_bound.x() - min_bound.x()) / cellSize) + 1;
+        static_cast<int>((maxBound.x() - minBound.x()) / cellSize) + 1;
     int gridHeight =
-        static_cast<int>((max_bound.y() - min_bound.y()) / cellSize) + 1;
+        static_cast<int>((maxBound.y() - minBound.y()) / cellSize) + 1;
 
     // 3. 初始化高度网格（存储每个网格单元的最小高度）
     std::vector<std::vector<double>> heightGrid(
@@ -46,8 +43,8 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
     for (std::size_t i = 0; i < cloud->points_.size(); ++i)
     {
         const auto& point = cloud->points_[i];
-        int x = static_cast<int>((point.x() - min_bound.x()) / cellSize);
-        int y = static_cast<int>((point.y() - min_bound.y()) / cellSize);
+        int x             = static_cast<int>((point.x() - minBound.x()) / cellSize);
+        int y             = static_cast<int>((point.y() - minBound.y()) / cellSize);
 
         if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight)
         {
@@ -62,7 +59,7 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
     // 多尺度形态学开运算
     for (double windowSize = 1.0; windowSize <= maxWindowSize; windowSize *= 2)
     {
-        int halfWindow = static_cast<int>(windowSize / cellSize / 2);
+        int halfWindow                            = static_cast<int>(windowSize / cellSize / 2);
         std::vector<std::vector<double>> tempGrid = filteredHeight;
 
         // 形态学开运算 = 腐蚀 + 膨胀
@@ -129,8 +126,8 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
     for (size_t i = 0; i < cloud->points_.size(); ++i)
     {
         const auto& point = cloud->points_[i];
-        int x = static_cast<int>((point.x() - min_bound.x()) / cellSize);
-        int y = static_cast<int>((point.y() - min_bound.y()) / cellSize);
+        int x             = static_cast<int>((point.x() - minBound.x()) / cellSize);
+        int y             = static_cast<int>((point.y() - minBound.y()) / cellSize);
 
         if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight &&
             filteredHeight[x][y] != std::numeric_limits<double>::max())
@@ -246,7 +243,7 @@ performClustering(std::shared_ptr<open3d::geometry::PointCloud> cloud,
 
     // 2. 智能降采样以提高性能
     std::shared_ptr<open3d::geometry::PointCloud> processed_cloud = cloud;
-    size_t original_size = cloud->points_.size();
+    size_t original_size                                          = cloud->points_.size();
 
     // 如果点云过大，进行降采样
     if (original_size > 50000)
@@ -844,200 +841,4 @@ void generatePowerLineParameters(
     // 触发弹出窗口
 
     commands.getResource<LayoutData>()->showPowerLineParamsPopup = true;
-}
-
-// 绘制重建物体的函数
-void spawnReconstructedInfrastructure(InfrastructureClassification const& infra,
-                                      ecs::Commands commands)
-{
-    auto meshes = commands.getResourceArray<Mesh>();
-
-    // 1. 绘制地面 - 使用大的Quad3D
-    if (infra.groundPoints && !infra.groundPoints->points_.empty())
-    {
-        // 计算地面范围
-        auto groundBbox = infra.groundPoints->GetAxisAlignedBoundingBox();
-        auto groundMin  = groundBbox.GetMinBound();
-        auto groundMax  = groundBbox.GetMaxBound();
-
-        float groundWidth  = static_cast<float>(groundMax.x() - groundMin.x());
-        float groundHeight = static_cast<float>(groundMax.y() - groundMin.y());
-        float groundCenterX =
-            static_cast<float>((groundMax.x() + groundMin.x()) * 0.5);
-        float groundCenterY =
-            static_cast<float>((groundMax.y() + groundMin.y()) * 0.5);
-        float groundCenterZ = static_cast<float>(groundMin.z());
-
-        // 创建地面网格
-        auto groundMesh =
-            meshes.add(Quad3D{.width = groundWidth, .height = groundHeight});
-
-        // 创建并调用createGPUBuffers
-        meshes.get(groundMesh)->createGPUBuffers();
-
-        // 生成地面物体
-        commands.spawn(LocalTransform{.position = math::Vector3{groundCenterX,
-                                                                groundCenterZ,
-                                                                groundCenterY},
-                                      .rotation = math::Quaternion::IDENTITY(),
-                                      .scale = math::Vector3{1.0f, 1.0f, 1.0f}},
-                       Mesh3D{groundMesh},
-                       MeshMaterial{World::defaultPointMaterialIndex});
-
-        WS_LOG_INFO("Infrastructure",
-                    "Spawned ground quad: {}x{} at ({}, {}, {})",
-                    groundWidth,
-                    groundHeight,
-                    groundCenterX,
-                    groundCenterZ,
-                    groundCenterY);
-    }
-
-    // 2. 绘制电力塔 - 使用Cube
-    if (infra.towerPoints)
-    {
-        math::Vector3 towerCenter = infra.towerBbox.getCenter();
-        math::Vector3 towerSize   = infra.towerBbox.getSize();
-
-        // 创建电力塔网格
-        auto towerMesh = meshes.add(Cube{.width  = towerSize.x,
-                                         .height = towerSize.y,
-                                         .depth  = towerSize.z});
-
-        // 创建并调用createGPUBuffers
-        meshes.get(towerMesh)->createGPUBuffers();
-
-        // 生成电力塔物体
-        commands.spawn(LocalTransform{.position = towerCenter,
-                                      .rotation = math::Quaternion::IDENTITY(),
-                                      .scale = math::Vector3{1.0f, 1.0f, 1.0f}},
-                       Mesh3D{towerMesh},
-                       MeshMaterial{World::defaultPointMaterialIndex});
-
-        WS_LOG_INFO("Infrastructure",
-                    "Spawned power tower cube: {}x{}x{} at ({}, {}, {})",
-                    towerSize.x,
-                    towerSize.y,
-                    towerSize.z,
-                    towerCenter.x,
-                    towerCenter.y,
-                    towerCenter.z);
-    }
-
-    // 3. 绘制电力线 - 使用CustomMesh3D生成长条圆轴线网格
-    for (size_t i = 0; i < infra.powerLineCurves.size(); ++i)
-    {
-        const auto& curve = infra.powerLineCurves[i];
-        if (curve.size() < 2)
-            continue;
-
-        // 生成电力线网格顶点和索引
-        std::vector<RHIVertexPosUvNrmTan> powerLineVertices;
-        std::vector<std::uint32_t> powerLineIndices;
-
-        // 电力线的半径
-        const float cable_radius     = 0.05f;
-        const int segments_per_point = 8; // 每个控制点周围的圆形段数
-
-        // 为每个曲线控制点生成圆形截面
-        for (std::size_t j = 0; j < curve.size(); ++j)
-        {
-            math::Vector3 const& point = curve[j];
-
-            // 计算切线方向（如果不是端点）
-            math::Vector3 tan;
-            if (j == 0)
-            {
-                tan = math::normalize(curve[j + 1] - curve[j]);
-            }
-            else if (j == curve.size() - 1)
-            {
-                tan = math::normalize(curve[j] - curve[j - 1]);
-            }
-            else
-            {
-                tan = math::normalize(curve[j + 1] - curve[j - 1]);
-            }
-
-            // 计算垂直于切线的两个向量
-            math::Vector3 up = math::Vector3{0.0f, 1.0f, 0.0f};
-            if (std::abs(math::dot(tan, up)) > 0.9f)
-            {
-                up = math::Vector3{1.0f, 0.0f, 0.0f};
-            }
-            math::Vector3 right = math::normalize(math::cross(tan, up));
-            up                  = math::normalize(math::cross(right, tan));
-
-            // 生成圆形截面的顶点
-            for (int k = 0; k < segments_per_point; ++k)
-            {
-                float angle = 2.0f * math::PI * k / segments_per_point;
-                float cos_a = std::cos(angle);
-                float sin_a = std::sin(angle);
-
-                math::Vector3 offset = right * (cos_a * cable_radius) +
-                                       up * (sin_a * cable_radius);
-                math::Vector3 vertex_pos = point + offset;
-                math::Vector3 normal     = math::normalize(offset);
-
-                RHIVertexPosUvNrmTan vertex;
-                vertex.position = vertex_pos;
-                vertex.normal   = normal;
-                vertex.tangent  = tan;
-                vertex.uv =
-                    math::Vector2{static_cast<float>(j) / (curve.size() - 1),
-                                  static_cast<float>(k) / segments_per_point};
-
-                powerLineVertices.push_back(vertex);
-            }
-        }
-
-        // 生成索引（连接相邻截面的三角形）
-        for (size_t j = 0; j < curve.size() - 1; ++j)
-        {
-            for (int k = 0; k < segments_per_point; ++k)
-            {
-                int current_ring = j * segments_per_point;
-                int next_ring    = (j + 1) * segments_per_point;
-                int next_k       = (k + 1) % segments_per_point;
-
-                // 每两个相邻截面之间形成四边形，分为两个三角形
-                // 三角形1
-                powerLineIndices.push_back(current_ring + k);
-                powerLineIndices.push_back(next_ring + k);
-                powerLineIndices.push_back(current_ring + next_k);
-
-                // 三角形2
-                powerLineIndices.push_back(current_ring + next_k);
-                powerLineIndices.push_back(next_ring + k);
-                powerLineIndices.push_back(next_ring + next_k);
-            }
-        }
-
-        // 创建自定义网格
-        auto powerLineMesh =
-            meshes.add(CustomMesh3D{.vertices = powerLineVertices,
-                                    .indices  = powerLineIndices});
-
-        // 创建并调用createGPUBuffers
-        meshes.get(powerLineMesh)->createGPUBuffers();
-
-        // 生成电力线物体
-        commands.spawn(
-            LocalTransform{.position = math::Vector3{0.0f, 0.0f, 0.0f},
-                           .rotation = math::Quaternion::IDENTITY(),
-                           .scale    = math::Vector3{1.0f, 1.0f, 1.0f}},
-            Mesh3D{powerLineMesh},
-            MeshMaterial{World::defaultPointMaterialIndex});
-
-        WS_LOG_INFO("Infrastructure",
-                    "Spawned power line {}: {} vertices, {} indices",
-                    i + 1,
-                    powerLineVertices.size(),
-                    powerLineIndices.size());
-    }
-
-    WS_LOG_INFO(
-        "Infrastructure",
-        "Successfully spawned all reconstructed infrastructure objects");
 }

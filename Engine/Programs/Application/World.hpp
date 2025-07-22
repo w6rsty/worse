@@ -69,7 +69,7 @@ public:
     // 选中的点云
     inline static pc::Cloud cloudData;
     inline static ecs::Entity cloudEntity = ecs::Entity::null();
-    inline static bool hasPointCloud      = false;
+    inline static bool hasCloud           = false;
 
     // 运行时加载的点云网格映射 - 文件名到网格索引的映射
     inline static std::unordered_map<std::string, size_t> loadedMeshes;
@@ -78,9 +78,7 @@ public:
     // 加载进度相关
     inline static bool isLoadingMesh             = false;
     inline static std::string currentLoadingFile = "";
-    inline static float loadingProgress          = 0.0f;
 
-    // PCL处理相关
     inline static bool isProcessing                 = false;
     inline static std::string currentProcessingFile = "";
 
@@ -110,30 +108,21 @@ public:
     inline static math::Quaternion cameraOrientation =
         math::Quaternion::IDENTITY();
 
-    inline static math::Vector3 pointCloudCenter =
-        math::Vector3{0.0f, 0.0f, 0.0f};
-    inline static float cloudBoundingRadius = 5.0f; // 视角切换辅助函数
+    inline static std::size_t defaultMaterial = 0;
 
-    inline static std::size_t defaultPointMaterialIndex = 0;
+    static void setCameraPerspectiveView(Camera* camera, math::Vector3 const& focus, float scale);
+    static void setCameraOrthographicView(Camera* camera);
+    static void setCameraTopView(Camera* camera);
+    static void setCameraSideView(Camera* camera);
+    static void fitCameraCloud(Camera* camera, math::Vector3 const& focus, float scale);
 
-    static void resetCameraView(Camera* camera);
-    static void setCameraToPerspectiveView(Camera* camera);
-    static void setCameraToOrthographicView(Camera* camera);
-    static void setCameraToTopView(Camera* camera);
-    static void setCameraToSideView(Camera* camera);
-    static void fitCameraToPointCloud(Camera* camera);
-
-    // 初始化可用文件列表的函数
-    static void initializeAvailableFiles();
-    // 运行时加载点云网格的函数
-    static bool loadPointCloudMesh(std::string const& filename,
-                                   ecs::Commands commands);
-    // 清理所有已加载的网格的函数
+    static void initializeLASFiles();
+    static bool loadCloudMesh(std::string const& filename,
+                              ecs::Commands commands);
     static void clearAllLoadedMeshes(ecs::Commands commands);
 
     static bool processMesh(std::string const& filename,
                             ecs::Commands commands);
-    // 通过文件名切换点云Entity的函数（支持运行时加载）
     static bool switchToPointCloud(std::string const& filename,
                                    ecs::Commands commands);
 

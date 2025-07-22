@@ -19,7 +19,6 @@ Application::Application(int argc, char** argv)
         m_schedule.addSystem<ecs::CoreStage::StartUp, ImGuiRenderer::initialize>();
         m_schedule.addSystem<ecs::CoreStage::StartUp, World::initialize>();
         m_schedule.addSystem<ecs::CoreStage::StartUp, World::setupScene>();
-        m_schedule.addSystem<ecs::CoreStage::StartUp, buildMeshes>();
         m_schedule.addSystem<ecs::CoreStage::StartUp, buildMaterials>();
 
         m_schedule.addSystem<ecs::CoreStage::Update, Engine::tick>();

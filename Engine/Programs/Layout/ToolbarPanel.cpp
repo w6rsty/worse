@@ -32,21 +32,27 @@ void World::toolbarPanel(ecs::Commands commands,
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,
                               ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
 
-        if (ImGui::Button("重置视角"))
-        {
-            // 重置相机视角
-            resetCameraView(currentCamera);
-        }
         ImGui::SameLine();
         if (ImGui::Button("适配视图"))
         {
-            // 适配点云到视图
-            fitCameraToPointCloud(currentCamera);
+            fitCameraCloud(currentCamera, math::Vector3::ZERO(), cloudData.volume.getExtent().elementMax());
         }
         ImGui::SameLine();
+
+        bool isActive = context->isWireFrameMode;
+        if (isActive)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.5f, 0.2f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.6f, 0.3f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.7f, 0.4f, 1.0f));
+        }
         if (ImGui::Button("线框模式"))
         {
             context->isWireFrameMode = !context->isWireFrameMode;
+        }
+        if (isActive)
+        {
+            ImGui::PopStyleColor(3);
         }
         ImGui::SameLine();
 
@@ -66,16 +72,16 @@ void World::toolbarPanel(ecs::Commands commands,
             switch (currentViewMode)
             {
             case 0: // 透视
-                setCameraToPerspectiveView(currentCamera);
+                setCameraPerspectiveView(currentCamera, math::Vector3::ZERO(), cloudData.volume.getExtent().elementMax());
                 break;
             case 1: // 正交
-                setCameraToOrthographicView(currentCamera);
+                setCameraOrthographicView(currentCamera);
                 break;
             case 2: // 顶视
-                setCameraToTopView(currentCamera);
+                setCameraTopView(currentCamera);
                 break;
             case 3: // 侧视
-                setCameraToSideView(currentCamera);
+                setCameraSideView(currentCamera);
                 break;
             }
             previousViewMode = currentViewMode;

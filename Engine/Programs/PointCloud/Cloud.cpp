@@ -44,8 +44,7 @@ namespace worse::pc
                                 static_cast<float>(reader->get_y()),
                                 static_cast<float>(reader->get_z())};
 
-            cloud.points.emplace_back(
-                (translation * math::Vector4{point, 1.0f}).xyz());
+            cloud.points.emplace_back((translation * math::Vector4{point, 1.0f}).xyz());
         }
 
         // 保存变换矩阵

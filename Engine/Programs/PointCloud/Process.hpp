@@ -46,7 +46,3 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
               double cellSize = 1.0, double maxWindowSize = 20.0,
               double slopeThreshold = 0.15, double maxDistance = 0.5,
               double initialDistance = 0.15);
-
-void spawnReconstructedInfrastructure(
-    InfrastructureClassification const& infrastructure,
-    worse::ecs::Commands commands);

@@ -18,7 +18,7 @@ namespace worse::pc
     struct Cloud
     {
         // 变换处理后的点云数据
-        std::vector<RHIVertexPosUvNrmTan> points;
+        std::vector<RHIVertexPos> points;
         // 变换后的点云包围盒
         math::BoundingBox volume;
 

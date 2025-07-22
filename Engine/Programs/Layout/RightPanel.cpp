@@ -63,13 +63,13 @@ void World::rightPanel(ecs::Commands commands)
         ImGui::Text("属性查看器");
         ImGui::Separator();
 
-        if (hasPointCloud &&
+        if (hasCloud &&
             ImGui::CollapsingHeader("属性", ImGuiTreeNodeFlags_DefaultOpen))
         {
             property(commands, cloudEntity, cloudData);
         }
 
-        if (hasPointCloud &&
+        if (hasCloud &&
             ImGui::CollapsingHeader("处理", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Separator();
