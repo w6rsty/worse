@@ -76,7 +76,7 @@ namespace worse
 
     void Renderer::createShaders()
     {
-        std::filesystem::path resourceRoot = "/Users/w6rsty/dev/Cpp/worse_pc";
+        std::filesystem::path resourceRoot = "./";
         std::filesystem::path shaderPath   = resourceRoot / "Engine" / "Shaders";
 
         // clang-format off

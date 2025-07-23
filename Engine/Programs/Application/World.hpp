@@ -85,7 +85,7 @@ public:
 
     // 固定的点云文件目录
     inline static const std::string POINT_CLOUD_DIRECTORY =
-        "/Users/w6rsty/dev/Cpp/worse_pc/Engine/Binary/LAS/";
+        "./Engine/Binary/LAS/";
 
     inline static std::size_t defaultMaterial = 0;
 
