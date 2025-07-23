@@ -65,12 +65,14 @@ enum class ApplicationState
     End,
 };
 
+struct CloudTag
+{
+};
+
 class World
 {
 public:
-    // 选中的点云
-    inline static ecs::Entity cloudEntity = ecs::Entity::null();
-    inline static bool hasCloud           = false;
+    inline static bool hasCloud = false;
 
     inline static CloudStorageManager cloudStorageManager;
     inline static std::vector<std::string> availableFiles;

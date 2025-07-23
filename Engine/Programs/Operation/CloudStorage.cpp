@@ -1,5 +1,7 @@
 #include "CloudStorage.hpp"
 #include "Cloud.hpp"
+#include <algorithm>
+#include <vector>
 
 using namespace worse;
 
@@ -22,8 +24,9 @@ void CloudStorage::createSubCloud(SubCloudKey const& key, FilterFn fn)
 
     std::vector<worse::RHIVertexPos> subPoints = fn(m_masterCloud);
 
-    SubCloud subCloud{};
-    subCloud.mesh = std::make_shared<worse::Mesh>();
+    SubCloud subCloud{
+        .count = subPoints.size(),
+        .mesh  = std::make_shared<worse::Mesh>()};
     subCloud.mesh->addGeometry(
         RHIVertexType::Pos,
         {reinterpret_cast<std::byte*>(subPoints.data()), subPoints.size() * sizeof(worse::RHIVertexPos)},
@@ -44,11 +47,72 @@ void CloudStorage::removeSubCloud(SubCloudKey const& key)
     }
 }
 
+void CloudStorage::destroyEntities(ecs::Commands commands)
+{
+    for (auto& [key, subCloud] : m_subClouds)
+    {
+        if (subCloud.entity != ecs::Entity::null())
+        {
+            commands.destroy(subCloud.entity);
+            subCloud.entity = ecs::Entity::null();
+        }
+    }
+}
+
 void CloudStorage::clearAll()
 {
     for (auto& [key, subCloud] : m_subClouds)
     {
         subCloud.mesh->clearAll();
+    }
+}
+
+void CloudStorage::autoHideLargeSubClouds(double threshold_ratio)
+{
+    if (m_subClouds.size() < 2)
+    {
+        return;
+    }
+
+    // 计算所有子点云的点数统计
+    std::vector<std::pair<std::string, std::size_t>> cloudSizes;
+    std::size_t totalPoints = 0;
+
+    for (const auto& [key, subCloud] : m_subClouds)
+    {
+        cloudSizes.emplace_back(key, subCloud.count);
+        totalPoints += subCloud.count;
+    }
+
+    if (cloudSizes.empty())
+    {
+        return;
+    }
+
+    // 按点数排序
+    std::sort(cloudSizes.begin(), cloudSizes.end(), [](const auto& a, const auto& b)
+              {
+                  return a.second > b.second;
+              });
+
+    // 计算中位数大小
+    std::size_t medianSize = cloudSizes[cloudSizes.size() / 2].second;
+
+    // 隐藏远大于中位数的子点云
+    int hiddenCount = 0;
+    for (const auto& [key, size] : cloudSizes)
+    {
+        if (size > medianSize * threshold_ratio && size > 10000)
+        {
+            setSubCloudVisibility(key, false);
+            hiddenCount++;
+        }
+    }
+
+    // 输出日志信息
+    if (hiddenCount > 0)
+    {
+        WS_LOG_INFO("CloudStorage", "Auto-hidden {} large SubClouds (threshold: {:.1f}x median)", hiddenCount, threshold_ratio);
     }
 }
 
@@ -88,6 +152,14 @@ CloudStorage* CloudStorageManager::get(std::string const& filePath)
     else
     {
         return nullptr;
+    }
+}
+
+void CloudStorageManager::destroyEntities(worse::ecs::Commands commands)
+{
+    for (auto& [_, storage] : m_storageMap)
+    {
+        storage->destroyEntities(commands);
     }
 }
 

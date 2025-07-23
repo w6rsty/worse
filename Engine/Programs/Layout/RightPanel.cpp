@@ -65,8 +65,8 @@ void World::rightPanel(ecs::Commands commands)
         if (hasCloud &&
             ImGui::CollapsingHeader("属性", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            pc::Cloud const& cloudData = cloudStorageManager.get(POINT_CLOUD_DIRECTORY + currentActiveFile)->getMasterCloud();
-            property(commands, cloudEntity, cloudData);
+            CloudStorage* storage = cloudStorageManager.get(POINT_CLOUD_DIRECTORY + currentActiveFile);
+            property(commands, storage->getSubCloud("main").entity, storage->getMasterCloud());
         }
 
         if (hasCloud &&
@@ -79,6 +79,79 @@ void World::rightPanel(ecs::Commands commands)
             {
                 ImGui::Text("%s", currentActiveFile.c_str());
                 ImGui::Spacing();
+            }
+
+            // 显示子点云信息
+            if (!currentActiveFile.empty())
+            {
+                CloudStorage* storage = cloudStorageManager.get(POINT_CLOUD_DIRECTORY + currentActiveFile);
+                if (storage != nullptr)
+                {
+                    std::vector<std::string> subCloudKeys = storage->getSubCloudKeys();
+
+                    ImGui::Text("子点云 (%zu):", storage->getSubCloudCount());
+                    ImGui::Indent();
+
+                    // 统计可见性状态
+                    int visibleCount = 0;
+                    int hiddenCount  = 0;
+                    for (std::string const& key : subCloudKeys)
+                    {
+                        SubCloud& subCloud = storage->getSubCloud(key);
+                        bool isVisible     = subCloud.mesh->isVisible();
+                        if (isVisible)
+                            visibleCount++;
+                        else
+                            hiddenCount++;
+                    }
+
+                    for (std::string const& key : subCloudKeys)
+                    {
+                        SubCloud& subCloud = storage->getSubCloud(key);
+                        bool isVisible     = subCloud.mesh->isVisible();
+
+                        // 创建可点击的文本来切换可见性
+                        ImVec4 textColor = isVisible ? ImVec4(0.0f, 0.8f, 0.0f, 1.0f) : // 绿色表示可见
+                                               ImVec4(0.6f, 0.6f, 0.6f, 1.0f);          // 灰色表示隐藏
+
+                        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+
+                        std::string displayText = key + " (" + std::to_string(subCloud.count) + ")";
+                        if (ImGui::Selectable(displayText.c_str(), false, ImGuiSelectableFlags_None))
+                        {
+                            subCloud.mesh->setVisible(!isVisible);
+                        }
+
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::SetTooltip("%s", isVisible ? "可见" : "隐藏");
+                        }
+
+                        ImGui::PopStyleColor();
+                    }
+
+                    ImGui::Unindent();
+
+                    ImGui::Separator();
+
+                    if (storage->getSubCloudCount() > 1)
+                    {
+                        if (ImGui::Button("隐藏大型点云", ImVec2(-1.0f, 0.0f)))
+                        {
+                            storage->autoHideLargeSubClouds(3.0);
+                        }
+
+                        if (ImGui::Button("显示所有", ImVec2(-1.0f, 0.0f)))
+                        {
+                            for (std::string const& key : subCloudKeys)
+                            {
+                                storage->setSubCloudVisibility(key, true);
+                            }
+                        }
+                    }
+
+                    ImGui::Spacing();
+                }
             }
 
             ImGui::PushStyleColor(ImGuiCol_Button, processBtFg);

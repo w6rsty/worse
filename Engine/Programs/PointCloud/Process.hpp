@@ -46,3 +46,37 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
               double cellSize = 1.0, double maxWindowSize = 20.0,
               double slopeThreshold = 0.15, double maxDistance = 0.5,
               double initialDistance = 0.15);
+
+// 高级点云预处理函数
+std::shared_ptr<open3d::geometry::PointCloud>
+preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud,
+                     double voxel_size       = 0.1,
+                     int sor_neighbors       = 30,
+                     double sor_std_ratio    = 1.5,
+                     int radius_neighbors    = 16,
+                     double radius_threshold = 0.5);
+
+// 自适应聚类参数估计
+struct AdaptiveClusteringParams
+{
+    double eps;
+    int min_points;
+    double density_threshold;
+};
+
+AdaptiveClusteringParams
+estimateClusteringParameters(std::shared_ptr<open3d::geometry::PointCloud> cloud,
+                             double base_eps     = 1.0,
+                             int base_min_points = 50);
+
+// 点云质量评估
+struct PointCloudQualityMetrics
+{
+    double point_density;       // 点密度 (points/m²)
+    double noise_ratio;         // 噪点比例
+    double coverage_uniformity; // 覆盖均匀性
+    double height_variation;    // 高度变化
+};
+
+PointCloudQualityMetrics
+assessPointCloudQuality(std::shared_ptr<open3d::geometry::PointCloud> cloud);

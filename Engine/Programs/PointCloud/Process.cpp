@@ -7,7 +7,7 @@
 
 using namespace worse;
 
-// 渐进形态滤波地面分割
+// 优化的多阶段地面分割算法
 GroundSegmentationResult
 segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
               double cellSize, double maxWindowSize, double slopeThreshold,
@@ -20,50 +20,141 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
         return result;
     }
 
-    // 1. 计算点云边界
-    auto bbox     = cloud->GetAxisAlignedBoundingBox();
+    WS_LOG_INFO("GroundSegmentation", "Starting optimized ground segmentation on {} points", cloud->points_.size());
+
+    // 1. 预处理 - 移除明显的离群点
+    WS_LOG_INFO("GroundSegmentation", "Step 1: Preprocessing and outlier removal");
+    auto preprocessed_cloud = cloud;
+
+    // 统计离群点移除
+    auto bbox           = cloud->GetAxisAlignedBoundingBox();
+    auto extent         = bbox.GetExtent();
+    double height_range = extent.z();
+
+    // 如果高度范围过大，先进行粗糙的高度过滤
+    if (height_range > 100.0)
+    {
+        std::vector<size_t> valid_indices;
+        auto minBound           = bbox.GetMinBound();
+        double height_threshold = minBound.z() + height_range * 0.8; // 保留底部80%的点
+
+        for (size_t i = 0; i < cloud->points_.size(); ++i)
+        {
+            if (cloud->points_[i].z() < height_threshold)
+            {
+                valid_indices.push_back(i);
+            }
+        }
+
+        if (valid_indices.size() < cloud->points_.size())
+        {
+            preprocessed_cloud = cloud->SelectByIndex(valid_indices);
+            WS_LOG_INFO("GroundSegmentation", "Height filtering: {} -> {} points", cloud->points_.size(), preprocessed_cloud->points_.size());
+        }
+    }
+
+    // 2. 自适应网格参数
+    bbox          = preprocessed_cloud->GetAxisAlignedBoundingBox();
     auto minBound = bbox.GetMinBound();
     auto maxBound = bbox.GetMaxBound();
+    extent        = bbox.GetExtent();
 
-    // 2. 创建网格
-    int gridWidth =
-        static_cast<int>((maxBound.x() - minBound.x()) / cellSize) + 1;
-    int gridHeight =
-        static_cast<int>((maxBound.y() - minBound.y()) / cellSize) + 1;
+    // 根据点云密度自适应调整网格大小
+    double point_density     = preprocessed_cloud->points_.size() / (extent.x() * extent.y());
+    double adaptive_cellSize = cellSize;
 
-    // 3. 初始化高度网格（存储每个网格单元的最小高度）
-    std::vector<std::vector<double>> heightGrid(
+    if (point_density < 10.0)
+    {
+        adaptive_cellSize = cellSize * 1.5; // 稀疏点云使用更大网格
+    }
+    else if (point_density > 100.0)
+    {
+        adaptive_cellSize = cellSize * 0.7; // 密集点云使用更小网格
+    }
+
+    WS_LOG_INFO("GroundSegmentation", "Adaptive cell size: {:.2f}m (density: {:.1f} pts/m²)", adaptive_cellSize, point_density);
+
+    // 3. 创建多层高度网格
+    int gridWidth  = static_cast<int>((maxBound.x() - minBound.x()) / adaptive_cellSize) + 1;
+    int gridHeight = static_cast<int>((maxBound.y() - minBound.y()) / adaptive_cellSize) + 1;
+
+    // 存储每个网格单元的多个高度值（最小值、中位数、标准差）
+    std::vector<std::vector<std::vector<double>>> heightGridMulti(
         gridWidth,
-        std::vector<double>(gridHeight, std::numeric_limits<double>::max()));
+        std::vector<std::vector<double>>(gridHeight));
     std::vector<std::vector<std::vector<size_t>>> pointGrid(
         gridWidth,
         std::vector<std::vector<size_t>>(gridHeight));
 
-    // 4. 将点投影到网格并记录最小高度
-    for (std::size_t i = 0; i < cloud->points_.size(); ++i)
+    WS_LOG_INFO("GroundSegmentation", "Step 2: Building adaptive height grid ({}x{})", gridWidth, gridHeight);
+
+    // 4. 填充网格并收集统计信息
+    for (std::size_t i = 0; i < preprocessed_cloud->points_.size(); ++i)
     {
-        const auto& point = cloud->points_[i];
-        int x             = static_cast<int>((point.x() - minBound.x()) / cellSize);
-        int y             = static_cast<int>((point.y() - minBound.y()) / cellSize);
+        const auto& point = preprocessed_cloud->points_[i];
+        int x             = static_cast<int>((point.x() - minBound.x()) / adaptive_cellSize);
+        int y             = static_cast<int>((point.y() - minBound.y()) / adaptive_cellSize);
 
         if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight)
         {
-            heightGrid[x][y] = std::min(heightGrid[x][y], point.z());
+            heightGridMulti[x][y].push_back(point.z());
             pointGrid[x][y].push_back(i);
         }
     }
 
-    // 5. 渐进形态滤波
-    std::vector<std::vector<double>> filteredHeight = heightGrid;
+    // 5. 计算每个网格单元的地面候选高度
+    WS_LOG_INFO("GroundSegmentation", "Step 3: Computing ground candidate heights");
+    std::vector<std::vector<double>> groundHeightGrid(
+        gridWidth,
+        std::vector<double>(gridHeight, std::numeric_limits<double>::max()));
+    std::vector<std::vector<double>> heightVarianceGrid(
+        gridWidth,
+        std::vector<double>(gridHeight, 0.0));
 
-    // 多尺度形态学开运算
-    for (double windowSize = 1.0; windowSize <= maxWindowSize; windowSize *= 2)
+    for (int x = 0; x < gridWidth; ++x)
     {
-        int halfWindow                            = static_cast<int>(windowSize / cellSize / 2);
+        for (int y = 0; y < gridHeight; ++y)
+        {
+            auto& heights = heightGridMulti[x][y];
+            if (heights.empty())
+                continue;
+
+            std::sort(heights.begin(), heights.end());
+
+            // 使用百分位数而不是最小值，更鲁棒
+            size_t percentile_idx  = static_cast<size_t>(heights.size() * 0.15); // 15%分位数
+            groundHeightGrid[x][y] = heights[percentile_idx];
+
+            // 计算高度方差
+            if (heights.size() > 1)
+            {
+                double mean = 0.0;
+                for (double h : heights)
+                    mean += h;
+                mean /= heights.size();
+
+                double variance = 0.0;
+                for (double h : heights)
+                {
+                    variance += (h - mean) * (h - mean);
+                }
+                heightVarianceGrid[x][y] = variance / heights.size();
+            }
+        }
+    }
+
+    // 6. 改进的形态学滤波 - 多尺度+方向性
+    WS_LOG_INFO("GroundSegmentation", "Step 4: Enhanced morphological filtering");
+    std::vector<std::vector<double>> filteredHeight = groundHeightGrid;
+
+    // 多尺度形态学开运算，增加方向性滤波
+    for (double windowSize = 1.0; windowSize <= maxWindowSize; windowSize *= 1.5)
+    {
+        int halfWindow                            = static_cast<int>(windowSize / adaptive_cellSize / 2);
         std::vector<std::vector<double>> tempGrid = filteredHeight;
 
-        // 形态学开运算 = 腐蚀 + 膨胀
-        // 腐蚀操作
+        // 改进的形态学开运算 - 考虑坡度连续性
+        // 腐蚀操作 - 增加坡度约束
         for (int x = 0; x < gridWidth; ++x)
         {
             for (int y = 0; y < gridHeight; ++y)
@@ -72,26 +163,32 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
                     continue;
 
                 double minHeight = filteredHeight[x][y];
+                std::vector<double> neighborHeights;
+
                 for (int dx = -halfWindow; dx <= halfWindow; ++dx)
                 {
                     for (int dy = -halfWindow; dy <= halfWindow; ++dy)
                     {
                         int nx = x + dx, ny = y + dy;
-                        if (nx >= 0 && nx < gridWidth && ny >= 0 &&
-                            ny < gridHeight &&
-                            filteredHeight[nx][ny] !=
-                                std::numeric_limits<double>::max())
+                        if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight &&
+                            filteredHeight[nx][ny] != std::numeric_limits<double>::max())
                         {
-                            minHeight =
-                                std::min(minHeight, filteredHeight[nx][ny]);
+                            neighborHeights.push_back(filteredHeight[nx][ny]);
                         }
                     }
                 }
-                tempGrid[x][y] = minHeight;
+
+                if (!neighborHeights.empty())
+                {
+                    // 使用鲁棒的百分位数而不是最小值
+                    std::sort(neighborHeights.begin(), neighborHeights.end());
+                    size_t robustIdx = static_cast<size_t>(neighborHeights.size() * 0.2);
+                    tempGrid[x][y]   = neighborHeights[robustIdx];
+                }
             }
         }
 
-        // 膨胀操作
+        // 膨胀操作 - 增加坡度连续性检查
         filteredHeight = tempGrid;
         for (int x = 0; x < gridWidth; ++x)
         {
@@ -100,74 +197,182 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
                 if (tempGrid[x][y] == std::numeric_limits<double>::max())
                     continue;
 
-                double maxHeight = tempGrid[x][y];
+                std::vector<double> neighborHeights;
                 for (int dx = -halfWindow; dx <= halfWindow; ++dx)
                 {
                     for (int dy = -halfWindow; dy <= halfWindow; ++dy)
                     {
                         int nx = x + dx, ny = y + dy;
-                        if (nx >= 0 && nx < gridWidth && ny >= 0 &&
-                            ny < gridHeight &&
-                            tempGrid[nx][ny] !=
-                                std::numeric_limits<double>::max())
+                        if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight &&
+                            tempGrid[nx][ny] != std::numeric_limits<double>::max())
                         {
-                            maxHeight = std::max(maxHeight, tempGrid[nx][ny]);
+                            neighborHeights.push_back(tempGrid[nx][ny]);
                         }
                     }
                 }
-                filteredHeight[x][y] = maxHeight;
+
+                if (!neighborHeights.empty())
+                {
+                    std::sort(neighborHeights.begin(), neighborHeights.end());
+                    size_t robustIdx     = static_cast<size_t>(neighborHeights.size() * 0.8);
+                    filteredHeight[x][y] = neighborHeights[robustIdx];
+                }
             }
         }
     }
 
-    // 6. 根据高度差和坡度分类点
+    // 7. 表面平滑和插值
+    WS_LOG_INFO("GroundSegmentation", "Step 5: Surface smoothing and interpolation");
+
+    // 高斯平滑滤波
+    std::vector<std::vector<double>> smoothedHeight = filteredHeight;
+    int smoothKernel                                = 2; // 5x5高斯核
+
+    for (int x = smoothKernel; x < gridWidth - smoothKernel; ++x)
+    {
+        for (int y = smoothKernel; y < gridHeight - smoothKernel; ++y)
+        {
+            if (filteredHeight[x][y] == std::numeric_limits<double>::max())
+                continue;
+
+            double weightedSum = 0.0;
+            double totalWeight = 0.0;
+
+            // 5x5 高斯权重
+            std::vector<std::vector<double>> gaussianWeights = {
+                {0.003, 0.013, 0.022, 0.013, 0.003},
+                {0.013, 0.059, 0.097, 0.059, 0.013},
+                {0.022, 0.097, 0.159, 0.097, 0.022},
+                {0.013, 0.059, 0.097, 0.059, 0.013},
+                {0.003, 0.013, 0.022, 0.013, 0.003}};
+
+            for (int dx = -smoothKernel; dx <= smoothKernel; ++dx)
+            {
+                for (int dy = -smoothKernel; dy <= smoothKernel; ++dy)
+                {
+                    int nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight &&
+                        filteredHeight[nx][ny] != std::numeric_limits<double>::max())
+                    {
+                        double weight = gaussianWeights[dx + smoothKernel][dy + smoothKernel];
+                        weightedSum += filteredHeight[nx][ny] * weight;
+                        totalWeight += weight;
+                    }
+                }
+            }
+
+            if (totalWeight > 0)
+            {
+                smoothedHeight[x][y] = weightedSum / totalWeight;
+            }
+        }
+    }
+
+    filteredHeight = smoothedHeight;
+
+    // 8. 改进的点分类 - 多准则决策
+    WS_LOG_INFO("GroundSegmentation", "Step 6: Enhanced point classification");
     std::vector<size_t> groundIndices, nonGroundIndices;
 
-    for (size_t i = 0; i < cloud->points_.size(); ++i)
+    // 多准则地面点分类
+    for (size_t i = 0; i < preprocessed_cloud->points_.size(); ++i)
     {
-        const auto& point = cloud->points_[i];
-        int x             = static_cast<int>((point.x() - minBound.x()) / cellSize);
-        int y             = static_cast<int>((point.y() - minBound.y()) / cellSize);
+        const auto& point = preprocessed_cloud->points_[i];
+        int x             = static_cast<int>((point.x() - minBound.x()) / adaptive_cellSize);
+        int y             = static_cast<int>((point.y() - minBound.y()) / adaptive_cellSize);
 
         if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight &&
             filteredHeight[x][y] != std::numeric_limits<double>::max())
         {
             double heightDiff = point.z() - filteredHeight[x][y];
 
-            // 计算局部坡度
-            double slope   = 0.0;
-            int slopeCount = 0;
-            for (int dx = -1; dx <= 1; ++dx)
+            // 准则1: 计算加权平均坡度（考虑距离衰减）
+            double weightedSlope = 0.0;
+            double totalWeight   = 0.0;
+
+            for (int dx = -2; dx <= 2; ++dx)
             {
-                for (int dy = -1; dy <= 1; ++dy)
+                for (int dy = -2; dy <= 2; ++dy)
                 {
                     int nx = x + dx, ny = y + dy;
-                    if (nx >= 0 && nx < gridWidth && ny >= 0 &&
-                        ny < gridHeight &&
-                        filteredHeight[nx][ny] !=
-                            std::numeric_limits<double>::max())
+                    if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight &&
+                        filteredHeight[nx][ny] != std::numeric_limits<double>::max())
                     {
-                        double distance =
-                            std::sqrt(dx * dx + dy * dy) * cellSize;
-                        if (distance > 0)
+                        double distance = std::sqrt(dx * dx + dy * dy) * adaptive_cellSize;
+                        if (distance > 0 && distance < 5.0 * adaptive_cellSize) // 限制影响范围
                         {
-                            slope += std::abs(filteredHeight[nx][ny] -
-                                              filteredHeight[x][y]) /
-                                     distance;
-                            ++slopeCount;
+                            double slope  = std::abs(filteredHeight[nx][ny] - filteredHeight[x][y]) / distance;
+                            double weight = std::exp(-distance / (2.0 * adaptive_cellSize)); // 高斯权重
+                            weightedSlope += slope * weight;
+                            totalWeight += weight;
                         }
                     }
                 }
             }
-            if (slopeCount > 0)
+
+            if (totalWeight > 0)
             {
-                slope /= slopeCount;
+                weightedSlope /= totalWeight;
             }
 
-            // 动态阈值：坡度越大，允许的高度差越大
-            double adaptiveThreshold = initialDistance + slope * maxDistance;
+            // 准则2: 局部高度变异性
+            double localVariance = heightVarianceGrid[x][y];
 
-            if (heightDiff <= adaptiveThreshold && slope <= slopeThreshold)
+            // 准则3: 动态自适应阈值
+            double baseThreshold      = initialDistance;
+            double slopeAdjustment    = weightedSlope * maxDistance * 0.5;
+            double varianceAdjustment = std::min(localVariance * 0.1, 2.0);
+            double adaptiveThreshold  = baseThreshold + slopeAdjustment + varianceAdjustment;
+
+            // 准则4: 相对高度检查（防止悬空点被误分为地面）
+            bool heightCheck   = heightDiff <= adaptiveThreshold;
+            bool slopeCheck    = weightedSlope <= slopeThreshold * 1.5; // 稍微放宽坡度阈值
+            bool varianceCheck = localVariance < 3.0;                   // 排除高变异性区域
+
+            // 准则5: 邻域一致性检查
+            bool neighborhoodCheck = true;
+            if (heightDiff > 0.5)
+            { // 对于稍高的点进行邻域检查
+                int groundNeighbors = 0;
+                int totalNeighbors  = 0;
+
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue;
+
+                        int nx = x + dx, ny = y + dy;
+                        if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight)
+                        {
+                            auto& cellPoints = pointGrid[nx][ny];
+                            for (size_t idx : cellPoints)
+                            {
+                                if (idx < preprocessed_cloud->points_.size())
+                                {
+                                    double neighborHeightDiff =
+                                        preprocessed_cloud->points_[idx].z() - filteredHeight[nx][ny];
+                                    if (neighborHeightDiff <= adaptiveThreshold)
+                                    {
+                                        groundNeighbors++;
+                                    }
+                                    totalNeighbors++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (totalNeighbors > 0)
+                {
+                    double groundRatio = static_cast<double>(groundNeighbors) / totalNeighbors;
+                    neighborhoodCheck  = groundRatio > 0.3; // 至少30%的邻居是地面点
+                }
+            }
+
+            // 综合决策
+            if (heightCheck && slopeCheck && varianceCheck && neighborhoodCheck)
             {
                 groundIndices.push_back(i);
             }
@@ -182,26 +387,87 @@ segmentGround(std::shared_ptr<open3d::geometry::PointCloud> cloud,
         }
     }
 
-    // 7. 创建结果点云
-    result.groundPoints    = cloud->SelectByIndex(groundIndices);
-    result.nonGroundPoints = cloud->SelectByIndex(nonGroundIndices);
+    // 9. 后处理 - 地面点连通性分析和噪声去除
+    WS_LOG_INFO("GroundSegmentation", "Step 7: Post-processing and connectivity analysis");
 
-    // 构造地面平面模型（简化为水平面）
-    if (!groundIndices.empty())
-    {
-        double avgZ = 0.0;
-        for (size_t idx : groundIndices)
+    // 如果检测到的地面点过少，放宽条件
+    double groundRatio = static_cast<double>(groundIndices.size()) / preprocessed_cloud->points_.size();
+    if (groundRatio < 0.1)
+    { // 地面点少于10%
+        WS_LOG_WARN("GroundSegmentation", "Ground ratio too low ({:.1f}%), relaxing criteria", groundRatio * 100);
+
+        groundIndices.clear();
+        nonGroundIndices.clear();
+
+        // 使用更宽松的条件重新分类
+        for (size_t i = 0; i < preprocessed_cloud->points_.size(); ++i)
         {
-            avgZ += cloud->points_[idx].z();
+            const auto& point = preprocessed_cloud->points_[i];
+            int x             = static_cast<int>((point.x() - minBound.x()) / adaptive_cellSize);
+            int y             = static_cast<int>((point.y() - minBound.y()) / adaptive_cellSize);
+
+            if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight &&
+                filteredHeight[x][y] != std::numeric_limits<double>::max())
+            {
+                double heightDiff = point.z() - filteredHeight[x][y];
+                if (heightDiff <= maxDistance * 2.0)
+                { // 使用更大的阈值
+                    groundIndices.push_back(i);
+                }
+                else
+                {
+                    nonGroundIndices.push_back(i);
+                }
+            }
+            else
+            {
+                nonGroundIndices.push_back(i);
+            }
         }
-        avgZ /= groundIndices.size();
-        result.groundPlaneModel = Eigen::Vector4d(0, 0, 1, -avgZ);
     }
+
+    // 10. 创建结果点云
+    WS_LOG_INFO("GroundSegmentation", "Step 8: Creating result point clouds");
+    result.groundPoints    = preprocessed_cloud->SelectByIndex(groundIndices);
+    result.nonGroundPoints = preprocessed_cloud->SelectByIndex(nonGroundIndices);
+
+    // 构造改进的地面平面模型（使用RANSAC平面拟合）
+    if (!groundIndices.empty() && result.groundPoints->points_.size() > 3)
+    {
+        // 使用RANSAC进行平面拟合
+        auto [plane_model, inliers] = result.groundPoints->SegmentPlane(
+            0.5,
+            3,
+            1000); // distance_threshold, ransac_n, num_iterations
+
+        if (inliers.size() > groundIndices.size() * 0.3)
+        { // 至少30%的内点
+            result.groundPlaneModel = plane_model;
+        }
+        else
+        {
+            // 回退到简单的水平面
+            double avgZ = 0.0;
+            for (size_t idx : groundIndices)
+            {
+                avgZ += preprocessed_cloud->points_[idx].z();
+            }
+            avgZ /= groundIndices.size();
+            result.groundPlaneModel = Eigen::Vector4d(0, 0, 1, -avgZ);
+        }
+    }
+
+    double finalGroundRatio = static_cast<double>(groundIndices.size()) / preprocessed_cloud->points_.size();
+    WS_LOG_INFO("GroundSegmentation",
+                "Segmentation completed: {:.1f}% ground points ({}/{})",
+                finalGroundRatio * 100,
+                groundIndices.size(),
+                preprocessed_cloud->points_.size());
 
     return result;
 }
 
-// 基于高度和形状特征的精确聚类分析
+// 针对电力基础设施优化的聚类分析
 ClusteringResult
 performClustering(std::shared_ptr<open3d::geometry::PointCloud> cloud,
                   double eps, int min_points)
@@ -213,241 +479,232 @@ performClustering(std::shared_ptr<open3d::geometry::PointCloud> cloud,
         return result;
     }
 
-    WS_LOG_INFO("Open3D",
-                "Starting clustering analysis on {} points...",
+    WS_LOG_INFO("PowerInfrastructure",
+                "Starting power infrastructure clustering on {} points...",
                 cloud->points_.size());
 
-    // 1. 基于高度的预分层
+    // 1. 高度分层预处理 - 专门针对电力设施
     auto bbox           = cloud->GetAxisAlignedBoundingBox();
     double min_z        = bbox.GetMinBound().z();
     double max_z        = bbox.GetMaxBound().z();
     double height_range = max_z - min_z;
 
-    WS_LOG_INFO("Open3D",
+    WS_LOG_INFO("PowerInfrastructure",
                 "Point cloud height range: {:.2f}m (from {:.2f}m to {:.2f}m)",
                 height_range,
                 min_z,
                 max_z);
 
-    // 根据高度特征调整聚类参数
-    double adaptive_eps = eps;
-    if (height_range > 50.0)
+    // 2. 多层次聚类策略
+    std::vector<std::shared_ptr<open3d::geometry::PointCloud>> all_clusters;
+
+    // 2.1 高空区域聚类（电力塔顶部和高压线）
+    std::vector<size_t> high_indices;
+    double high_threshold = min_z + height_range * 0.7; // 上层30%
+
+    for (size_t i = 0; i < cloud->points_.size(); ++i)
     {
-        // 高层结构，增大聚类距离
-        adaptive_eps = eps * 1.5;
-        WS_LOG_INFO("Open3D",
-                    "Detected high structures, adaptive eps: {:.2f} -> {:.2f}",
-                    eps,
-                    adaptive_eps);
-    }
-
-    // 2. 智能降采样以提高性能
-    std::shared_ptr<open3d::geometry::PointCloud> processed_cloud = cloud;
-    size_t original_size                                          = cloud->points_.size();
-
-    // 如果点云过大，进行降采样
-    if (original_size > 50000)
-    {
-        double voxel_size = 0.2; // 20cm体素大小
-        WS_LOG_INFO("Open3D",
-                    "Point cloud is large ({}), applying voxel "
-                    "downsampling with size {:.2f}m...",
-                    original_size,
-                    voxel_size);
-
-        auto downsample_start = std::chrono::high_resolution_clock::now();
-        processed_cloud       = cloud->VoxelDownSample(voxel_size);
-        auto downsample_end   = std::chrono::high_resolution_clock::now();
-        auto downsample_duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                downsample_end - downsample_start);
-
-        WS_LOG_INFO(
-            "Open3D",
-            "Downsampling completed in {}ms: {} -> {} points ({:.1f}% "
-            "reduction)",
-            downsample_duration.count(),
-            original_size,
-            processed_cloud->points_.size(),
-            (1.0 - static_cast<double>(processed_cloud->points_.size()) /
-                       original_size) *
-                100.0);
-    }
-
-    // 根据降采样后的点云大小调整聚类参数
-    size_t current_size     = processed_cloud->points_.size();
-    int adjusted_min_points = min_points;
-
-    if (current_size < original_size)
-    {
-        // 降采样后调整最小点数
-        double reduction_ratio =
-            static_cast<double>(current_size) / original_size;
-        adjusted_min_points =
-            std::max(10, static_cast<int>(min_points * reduction_ratio));
-    }
-
-    // 对于非常大的点云，进一步放宽参数
-    if (current_size > 80000)
-    {
-        adaptive_eps *= 1.2;
-        adjusted_min_points = std::max(adjusted_min_points, 15);
-        WS_LOG_INFO("Open3D",
-                    "Large point cloud detected, relaxing parameters");
-    }
-
-    WS_LOG_INFO(
-        "Open3D",
-        "DBSCAN parameters: eps={:.2f}, min_points={} (adjusted from {})",
-        adaptive_eps,
-        adjusted_min_points,
-        min_points);
-
-    // 3. 执行DBSCAN聚类
-    WS_LOG_INFO("Open3D",
-                "Executing DBSCAN clustering on {} points...",
-                current_size);
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    result.clusterLabels =
-        processed_cloud->ClusterDBSCAN(adaptive_eps, adjusted_min_points);
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        end_time - start_time);
-    WS_LOG_INFO("Open3D",
-                "DBSCAN clustering completed in {}ms",
-                duration.count());
-
-    // 4. 获取聚类数量并统计
-    int max_label = -1;
-    if (!result.clusterLabels.empty())
-    {
-        max_label = *std::max_element(result.clusterLabels.begin(),
-                                      result.clusterLabels.end());
-    }
-
-    // 统计噪声点
-    int noise_points = std::count(result.clusterLabels.begin(),
-                                  result.clusterLabels.end(),
-                                  -1);
-
-    WS_LOG_INFO("Open3D",
-                "Raw clustering results: {} clusters, {} noise points",
-                max_label + 1,
-                noise_points);
-
-    // 5. 为每个聚类创建点云并计算特征
-    WS_LOG_INFO("Open3D", "Processing clusters and applying filters...");
-
-    int valid_clusters  = 0;
-    int filtered_small  = 0;
-    int filtered_volume = 0;
-    int filtered_points = 0;
-
-    // 如果使用了降采样，需要映射回原始点云
-    std::shared_ptr<open3d::geometry::PointCloud> source_cloud =
-        (processed_cloud != cloud) ? cloud : processed_cloud;
-
-    for (int i = 0; i <= max_label; ++i)
-    {
-        std::vector<size_t> cluster_indices;
-        for (size_t j = 0; j < result.clusterLabels.size(); ++j)
+        if (cloud->points_[i].z() > high_threshold)
         {
-            if (result.clusterLabels[j] == i)
-            {
-                cluster_indices.push_back(j);
-            }
+            high_indices.push_back(i);
+        }
+    }
+
+    if (!high_indices.empty())
+    {
+        auto high_cloud = cloud->SelectByIndex(high_indices);
+        WS_LOG_INFO("PowerInfrastructure", "High-altitude clustering: {} points", high_cloud->points_.size());
+
+        // 对高空区域使用更小的eps以精确分离电力塔和线路
+        double high_eps     = eps * 0.8;
+        int high_min_points = std::max(5, min_points / 3);
+
+        auto high_labels = high_cloud->ClusterDBSCAN(high_eps, high_min_points);
+
+        int max_high_label = -1;
+        if (!high_labels.empty())
+        {
+            max_high_label = *std::max_element(high_labels.begin(), high_labels.end());
         }
 
-        if (!cluster_indices.empty())
+        for (int i = 0; i <= max_high_label; ++i)
         {
-            auto cluster_cloud =
-                processed_cloud->SelectByIndex(cluster_indices);
-
-            // 计算聚类特征用于后续分类
-            auto cluster_bbox = cluster_cloud->GetAxisAlignedBoundingBox();
-            auto extent       = cluster_bbox.GetExtent();
-            double height     = extent.z();
-            double volume     = extent.x() * extent.y() * extent.z();
-
-            // 调整过滤阈值（考虑降采样影响）
-            double height_threshold = 2.0;
-            double volume_threshold = 10.0;
-            size_t points_threshold = adjusted_min_points;
-
-            // 详细的过滤日志
-            bool height_ok = height > height_threshold;
-            bool volume_ok = volume > volume_threshold;
-            bool points_ok = cluster_indices.size() >= points_threshold;
-
-            if (!height_ok)
-                filtered_small++;
-            if (!volume_ok)
-                filtered_volume++;
-            if (!points_ok)
-                filtered_points++;
-
-            // 过滤掉太小的聚类
-            if (height_ok && volume_ok && points_ok)
+            std::vector<size_t> cluster_indices;
+            for (size_t j = 0; j < high_labels.size(); ++j)
             {
-                result.clusters.push_back(cluster_cloud);
-                valid_clusters++;
-
-                if (valid_clusters <= 10)
-                { // 只显示前10个聚类的详细信息
-                    WS_LOG_DEBUG("Open3D",
-                                 "Cluster {}: {} points, height={:.2f}m, "
-                                 "volume={:.2f}m³",
-                                 i,
-                                 cluster_indices.size(),
-                                 height,
-                                 volume);
+                if (high_labels[j] == i)
+                {
+                    cluster_indices.push_back(j);
                 }
             }
 
-            // 每处理20个聚类输出一次进度
-            if ((i + 1) % 20 == 0 || i == max_label)
+            if (!cluster_indices.empty() && cluster_indices.size() >= 3)
             {
-                double progress =
-                    static_cast<double>(i + 1) / (max_label + 1) * 100.0;
-                WS_LOG_INFO("Open3D",
-                            "Cluster processing progress: {:.1f}% ({}/{})",
-                            progress,
-                            i + 1,
-                            max_label + 1);
+                auto cluster = high_cloud->SelectByIndex(cluster_indices);
+                all_clusters.push_back(cluster);
             }
+        }
+
+        WS_LOG_INFO("PowerInfrastructure", "High-altitude clusters: {}", max_high_label + 1);
+    }
+
+    // 2.2 中空区域聚类（电力塔主体和中压线）
+    std::vector<size_t> mid_indices;
+    double mid_low  = min_z + height_range * 0.2; // 下层20%以上
+    double mid_high = min_z + height_range * 0.7; // 上层30%以下
+
+    for (size_t i = 0; i < cloud->points_.size(); ++i)
+    {
+        double z = cloud->points_[i].z();
+        if (z > mid_low && z <= mid_high)
+        {
+            mid_indices.push_back(i);
         }
     }
 
-    // 输出过滤统计
-    WS_LOG_INFO("Open3D", "Clustering filter results:");
-    WS_LOG_INFO("Open3D", "  - Valid clusters: {}", valid_clusters);
-    WS_LOG_INFO("Open3D",
-                "  - Filtered (height < {:.1f}m): {}",
-                2.0,
-                filtered_small);
-    WS_LOG_INFO("Open3D",
-                "  - Filtered (volume < {:.1f}m³): {}",
-                10.0,
-                filtered_volume);
-    WS_LOG_INFO("Open3D",
-                "  - Filtered (points < {}): {}",
-                adjusted_min_points,
-                filtered_points);
-    WS_LOG_INFO("Open3D", "  - Total processed: {}", max_label + 1);
-
-    if (current_size != original_size)
+    if (!mid_indices.empty())
     {
-        WS_LOG_INFO("Open3D",
-                    "  - Note: Results based on downsampled data ({} points)",
-                    current_size);
+        auto mid_cloud = cloud->SelectByIndex(mid_indices);
+        WS_LOG_INFO("PowerInfrastructure", "Mid-altitude clustering: {} points", mid_cloud->points_.size());
+
+        // 中空区域使用标准参数
+        auto mid_labels = mid_cloud->ClusterDBSCAN(eps, min_points);
+
+        int max_mid_label = -1;
+        if (!mid_labels.empty())
+        {
+            max_mid_label = *std::max_element(mid_labels.begin(), mid_labels.end());
+        }
+
+        for (int i = 0; i <= max_mid_label; ++i)
+        {
+            std::vector<size_t> cluster_indices;
+            for (size_t j = 0; j < mid_labels.size(); ++j)
+            {
+                if (mid_labels[j] == i)
+                {
+                    cluster_indices.push_back(j);
+                }
+            }
+
+            if (!cluster_indices.empty() && cluster_indices.size() >= min_points)
+            {
+                auto cluster = mid_cloud->SelectByIndex(cluster_indices);
+                all_clusters.push_back(cluster);
+            }
+        }
+
+        WS_LOG_INFO("PowerInfrastructure", "Mid-altitude clusters: {}", max_mid_label + 1);
     }
+
+    // 2.3 低空区域聚类（电力塔基座和低矮设施）
+    std::vector<size_t> low_indices;
+    double low_threshold = min_z + height_range * 0.2; // 下层20%
+
+    for (size_t i = 0; i < cloud->points_.size(); ++i)
+    {
+        if (cloud->points_[i].z() <= low_threshold)
+        {
+            low_indices.push_back(i);
+        }
+    }
+
+    if (!low_indices.empty())
+    {
+        auto low_cloud = cloud->SelectByIndex(low_indices);
+        WS_LOG_INFO("PowerInfrastructure", "Low-altitude clustering: {} points", low_cloud->points_.size());
+
+        // 低空区域使用更大的eps以合并基座结构
+        double low_eps     = eps * 1.5;
+        int low_min_points = min_points * 2;
+
+        auto low_labels = low_cloud->ClusterDBSCAN(low_eps, low_min_points);
+
+        int max_low_label = -1;
+        if (!low_labels.empty())
+        {
+            max_low_label = *std::max_element(low_labels.begin(), low_labels.end());
+        }
+
+        for (int i = 0; i <= max_low_label; ++i)
+        {
+            std::vector<size_t> cluster_indices;
+            for (size_t j = 0; j < low_labels.size(); ++j)
+            {
+                if (low_labels[j] == i)
+                {
+                    cluster_indices.push_back(j);
+                }
+            }
+
+            if (!cluster_indices.empty() && cluster_indices.size() >= low_min_points)
+            {
+                auto cluster = low_cloud->SelectByIndex(cluster_indices);
+                all_clusters.push_back(cluster);
+            }
+        }
+
+        WS_LOG_INFO("PowerInfrastructure", "Low-altitude clusters: {}", max_low_label + 1);
+    }
+
+    // 3. 形状和几何特征过滤
+    WS_LOG_INFO("PowerInfrastructure", "Filtering clusters by shape characteristics...");
+
+    for (const auto& cluster : all_clusters)
+    {
+        if (!cluster || cluster->points_.empty())
+            continue;
+
+        auto cluster_bbox = cluster->GetAxisAlignedBoundingBox();
+        auto extent       = cluster_bbox.GetExtent();
+        auto center       = cluster_bbox.GetCenter();
+
+        double width           = extent.x();
+        double depth           = extent.y();
+        double height          = extent.z();
+        double volume          = width * depth * height;
+        double relative_height = center.z() - min_z;
+
+        // 计算特征比率
+        double aspect_ratio_xy = std::max(width, depth) / std::min(width, depth);
+        double aspect_ratio_z  = height / std::min(width, depth);
+        double point_density   = cluster->points_.size() / std::max(volume, 0.1);
+
+        // 更宽松的过滤条件，专门针对电力设施
+        bool size_ok   = (width > 0.5 && depth > 0.5 && height > 1.0); // 最小尺寸要求
+        bool height_ok = relative_height > 5.0;                        // 相对地面5米以上
+        bool points_ok = cluster->points_.size() >= 10;                // 最少10个点
+
+        // 特殊形状检测
+        bool tower_like     = (aspect_ratio_z > 3.0 && aspect_ratio_xy < 4.0 && height > 15.0);
+        bool line_like      = (aspect_ratio_xy > 8.0 || (width > 20.0 || depth > 20.0));
+        bool structure_like = (volume > 20.0 && point_density > 0.05);
+
+        if (size_ok && height_ok && points_ok && (tower_like || line_like || structure_like))
+        {
+            result.clusters.push_back(cluster);
+
+            WS_LOG_INFO("PowerInfrastructure",
+                        "Valid cluster: {} points, {:.1f}x{:.1f}x{:.1f}m, aspect_xy={:.1f}, aspect_z={:.1f}, type={}",
+                        cluster->points_.size(),
+                        width,
+                        depth,
+                        height,
+                        aspect_ratio_xy,
+                        aspect_ratio_z,
+                        tower_like ? "tower-like" : (line_like ? "line-like" : "structure-like"));
+        }
+    }
+
+    WS_LOG_INFO("PowerInfrastructure",
+                "Clustering completed: {} valid clusters found from {} total clusters",
+                result.clusters.size(),
+                all_clusters.size());
 
     return result;
 }
 
-// 精确的电力基础设施分类
+// 专业的电力基础设施分类算法
 InfrastructureClassification classifyInfrastructure(
     const std::vector<std::shared_ptr<open3d::geometry::PointCloud>>& clusters,
     std::shared_ptr<open3d::geometry::PointCloud> ground_points)
@@ -455,7 +712,13 @@ InfrastructureClassification classifyInfrastructure(
     InfrastructureClassification result;
     result.groundPoints = ground_points;
 
-    // 计算地面高度用于相对高度计算
+    if (clusters.empty())
+    {
+        WS_LOG_WARN("PowerInfrastructure", "No clusters provided for classification");
+        return result;
+    }
+
+    // 计算地面基准高度
     double ground_z = 0.0;
     if (ground_points && !ground_points->points_.empty())
     {
@@ -463,22 +726,42 @@ InfrastructureClassification classifyInfrastructure(
         ground_z         = ground_bbox.GetMaxBound().z();
     }
 
-    // 存储候选电力塔和电力线
-    std::vector<
-        std::pair<std::shared_ptr<open3d::geometry::PointCloud>, double>>
-        tower_candidates;
-    std::vector<std::shared_ptr<open3d::geometry::PointCloud>>
-        powerline_candidates;
+    WS_LOG_INFO("PowerInfrastructure", "Classifying {} clusters with ground level at {:.2f}m", clusters.size(), ground_z);
 
-    // 分析每个聚类
-    for (const auto& cluster : clusters)
+    // 分类候选者存储
+    struct TowerCandidate
     {
-        if (cluster->points_.empty())
+        std::shared_ptr<open3d::geometry::PointCloud> cloud;
+        double score;
+        double height;
+        double volume;
+        math::Vector3 position;
+    };
+
+    struct PowerLineCandidate
+    {
+        std::shared_ptr<open3d::geometry::PointCloud> cloud;
+        double score;
+        double length;
+        double height;
+        math::Vector3 start, end;
+    };
+
+    std::vector<TowerCandidate> tower_candidates;
+    std::vector<PowerLineCandidate> powerline_candidates;
+
+    // 遍历所有聚类进行分类
+    for (size_t idx = 0; idx < clusters.size(); ++idx)
+    {
+        const auto& cluster = clusters[idx];
+        if (!cluster || cluster->points_.empty())
             continue;
 
-        auto bbox   = cluster->GetAxisAlignedBoundingBox();
-        auto extent = bbox.GetExtent();
-        auto center = bbox.GetCenter();
+        auto bbox      = cluster->GetAxisAlignedBoundingBox();
+        auto extent    = bbox.GetExtent();
+        auto center    = bbox.GetCenter();
+        auto min_bound = bbox.GetMinBound();
+        auto max_bound = bbox.GetMaxBound();
 
         double width           = extent.x();
         double depth           = extent.y();
@@ -486,111 +769,282 @@ InfrastructureClassification classifyInfrastructure(
         double relative_height = center.z() - ground_z;
         double volume          = width * depth * height;
         double base_area       = width * depth;
+        size_t point_count     = cluster->points_.size();
 
-        // 计算形状特征
-        double aspect_ratio_xy =
-            std::max(width, depth) / std::min(width, depth);
-        double aspect_ratio_z = height / std::min(width, depth);
-        double compactness    = volume / (width * depth * height);
+        // 计算几何特征
+        double aspect_ratio_xy = std::max(width, depth) / std::min(width, depth);
+        double aspect_ratio_z  = height / std::min(width, depth);
+        double compactness     = point_count / std::max(volume, 0.1);
+        double slenderness     = height / std::sqrt(base_area);
 
-        // 计算密度特征
-        double point_density = cluster->points_.size() / volume;
+        WS_LOG_DEBUG("PowerInfrastructure",
+                     "Cluster {}: {:.1f}x{:.1f}x{:.1f}m, {} points, height={:.1f}m, aspect_xy={:.1f}, aspect_z={:.1f}",
+                     idx,
+                     width,
+                     depth,
+                     height,
+                     point_count,
+                     relative_height,
+                     aspect_ratio_xy,
+                     aspect_ratio_z);
 
-        // 电力塔识别规则（更严格的条件）
-        bool is_tower_candidate =
-            (relative_height > 15.0 &&     // 相对地面高度超过15米
-             height > 20.0 &&              // 绝对高度超过20米
-             aspect_ratio_z > 2.0 &&       // 垂直结构（高度至少是底面的2倍）
-             aspect_ratio_xy < 3.0 &&      // 底面相对方正
-             base_area > 20.0 &&           // 足够的底面积
-             volume > 400.0 &&             // 足够的体积
-             point_density > 0.1 &&        // 合理的点密度
-             cluster->points_.size() > 100 // 足够的点数
-            );
+        // === 电力塔识别算法 ===
+        // 更精准的电力塔识别标准
+        bool tower_height_ok          = relative_height > 20.0;                          // 相对地面20米以上
+        bool tower_absolute_height_ok = height > 25.0;                                   // 绝对高度25米以上
+        bool tower_shape_ok           = (aspect_ratio_z > 2.5 && aspect_ratio_z < 15.0); // 高而不过分细长
+        bool tower_base_ok            = (aspect_ratio_xy < 5.0 && base_area > 15.0);     // 底面相对方正且足够大
+        bool tower_volume_ok          = volume > 200.0;                                  // 足够的体积
+        bool tower_density_ok         = compactness > 0.05;                              // 合理的点密度
+        bool tower_points_ok          = point_count > 80;                                // 足够的点数
 
-        // 电力线识别规则（更精确的条件）
-        bool is_powerline_candidate =
-            (relative_height > 5.0 &&            // 相对地面高度超过5米
-             height > 8.0 &&                     // 最小高度
-             (aspect_ratio_xy > 5.0 ||           // 长条形结构
-              (width > 30.0 || depth > 30.0)) && // 或者在某一方向很长
-             volume < 500.0 &&                   // 体积不能太大（排除建筑物）
-             volume > 5.0 &&                     // 体积不能太小
-             cluster->points_.size() > 20 &&     // 最小点数
-             cluster->points_.size() < 2000      // 最大点数（排除大型结构）
-            );
-
-        if (is_tower_candidate)
+        // 高级形状检测 - 检查是否有塔状结构特征
+        bool tower_profile_ok = false;
+        if (tower_height_ok && tower_shape_ok)
         {
-            // 计算塔的评分（高度和密度权重）
-            double tower_score =
-                relative_height * 0.4 + volume * 0.0001 + point_density * 10.0;
-            tower_candidates.push_back({cluster, tower_score});
-        }
-        else if (is_powerline_candidate)
-        {
-            powerline_candidates.push_back(cluster);
-        }
-    }
+            // 分析垂直剖面 - 电力塔通常底部宽，顶部窄
+            int layers          = 5;
+            double layer_height = height / layers;
+            std::vector<double> layer_areas;
 
-    // 选择最佳的电力塔候选
-    if (!tower_candidates.empty())
-    {
-        // 按评分排序，选择最高分的作为电力塔
-        std::sort(tower_candidates.begin(),
-                  tower_candidates.end(),
-                  [](const auto& a, const auto& b)
-                  {
-                      return a.second > b.second;
-                  });
-
-        result.towerPoints = tower_candidates[0].first;
-
-        // 设置塔的包围盒
-        auto tower_bbox = result.towerPoints->GetAxisAlignedBoundingBox();
-        auto min_bound  = tower_bbox.GetMinBound();
-        auto max_bound  = tower_bbox.GetMaxBound();
-        result.towerBbox =
-            math::BoundingBox{math::Vector3(static_cast<float>(min_bound.x()),
-                                            static_cast<float>(min_bound.y()),
-                                            static_cast<float>(min_bound.z())),
-                              math::Vector3(static_cast<float>(max_bound.x()),
-                                            static_cast<float>(max_bound.y()),
-                                            static_cast<float>(max_bound.z()))};
-    }
-
-    // 进一步过滤电力线候选
-    if (result.towerPoints && !powerline_candidates.empty())
-    {
-        auto tower_center =
-            result.towerPoints->GetAxisAlignedBoundingBox().GetCenter();
-
-        // 按照与塔的距离和高度特征进一步筛选电力线
-        for (const auto& candidate : powerline_candidates)
-        {
-            auto line_center =
-                candidate->GetAxisAlignedBoundingBox().GetCenter();
-            double distance_to_tower =
-                std::sqrt(std::pow(line_center.x() - tower_center.x(), 2) +
-                          std::pow(line_center.y() - tower_center.y(), 2));
-
-            // 电力线应该在塔附近但不能太近
-            if (distance_to_tower > 5.0 && distance_to_tower < 200.0)
+            for (int layer = 0; layer < layers; ++layer)
             {
-                // 检查高度是否合理（电力线通常比塔低）
-                if (line_center.z() < tower_center.z() &&
-                    line_center.z() > ground_z + 8.0)
+                double z_min = min_bound.z() + layer * layer_height;
+                double z_max = z_min + layer_height;
+
+                std::vector<size_t> layer_indices;
+                for (size_t i = 0; i < cluster->points_.size(); ++i)
                 {
-                    result.powerLines.push_back(candidate);
+                    double z = cluster->points_[i].z();
+                    if (z >= z_min && z < z_max)
+                    {
+                        layer_indices.push_back(i);
+                    }
+                }
+
+                if (!layer_indices.empty())
+                {
+                    auto layer_cloud  = cluster->SelectByIndex(layer_indices);
+                    auto layer_bbox   = layer_cloud->GetAxisAlignedBoundingBox();
+                    auto layer_extent = layer_bbox.GetExtent();
+                    double area       = layer_extent.x() * layer_extent.y();
+                    layer_areas.push_back(area);
                 }
             }
+
+            // 检查是否有锥形特征（底部面积大于顶部）
+            if (layer_areas.size() >= 3)
+            {
+                double bottom_area = layer_areas[0];
+                double top_area    = layer_areas.back();
+                tower_profile_ok   = (bottom_area > top_area * 1.2); // 底部比顶部大20%以上
+            }
+        }
+
+        if (tower_height_ok && tower_absolute_height_ok && tower_shape_ok &&
+            tower_base_ok && tower_volume_ok && tower_density_ok && tower_points_ok)
+        {
+
+            // 计算电力塔评分
+            double tower_score = 0.0;
+            tower_score += relative_height * 0.3; // 高度权重
+            tower_score += volume * 0.001;        // 体积权重
+            tower_score += compactness * 20.0;    // 密度权重
+            tower_score += slenderness * 2.0;     // 细长度权重
+
+            if (tower_profile_ok)
+                tower_score += 50.0; // 锥形特征加分
+
+            TowerCandidate candidate;
+            candidate.cloud    = cluster;
+            candidate.score    = tower_score;
+            candidate.height   = relative_height;
+            candidate.volume   = volume;
+            candidate.position = math::Vector3(
+                static_cast<float>(center.x()),
+                static_cast<float>(center.y()),
+                static_cast<float>(center.z()));
+
+            tower_candidates.push_back(candidate);
+
+            WS_LOG_INFO("PowerInfrastructure",
+                        "Tower candidate {}: score={:.1f}, height={:.1f}m, volume={:.1f}m³, profile={}",
+                        idx,
+                        tower_score,
+                        relative_height,
+                        volume,
+                        tower_profile_ok ? "yes" : "no");
+        }
+
+        // === 输电线识别算法 ===
+        // 更精准的输电线识别标准
+        bool line_height_ok    = relative_height > 8.0 && relative_height < 80.0; // 8-80米高度范围
+        bool line_length_ok    = (std::max(width, depth) > 30.0);                 // 至少30米长
+        bool line_shape_ok     = aspect_ratio_xy > 6.0;                           // 明显的线状结构
+        bool line_thickness_ok = (height < 8.0 || std::min(width, depth) < 3.0);  // 相对较薄
+        bool line_volume_ok    = volume > 10.0 && volume < 800.0;                 // 体积范围控制
+        bool line_points_ok    = point_count > 30 && point_count < 5000;          // 点数范围
+
+        // 线性度检测 - 检查点的分布是否接近直线
+        bool line_linearity_ok = false;
+        if (line_length_ok && line_shape_ok)
+        {
+            // 简化的线性度检测 - 检查点云的最长轴与总体积的比例
+            double max_dimension   = std::max({width, depth, height});
+            double min_dimension   = std::min({width, depth, height});
+            double dimension_ratio = max_dimension / min_dimension;
+
+            // 如果最长维度是其他维度的8倍以上，认为是线性的
+            line_linearity_ok = dimension_ratio > 8.0;
+
+            // 额外检查：点云在主方向上的分布密度
+            if (!line_linearity_ok && aspect_ratio_xy > 10.0)
+            {
+                double main_axis_length = std::max(width, depth);
+                double cross_section    = volume / main_axis_length;
+                double thickness        = std::sqrt(cross_section);
+
+                // 如果厚度相对于长度很小，也认为是线性的
+                line_linearity_ok = (thickness / main_axis_length) < 0.1;
+            }
+        }
+
+        if (line_height_ok && line_length_ok && line_shape_ok &&
+            line_thickness_ok && line_volume_ok && line_points_ok)
+        {
+
+            // 计算输电线评分
+            double line_score = 0.0;
+            line_score += std::max(width, depth) * 0.5;    // 长度权重
+            line_score += aspect_ratio_xy * 2.0;           // 长宽比权重
+            line_score += (100.0 - relative_height) * 0.3; // 适中高度加分
+
+            if (line_linearity_ok)
+                line_score += 30.0; // 线性度加分
+
+            PowerLineCandidate candidate;
+            candidate.cloud  = cluster;
+            candidate.score  = line_score;
+            candidate.length = std::max(width, depth);
+            candidate.height = relative_height;
+
+            // 确定起点和终点
+            if (width > depth)
+            {
+                candidate.start = math::Vector3(static_cast<float>(min_bound.x()),
+                                                static_cast<float>(center.y()),
+                                                static_cast<float>(center.z()));
+                candidate.end   = math::Vector3(static_cast<float>(max_bound.x()),
+                                              static_cast<float>(center.y()),
+                                              static_cast<float>(center.z()));
+            }
+            else
+            {
+                candidate.start = math::Vector3(static_cast<float>(center.x()),
+                                                static_cast<float>(min_bound.y()),
+                                                static_cast<float>(center.z()));
+                candidate.end   = math::Vector3(static_cast<float>(center.x()),
+                                              static_cast<float>(max_bound.y()),
+                                              static_cast<float>(center.z()));
+            }
+
+            powerline_candidates.push_back(candidate);
+
+            WS_LOG_INFO("PowerInfrastructure",
+                        "PowerLine candidate {}: score={:.1f}, length={:.1f}m, height={:.1f}m, linearity={}",
+                        idx,
+                        line_score,
+                        candidate.length,
+                        relative_height,
+                        line_linearity_ok ? "yes" : "no");
         }
     }
-    else
+
+    // 选择最佳电力塔
+    if (!tower_candidates.empty())
     {
-        // 如果没有识别到塔，直接添加所有电力线候选
-        result.powerLines = powerline_candidates;
+        std::sort(tower_candidates.begin(), tower_candidates.end(), [](const TowerCandidate& a, const TowerCandidate& b)
+                  {
+                      return a.score > b.score;
+                  });
+
+        result.towerPoints = tower_candidates[0].cloud;
+
+        auto tower_bbox  = result.towerPoints->GetAxisAlignedBoundingBox();
+        auto min_bound   = tower_bbox.GetMinBound();
+        auto max_bound   = tower_bbox.GetMaxBound();
+        result.towerBbox = math::BoundingBox{
+            math::Vector3(static_cast<float>(min_bound.x()),
+                          static_cast<float>(min_bound.y()),
+                          static_cast<float>(min_bound.z())),
+            math::Vector3(static_cast<float>(max_bound.x()),
+                          static_cast<float>(max_bound.y()),
+                          static_cast<float>(max_bound.z()))};
+
+        WS_LOG_INFO("PowerInfrastructure",
+                    "Selected best tower: score={:.1f}, height={:.1f}m, volume={:.1f}m³",
+                    tower_candidates[0].score,
+                    tower_candidates[0].height,
+                    tower_candidates[0].volume);
     }
+
+    // 选择输电线（可以有多条）
+    if (!powerline_candidates.empty())
+    {
+        // 按评分排序
+        std::sort(powerline_candidates.begin(), powerline_candidates.end(), [](const PowerLineCandidate& a, const PowerLineCandidate& b)
+                  {
+                      return a.score > b.score;
+                  });
+
+        // 选择前几条最佳的输电线
+        size_t max_lines = std::min(static_cast<size_t>(8), powerline_candidates.size());
+        for (size_t i = 0; i < max_lines; ++i)
+        {
+            result.powerLines.push_back(powerline_candidates[i].cloud);
+
+            WS_LOG_INFO("PowerInfrastructure",
+                        "Selected powerline {}: score={:.1f}, length={:.1f}m, height={:.1f}m",
+                        i + 1,
+                        powerline_candidates[i].score,
+                        powerline_candidates[i].length,
+                        powerline_candidates[i].height);
+        }
+    }
+
+    // 距离过滤 - 如果有电力塔，优先选择附近的输电线
+    if (result.towerPoints && !result.powerLines.empty())
+    {
+        auto tower_center = result.towerPoints->GetAxisAlignedBoundingBox().GetCenter();
+
+        std::vector<std::shared_ptr<open3d::geometry::PointCloud>> filtered_lines;
+        for (const auto& line : result.powerLines)
+        {
+            auto line_center = line->GetAxisAlignedBoundingBox().GetCenter();
+            double distance  = std::sqrt(
+                std::pow(line_center.x() - tower_center.x(), 2) +
+                std::pow(line_center.y() - tower_center.y(), 2));
+
+            // 保留距离电力塔500米以内的输电线
+            if (distance < 500.0)
+            {
+                filtered_lines.push_back(line);
+            }
+        }
+
+        if (!filtered_lines.empty())
+        {
+            result.powerLines = filtered_lines;
+            WS_LOG_INFO("PowerInfrastructure",
+                        "Filtered powerlines by tower proximity: {} lines within 500m",
+                        filtered_lines.size());
+        }
+    }
+
+    WS_LOG_INFO("PowerInfrastructure",
+                "Classification completed: {} towers, {} power lines",
+                result.towerPoints ? 1 : 0,
+                result.powerLines.size());
 
     return result;
 }
@@ -841,4 +1295,243 @@ void generatePowerLineParameters(
     // 触发弹出窗口
 
     commands.getResource<LayoutData>()->showPowerLineParamsPopup = true;
+}
+
+// === 新增的高级处理函数实现 ===
+
+// 高级点云预处理函数
+std::shared_ptr<open3d::geometry::PointCloud>
+preprocessPointCloud(std::shared_ptr<open3d::geometry::PointCloud> cloud,
+                     double voxel_size,
+                     int sor_neighbors,
+                     double sor_std_ratio,
+                     int radius_neighbors,
+                     double radius_threshold)
+{
+    if (!cloud || cloud->points_.empty())
+    {
+        WS_LOG_WARN("Preprocessing", "Empty point cloud provided");
+        return cloud;
+    }
+
+    WS_LOG_INFO("Preprocessing", "Starting advanced preprocessing on {} points", cloud->points_.size());
+
+    // 1. 体素下采样
+    auto downsampled = cloud->VoxelDownSample(voxel_size);
+    WS_LOG_INFO("Preprocessing", "Voxel downsampling: {} -> {} points", cloud->points_.size(), downsampled->points_.size());
+
+    // 安全检查：确保下采样后还有足够的点
+    if (downsampled->points_.size() < 100)
+    {
+        WS_LOG_WARN("Preprocessing", "Too few points after downsampling, using original cloud");
+        downsampled = cloud;
+    }
+
+    // 2. 统计离群点移除（使用更保守的参数）
+    auto [sor_cleaned, sor_indices] = downsampled->RemoveStatisticalOutliers(sor_neighbors, sor_std_ratio);
+    WS_LOG_INFO("Preprocessing", "Statistical outlier removal: {} -> {} points", downsampled->points_.size(), sor_cleaned->points_.size());
+
+    // 安全检查：如果移除了太多点，回退到下采样结果
+    if (sor_cleaned->points_.size() < downsampled->points_.size() * 0.3)
+    {
+        WS_LOG_WARN("Preprocessing", "Statistical filtering too aggressive, reverting to downsampled cloud");
+        sor_cleaned = downsampled;
+    }
+
+    // 3. 半径离群点移除（使用更保守的参数）
+    // 根据点云密度自适应调整半径阈值
+    auto bbox              = sor_cleaned->GetAxisAlignedBoundingBox();
+    auto extent            = bbox.GetExtent();
+    double adaptive_radius = std::min(extent.x(), extent.y()) / 100.0; // 基于点云尺寸的自适应半径
+    adaptive_radius        = std::max(adaptive_radius, 0.2);           // 最小半径
+    adaptive_radius        = std::min(adaptive_radius, 2.0);           // 最大半径
+
+    auto [radius_cleaned, radius_indices] = sor_cleaned->RemoveRadiusOutliers(
+        std::max(5, radius_neighbors / 2),
+        adaptive_radius);
+
+    WS_LOG_INFO("Preprocessing", "Radius outlier removal (radius={:.2f}): {} -> {} points", adaptive_radius, sor_cleaned->points_.size(), radius_cleaned->points_.size());
+
+    // 安全检查：如果半径过滤移除了太多点，回退到统计过滤结果
+    if (radius_cleaned->points_.size() < sor_cleaned->points_.size() * 0.5)
+    {
+        WS_LOG_WARN("Preprocessing", "Radius filtering too aggressive, reverting to statistical filtered cloud");
+        radius_cleaned = sor_cleaned;
+    }
+
+    // 最终安全检查：确保至少有足够的点进行后续处理
+    if (radius_cleaned->points_.size() < 1000)
+    {
+        WS_LOG_WARN("Preprocessing", "Very few points remaining ({}), using conservative filtering", radius_cleaned->points_.size());
+        // 如果点太少，只使用体素下采样
+        radius_cleaned = downsampled;
+    }
+
+    // 4. 法向量估计（仅当有足够点时）
+    if (radius_cleaned->points_.size() >= 100)
+    {
+        try
+        {
+            radius_cleaned->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 20));
+        }
+        catch (const std::exception& e)
+        {
+            WS_LOG_WARN("Preprocessing", "Normal estimation failed: {}", e.what());
+        }
+    }
+
+    WS_LOG_INFO("Preprocessing", "Preprocessing completed: {:.1f}% points retained", 100.0 * radius_cleaned->points_.size() / cloud->points_.size());
+
+    return radius_cleaned;
+}
+
+// 自适应聚类参数估计
+AdaptiveClusteringParams
+estimateClusteringParameters(std::shared_ptr<open3d::geometry::PointCloud> cloud,
+                             double base_eps,
+                             int base_min_points)
+{
+    AdaptiveClusteringParams params;
+    params.eps               = base_eps;
+    params.min_points        = base_min_points;
+    params.density_threshold = 1.0;
+
+    if (!cloud || cloud->points_.size() < 10)
+    {
+        WS_LOG_WARN("Clustering", "Very few points for parameter estimation, using defaults");
+        params.eps        = base_eps * 2.0;                   // 使用更大的eps
+        params.min_points = std::max(3, base_min_points / 5); // 使用更小的min_points
+        return params;
+    }
+
+    // 计算点云密度
+    auto bbox   = cloud->GetAxisAlignedBoundingBox();
+    auto extent = bbox.GetExtent();
+    double area = extent.x() * extent.y();
+
+    // 处理退化情况（如果点云是一条线或一个点）
+    if (area < 1e-6)
+    {
+        area = extent.norm() * extent.norm(); // 使用总范围的平方
+        if (area < 1e-6)
+            area = 1.0; // 如果还是太小，设为默认值
+    }
+
+    double density = cloud->points_.size() / area;
+
+    WS_LOG_INFO("Clustering", "Point density: {:.2f} points/m² (area: {:.2f}m²)", density, area);
+
+    // 根据密度自适应调整参数
+    if (density < 2.0)
+    {
+        // 极低密度：大幅增大eps，减少min_points
+        params.eps        = base_eps * 3.0;
+        params.min_points = std::max(3, base_min_points / 5);
+    }
+    else if (density < 10.0)
+    {
+        // 低密度：增大eps，减少min_points
+        params.eps        = base_eps * 2.0;
+        params.min_points = std::max(5, base_min_points / 3);
+    }
+    else if (density > 100.0)
+    {
+        // 高密度：减小eps，增加min_points
+        params.eps        = base_eps * 0.7;
+        params.min_points = std::min(static_cast<int>(cloud->points_.size() / 10), base_min_points * 2);
+    }
+    else
+    {
+        // 中等密度：使用基础参数的微调
+        params.eps        = base_eps * (1.0 + 0.2 * (25.0 - density) / 25.0);
+        params.min_points = std::max(5, static_cast<int>(base_min_points * (density / 25.0)));
+    }
+
+    // 确保参数在合理范围内
+    params.eps               = std::max(0.3, std::min(10.0, params.eps));
+    params.min_points        = std::max(3, std::min(static_cast<int>(cloud->points_.size() / 5), params.min_points));
+    params.density_threshold = density;
+
+    WS_LOG_INFO("Clustering", "Adaptive parameters: eps={:.2f}, min_points={}", params.eps, params.min_points);
+
+    return params;
+}
+
+// 点云质量评估
+PointCloudQualityMetrics
+assessPointCloudQuality(std::shared_ptr<open3d::geometry::PointCloud> cloud)
+{
+    PointCloudQualityMetrics metrics = {};
+
+    if (!cloud || cloud->points_.empty())
+    {
+        WS_LOG_WARN("Quality", "Empty cloud for quality assessment");
+        return metrics;
+    }
+
+    // 1. 计算点密度
+    auto bbox             = cloud->GetAxisAlignedBoundingBox();
+    auto extent           = bbox.GetExtent();
+    double area           = extent.x() * extent.y();
+    metrics.point_density = cloud->points_.size() / std::max(area, 1.0);
+
+    // 2. 估算噪点比例（使用保守的统计离群点检测）
+    size_t outliers = 0;
+    try
+    {
+        auto [clean_cloud, clean_indices] = cloud->RemoveStatisticalOutliers(15, 3.0); // 更保守的参数
+        outliers                          = cloud->points_.size() - clean_cloud->points_.size();
+    }
+    catch (const std::exception& e)
+    {
+        WS_LOG_WARN("Quality", "Outlier detection failed: {}", e.what());
+        outliers = 0; // 如果失败，假设没有离群点
+    }
+    metrics.noise_ratio = static_cast<double>(outliers) / cloud->points_.size();
+
+    // 3. 评估覆盖均匀性（通过网格化分析）
+    int grid_size = 20;
+    double cell_x = extent.x() / grid_size;
+    double cell_y = extent.y() / grid_size;
+
+    std::vector<std::vector<int>> grid(grid_size, std::vector<int>(grid_size, 0));
+    auto min_bound = bbox.GetMinBound();
+
+    for (const auto& point : cloud->points_)
+    {
+        int x = std::min(grid_size - 1, static_cast<int>((point.x() - min_bound.x()) / cell_x));
+        int y = std::min(grid_size - 1, static_cast<int>((point.y() - min_bound.y()) / cell_y));
+        grid[x][y]++;
+    }
+
+    // 计算网格单元的点数方差
+    double mean_points = static_cast<double>(cloud->points_.size()) / (grid_size * grid_size);
+    double variance    = 0.0;
+    for (const auto& row : grid)
+    {
+        for (int count : row)
+        {
+            double diff = count - mean_points;
+            variance += diff * diff;
+        }
+    }
+    variance /= (grid_size * grid_size);
+    metrics.coverage_uniformity = 1.0 / (1.0 + variance / (mean_points + 1.0));
+
+    // 4. 计算高度变化
+    std::vector<double> heights;
+    heights.reserve(cloud->points_.size());
+    for (const auto& point : cloud->points_)
+    {
+        heights.push_back(point.z());
+    }
+
+    std::sort(heights.begin(), heights.end());
+    double height_range      = heights.back() - heights.front();
+    double height_median     = heights[heights.size() / 2];
+    metrics.height_variation = height_range / std::max(height_median, 1.0);
+
+    WS_LOG_INFO("Quality", "Quality metrics - Density: {:.2f}, Noise: {:.1f}%, Uniformity: {:.3f}, Height var: {:.2f}", metrics.point_density, metrics.noise_ratio * 100, metrics.coverage_uniformity, metrics.height_variation);
+
+    return metrics;
 }

@@ -101,9 +101,8 @@ void World::leftPanel(ecs::Commands commands)
 
                 // 检查当前是否是加载的文件
                 bool isCurrentFile = false;
-                if (hasCloud && cloudEntity != ecs::Entity::null())
+                if (hasCloud)
                 {
-                    // 可以通过检查filename来确定，这里简化处理
                     isCurrentFile = (selectedFile == i);
                 }
 
