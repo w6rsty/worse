@@ -2,6 +2,8 @@
 
 #include "../Application/World.hpp"
 
+#include <limits>
+
 void World::mainLayout(ecs::Commands commands,
                        ecs::Resource<GlobalContext> context)
 {
@@ -43,18 +45,38 @@ void World::mainLayout(ecs::Commands commands,
                                    nullptr,
                                    ImGuiWindowFlags_AlwaysAutoResize))
         {
-
-            // 标题和文件信息
-            ImGui::PushStyleColor(ImGuiCol_Text,
-                                  ImVec4(0.2f, 0.8f, 0.2f, 1.0f)); // 绿色
-            ImGui::Text("电力基础设施分析完成");
-            ImGui::PopStyleColor();
-
             if (!World::lastProcessedFile.empty())
             {
                 ImGui::Text("处理文件: %s", World::lastProcessedFile.c_str());
             }
+
+            // 分析统计信息
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.1f, 1.0f)); // 亮黄色
             ImGui::Text("识别到 %zu 条电力线", World::powerLineParams.size());
+            ImGui::PopStyleColor();
+
+            // 计算总体统计信息
+            if (!World::powerLineParams.empty())
+            {
+                float totalLength = 0.0f;
+                float avgSag      = 0.0f;
+                float minHeight   = std::numeric_limits<float>::max();
+                float maxHeight   = std::numeric_limits<float>::lowest();
+
+                for (const auto& param : World::powerLineParams)
+                {
+                    totalLength += param.length;
+                    avgSag += param.maxSag;
+                    float avgHeight = (param.startZ + param.endZ) / 2.0f;
+                    minHeight       = std::min(minHeight, avgHeight);
+                    maxHeight       = std::max(maxHeight, avgHeight);
+                }
+                avgSag /= World::powerLineParams.size();
+
+                ImGui::Text("总线路长度: %.1f m", totalLength);
+                ImGui::Text("平均弧垂: %.3f m", avgSag);
+                ImGui::Text("高度范围: %.1f - %.1f m", minHeight, maxHeight);
+            }
             ImGui::Separator();
             ImGui::Spacing();
 
@@ -63,32 +85,29 @@ void World::mainLayout(ecs::Commands commands,
             {
                 ImGui::PushStyleColor(ImGuiCol_Text,
                                       ImVec4(0.8f, 0.8f, 0.4f, 1.0f)); // 黄色
-                ImGui::Text("电力线主要参数:");
+                ImGui::Text("🔧 电力线形态特征:");
                 ImGui::PopStyleColor();
 
                 if (ImGui::BeginTable(
                         "MainTable",
-                        5,
+                        4, // 简化为4列: UUID, 长度, 弧垂, 导线规格
                         ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                             ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
-                        ImVec2(0, 200)))
+                        ImVec2(0, 220)))
                 {
                     // 表头设置
-                    ImGui::TableSetupColumn("ID",
+                    ImGui::TableSetupColumn("UUID",
                                             ImGuiTableColumnFlags_WidthFixed,
-                                            40);
-                    ImGui::TableSetupColumn("名称(UUID)",
-                                            ImGuiTableColumnFlags_WidthFixed,
-                                            200);
+                                            120);
                     ImGui::TableSetupColumn("长度(m)",
-                                            ImGuiTableColumnFlags_WidthFixed,
-                                            80);
-                    ImGui::TableSetupColumn("宽度(mm)",
                                             ImGuiTableColumnFlags_WidthFixed,
                                             80);
                     ImGui::TableSetupColumn("最大弧垂(m)",
                                             ImGuiTableColumnFlags_WidthFixed,
                                             90);
+                    ImGui::TableSetupColumn("导线规格(mm)",
+                                            ImGuiTableColumnFlags_WidthFixed,
+                                            100);
 
                     ImGui::TableSetupScrollFreeze(0, 1);
 
@@ -108,48 +127,81 @@ void World::mainLayout(ecs::Commands commands,
                         ImGui::TableNextRow();
 
                         ImGui::TableSetColumnIndex(0);
-                        ImGui::Text("%d", param.id);
-
-                        ImGui::TableSetColumnIndex(1);
                         ImGui::Text("%s", param.name.c_str());
 
+                        ImGui::TableSetColumnIndex(1);
+                        // 根据长度设置颜色
+                        if (param.length > 100.0f)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f)); // 橙色
+                        }
+                        else if (param.length > 50.0f)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.8f, 0.2f, 1.0f)); // 绿色
+                        }
+                        else
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.8f, 1.0f)); // 灰色
+                        }
+                        ImGui::Text("%.1f", param.length);
+                        ImGui::PopStyleColor();
+
                         ImGui::TableSetColumnIndex(2);
-                        ImGui::Text("%.2f", param.length);
+                        // 根据弧垂设置颜色 - 弧垂大表示线路松弛
+                        if (param.maxSag > 5.0f)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f)); // 红色（需要关注）
+                        }
+                        else if (param.maxSag > 2.0f)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.2f, 1.0f)); // 黄色（正常）
+                        }
+                        else
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.8f, 0.2f, 1.0f)); // 绿色（良好）
+                        }
+                        ImGui::Text("%.3f", param.maxSag);
+                        ImGui::PopStyleColor();
 
                         ImGui::TableSetColumnIndex(3);
                         ImGui::Text("%.1f", param.width);
-
-                        ImGui::TableSetColumnIndex(4);
-                        ImGui::Text("%.3f", param.maxSag);
                     }
                     ImGui::EndTable();
                 }
 
                 // 详细技术参数展开区域
-                if (ImGui::CollapsingHeader("悬链线参数"))
+                if (ImGui::CollapsingHeader("悬链线参数", ImGuiTreeNodeFlags_DefaultOpen))
                 {
+                    ImGui::TextWrapped("悬链线方程: y = a × cosh((x - h) / a) + k");
+                    ImGui::Text("其中 a=张力系数, h=水平位移, k=垂直位移");
+                    ImGui::Separator();
+
                     if (ImGui::BeginTable("DetailedTable",
-                                          4,
+                                          5,
                                           ImGuiTableFlags_Borders |
                                               ImGuiTableFlags_RowBg |
                                               ImGuiTableFlags_ScrollX))
                     {
                         ImGui::TableSetupColumn(
-                            "ID",
-                            ImGuiTableColumnFlags_WidthFixed,
-                            40);
-                        ImGui::TableSetupColumn(
-                            "悬链线系数a",
+                            "UUID",
                             ImGuiTableColumnFlags_WidthFixed,
                             120);
                         ImGui::TableSetupColumn(
-                            "水平位移h",
+                            "张力系数(a)",
                             ImGuiTableColumnFlags_WidthFixed,
-                            120);
+                            100);
                         ImGui::TableSetupColumn(
-                            "垂直位移k",
+                            "水平位移(h)",
                             ImGuiTableColumnFlags_WidthFixed,
-                            120);
+                            100);
+                        ImGui::TableSetupColumn(
+                            "垂直位移(k)",
+                            ImGuiTableColumnFlags_WidthFixed,
+                            100);
+                        ImGui::TableSetupColumn(
+                            "弧垂评级",
+                            ImGuiTableColumnFlags_WidthFixed,
+                            80);
 
                         // 表头样式 - 增强对比度
                         ImGui::PushStyleColor(
@@ -166,16 +218,37 @@ void World::mainLayout(ecs::Commands commands,
                             ImGui::TableNextRow();
 
                             ImGui::TableSetColumnIndex(0);
-                            ImGui::Text("%d", param.id);
+                            ImGui::Text("%s", param.name.c_str());
 
                             ImGui::TableSetColumnIndex(1);
-                            ImGui::Text("%.6f", param.catenaryA);
+                            ImGui::Text("%.2f", param.catenaryA);
 
                             ImGui::TableSetColumnIndex(2);
-                            ImGui::Text("%.3f", param.catenaryH);
+                            ImGui::Text("%.1f", param.catenaryH);
 
                             ImGui::TableSetColumnIndex(3);
-                            ImGui::Text("%.3f", param.catenaryK);
+                            ImGui::Text("%.1f", param.catenaryK);
+
+                            ImGui::TableSetColumnIndex(4);
+                            // 弧垂评级
+                            std::string rating;
+                            if (param.maxSag > 5.0f)
+                            {
+                                rating = "需关注";
+                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+                            }
+                            else if (param.maxSag > 2.0f)
+                            {
+                                rating = "正常";
+                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
+                            }
+                            else
+                            {
+                                rating = "良好";
+                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.8f, 0.8f, 1.0f));
+                            }
+                            ImGui::Text("%s", rating.c_str());
+                            ImGui::PopStyleColor();
                         }
                         ImGui::EndTable();
                     }
@@ -191,9 +264,9 @@ void World::mainLayout(ecs::Commands commands,
                                               ImGuiTableFlags_ScrollX))
                     {
                         ImGui::TableSetupColumn(
-                            "ID",
+                            "UUID",
                             ImGuiTableColumnFlags_WidthFixed,
-                            40);
+                            120);
                         ImGui::TableSetupColumn(
                             "起点X",
                             ImGuiTableColumnFlags_WidthFixed,
@@ -234,7 +307,7 @@ void World::mainLayout(ecs::Commands commands,
                             ImGui::TableNextRow();
 
                             ImGui::TableSetColumnIndex(0);
-                            ImGui::Text("%d", param.id);
+                            ImGui::Text("%s", param.name.c_str());
 
                             ImGui::TableSetColumnIndex(1);
                             ImGui::Text("%.3f", param.startX);
@@ -375,43 +448,6 @@ void World::mainLayout(ecs::Commands commands,
                                 param.catenaryK);
                 }
                 WS_LOG_INFO("CSV", "=== CSV导出完成 ===");
-            }
-            ImGui::PopStyleColor(2);
-
-            ImGui::SameLine();
-
-            // 技术报告按钮
-            ImGui::PushStyleColor(ImGuiCol_Button,
-                                  ImVec4(0.6f, 0.4f, 0.8f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                                  ImVec4(0.7f, 0.5f, 0.9f, 1.0f));
-            if (ImGui::Button("技术报告", ImVec2(buttonWidth, 0)))
-            {
-                WS_LOG_INFO("Report", "=== 电力线路技术分析报告 ===");
-                WS_LOG_INFO("Report", "处理文件: {}", World::lastProcessedFile);
-                WS_LOG_INFO("Report",
-                            "识别电力线数量: {}",
-                            World::powerLineParams.size());
-
-                float totalLength = 0.0f;
-                float avgWidth    = 0.0f;
-                float avgSag      = 0.0f;
-                for (const auto& param : World::powerLineParams)
-                {
-                    totalLength += param.length;
-                    avgWidth += param.width;
-                    avgSag += param.maxSag;
-                }
-                if (!World::powerLineParams.empty())
-                {
-                    avgWidth /= World::powerLineParams.size();
-                    avgSag /= World::powerLineParams.size();
-                }
-
-                WS_LOG_INFO("Report", "总线路长度: {:.2f}m", totalLength);
-                WS_LOG_INFO("Report", "平均导线宽度: {:.1f}mm", avgWidth);
-                WS_LOG_INFO("Report", "平均弧垂: {:.3f}m", avgSag);
-                WS_LOG_INFO("Report", "=== 报告生成完成 ===");
             }
             ImGui::PopStyleColor(2);
 

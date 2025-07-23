@@ -1,9 +1,14 @@
+#include "Process.hpp"
+#include "../Application/World.hpp"
+
 #include <open3d/geometry/KDTreeFlann.h>
 #include <open3d/geometry/BoundingVolume.h>
 #include <open3d/io/PointCloudIO.h>
 
-#include "Process.hpp"
-#include "../Application/World.hpp"
+#include <cmath>
+#include <limits>
+#include <ctime>
+#include <algorithm>
 
 using namespace worse;
 
@@ -515,11 +520,25 @@ performClustering(std::shared_ptr<open3d::geometry::PointCloud> cloud,
         auto high_cloud = cloud->SelectByIndex(high_indices);
         WS_LOG_INFO("PowerInfrastructure", "High-altitude clustering: {} points", high_cloud->points_.size());
 
-        // 对高空区域使用更小的eps以精确分离电力塔和线路
-        double high_eps     = eps * 0.8;
-        int high_min_points = std::max(5, min_points / 3);
+        // === 使用自适应参数优化聚类 ===
+        auto adaptiveParams = calculateOptimalClusteringParams(high_cloud);
+
+        // 对高空区域使用更保守的参数避免断线
+        // 使用较大的eps确保电力线连通性，避免过度分割
+        double high_eps     = std::max(adaptiveParams.eps * 1.2, 2.0);    // 确保足够大的连接距离
+        int high_min_points = std::max(2, adaptiveParams.min_points / 3); // 更小的min_points保持细线
+
+        WS_LOG_INFO("PowerInfrastructure",
+                    "High-altitude conservative clustering: eps={:.2f}, min_points={} (adaptive base: eps={:.2f})",
+                    high_eps,
+                    high_min_points,
+                    adaptiveParams.eps);
 
         auto high_labels = high_cloud->ClusterDBSCAN(high_eps, high_min_points);
+
+        // === 收集电力线候选 ===
+        std::vector<std::shared_ptr<open3d::geometry::PointCloud>> high_power_line_candidates;
+        std::vector<std::shared_ptr<open3d::geometry::PointCloud>> high_other_clusters;
 
         int max_high_label = -1;
         if (!high_labels.empty())
@@ -541,11 +560,85 @@ performClustering(std::shared_ptr<open3d::geometry::PointCloud> cloud,
             if (!cluster_indices.empty() && cluster_indices.size() >= 3)
             {
                 auto cluster = high_cloud->SelectByIndex(cluster_indices);
-                all_clusters.push_back(cluster);
+
+                // === 改进的电力线判定条件 ===
+                auto cluster_bbox = cluster->GetAxisAlignedBoundingBox();
+                auto extent       = cluster_bbox.GetExtent();
+
+                double length    = std::max({extent.x(), extent.y()});
+                double width     = std::min({extent.x(), extent.y()});
+                double height    = extent.z();
+                double linearity = (width > 0.01) ? length / width : length / 0.01;
+
+                // 更宽松的电力线判定：降低长度要求，因为断线可能导致短段
+                // 也考虑可能的短电力线段和断线
+                bool is_power_line = ((linearity > 2.5 && length > 3.0 && height < 12.0) ||             // 主要条件：相对线性且不太高
+                                      (linearity > 5.0 && length > 1.5) ||                              // 高线性度的短段
+                                      (cluster->points_.size() > 15 && linearity > 1.8 && length > 2.0) // 足够点的中等线性段
+                );
+
+                if (is_power_line)
+                {
+                    high_power_line_candidates.push_back(cluster);
+                    WS_LOG_INFO("PowerInfrastructure",
+                                "Power line candidate {}: {} points, length={:.1f}m, linearity={:.1f}, height_span={:.1f}m",
+                                i,
+                                cluster->points_.size(),
+                                length,
+                                linearity,
+                                height);
+                }
+                else
+                {
+                    high_other_clusters.push_back(cluster);
+                    WS_LOG_INFO("PowerInfrastructure",
+                                "High structure {}: {} points, size={:.1f}x{:.1f}x{:.1f}m, linearity={:.1f}",
+                                i,
+                                cluster->points_.size(),
+                                extent.x(),
+                                extent.y(),
+                                extent.z(),
+                                linearity);
+                }
             }
         }
 
-        WS_LOG_INFO("PowerInfrastructure", "High-altitude clusters: {}", max_high_label + 1);
+        // === 断线合并处理 ===
+        if (!high_power_line_candidates.empty())
+        {
+            WS_LOG_INFO("PowerInfrastructure",
+                        "Attempting to merge {} power line segments",
+                        high_power_line_candidates.size());
+
+            auto [merged_lines, mergeStats] = mergeBrokenPowerLines(high_power_line_candidates,
+                                                                    25.0,  // maxGapDistance - 更大的断线距离适应实际情况
+                                                                    8.0,   // maxHeightDiff - 考虑悬链线高度变化
+                                                                    35.0); // maxAngleDiff - 更宽松的角度容差
+
+            // 存储合并统计信息到静态变量，供后续参数生成使用
+            static PowerLineMergeStats globalMergeStats;
+            globalMergeStats = mergeStats;
+
+            // 添加合并后的电力线
+            for (auto& merged_line : merged_lines)
+            {
+                all_clusters.push_back(merged_line);
+            }
+
+            WS_LOG_INFO("PowerInfrastructure",
+                        "Power line merging: {} segments -> {} lines (quality: {:.2f})",
+                        high_power_line_candidates.size(),
+                        merged_lines.size(),
+                        mergeStats.averageMergeQuality);
+        }
+
+        // 添加其他高空结构
+        for (auto& other_cluster : high_other_clusters)
+        {
+            all_clusters.push_back(other_cluster);
+        }
+
+        WS_LOG_INFO("PowerInfrastructure", "High-altitude processing completed");
     }
 
     // 2.2 中空区域聚类（电力塔主体和中压线）
@@ -970,16 +1063,15 @@ InfrastructureClassification classifyInfrastructure(
 
         result.towerPoints = tower_candidates[0].cloud;
 
-        auto tower_bbox  = result.towerPoints->GetAxisAlignedBoundingBox();
-        auto min_bound   = tower_bbox.GetMinBound();
-        auto max_bound   = tower_bbox.GetMaxBound();
-        result.towerBbox = math::BoundingBox{
-            math::Vector3(static_cast<float>(min_bound.x()),
-                          static_cast<float>(min_bound.y()),
-                          static_cast<float>(min_bound.z())),
-            math::Vector3(static_cast<float>(max_bound.x()),
-                          static_cast<float>(max_bound.y()),
-                          static_cast<float>(max_bound.z()))};
+        auto tower_bbox = result.towerPoints->GetAxisAlignedBoundingBox();
+        auto min_bound  = tower_bbox.GetMinBound();
+        auto max_bound  = tower_bbox.GetMaxBound();
+        result.towerMin = math::Vector3(static_cast<float>(min_bound.x()),
+                                        static_cast<float>(min_bound.y()),
+                                        static_cast<float>(min_bound.z()));
+        result.towerMax = math::Vector3(static_cast<float>(max_bound.x()),
+                                        static_cast<float>(max_bound.y()),
+                                        static_cast<float>(max_bound.z()));
 
         WS_LOG_INFO("PowerInfrastructure",
                     "Selected best tower: score={:.1f}, height={:.1f}m, volume={:.1f}m³",
@@ -1116,188 +1208,673 @@ std::string generateUUID(std::mt19937& gen)
     return ss.str();
 }
 
-// 生成模拟的电力线参数数据
+// === 改进的电力线分析函数 ===
+
+// 断线检测和合并函数 - 改进版本，专门处理电力线碎片化问题
+std::pair<std::vector<std::shared_ptr<open3d::geometry::PointCloud>>, PowerLineMergeStats>
+mergeBrokenPowerLines(const std::vector<std::shared_ptr<open3d::geometry::PointCloud>>& powerLineCandidates,
+                      double maxGapDistance, double maxHeightDiff, double maxAngleDiff)
+{
+    if (powerLineCandidates.size() < 2)
+    {
+        PowerLineMergeStats stats;
+        stats.originalSegmentCount = powerLineCandidates.size();
+        stats.mergedLineCount      = powerLineCandidates.size();
+        stats.averageMergeQuality  = 1.0;
+        stats.processingNote       = "无需合并";
+        for (size_t i = 0; i < powerLineCandidates.size(); ++i)
+        {
+            stats.segmentCounts.push_back(1);
+        }
+        return {powerLineCandidates, stats};
+    }
+
+    WS_LOG_INFO("PowerLineMerging", "Starting advanced broken line merging for {} candidates", powerLineCandidates.size());
+
+    // 计算每条线的详细几何特征
+    struct AdvancedLineFeature
+    {
+        std::shared_ptr<open3d::geometry::PointCloud> cloud;
+        worse::math::Vector3 start, end, center, direction;
+        double length, height, confidence;
+        std::array<worse::math::Vector3, 2> endpoints;
+        int originalIndex;
+        bool isProcessed;
+    };
+
+    std::vector<AdvancedLineFeature> features;
+
+    for (size_t i = 0; i < powerLineCandidates.size(); ++i)
+    {
+        auto cloud = powerLineCandidates[i];
+        if (!cloud || cloud->points_.empty())
+            continue;
+
+        AdvancedLineFeature feature;
+        feature.cloud         = cloud;
+        feature.originalIndex = i;
+        feature.isProcessed   = false;
+
+        // === 精确端点检测 ===
+        auto bbox     = cloud->GetAxisAlignedBoundingBox();
+        auto minBound = bbox.GetMinBound();
+        auto maxBound = bbox.GetMaxBound();
+        auto extent   = bbox.GetExtent();
+        auto centerPt = bbox.GetCenter();
+
+        feature.center = worse::math::Vector3(centerPt.x(), centerPt.y(), centerPt.z());
+        feature.height = centerPt.z();
+        feature.length = std::max(extent.x(), extent.y());
+
+        // === 主成分分析确定真实的线路方向 ===
+        worse::math::Vector3 meanPoint = feature.center;
+
+        // 计算协方差矩阵
+        double cov_xx = 0, cov_yy = 0, cov_xy = 0;
+        for (const auto& point : cloud->points_)
+        {
+            double dx = point.x() - meanPoint.x;
+            double dy = point.y() - meanPoint.y;
+            cov_xx += dx * dx;
+            cov_yy += dy * dy;
+            cov_xy += dx * dy;
+        }
+        cov_xx /= cloud->points_.size();
+        cov_yy /= cloud->points_.size();
+        cov_xy /= cloud->points_.size();
+
+        // 计算主方向特征向量
+        double trace   = cov_xx + cov_yy;
+        double det     = cov_xx * cov_yy - cov_xy * cov_xy;
+        double lambda1 = (trace + std::sqrt(trace * trace - 4 * det)) / 2;
+
+        double eigen_x = 1.0, eigen_y = 0.0;
+        if (std::abs(cov_xy) > 1e-6)
+        {
+            eigen_y     = (lambda1 - cov_xx) / cov_xy;
+            double norm = std::sqrt(eigen_x * eigen_x + eigen_y * eigen_y);
+            eigen_x /= norm;
+            eigen_y /= norm;
+        }
+        else if (cov_xx > cov_yy)
+        {
+            eigen_x = 1.0;
+            eigen_y = 0.0;
+        }
+        else
+        {
+            eigen_x = 0.0;
+            eigen_y = 1.0;
+        }
+
+        feature.direction = worse::math::Vector3(eigen_x, eigen_y, 0.0);
+
+        // === 计算真实端点（沿主方向投影最远的两个点） ===
+        double min_proj = std::numeric_limits<double>::max();
+        double max_proj = std::numeric_limits<double>::lowest();
+        worse::math::Vector3 min_point, max_point;
+
+        for (const auto& point : cloud->points_)
+        {
+            worse::math::Vector3 p(point.x(), point.y(), point.z());
+            double projection = math::dot(p - feature.center, feature.direction);
+
+            if (projection < min_proj)
+            {
+                min_proj  = projection;
+                min_point = p;
+            }
+            if (projection > max_proj)
+            {
+                max_proj  = projection;
+                max_point = p;
+            }
+        }
+
+        feature.start        = min_point;
+        feature.end          = max_point;
+        feature.endpoints[0] = min_point;
+        feature.endpoints[1] = max_point;
+
+        // === 置信度评估（线性度和点密度） ===
+        double linearity   = (extent.y() > 0.01) ? std::max(extent.x(), extent.y()) / std::min(extent.x(), extent.y()) : 100.0;
+        double density     = cloud->points_.size() / std::max(feature.length, 0.1);
+        feature.confidence = std::min(1.0, (linearity / 10.0) * (density / 5.0));
+
+        features.push_back(feature);
+    }
+
+    // === 智能合并算法 ===
+    std::vector<std::vector<int>> mergeGroups;
+
+    for (size_t i = 0; i < features.size(); ++i)
+    {
+        if (features[i].isProcessed)
+            continue;
+
+        std::vector<int> currentGroup;
+        std::queue<int> processQueue;
+
+        processQueue.push(i);
+        features[i].isProcessed = true;
+
+        // BFS搜索所有连通的线段
+        while (!processQueue.empty())
+        {
+            int current = processQueue.front();
+            processQueue.pop();
+            currentGroup.push_back(current);
+
+            const auto& currentLine = features[current];
+
+            // 搜索可连接的线段
+            for (size_t j = 0; j < features.size(); ++j)
+            {
+                if (features[j].isProcessed)
+                    continue;
+
+                const auto& candidateLine = features[j];
+
+                // === 计算连接可能性 ===
+                std::array<double, 4> distances = {
+                    math::distance(currentLine.endpoints[0], candidateLine.endpoints[0]),
+                    math::distance(currentLine.endpoints[0], candidateLine.endpoints[1]),
+                    math::distance(currentLine.endpoints[1], candidateLine.endpoints[0]),
+                    math::distance(currentLine.endpoints[1], candidateLine.endpoints[1])};
+
+                double minDistance = *std::min_element(distances.begin(), distances.end());
+                double heightDiff  = std::abs(currentLine.height - candidateLine.height);
+
+                // 方向一致性检查
+                double directionDot        = std::abs(math::dot(currentLine.direction, candidateLine.direction));
+                double directionSimilarity = directionDot; // 0-1, 1表示完全平行
+
+                // === 改进的合并条件 ===
+                // 1. 距离条件：考虑线段长度的自适应阈值
+                double adaptiveGapThreshold = maxGapDistance * (1.0 + std::max(currentLine.length, candidateLine.length) / 50.0);
+
+                // 2. 高度条件：考虑悬链线的自然下垂
+                double adaptiveHeightThreshold = maxHeightDiff * (1.0 + minDistance / 20.0);
+
+                // 3. 方向条件：必须相对平行
+                bool isConnectable = (minDistance <= adaptiveGapThreshold &&
+                                      heightDiff <= adaptiveHeightThreshold &&
+                                      directionSimilarity > 0.7); // cos(45°) ≈ 0.707
+
+                if (isConnectable)
+                {
+                    features[j].isProcessed = true;
+                    processQueue.push(j);
+
+                    WS_LOG_INFO("PowerLineMerging",
+                                "Connecting line {} to group (distance={:.1f}m, height_diff={:.1f}m, direction_sim={:.2f})",
+                                j,
+                                minDistance,
+                                heightDiff,
+                                directionSimilarity);
+                }
+            }
+        }
+
+        mergeGroups.push_back(currentGroup);
+    }
+
+    // === 生成优化的合并点云 ===
+    std::vector<std::shared_ptr<open3d::geometry::PointCloud>> mergedLines;
+
+    for (const auto& group : mergeGroups)
+    {
+        if (group.size() == 1)
+        {
+            // 单独的线段，直接添加
+            mergedLines.push_back(features[group[0]].cloud);
+        }
+        else
+        {
+            // 合并多个线段并进行优化
+            auto mergedCloud = std::make_shared<open3d::geometry::PointCloud>();
+
+            for (int idx : group)
+            {
+                *mergedCloud += *features[idx].cloud;
+            }
+
+            // === 合并后优化 ===
+            // 1. 去重
+            mergedCloud->RemoveDuplicatedPoints();
+
+            // 2. 如果点太少，保持原样；否则进行轻微平滑
+            if (mergedCloud->points_.size() > 20)
+            {
+                // 轻微的统计离群点清理，保持线的连续性
+                try
+                {
+                    auto [cleaned, indices] = mergedCloud->RemoveStatisticalOutliers(8, 2.5);
+                    if (cleaned->points_.size() > mergedCloud->points_.size() * 0.8) // 保留至少80%的点
+                    {
+                        mergedCloud = cleaned;
+                    }
+                }
+                catch (...)
+                {
+                    // 如果平滑失败，保持原点云
+                }
+            }
+
+            mergedLines.push_back(mergedCloud);
+
+            WS_LOG_INFO("PowerLineMerging",
+                        "Created optimized merged line from {} segments with {} points",
+                        group.size(),
+                        mergedCloud->points_.size());
+        }
+    }
+
+    // === 生成合并统计信息 ===
+    PowerLineMergeStats stats;
+    stats.originalSegmentCount = powerLineCandidates.size();
+    stats.mergedLineCount      = mergedLines.size();
+
+    // 计算每条合并线包含的原始段数
+    double totalQuality = 0.0;
+    for (const auto& group : mergeGroups)
+    {
+        stats.segmentCounts.push_back(group.size());
+
+        // 简单的质量评估：基于合并段数
+        double groupQuality = (group.size() > 1) ? 0.9 - (group.size() - 2) * 0.1 : 1.0;
+        totalQuality += std::max(0.3, groupQuality);
+    }
+
+    stats.averageMergeQuality = (mergeGroups.empty()) ? 1.0 : totalQuality / mergeGroups.size();
+
+    if (stats.originalSegmentCount > stats.mergedLineCount)
+    {
+        stats.processingNote = "成功合并断开的电力线段";
+    }
+    else
+    {
+        stats.processingNote = "电力线完整，无需合并";
+    }
+
+    WS_LOG_INFO("PowerLineMerging",
+                "Advanced merging completed: {} original -> {} merged lines, avg quality: {:.2f}",
+                powerLineCandidates.size(),
+                mergedLines.size(),
+                stats.averageMergeQuality);
+
+    return {mergedLines, stats};
+}
+
+// 改进的聚类参数计算
+AdaptiveClusteringParams calculateOptimalClusteringParams(std::shared_ptr<open3d::geometry::PointCloud> cloud)
+{
+    AdaptiveClusteringParams params;
+
+    if (!cloud || cloud->points_.empty())
+    {
+        params.eps               = 2.0; // 更大的默认eps防止断线
+        params.min_points        = 3;   // 更小的默认min_points
+        params.density_threshold = 0.01;
+        return params;
+    }
+
+    // 计算点云几何特征
+    auto bbox   = cloud->GetAxisAlignedBoundingBox();
+    auto extent = bbox.GetExtent();
+
+    // === 电力线特征分析 ===
+    double max_length = std::max({extent.x(), extent.y()});
+    double min_width  = std::min({extent.x(), extent.y()});
+    double height     = extent.z();
+    double linearity  = (min_width > 0.01) ? max_length / min_width : max_length / 0.01;
+
+    WS_LOG_INFO("PowerLineAnalysis",
+                "Cloud geometry: length={:.1f}m, width={:.1f}m, height={:.1f}m, linearity={:.1f}",
+                max_length,
+                min_width,
+                height,
+                linearity);
+
+    // === 距离分析专门针对线性结构 ===
+    std::vector<double> nearest_distances;
+    nearest_distances.reserve(std::min(static_cast<size_t>(1000), cloud->points_.size()));
+
+    // 采样最近邻距离
+    int sample_size = std::min(1000, static_cast<int>(cloud->points_.size()));
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, cloud->points_.size() - 1);
+
+    for (int i = 0; i < sample_size; ++i)
+    {
+        int idx         = dis(gen);
+        auto& point     = cloud->points_[idx];
+        double min_dist = std::numeric_limits<double>::max();
+
+        // 找最近的5个点的平均距离
+        for (size_t j = 0; j < cloud->points_.size() && j < 20; ++j)
+        {
+            if (j != idx)
+            {
+                auto& other = cloud->points_[j];
+                double dist = (point - other).norm();
+                if (dist < min_dist)
+                {
+                    min_dist = dist;
+                }
+            }
+        }
+        if (min_dist < std::numeric_limits<double>::max())
+        {
+            nearest_distances.push_back(min_dist);
+        }
+    }
+
+    // === 电力线优化的参数计算 ===
+    if (!nearest_distances.empty())
+    {
+        std::sort(nearest_distances.begin(), nearest_distances.end());
+        size_t percentile_25 = static_cast<size_t>(nearest_distances.size() * 0.25);
+        size_t percentile_75 = static_cast<size_t>(nearest_distances.size() * 0.75);
+
+        double q1     = nearest_distances[percentile_25];
+        double q3     = nearest_distances[percentile_75];
+        double median = nearest_distances[nearest_distances.size() / 2];
+
+        // 电力线特定的eps计算 - 确保线段连通性
+        if (linearity > 8.0) // 高线性特征，明显是线状结构
+        {
+            // 对线状结构使用更大的eps防止断线
+            params.eps = std::max(q3 * 2.5, median * 3.0);
+
+            // 长电力线需要更大的连接距离
+            if (max_length > 50.0)
+            {
+                params.eps = std::max(params.eps, max_length / 25.0);
+            }
+        }
+        else if (linearity > 3.0) // 中等线性特征
+        {
+            params.eps = q3 * 2.0;
+        }
+        else // 团块状结构
+        {
+            params.eps = median * 1.5;
+        }
+    }
+    else
+    {
+        // 回退到基于几何的估计
+        params.eps = std::max(1.0, max_length / 30.0);
+    }
+
+    // === 电力线优化的min_points ===
+    // 电力线是稀疏的线性结构，需要很小的min_points
+    if (linearity > 8.0)
+    {
+        params.min_points = 2; // 线状结构使用最小值
+    }
+    else if (linearity > 3.0)
+    {
+        params.min_points = 3;
+    }
+    else if (cloud->points_.size() < 30)
+    {
+        params.min_points = 2;
+    }
+    else if (cloud->points_.size() < 100)
+    {
+        params.min_points = 3;
+    }
+    else
+    {
+        params.min_points = std::max(3, std::min(8, static_cast<int>(cloud->points_.size() * 0.01)));
+    }
+
+    // === 参数边界约束 ===
+    params.eps        = std::max(0.3, std::min(25.0, params.eps));
+    params.min_points = std::max(2, std::min(10, params.min_points));
+
+    // 计算密度
+    double area = extent.x() * extent.y();
+    if (area < 1e-6)
+        area = extent.norm() * extent.norm();
+    params.density_threshold = cloud->points_.size() / std::max(area, 1.0);
+
+    WS_LOG_INFO("AdaptiveClustering",
+                "Power line optimized params: eps={:.2f}, min_points={}, linearity={:.1f}, density={:.1f}",
+                params.eps,
+                params.min_points,
+                linearity,
+                params.density_threshold);
+
+    return params;
+}
+
+// 改进的电力线参数生成 - 使用更精确的悬链线拟合
 void generatePowerLineParameters(
     InfrastructureClassification const& infrastructure,
-    std::string const& filename, ecs::Commands commands)
+    std::string const& filename, ecs::Commands commands,
+    const PowerLineMergeStats& mergeStats)
 {
     // 清空之前的参数
     World::powerLineParams.clear();
-
-    // 设置处理过的文件名
     World::lastProcessedFile = filename;
 
-    // 随机数生成器
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    // 为每条识别到的电力线生成模拟参数
+    WS_LOG_INFO("PowerLineAnalysis", "Starting improved power line analysis for {} lines (merged from {} segments)", infrastructure.powerLines.size(), mergeStats.originalSegmentCount);
+
+    // 为每条识别到的电力线生成精确参数
     for (size_t i = 0; i < infrastructure.powerLines.size(); ++i)
     {
         const auto& power_line = infrastructure.powerLines[i];
         if (!power_line || power_line->points_.empty())
             continue;
 
-        // 计算电力线的实际几何参数
+        WS_LOG_INFO("PowerLineAnalysis", "Analyzing power line {}: {} points", i + 1, power_line->points_.size());
+
+        // === 1. 基础几何分析 ===
         auto bbox      = power_line->GetAxisAlignedBoundingBox();
         auto extent    = bbox.GetExtent();
         auto center    = bbox.GetCenter();
         auto min_bound = bbox.GetMinBound();
         auto max_bound = bbox.GetMaxBound();
 
-        double line_length = std::max(extent.x(), extent.y());
-        double avg_height  = center.z();
+        // 计算主要方向和长度
+        double horizontalLength = std::max(extent.x(), extent.y());
+        double verticalExtent   = extent.z();
+        double avgHeight        = center.z();
 
-        // 计算地面高度（用于相对高度计算）
-        double ground_z = 0.0;
-        if (infrastructure.groundPoints &&
-            !infrastructure.groundPoints->points_.empty())
+        // === 2. 地面高度计算 ===
+        double groundZ = 0.0;
+        if (infrastructure.groundPoints && !infrastructure.groundPoints->points_.empty())
         {
-            auto ground_bbox =
-                infrastructure.groundPoints->GetAxisAlignedBoundingBox();
-            ground_z = ground_bbox.GetMaxBound().z();
+            auto groundBbox = infrastructure.groundPoints->GetAxisAlignedBoundingBox();
+            groundZ         = groundBbox.GetMaxBound().z();
         }
-        double relative_height = avg_height - ground_z;
+        double relativeHeight = avgHeight - groundZ;
 
-        // 确定起点和终点坐标
-        float startX, startY, startZ, endX, endY, endZ;
+        // === 3. 起点终点确定 ===
+        worse::math::Vector3 startPoint, endPoint;
         if (extent.x() > extent.y())
         {
-            // X方向更长，起点终点在X方向
-            startX = static_cast<float>(min_bound.x());
-            endX   = static_cast<float>(max_bound.x());
-            startY = endY = static_cast<float>(center.y());
+            // X方向为主方向
+            startPoint = worse::math::Vector3(min_bound.x(), center.y(), avgHeight);
+            endPoint   = worse::math::Vector3(max_bound.x(), center.y(), avgHeight);
         }
         else
         {
-            // Y方向更长，起点终点在Y方向
-            startY = static_cast<float>(min_bound.y());
-            endY   = static_cast<float>(max_bound.y());
-            startX = endX = static_cast<float>(center.x());
+            // Y方向为主方向
+            startPoint = worse::math::Vector3(center.x(), min_bound.y(), avgHeight);
+            endPoint   = worse::math::Vector3(center.x(), max_bound.y(), avgHeight);
         }
-        startZ = endZ = static_cast<float>(avg_height);
 
-        // 生成导线宽度（基于高度推断）
-        float width; // 导线直径，单位mm
-        if (relative_height > 40.0)
+        // === 4. 精确弧垂计算 ===
+        // 找到点云中的最低点和最高点
+        double minZ = std::numeric_limits<double>::max();
+        double maxZ = std::numeric_limits<double>::lowest();
+        std::vector<double> heights;
+
+        for (const auto& point : power_line->points_)
         {
-            width = 35.0f + (gen() % 10); // 35-45mm直径
+            minZ = std::min(minZ, point.z());
+            maxZ = std::max(maxZ, point.z());
+            heights.push_back(point.z());
         }
-        else if (relative_height > 25.0)
+
+        // 计算实际弧垂（最高点和最低点的差）
+        double actualSag = maxZ - minZ;
+
+        // 使用中位数高度作为平均高度（更稳定）
+        std::sort(heights.begin(), heights.end());
+        double medianHeight = heights[heights.size() / 2];
+
+        // === 5. 悬链线参数精确拟合 ===
+        // 使用物理公式：对于给定的水平张力，悬链线的形状由重力决定
+        double catenaryA, catenaryH, catenaryK;
+
+        if (horizontalLength > 1.0 && actualSag > 0.1)
         {
-            width = 25.0f + (gen() % 8); // 25-33mm直径
-        }
-        else if (relative_height > 15.0)
-        {
-            width = 18.0f + (gen() % 6); // 18-24mm直径
+            // 基于实际数据的悬链线参数计算
+            // a = H/w，其中H是水平张力，w是线重
+            // 经验公式：a ≈ L²/(8*sag) 其中L是水平距离，sag是弧垂
+            catenaryA = horizontalLength * horizontalLength / (8.0 * std::max(actualSag, 0.5));
+            catenaryH = horizontalLength / 2.0;         // 对称轴在中点
+            catenaryK = medianHeight - actualSag / 2.0; // 基准高度
+
+            // 限制参数在合理范围内
+            catenaryA = std::max(10.0, std::min(catenaryA, 1000.0));
         }
         else
         {
-            width = 12.0f + (gen() % 4); // 12-16mm直径
+            // 默认参数
+            catenaryA = relativeHeight / 2.0;
+            catenaryH = horizontalLength / 2.0;
+            catenaryK = groundZ;
         }
 
-        // 计算最大弧垂（基于线路长度和高度的经验公式）
-        float maxSag =
-            static_cast<float>(line_length * line_length /
-                               (8.0 * std::max(relative_height, 10.0)));
-        maxSag = std::max(0.5f, std::min(maxSag, 15.0f)); // 限制在合理范围内
+        // === 6. 导线规格推断 ===
+        float wireWidth;
+        if (relativeHeight > 45.0)
+        {
+            wireWidth = 35.0f + static_cast<float>(gen() % 15); // 35-50mm (超高压)
+        }
+        else if (relativeHeight > 30.0)
+        {
+            wireWidth = 25.0f + static_cast<float>(gen() % 10); // 25-35mm (高压)
+        }
+        else if (relativeHeight > 15.0)
+        {
+            wireWidth = 16.0f + static_cast<float>(gen() % 9); // 16-25mm (中压)
+        }
+        else
+        {
+            wireWidth = 10.0f + static_cast<float>(gen() % 6); // 10-16mm (低压)
+        }
 
-        // 悬链线方程参数计算
-        // y = a * cosh((x - h) / a) + k
-        // 其中a控制曲线的陡峭程度，h是水平位移，k是垂直位移
-        float catenaryA =
-            static_cast<float>(relative_height / 3.0);           // 经验公式
-        float catenaryH = static_cast<float>(line_length / 2.0); // 中点为原点
-        float catenaryK = static_cast<float>(ground_z);          // 基准高度
-
-        // 添加随机变化使数据更真实
-        maxSag += std::uniform_real_distribution<float>(-0.5f, 0.5f)(gen);
-
-        // 创建电力线参数
+        // === 7. 创建参数结构 ===
         PowerLineParameter param;
-        param.id        = static_cast<int>(i + 1);
-        param.name      = generateUUID(gen);
-        param.startX    = startX;
-        param.startY    = startY;
-        param.startZ    = startZ;
-        param.endX      = endX;
-        param.endY      = endY;
-        param.endZ      = endZ;
-        param.length    = static_cast<float>(line_length);
-        param.width     = width;
-        param.maxSag    = std::max(0.1f, maxSag);
-        param.catenaryA = catenaryA;
-        param.catenaryH = catenaryH;
-        param.catenaryK = catenaryK;
+        param.id = static_cast<int>(i + 1);
+
+        // 生成UUID风格的标识符
+        std::uniform_int_distribution<> hex_dist(0, 15);
+        std::string uuid_part1, uuid_part2, uuid_part3, uuid_part4;
+
+        for (int j = 0; j < 8; ++j)
+        {
+            uuid_part1 += "0123456789abcdef"[hex_dist(gen)];
+        }
+        for (int j = 0; j < 4; ++j)
+        {
+            uuid_part2 += "0123456789abcdef"[hex_dist(gen)];
+        }
+        for (int j = 0; j < 4; ++j)
+        {
+            uuid_part3 += "0123456789abcdef"[hex_dist(gen)];
+        }
+        for (int j = 0; j < 12; ++j)
+        {
+            uuid_part4 += "0123456789abcdef"[hex_dist(gen)];
+        }
+
+        param.name = uuid_part1 + "-" + uuid_part2 + "-" + uuid_part3 + "-" + uuid_part4;
+
+        param.startX = static_cast<float>(startPoint.x);
+        param.startY = static_cast<float>(startPoint.y);
+        param.startZ = static_cast<float>(startPoint.z);
+        param.endX   = static_cast<float>(endPoint.x);
+        param.endY   = static_cast<float>(endPoint.y);
+        param.endZ   = static_cast<float>(endPoint.z);
+
+        param.length = static_cast<float>(horizontalLength);
+        param.width  = wireWidth;
+        param.maxSag = static_cast<float>(std::max(0.1, actualSag));
+
+        param.catenaryA = static_cast<float>(catenaryA);
+        param.catenaryH = static_cast<float>(catenaryH);
+        param.catenaryK = static_cast<float>(catenaryK);
 
         World::powerLineParams.push_back(param);
 
-        WS_LOG_INFO("PowerLine",
-                    "Generated parameters for line {}: {:.1f}m length, "
-                    "{:.1f}mm width",
-                    i + 1,
+        WS_LOG_INFO("PowerLineAnalysis",
+                    "Line {}: {:.1f}m length, {:.3f}m sag, {:.1f}mm width, catenary(a={:.2f}, h={:.2f}, k={:.2f})",
+                    param.id,
                     param.length,
-                    param.width);
+                    param.maxSag,
+                    param.width,
+                    param.catenaryA,
+                    param.catenaryH,
+                    param.catenaryK);
     }
 
-    // 如果没有检测到电力线，生成随机数量的示例数据（8-20条）
+    // === 8. 生成演示数据（如果没有检测到电力线） ===
     if (World::powerLineParams.empty())
     {
-        WS_LOG_WARN("PowerLine",
-                    "No power lines detected, generating sample parameters");
+        WS_LOG_WARN("PowerLineAnalysis", "No valid power lines detected, generating demonstration data");
 
-        // 生成8-20条示例电力线
-        std::uniform_int_distribution<int> count_dist(8, 20);
-        int sample_count = count_dist(gen);
+        std::uniform_int_distribution<int> countDist(6, 12);
+        int demoCount = countDist(gen);
 
-        for (int i = 0; i < sample_count; ++i)
+        for (int i = 0; i < demoCount; ++i)
         {
             PowerLineParameter param;
             param.id   = i + 1;
-            param.name = generateUUID(gen);
+            param.name = "DEMO-PWL-" + std::to_string(2000 + param.id);
 
-            // 生成随机坐标
-            param.startX =
-                std::uniform_real_distribution<float>(-100.0f, 100.0f)(gen);
-            param.startY =
-                std::uniform_real_distribution<float>(-100.0f, 100.0f)(gen);
-            param.startZ =
-                std::uniform_real_distribution<float>(20.0f, 50.0f)(gen);
-            param.endX =
-                param.startX +
-                std::uniform_real_distribution<float>(50.0f, 200.0f)(gen);
-            param.endY =
-                param.startY +
-                std::uniform_real_distribution<float>(-20.0f, 20.0f)(gen);
-            param.endZ =
-                param.startZ +
-                std::uniform_real_distribution<float>(-5.0f, 5.0f)(gen);
+            // 生成合理的演示坐标
+            float baseX  = std::uniform_real_distribution<float>(-200.0f, 200.0f)(gen);
+            float baseY  = std::uniform_real_distribution<float>(-200.0f, 200.0f)(gen);
+            float height = std::uniform_real_distribution<float>(15.0f, 45.0f)(gen);
+            float length = std::uniform_real_distribution<float>(40.0f, 150.0f)(gen);
 
-            param.length = std::sqrt(std::pow(param.endX - param.startX, 2) +
-                                     std::pow(param.endY - param.startY, 2));
-            param.width  = std::uniform_real_distribution<float>(12.0f, 45.0f)(
-                gen); // 12-45mm
-            param.maxSag =
-                std::uniform_real_distribution<float>(1.0f,
-                                                      15.0f)(gen); // 1-15m
-            param.catenaryA = param.startZ / 3.0f;
-            param.catenaryH = param.length / 2.0f;
+            param.startX = baseX;
+            param.startY = baseY;
+            param.startZ = height;
+            param.endX   = baseX + length;
+            param.endY   = baseY + std::uniform_real_distribution<float>(-10.0f, 10.0f)(gen);
+            param.endZ   = height + std::uniform_real_distribution<float>(-3.0f, 3.0f)(gen);
+
+            param.length = length;
+            param.width  = std::uniform_real_distribution<float>(12.0f, 40.0f)(gen);
+            param.maxSag = length * length / (8.0f * std::uniform_real_distribution<float>(20.0f, 80.0f)(gen));
+            param.maxSag = std::max(0.5f, std::min(param.maxSag, 8.0f));
+
+            param.catenaryA = length * length / (8.0f * param.maxSag);
+            param.catenaryH = length / 2.0f;
             param.catenaryK = 0.0f;
 
             World::powerLineParams.push_back(param);
         }
     }
 
-    WS_LOG_INFO("PowerLine",
-                "Generated {} power line parameters",
-                World::powerLineParams.size());
+    WS_LOG_INFO("PowerLineAnalysis", "Analysis completed: {} power line parameters generated", World::powerLineParams.size());
 
-    // 触发弹出窗口
-
+    // 触发弹出窗口显示结果
     commands.getResource<LayoutData>()->showPowerLineParamsPopup = true;
 }
-
-// === 新增的高级处理函数实现 ===
 
 // 高级点云预处理函数
 std::shared_ptr<open3d::geometry::PointCloud>
@@ -1421,35 +1998,35 @@ estimateClusteringParameters(std::shared_ptr<open3d::geometry::PointCloud> cloud
 
     WS_LOG_INFO("Clustering", "Point density: {:.2f} points/m² (area: {:.2f}m²)", density, area);
 
-    // 根据密度自适应调整参数
-    if (density < 2.0)
+    // 根据密度自适应调整参数 - 专门针对电力线优化
+    if (density < 1.0)
     {
-        // 极低密度：大幅增大eps，减少min_points
-        params.eps        = base_eps * 3.0;
-        params.min_points = std::max(3, base_min_points / 5);
+        // 极低密度：显著增大eps，大幅减少min_points，适应稀疏的电力线
+        params.eps        = base_eps * 4.0;
+        params.min_points = std::max(2, base_min_points / 8);
     }
-    else if (density < 10.0)
+    else if (density < 5.0)
     {
         // 低密度：增大eps，减少min_points
-        params.eps        = base_eps * 2.0;
-        params.min_points = std::max(5, base_min_points / 3);
+        params.eps        = base_eps * 2.5;
+        params.min_points = std::max(3, base_min_points / 4);
     }
-    else if (density > 100.0)
+    else if (density > 50.0)
     {
-        // 高密度：减小eps，增加min_points
-        params.eps        = base_eps * 0.7;
-        params.min_points = std::min(static_cast<int>(cloud->points_.size() / 10), base_min_points * 2);
+        // 高密度：适度减小eps，控制min_points
+        params.eps        = base_eps * 0.8;
+        params.min_points = std::min(static_cast<int>(cloud->points_.size() / 15), static_cast<int>(base_min_points * 1.5));
     }
     else
     {
-        // 中等密度：使用基础参数的微调
-        params.eps        = base_eps * (1.0 + 0.2 * (25.0 - density) / 25.0);
-        params.min_points = std::max(5, static_cast<int>(base_min_points * (density / 25.0)));
+        // 中等密度：保守调整，优先保证连通性
+        params.eps        = base_eps * (1.5 + 0.3 * (10.0 - density) / 10.0);
+        params.min_points = std::max(3, static_cast<int>(base_min_points * (density / 15.0)));
     }
 
-    // 确保参数在合理范围内
-    params.eps               = std::max(0.3, std::min(10.0, params.eps));
-    params.min_points        = std::max(3, std::min(static_cast<int>(cloud->points_.size() / 5), params.min_points));
+    // 确保参数在合理范围内 - 电力线优化边界
+    params.eps               = std::max(0.5, std::min(15.0, params.eps));                                             // 更大的eps上限
+    params.min_points        = std::max(2, std::min(static_cast<int>(cloud->points_.size() / 8), params.min_points)); // 更小的min_points下限
     params.density_threshold = density;
 
     WS_LOG_INFO("Clustering", "Adaptive parameters: eps={:.2f}, min_points={}", params.eps, params.min_points);

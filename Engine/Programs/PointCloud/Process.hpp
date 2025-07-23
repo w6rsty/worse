@@ -1,6 +1,33 @@
 #pragma once
+
+// 临时解决fmt consteval问题
+#define FMT_CONSTEVAL
+
 #include "Math/Math.hpp"
-#include "ECS/Commands.hpp"
+#include <vector>
+#include <string>
+
+// Forward declarations
+namespace worse::ecs
+{
+    class Commands;
+}
+struct InfrastructureClassification;
+
+// 电力线合并统计信息
+struct PowerLineMergeStats
+{
+    int originalSegmentCount;
+    int mergedLineCount;
+    std::vector<int> segmentCounts; // 每条合并线包含的原始段数
+    double averageMergeQuality;
+    std::string processingNote;
+};
+
+void generatePowerLineParameters(
+    InfrastructureClassification const& infrastructure,
+    std::string const& filename, worse::ecs::Commands commands,
+    const PowerLineMergeStats& mergeStats = {});
 
 #include "Infrastructure.hpp"
 
@@ -68,6 +95,14 @@ AdaptiveClusteringParams
 estimateClusteringParameters(std::shared_ptr<open3d::geometry::PointCloud> cloud,
                              double base_eps     = 1.0,
                              int base_min_points = 50);
+
+// 改进的电力线分析函数
+AdaptiveClusteringParams calculateOptimalClusteringParams(std::shared_ptr<open3d::geometry::PointCloud> cloud);
+
+// 断线检测和合并函数
+std::pair<std::vector<std::shared_ptr<open3d::geometry::PointCloud>>, PowerLineMergeStats>
+mergeBrokenPowerLines(const std::vector<std::shared_ptr<open3d::geometry::PointCloud>>& powerLineCandidates,
+                      double maxGapDistance = 20.0, double maxHeightDiff = 5.0, double maxAngleDiff = 30.0);
 
 // 点云质量评估
 struct PointCloudQualityMetrics
