@@ -70,9 +70,9 @@ namespace worse
         RHIFormat standardFormat = RHIFormat::B8R8G8A8Unorm;
 
         std::vector<RHITextureSlice> dummy;
-        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, dummy, "render");
-        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewUsageFlagBits::Rtv | RHITextureViewUsageFlagBits::Uav | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, dummy, "output");
-        renderTargets[RendererTarget::Depth]  = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, RHIFormat::D32Float, RHITextureViewUsageFlagBits::Dsv | RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, dummy, "depth");
+        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "render");
+        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "output");
+        renderTargets[RendererTarget::Depth]  = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, RHIFormat::D32Float, RHITextureViewFlagBits::DepthStencilView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "depth");
         // clang-format on
     }
 
@@ -141,7 +141,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::Placeholder] = std::make_shared<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "Placeholder");
+            textures[RendererTexture::Placeholder] = std::make_shared<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "Placeholder");
         }
         // Default Albedo Map: (1.0, 1.0, 1.0, 1.0) = (255, 255, 255, 255) in RGBA8
         {
@@ -154,7 +154,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::DefaultAlbedo] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "DefaultAlbedo");
+            textures[RendererTexture::DefaultAlbedo] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultAlbedo");
         }
         // Default Normal Map: (0.5, 0.5, 1.0, 1.0) in tangent space = (128, 128, 255, 255) in RGBA8
         {
@@ -167,7 +167,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::DefaultNormal] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "DefaultNormal");
+            textures[RendererTexture::DefaultNormal] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultNormal");
         }
         // Default Metallic: 0.0 (non-metallic) = (0, 0, 0, 255) in RGBA8
         {
@@ -180,7 +180,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::DefaultMetallic] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "DefaultMetallic");
+            textures[RendererTexture::DefaultMetallic] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultMetallic");
         }
         // Default Roughness: 0.5 (medium roughness) = (128, 128, 128, 255) in RGBA8
         {
@@ -193,7 +193,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::DefaultRoughness] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "DefaultRoughness");
+            textures[RendererTexture::DefaultRoughness] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultRoughness");
         }
         // Default Ambient Occlusion: 1.0 (no occlusion) = (255, 255, 255, 255) in RGBA8
         {
@@ -206,7 +206,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::DefaultAmbientOcclusion] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "DefaultAmbientOcclusion");
+            textures[RendererTexture::DefaultAmbientOcclusion] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultAmbientOcclusion");
         }
         // Default Emissive: (0.0, 0.0, 0.0) (no emission) = (0, 0, 0, 255) in RGBA8
         {
@@ -219,7 +219,7 @@ namespace worse
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
         
-            textures[RendererTexture::DefaultEmissive] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsageFlagBits::Srv | RHITextureViewUsageFlagBits::ClearOrBlit, data, "DefaultEmissive");
+            textures[RendererTexture::DefaultEmissive] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultEmissive");
         }
 
         // clang-format on

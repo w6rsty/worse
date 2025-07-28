@@ -118,15 +118,15 @@ namespace worse
         // transition layout
         {
             RHIImageLayout layout = RHIImageLayout::Max;
-            if (m_usage & RHITextureViewUsageFlagBits::Rtv)
+            if (m_usage & RHITextureViewFlagBits::RenderTargetView)
             {
                 layout = RHIImageLayout::Attachment;
             }
-            if (m_usage & RHITextureViewUsageFlagBits::Uav)
+            if (m_usage & RHITextureViewFlagBits::UnorderedAccessView)
             {
                 layout = RHIImageLayout::General;
             }
-            if (m_usage & RHITextureViewUsageFlagBits::Srv)
+            if (m_usage & RHITextureViewFlagBits::ShaderReadView)
             {
                 layout = RHIImageLayout::ShaderRead;
             }

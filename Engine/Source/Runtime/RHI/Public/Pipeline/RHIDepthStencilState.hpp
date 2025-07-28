@@ -2,8 +2,6 @@
 #include "Math/Hash.hpp"
 #include "RHIDefinitions.hpp"
 
-#include <cstdint>
-
 namespace worse
 {
 

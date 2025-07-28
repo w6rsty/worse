@@ -4,9 +4,7 @@
 namespace worse
 {
 
-    RHIDescriptorSetLayout::RHIDescriptorSetLayout(
-        std::vector<RHIDescriptor> const& descriptors, u64 descriptorHash,
-        std::string_view name)
+    RHIDescriptorSetLayout::RHIDescriptorSetLayout(std::vector<RHIDescriptor> const& descriptors, u64 descriptorHash, std::string_view name)
         : RHIResource(name)
     {
         m_hash = descriptorHash;

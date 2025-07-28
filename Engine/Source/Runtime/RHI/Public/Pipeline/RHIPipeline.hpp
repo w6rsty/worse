@@ -3,7 +3,6 @@
 #include "RHIPipelineState.hpp"
 #include "RHIDescriptorSetLayout.hpp"
 
-#include <cstdint>
 #include <unordered_map>
 
 namespace worse

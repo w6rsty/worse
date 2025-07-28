@@ -6,7 +6,6 @@
 #include "Pipeline/RHIPipelineState.hpp"
 
 #include <span>
-#include <cstdint>
 #include <atomic>
 
 namespace worse

@@ -1,4 +1,6 @@
 #pragma once
+#include "Types.hpp"
+
 #include <chrono>
 
 namespace worse::profiling
@@ -7,8 +9,7 @@ namespace worse::profiling
     class Stopwatch
     {
     public:
-        using TimePoint =
-            std::chrono::time_point<std::chrono::high_resolution_clock>;
+        using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
         Stopwatch()
         {

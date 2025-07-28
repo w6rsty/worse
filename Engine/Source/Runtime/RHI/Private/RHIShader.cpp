@@ -59,10 +59,7 @@ namespace worse
 
                 if (!FileSystem::isFileExists(includePath))
                 {
-                    WS_LOG_ERROR("Shader",
-                                 "{} (line {}) does not exist",
-                                 includePath.string(),
-                                 lineNumber);
+                    WS_LOG_ERROR("Shader", "{} (line {}) does not exist", includePath.string(), lineNumber);
                     continue;
                 }
                 else
@@ -80,8 +77,7 @@ namespace worse
         return outputStream.str();
     }
 
-    std::string
-    PreprocessIncludesParser::parse(std::filesystem::path const& path)
+    std::string PreprocessIncludesParser::parse(std::filesystem::path const& path)
     {
         m_includes.clear();
 
@@ -102,9 +98,7 @@ namespace worse
     {
     }
 
-    void RHIShader::compile(std::filesystem::path const& filepath,
-                            RHIShaderType const shaderType,
-                            RHIVertexType const vertexType)
+    void RHIShader::compile(std::filesystem::path const& filepath, RHIShaderType const shaderType, RHIVertexType const vertexType)
     {
         m_source.clear();
         m_descriptors.clear();
@@ -137,10 +131,7 @@ namespace worse
 
             if (m_state == RHIShaderCompilationState::CompiledSuccess)
             {
-                WS_LOG_INFO("Shader",
-                            "Compiled: {} took: {:.1f}ms",
-                            m_path.string(),
-                            sw.elapsedMs());
+                WS_LOG_INFO("Shader", "Compiled: {} took: {:.1f}ms", m_path.string(), sw.elapsedMs());
             }
         }
     }

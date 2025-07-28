@@ -40,8 +40,7 @@ namespace worse
     } // namespace
 
     void
-    RHIPipeline::nativeCreate(RHIPipelineState const& pipelineState,
-                              RHIDescriptorSetLayout const& descriptorSetLayout)
+    RHIPipeline::nativeCreate(RHIPipelineState const& pipelineState, RHIDescriptorSetLayout const& descriptorSetLayout)
     {
         // clang-format off
         m_state = pipelineState;
@@ -90,10 +89,7 @@ namespace worse
             infoPipelineLayout.pPushConstantRanges    = pushConstantRanges.data();
 
             VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkCreatePipelineLayout(RHIContext::device,
-                                                &infoPipelineLayout,
-                                                nullptr,
-                                                &pipelineLayout));
+            WS_ASSERT_VK(vkCreatePipelineLayout(RHIContext::device, &infoPipelineLayout, nullptr, &pipelineLayout));
             m_pipelineLayout = RHINativeHandle{pipelineLayout, RHINativeHandleType::PipelineLayout};
             RHIDevice::setResourceName(m_pipelineLayout, m_state.name);
         }
@@ -106,12 +102,7 @@ namespace worse
             infoComputePipeline.stage  = shaderStages[0];
 
             VkPipeline pipeline = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkCreateComputePipelines(RHIContext::device,
-                                                  VK_NULL_HANDLE,
-                                                  1,
-                                                  &infoComputePipeline,
-                                                  nullptr,
-                                                  &pipeline));
+            WS_ASSERT_VK(vkCreateComputePipelines(RHIContext::device, VK_NULL_HANDLE, 1, &infoComputePipeline, nullptr, &pipeline));
             m_pipeline = RHINativeHandle{pipeline, RHINativeHandleType::Pipeline};
             RHIDevice::setResourceName(m_pipeline, pipelineState.name);
         }
@@ -298,14 +289,8 @@ namespace worse
             // clang-format on
 
             VkPipeline pipeline = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkCreateGraphicsPipelines(RHIContext::device,
-                                                   VK_NULL_HANDLE,
-                                                   1,
-                                                   &infoGraphicsPipeline,
-                                                   nullptr,
-                                                   &pipeline));
-            m_pipeline =
-                RHINativeHandle{pipeline, RHINativeHandleType::Pipeline};
+            WS_ASSERT_VK(vkCreateGraphicsPipelines(RHIContext::device, VK_NULL_HANDLE, 1, &infoGraphicsPipeline, nullptr, &pipeline));
+            m_pipeline = RHINativeHandle{pipeline, RHINativeHandleType::Pipeline};
             RHIDevice::setResourceName(m_pipeline, pipelineState.name);
         }
 

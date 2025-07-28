@@ -26,11 +26,8 @@ namespace worse
         infoSampler.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
         // clang-format on
 
-        VkSampler sampler = {};
-        WS_ASSERT_VK(vkCreateSampler(RHIContext::device,
-                                     &infoSampler,
-                                     nullptr,
-                                     &sampler));
+        VkSampler sampler = VK_NULL_HANDLE;
+        WS_ASSERT_VK(vkCreateSampler(RHIContext::device, &infoSampler, nullptr, &sampler));
         m_handle = RHINativeHandle{sampler, RHINativeHandleType::Sampler};
     }
 

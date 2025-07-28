@@ -50,30 +50,26 @@ namespace worse
             return;
         }
 
-        m_vertexBuffer =
-            std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Vertex,
-                                        sizeof(RHIVertexPosUvNrmTan),
-                                        m_vertices.size(),
-                                        m_vertices.data(),
-                                        false,
-                                        "MeshVertexBuffer");
+        m_vertexBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Vertex,
+                                                     sizeof(RHIVertexPosUvNrmTan),
+                                                     m_vertices.size(),
+                                                     m_vertices.data(),
+                                                     false,
+                                                     "MeshVertexBuffer");
 
         if (m_indices.size() != 0)
         {
-            m_indexBuffer =
-                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
-                                            sizeof(u32),
-                                            m_indices.size(),
-                                            m_indices.data(),
-                                            false,
-                                            "MeshIndexBuffer");
+            m_indexBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
+                                                        sizeof(u32),
+                                                        m_indices.size(),
+                                                        m_indices.data(),
+                                                        false,
+                                                        "MeshIndexBuffer");
         }
     }
 
     // clang-format off
-    void buildMeshes(
-        ecs::QueryView<Mesh3D> view,
-        ecs::ResourceArray<Mesh> meshes
+    void buildMeshes( ecs::QueryView<Mesh3D> view, ecs::ResourceArray<Mesh> meshes
     )
     {
         view.each(

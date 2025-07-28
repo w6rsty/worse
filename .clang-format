@@ -7,7 +7,7 @@ UseTab: Never
 BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
-ColumnLimit: 80
+ColumnLimit: 0
 # 开括号后的对齐
 AlignAfterOpenBracket: Align
 # 大括号换行风格

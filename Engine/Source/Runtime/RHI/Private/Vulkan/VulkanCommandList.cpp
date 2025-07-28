@@ -55,8 +55,7 @@ namespace worse
         }
     } // namespace map
 
-    RHICommandList::RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool,
-                                   std::string_view name)
+    RHICommandList::RHICommandList(RHIQueue* queue, RHINativeHandle cmdPool, std::string_view name)
         : RHIResource(name)
 
     {
@@ -73,20 +72,12 @@ namespace worse
             // clang-format on
 
             VkCommandBuffer cmdBuffer = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkAllocateCommandBuffers(RHIContext::device,
-                                                  &infoAloc,
-                                                  &cmdBuffer));
-            m_handle =
-                RHINativeHandle{cmdBuffer, RHINativeHandleType::CommandList};
+            WS_ASSERT_VK(vkAllocateCommandBuffers(RHIContext::device, &infoAloc, &cmdBuffer));
+            m_handle = RHINativeHandle{cmdBuffer, RHINativeHandleType::CommandList};
         }
 
-        m_renderingCompleteBinaySemaphore = std::make_shared<RHISyncPrimitive>(
-            RHISyncPrimitiveType::BinarySemaphore,
-            "rendering_complete_binary_semaphore");
-        m_renderingCompleteTimelineSemaphore =
-            std::make_shared<RHISyncPrimitive>(
-                RHISyncPrimitiveType::TimelineSemaphore,
-                "rendering_complete_timeline_semaphore");
+        m_renderingCompleteBinaySemaphore    = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::BinarySemaphore, "rendering_complete_binary_semaphore");
+        m_renderingCompleteTimelineSemaphore = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::TimelineSemaphore, "rendering_complete_timeline_semaphore");
     }
 
     RHICommandList::~RHICommandList()
@@ -101,9 +92,8 @@ namespace worse
         WS_ASSERT(m_state == RHICommandListState::Idle);
 
         VkCommandBufferBeginInfo infoBegin = {};
-        infoBegin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        WS_ASSERT_VK(vkBeginCommandBuffer(m_handle.asValue<VkCommandBuffer>(),
-                                          &infoBegin));
+        infoBegin.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        WS_ASSERT_VK(vkBeginCommandBuffer(m_handle.asValue<VkCommandBuffer>(), &infoBegin));
 
         m_state               = RHICommandListState::Recording;
         m_isFirstGraphicsPass = true;
@@ -118,21 +108,11 @@ namespace worse
 
         if (!m_renderingCompleteBinaySemaphore->hasBeenWaitedFor)
         {
-            m_renderingCompleteBinaySemaphore =
-                std::make_shared<RHISyncPrimitive>(
-                    RHISyncPrimitiveType::BinarySemaphore,
-                    m_renderingCompleteBinaySemaphore->getName());
-            m_renderingCompleteTimelineSemaphore =
-                std::make_shared<RHISyncPrimitive>(
-                    RHISyncPrimitiveType::TimelineSemaphore,
-                    m_renderingCompleteTimelineSemaphore->getName());
+            m_renderingCompleteBinaySemaphore    = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::BinarySemaphore, m_renderingCompleteBinaySemaphore->getName());
+            m_renderingCompleteTimelineSemaphore = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::TimelineSemaphore, m_renderingCompleteTimelineSemaphore->getName());
         }
 
-        m_submissionQueue->submit(m_handle.asValue<VkCommandBuffer>(),
-                                  0,
-                                  semaphoreWait,
-                                  m_renderingCompleteBinaySemaphore.get(),
-                                  m_renderingCompleteTimelineSemaphore.get());
+        m_submissionQueue->submit(m_handle.asValue<VkCommandBuffer>(), 0, semaphoreWait, m_renderingCompleteBinaySemaphore.get(), m_renderingCompleteTimelineSemaphore.get());
 
         if (semaphoreWait)
         {
@@ -140,7 +120,7 @@ namespace worse
         }
 
         m_renderingCompleteBinaySemaphore->hasBeenWaitedFor = false;
-        m_state = RHICommandListState::Submitted;
+        m_state                                             = RHICommandListState::Submitted;
     }
 
     void RHICommandList::renderPassBegin()
@@ -219,8 +199,7 @@ namespace worse
         infoRender.pColorAttachments    = colorAttachments.data();
         // clang-format on
 
-        vkCmdBeginRenderingKHR(m_handle.asValue<VkCommandBuffer>(),
-                               &infoRender);
+        vkCmdBeginRenderingKHR(m_handle.asValue<VkCommandBuffer>(), &infoRender);
 
         setViewport(m_pso.viewport);
 
@@ -239,8 +218,7 @@ namespace worse
         m_isRenderPassActive = false;
     }
 
-    void RHICommandList::imguiPassBegin(RHITexture const* renderTarget,
-                                        math::Rectangle const& scissor)
+    void RHICommandList::imguiPassBegin(RHITexture const* renderTarget, math::Rectangle const& scissor)
     {
         // clang-format off
         VkRenderingAttachmentInfo colorAttachment = {};
@@ -251,20 +229,19 @@ namespace worse
         colorAttachment.storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
 
         VkRenderingInfo rendering_info = {};
-        rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-        rendering_info.renderArea = {scissor.x, scissor.y, scissor.width, scissor.height};
-        rendering_info.layerCount = 1;
+        rendering_info.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        rendering_info.renderArea           = {scissor.x, scissor.y, scissor.width, scissor.height};
+        rendering_info.layerCount           = 1;
         rendering_info.colorAttachmentCount = 1;
-        rendering_info.pColorAttachments = &colorAttachment;
-        rendering_info.pDepthAttachment = nullptr;
+        rendering_info.pColorAttachments    = &colorAttachment;
+        rendering_info.pDepthAttachment     = nullptr;
 
         vkCmdBeginRenderingKHR(m_handle.asValue<VkCommandBuffer>(), &rendering_info);
         // clang-format on
     }
     void RHICommandList::imguiPassEnd(void* drawData)
     {
-        ImGui_ImplVulkan_RenderDrawData(static_cast<ImDrawData*>(drawData),
-                                        m_handle.asValue<VkCommandBuffer>());
+        ImGui_ImplVulkan_RenderDrawData(static_cast<ImDrawData*>(drawData), m_handle.asValue<VkCommandBuffer>());
 
         vkCmdEndRenderingKHR(m_handle.asValue<VkCommandBuffer>());
     }
@@ -273,26 +250,13 @@ namespace worse
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
 
-        vkCmdDraw(m_handle.asValue<VkCommandBuffer>(),
-                  vertexCount,
-                  1, // instance count
-                  vertexOffset,
-                  0); // first instance
+        vkCmdDraw(m_handle.asValue<VkCommandBuffer>(), vertexCount, 1, vertexOffset, 0);
     }
 
-    void RHICommandList::drawIndexed(u32 const indexCount,
-                                     u32 const indexOffset,
-                                     u32 const vertexOffset,
-                                     u32 const instanceIndex,
-                                     u32 const instanceCount)
+    void RHICommandList::drawIndexed(u32 const indexCount, u32 const indexOffset, u32 const vertexOffset, u32 const instanceIndex, u32 const instanceCount)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
-        vkCmdDrawIndexed(m_handle.asValue<VkCommandBuffer>(),
-                         indexCount,
-                         instanceCount,
-                         indexOffset,
-                         vertexOffset,
-                         instanceIndex);
+        vkCmdDrawIndexed(m_handle.asValue<VkCommandBuffer>(), indexCount, instanceCount, indexOffset, vertexOffset, instanceIndex);
     }
 
     void RHICommandList::setPipelineState(RHIPipelineState const& pso)
@@ -312,14 +276,11 @@ namespace worse
 
         renderPassBegin();
 
-        VkPipelineBindPoint bindPoint =
-            (m_pso.type == RHIPipelineType::Graphics)
-                ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                : VK_PIPELINE_BIND_POINT_COMPUTE;
+        VkPipelineBindPoint bindPoint = (m_pso.type == RHIPipelineType::Graphics)
+                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                            : VK_PIPELINE_BIND_POINT_COMPUTE;
 
-        vkCmdBindPipeline(m_handle.asValue<VkCommandBuffer>(),
-                          bindPoint,
-                          m_pipeline->getHandle().asValue<VkPipeline>());
+        vkCmdBindPipeline(m_handle.asValue<VkCommandBuffer>(), bindPoint, m_pipeline->getHandle().asValue<VkPipeline>());
 
         if (m_pso.type == RHIPipelineType::Graphics)
         {
@@ -364,10 +325,7 @@ namespace worse
         vkViewport.minDepth   = viewport.depthMin;
         vkViewport.maxDepth   = viewport.depthMax;
 
-        vkCmdSetViewport(m_handle.asValue<VkCommandBuffer>(),
-                         0,
-                         1,
-                         &vkViewport);
+        vkCmdSetViewport(m_handle.asValue<VkCommandBuffer>(), 0, 1, &vkViewport);
     }
 
     void RHICommandList::setScissor(math::Rectangle const& scissor)
@@ -383,9 +341,7 @@ namespace worse
         vkCmdSetScissor(m_handle.asValue<VkCommandBuffer>(), 0, 1, &vkScissor);
     }
 
-    void RHICommandList::insertBarrier(RHINativeHandle image,
-                                       RHIFormat const format,
-                                       RHIImageLayout const layoutNew)
+    void RHICommandList::insertBarrier(RHINativeHandle image, RHIFormat const format, RHIImageLayout const layoutNew)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(image);
@@ -419,8 +375,7 @@ namespace worse
         infoDependency.imageMemoryBarrierCount = 1;
         infoDependency.pImageMemoryBarriers    = &imageBarrier;
         // clang-format on
-        vkCmdPipelineBarrier2KHR(m_handle.asValue<VkCommandBuffer>(),
-                                 &infoDependency);
+        vkCmdPipelineBarrier2KHR(m_handle.asValue<VkCommandBuffer>(), &infoDependency);
         map::setImageLayout(image, layoutNew);
     }
 
@@ -492,9 +447,7 @@ namespace worse
         RHIImageLayout initialLayout = source->getImageLayout();
 
         source->convertImageLayout(this, RHIImageLayout::TransferSource);
-        insertBarrier(destination->getCurrentRt(),
-                      destination->getFormat(),
-                      RHIImageLayout::TransferDestination);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::TransferDestination);
 
         RHIFilter filter = (source->getWidth() == destination->getWidth() &&
                             source->getHeight() == destination->getHeight())
@@ -541,9 +494,7 @@ namespace worse
 
         // restore layout
         source->convertImageLayout(this, initialLayout);
-        insertBarrier(destination->getCurrentRt(),
-                      destination->getFormat(),
-                      RHIImageLayout::PresentSource);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::PresentSource);
     }
 
     void RHICommandList::copy(RHITexture const* source,
@@ -592,8 +543,7 @@ namespace worse
         destination->convertImageLayout(this, destinationInitialLayout);
     }
 
-    void RHICommandList::copy(RHITexture const* source,
-                              RHISwapchain const* destination)
+    void RHICommandList::copy(RHITexture const* source, RHISwapchain const* destination)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT((source->getWidth() == destination->getWidth()) &&
@@ -603,9 +553,7 @@ namespace worse
         RHIImageLayout sourceInitialLayout = source->getImageLayout();
 
         source->convertImageLayout(this, RHIImageLayout::TransferSource);
-        insertBarrier(destination->getCurrentRt(),
-                      destination->getFormat(),
-                      RHIImageLayout::TransferDestination);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::TransferDestination);
 
         VkImageCopy2 region                  = {};
         region.sType                         = VK_STRUCTURE_TYPE_IMAGE_COPY_2;
@@ -619,7 +567,7 @@ namespace worse
         region.dstSubresource.layerCount     = 1;
         region.dstSubresource.baseArrayLayer = 0;
         region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.extent = {source->getWidth(), source->getHeight(), 1};
+        region.extent                        = {source->getWidth(), source->getHeight(), 1};
 
         VkCopyImageInfo2 info = {};
         info.sType            = VK_STRUCTURE_TYPE_COPY_IMAGE_INFO_2;
@@ -634,9 +582,7 @@ namespace worse
 
         // restore
         source->convertImageLayout(this, sourceInitialLayout);
-        insertBarrier(destination->getCurrentRt(),
-                      destination->getFormat(),
-                      RHIImageLayout::PresentSource);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::PresentSource);
     }
 
     void RHICommandList::pushConstants(
@@ -659,12 +605,7 @@ namespace worse
             stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
         }
 
-        vkCmdPushConstants(m_handle.asValue<VkCommandBuffer>(),
-                           m_pipeline->getLayout().asValue<VkPipelineLayout>(),
-                           stageFlags,
-                           0,
-                           data.size(),
-                           data.data());
+        vkCmdPushConstants(m_handle.asValue<VkCommandBuffer>(), m_pipeline->getLayout().asValue<VkPipelineLayout>(), stageFlags, 0, data.size(), data.data());
     }
 
     void RHICommandList::setBufferVertex(RHIBuffer* buffer)
@@ -674,11 +615,7 @@ namespace worse
         VkBuffer vertexBuffer = buffer->getHandle().asValue<VkBuffer>();
         VkDeviceSize offset   = 0;
 
-        vkCmdBindVertexBuffers(m_handle.asValue<VkCommandBuffer>(),
-                               0,
-                               1,
-                               &vertexBuffer,
-                               &offset);
+        vkCmdBindVertexBuffers(m_handle.asValue<VkCommandBuffer>(), 0, 1, &vertexBuffer, &offset);
     }
 
     void RHICommandList::setBufferIndex(RHIBuffer* buffer)
@@ -690,10 +627,7 @@ namespace worse
         VkIndexType indexType = (buffer->getStride() == sizeof(u16))
                                     ? VK_INDEX_TYPE_UINT16
                                     : VK_INDEX_TYPE_UINT32;
-        vkCmdBindIndexBuffer(m_handle.asValue<VkCommandBuffer>(),
-                             indexBuffer,
-                             offset,
-                             indexType);
+        vkCmdBindIndexBuffer(m_handle.asValue<VkCommandBuffer>(), indexBuffer, offset, indexType);
     }
 
     void RHICommandList::updateBuffer(RHIBuffer* buffer, u32 const offset,
@@ -707,11 +641,7 @@ namespace worse
 
         if (synchronizeUpdate)
         {
-            vkCmdUpdateBuffer(m_handle.asValue<VkCommandBuffer>(),
-                              buffer->getHandle().asValue<VkBuffer>(),
-                              offset,
-                              size,
-                              data);
+            vkCmdUpdateBuffer(m_handle.asValue<VkCommandBuffer>(), buffer->getHandle().asValue<VkBuffer>(), offset, size, data);
             VkBufferMemoryBarrier2 barrier = {};
             barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
             barrier.srcStageMask        = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
@@ -754,10 +684,9 @@ namespace worse
         VkDescriptorSet vkSet =
             RHIDevice::getGlobalDescriptorSet().asValue<VkDescriptorSet>();
 
-        VkPipelineBindPoint bindPoint =
-            (m_pso.type == RHIPipelineType::Graphics)
-                ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                : VK_PIPELINE_BIND_POINT_COMPUTE;
+        VkPipelineBindPoint bindPoint = (m_pso.type == RHIPipelineType::Graphics)
+                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                            : VK_PIPELINE_BIND_POINT_COMPUTE;
 
         vkCmdBindDescriptorSets(
             m_handle.asValue<VkCommandBuffer>(),
@@ -782,10 +711,9 @@ namespace worse
 
         VkDescriptorSet vkSet = set.asValue<VkDescriptorSet>();
 
-        VkPipelineBindPoint bindPoint =
-            (m_pso.type == RHIPipelineType::Graphics)
-                ? VK_PIPELINE_BIND_POINT_GRAPHICS
-                : VK_PIPELINE_BIND_POINT_COMPUTE;
+        VkPipelineBindPoint bindPoint = (m_pso.type == RHIPipelineType::Graphics)
+                                            ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                            : VK_PIPELINE_BIND_POINT_COMPUTE;
 
         vkCmdBindDescriptorSets(
             m_handle.asValue<VkCommandBuffer>(),
@@ -800,7 +728,6 @@ namespace worse
 
     void RHICommandList::updateSpecificSet(std::span<RHIDescriptorWrite> writes)
     {
-        // clang-format off
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(m_pipeline);
 
@@ -809,7 +736,7 @@ namespace worse
             return; // Early exit if no writes
         }
 
-        u64 hash  = m_pipeline->getDescriptorHash();
+        u64 hash            = m_pipeline->getDescriptorHash();
         RHINativeHandle set = RHIDevice::getSpecificDescriptorSet(hash);
         WS_ASSERT(set);
 
@@ -833,9 +760,9 @@ namespace worse
             case RHIDescriptorType::TextureStorage:
             {
                 RHITexture* texture = desc.resource.texture;
-                texture = texture
-                              ? texture
-                              : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+                texture             = texture
+                                          ? texture
+                                          : RHIDevice::getResourceProvider()->getPlaceholderTexture();
 
                 VkDescriptorType vkType =
                     (desc.type == RHIDescriptorType::Texture)
@@ -843,23 +770,23 @@ namespace worse
                         : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
                 u32 shift = (desc.type == RHIDescriptorType::Texture)
-                                          ? RHIConfig::HLSL_REGISTER_SHIFT_T
-                                          : RHIConfig::HLSL_REGISTER_SHIFT_U;
+                                ? RHIConfig::HLSL_REGISTER_SHIFT_T
+                                : RHIConfig::HLSL_REGISTER_SHIFT_U;
 
                 VkDescriptorImageInfo infoImage = {};
-                infoImage.imageView   = texture->getView().asValue<VkImageView>();
-                infoImage.imageLayout = vulkanImageLayout(texture->getImageLayout());
-                infoImage.sampler     = VK_NULL_HANDLE;
+                infoImage.imageView             = texture->getView().asValue<VkImageView>();
+                infoImage.imageLayout           = vulkanImageLayout(texture->getImageLayout());
+                infoImage.sampler               = VK_NULL_HANDLE;
                 infoImages.push_back(infoImage);
 
                 VkWriteDescriptorSet writeSet = {};
-                writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                writeSet.dstSet          = vkSet;
-                writeSet.dstBinding      = shift + desc.reg;
-                writeSet.dstArrayElement = desc.index;
-                writeSet.descriptorCount = 1;
-                writeSet.descriptorType  = vkType;
-                writeSet.pImageInfo      = &infoImages.back();
+                writeSet.sType                = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeSet.dstSet               = vkSet;
+                writeSet.dstBinding           = shift + desc.reg;
+                writeSet.dstArrayElement      = desc.index;
+                writeSet.descriptorCount      = 1;
+                writeSet.descriptorType       = vkType;
+                writeSet.pImageInfo           = &infoImages.back();
                 vkWrites.push_back(writeSet);
                 break;
             }
@@ -870,10 +797,9 @@ namespace worse
                 RHIBuffer* buffer = desc.resource.buffer;
                 WS_ASSERT(buffer); // Validate buffer pointer
 
-                VkDescriptorType vkType =
-                    (desc.type == RHIDescriptorType::UniformBuffer)
-                        ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
-                        : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                VkDescriptorType vkType = (desc.type == RHIDescriptorType::UniformBuffer)
+                                              ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+                                              : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
                 u32 shift = 0;
                 if (desc.type == RHIDescriptorType::UniformBuffer)
@@ -890,19 +816,19 @@ namespace worse
                 }
 
                 VkDescriptorBufferInfo infoBuffer = {};
-                infoBuffer.buffer = buffer->getHandle().asValue<VkBuffer>();
-                infoBuffer.offset = buffer->getOffset();
-                infoBuffer.range  = buffer->getSize();
+                infoBuffer.buffer                 = buffer->getHandle().asValue<VkBuffer>();
+                infoBuffer.offset                 = buffer->getOffset();
+                infoBuffer.range                  = buffer->getSize();
                 infoBuffers.push_back(infoBuffer);
 
                 VkWriteDescriptorSet writeSet = {};
-                writeSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                writeSet.dstSet          = vkSet;
-                writeSet.dstBinding      = shift + desc.reg;
-                writeSet.dstArrayElement = desc.index;
-                writeSet.descriptorCount = 1;
-                writeSet.descriptorType  = vkType;
-                writeSet.pBufferInfo     = &infoBuffers.back();
+                writeSet.sType                = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writeSet.dstSet               = vkSet;
+                writeSet.dstBinding           = shift + desc.reg;
+                writeSet.dstArrayElement      = desc.index;
+                writeSet.descriptorCount      = 1;
+                writeSet.descriptorType       = vkType;
+                writeSet.pBufferInfo          = &infoBuffers.back();
                 vkWrites.push_back(writeSet);
                 break;
             }
@@ -911,12 +837,7 @@ namespace worse
             }
         }
 
-        vkUpdateDescriptorSets(RHIContext::device,
-                               static_cast<u32>(vkWrites.size()),
-                               vkWrites.data(),
-                               0,
-                               nullptr);
-        // clang-format on
+        vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(vkWrites.size()), vkWrites.data(), 0, nullptr);
     }
 
     RHIImageLayout RHICommandList::getImageLayout(RHINativeHandle image)

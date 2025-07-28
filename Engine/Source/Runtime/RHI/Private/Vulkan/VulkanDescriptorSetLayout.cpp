@@ -40,10 +40,7 @@ namespace worse
         infoLayout.pBindings    = bindings.data();
 
         VkDescriptorSetLayout vkLayout = VK_NULL_HANDLE;
-        WS_ASSERT_VK(vkCreateDescriptorSetLayout(RHIContext::device,
-                                                 &infoLayout,
-                                                 nullptr,
-                                                 &vkLayout));
+        WS_ASSERT_VK(vkCreateDescriptorSetLayout(RHIContext::device, &infoLayout, nullptr, &vkLayout));
         m_layout = RHINativeHandle{vkLayout, RHINativeHandleType::DescriptorSetLayout};
         RHIDevice::setResourceName(m_layout, m_name);
         // clang-format on

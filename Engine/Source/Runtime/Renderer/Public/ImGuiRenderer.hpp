@@ -18,7 +18,8 @@ namespace worse
         State::End;
     };
 
-    template <StateTraits State> class PageRouter
+    template <StateTraits State>
+    class PageRouter
     {
     public:
         using Page =
@@ -83,8 +84,7 @@ namespace worse
     class ImGuiRenderer
     {
     public:
-        using Page =
-            std::function<void(ecs::Commands, ecs::Resource<GlobalContext>)>;
+        using Page = std::function<void(ecs::Commands, ecs::Resource<GlobalContext>)>;
 
         static void initialize();
         static void shutdown();

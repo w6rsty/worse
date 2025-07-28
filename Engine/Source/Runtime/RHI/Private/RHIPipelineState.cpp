@@ -27,7 +27,6 @@ namespace worse
                 height = pso.renderTargetDepthTexture->getHeight();
             }
 
-            // clang-format off
             RHIShaderStageFlags flags = {};
             for (RHIShader const* shader : pso.shaders)
             {
@@ -37,7 +36,7 @@ namespace worse
                 }
             }
 
-            bool isCompute = (flags & RHIComputePipelineShaderCombination) == RHIComputePipelineShaderCombination;
+            bool isCompute  = (flags & RHIComputePipelineShaderCombination) == RHIComputePipelineShaderCombination;
             bool isGraphics = (flags & RHIGraphicsPipelineShaderCombination) == RHIGraphicsPipelineShaderCombination;
             WS_ASSERT_MSG(isCompute || isGraphics, "Invalid shader set");
 
@@ -45,7 +44,7 @@ namespace worse
             {
                 WS_ASSERT_MSG(pso.type == RHIPipelineType::Compute, "Incompatible pipeline type");
             }
-            
+
             if (isGraphics)
             {
                 WS_ASSERT_MSG(pso.type == RHIPipelineType::Graphics, "Incompatible pipeline type");
@@ -61,15 +60,13 @@ namespace worse
             WS_ASSERT_MSG(((width != 0) && (height != 0)) || isCompute, "Invalid render target size");
 
             WS_ASSERT_MSG(!pso.name.empty(), "Pipeline state must have a name");
-            // clang-format on
         }
 
         u64 computeHash(RHIPipelineState const& pso)
         {
             u64 hash = 0;
 
-            hash = math::hashCombine(hash,
-                                     static_cast<u64>(pso.primitiveTopology));
+            hash = math::hashCombine(hash, static_cast<u64>(pso.primitiveTopology));
 
             if (pso.rasterizerState)
             {
@@ -99,16 +96,13 @@ namespace worse
             {
                 if (texture)
                 {
-                    hash =
-                        math::hashCombine(hash, texture->getImage().asValue());
+                    hash = math::hashCombine(hash, texture->getImage().asValue());
                 }
             }
 
             if (pso.renderTargetDepthTexture)
             {
-                hash = math::hashCombine(
-                    hash,
-                    pso.renderTargetDepthTexture->getImage().asValue());
+                hash = math::hashCombine(hash, pso.renderTargetDepthTexture->getImage().asValue());
             }
 
             return hash;
@@ -116,19 +110,17 @@ namespace worse
 
         // find descriptors bound to the same slot, merge their
         // stageFlags
-        void mergeDescriptors(std::vector<RHIDescriptor>& bases,
-                              std::vector<RHIDescriptor> const& additionals)
+        void mergeDescriptors(std::vector<RHIDescriptor>& bases, std::vector<RHIDescriptor> const& additionals)
         {
             for (RHIDescriptor const& additional : additionals)
             {
-                auto it =
-                    std::find_if(bases.begin(),
-                                 bases.end(),
-                                 [additional](RHIDescriptor const& base)
-                                 {
-                                     return (base.slot == additional.slot) &&
-                                            (base.space == additional.space);
-                                 });
+                auto it = std::find_if(bases.begin(),
+                                       bases.end(),
+                                       [additional](RHIDescriptor const& base)
+                                       {
+                                           return (base.slot == additional.slot) &&
+                                                  (base.space == additional.space);
+                                       });
 
                 if (it != bases.end())
                 {
@@ -172,21 +164,19 @@ namespace worse
         else if (type == RHIPipelineType::Graphics)
         {
             descriptors = shaders[RHIShaderType::Vertex]->getDescriptors();
-            mergeDescriptors(descriptors,
-                             shaders[RHIShaderType::Pixel]->getDescriptors());
+            mergeDescriptors(descriptors, shaders[RHIShaderType::Pixel]->getDescriptors());
         }
 
         // remove space != 1
-        descriptors.erase(
-            std::remove_if(descriptors.begin(),
-                           descriptors.end(),
-                           [](RHIDescriptor const& descriptor)
-                           {
-                               return (descriptor.space != 1) &&
-                                      (descriptor.type !=
-                                       RHIDescriptorType::PushConstant);
-                           }),
-            descriptors.end());
+        descriptors.erase(std::remove_if(descriptors.begin(),
+                                         descriptors.end(),
+                                         [](RHIDescriptor const& descriptor)
+                                         {
+                                             return (descriptor.space != 1) &&
+                                                    (descriptor.type !=
+                                                     RHIDescriptorType::PushConstant);
+                                         }),
+                          descriptors.end());
 
         // helper for generating same hash for same descriptor set with
         // different order
@@ -201,80 +191,68 @@ namespace worse
         return descriptors;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setName(std::string const& name)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setName(std::string const& name)
     {
 
         m_pso.name = name;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setType(RHIPipelineType type)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setType(RHIPipelineType type)
     {
         m_pso.type = type;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setPrimitiveTopology(RHIPrimitiveTopology topology)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setPrimitiveTopology(RHIPrimitiveTopology topology)
     {
         m_pso.primitiveTopology = topology;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setRasterizerState(RHIRasterizerState* state)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setRasterizerState(RHIRasterizerState* state)
     {
         m_pso.rasterizerState = state;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setDepthStencilState(RHIDepthStencilState* state)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setDepthStencilState(RHIDepthStencilState* state)
     {
         m_pso.depthStencilState = state;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setBlendState(RHIBlendState* state)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setBlendState(RHIBlendState* state)
     {
         m_pso.blendState = state;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::addShader(RHIShader* shader)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::addShader(RHIShader* shader)
     {
         m_pso.shaders[static_cast<usize>(shader->getShaderType())] = shader;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setRenderTargetColorTexture(usize index,
-                                                         RHITexture* texture)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setRenderTargetColorTexture(usize index, RHITexture* texture)
     {
         m_pso.renderTargetColorTextures[index] = texture;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setRenderTargetDepthTexture(RHITexture* texture)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setRenderTargetDepthTexture(RHITexture* texture)
     {
         m_pso.renderTargetDepthTexture = texture;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setScissor(math::Rectangle const& scissor)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setScissor(math::Rectangle const& scissor)
     {
         m_pso.scissor = scissor;
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setViewport(RHIViewport const& viewport)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setViewport(RHIViewport const& viewport)
     {
         m_pso.viewport = viewport;
         return *this;
@@ -286,8 +264,7 @@ namespace worse
         return *this;
     }
 
-    RHIPipelineStateBuilder&
-    RHIPipelineStateBuilder::setClearColor(Color const& color)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setClearColor(Color const& color)
     {
         m_pso.clearColor = color;
         return *this;

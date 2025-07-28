@@ -1,7 +1,6 @@
 #pragma once
 #include "Types.hpp"
 
-#include <cstdint>
 #include <string>
 
 namespace worse

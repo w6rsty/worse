@@ -3,7 +3,6 @@
 #include "RHIDefinitions.hpp"
 
 #include <functional>
-#include <cstdint>
 
 namespace worse
 {

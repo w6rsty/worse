@@ -1,4 +1,6 @@
 #pragma once
+#include "Types.hpp"
+
 #include <variant>
 #include <functional>
 

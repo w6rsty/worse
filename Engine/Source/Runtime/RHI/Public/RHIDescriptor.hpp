@@ -1,7 +1,6 @@
 #pragma once
 #include "RHIDefinitions.hpp"
 
-#include <cstdint>
 #include <string>
 
 namespace worse

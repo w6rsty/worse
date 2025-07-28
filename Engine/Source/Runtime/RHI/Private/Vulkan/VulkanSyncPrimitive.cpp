@@ -12,25 +12,19 @@ namespace worse
             infoFence.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
             VkFence fence = VK_NULL_HANDLE;
-            WS_ASSERT_VK(
-                vkCreateFence(RHIContext::device, &infoFence, nullptr, &fence));
+            WS_ASSERT_VK(vkCreateFence(RHIContext::device, &infoFence, nullptr, &fence));
             resource = RHINativeHandle{fence, RHINativeHandleType::Fence};
         }
 
         void wait(RHINativeHandle& resource, u64 const timeoutNs)
         {
             VkFence fence = resource.asValue<VkFence>();
-            WS_ASSERT_VK(vkWaitForFences(RHIContext::device,
-                                         1,
-                                         &fence,
-                                         VK_TRUE,
-                                         timeoutNs));
+            WS_ASSERT_VK(vkWaitForFences(RHIContext::device, 1, &fence, VK_TRUE, timeoutNs));
         }
 
         bool isSignaled(RHINativeHandle& resource)
         {
-            return vkGetFenceStatus(RHIContext::device,
-                                    resource.asValue<VkFence>()) == VK_SUCCESS;
+            return vkGetFenceStatus(RHIContext::device, resource.asValue<VkFence>()) == VK_SUCCESS;
         }
 
         void reset(RHINativeHandle& resource)
@@ -60,54 +54,42 @@ namespace worse
             // clang-format on
 
             VkSemaphore semaphore = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkCreateSemaphore(RHIContext::device,
-                                           &infoSem,
-                                           nullptr,
-                                           &semaphore));
-            resource =
-                RHINativeHandle{semaphore, RHINativeHandleType::Semaphore};
+            WS_ASSERT_VK(vkCreateSemaphore(RHIContext::device, &infoSem, nullptr, &semaphore));
+            resource = RHINativeHandle{semaphore, RHINativeHandleType::Semaphore};
         }
 
-        void wait(RHINativeHandle& resource, u64 const value,
-                  u64 const timeoutNs)
+        void wait(RHINativeHandle& resource, u64 const value, u64 const timeoutNs)
         {
             VkSemaphore semaphore = resource.asValue<VkSemaphore>();
 
-            // clang-format off
             VkSemaphoreWaitInfo infoWait = {};
             infoWait.sType               = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
             infoWait.semaphoreCount      = 1;
             infoWait.pSemaphores         = &semaphore;
             infoWait.pValues             = &value;
-            // clang-format on
-            WS_ASSERT_VK(
-                vkWaitSemaphores(RHIContext::device, &infoWait, timeoutNs));
+
+            WS_ASSERT_VK(vkWaitSemaphores(RHIContext::device, &infoWait, timeoutNs));
         }
 
         void signal(RHINativeHandle& resource, u64 const value)
         {
-            // clang-format off
             VkSemaphoreSignalInfo infoSignal = {};
             infoSignal.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
             infoSignal.semaphore             = resource.asValue<VkSemaphore>();
             infoSignal.value                 = value;
-            // clang-format on
+
             WS_ASSERT_VK(vkSignalSemaphore(RHIContext::device, &infoSignal));
         }
 
         u64 getValue(RHINativeHandle& resource)
         {
             u64 value = 0;
-            WS_ASSERT_VK(
-                vkGetSemaphoreCounterValue(RHIContext::device,
-                                           resource.asValue<VkSemaphore>(),
-                                           &value));
+            WS_ASSERT_VK(vkGetSemaphoreCounterValue(RHIContext::device, resource.asValue<VkSemaphore>(), &value));
             return value;
         }
     } // namespace semaphore
 
-    RHISyncPrimitive::RHISyncPrimitive(RHISyncPrimitiveType const type,
-                                       std::string_view name)
+    RHISyncPrimitive::RHISyncPrimitive(RHISyncPrimitiveType const type, std::string_view name)
         : RHIResource(name)
     {
         m_type = type;
@@ -132,8 +114,7 @@ namespace worse
 
     void RHISyncPrimitive::wait(u64 const timeoutNs)
     {
-        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) ||
-                  (m_type == RHISyncPrimitiveType::TimelineSemaphore));
+        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
 
         if (m_type == RHISyncPrimitiveType::Fence)
         {
@@ -154,8 +135,7 @@ namespace worse
 
     bool RHISyncPrimitive::isSignaled()
     {
-        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) ||
-                  (m_type == RHISyncPrimitiveType::TimelineSemaphore));
+        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
 
         if (m_type == RHISyncPrimitiveType::Fence)
         {

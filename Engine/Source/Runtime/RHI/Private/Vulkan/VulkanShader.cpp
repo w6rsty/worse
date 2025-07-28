@@ -30,12 +30,12 @@ namespace worse
             }
 
             RHIImageLayout layout = RHIImageLayout::Undefined;
-            layout = descriptorType == RHIDescriptorType::TextureStorage
-                         ? RHIImageLayout::General
-                         : layout;
-            layout = descriptorType == RHIDescriptorType::Texture
-                         ? RHIImageLayout::ShaderRead
-                         : layout;
+            layout                = descriptorType == RHIDescriptorType::TextureStorage
+                                        ? RHIImageLayout::General
+                                        : layout;
+            layout                = descriptorType == RHIDescriptorType::Texture
+                                        ? RHIImageLayout::ShaderRead
+                                        : layout;
 
             for (spirv_cross::Resource const& resource : resources)
             {
@@ -102,9 +102,7 @@ namespace worse
         }
         // clang-format on
 
-        wArguments.insert(wArguments.end(),
-                          commonOptions.begin(),
-                          commonOptions.end());
+        wArguments.insert(wArguments.end(), commonOptions.begin(), commonOptions.end());
 
         std::string filepath   = m_path.string();
         std::wstring wFilepath = std::wstring(filepath.begin(), filepath.end());
@@ -112,8 +110,7 @@ namespace worse
 
         RHINativeHandle shader = {};
 
-        CComPtr<IDxcBlob> codeBlob =
-            DXCompiler::instance()->compile(m_source, wArguments);
+        CComPtr<IDxcBlob> codeBlob = DXCompiler::instance()->compile(m_source, wArguments);
 
         if (!codeBlob)
         {
@@ -129,24 +126,18 @@ namespace worse
         // clang-format on
 
         VkShaderModule vkShader = VK_NULL_HANDLE;
-        WS_ASSERT_VK(vkCreateShaderModule(RHIContext::device,
-                                          &infoShader,
-                                          nullptr,
-                                          &vkShader));
+        WS_ASSERT_VK(vkCreateShaderModule(RHIContext::device, &infoShader, nullptr, &vkShader));
         shader = RHINativeHandle{vkShader, RHINativeHandleType::Shader};
         RHIDevice::setResourceName(shader, m_name);
 
-        reflect(m_shaderType,
-                static_cast<u32*>(codeBlob->GetBufferPointer()),
-                codeBlob->GetBufferSize() / sizeof(u32));
+        reflect(m_shaderType, static_cast<u32*>(codeBlob->GetBufferPointer()), codeBlob->GetBufferSize() / sizeof(u32));
 
         codeBlob.Release();
 
         return shader;
     }
 
-    void RHIShader::reflect(RHIShaderType const shaderType, u32* spirvData,
-                            usize const spirvSize)
+    void RHIShader::reflect(RHIShaderType const shaderType, u32* spirvData, usize const spirvSize)
     {
         WS_ASSERT(spirvData != nullptr);
         WS_ASSERT(spirvSize > 0);
@@ -167,30 +158,6 @@ namespace worse
         // RWStructuredBuffer / storage buffer
         spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer, shaderStage, m_descriptors);
         // clang-format on
-
-        // std::string logMessage = m_name + "\n";
-        // for (RHIDescriptor& descriptor : m_descriptors)
-        // {
-        //     std::string typeName  =
-        //     rhiDescriptorTypeToString(descriptor.type); std::string arrayName
-        //     = descriptor.isArray
-        //                                 ?
-        //                                 std::to_string(descriptor.arrayLength)
-        //                                 : "0";
-        //     if (descriptor.isArray)
-        //     {
-        //         arrayName = "bindless";
-        //     }
-        //     logMessage += std::format(
-        //         "(type: {:>15}, slot: {:>3}, space: {:>2}, length: {:>2}) "
-        //         "{}\n",
-        //         typeName,
-        //         descriptor.slot,
-        //         descriptor.space,
-        //         arrayName,
-        //         descriptor.name);
-        // }
-        // WS_LOG_DEBUG("SPIRV-Cross", "{}", logMessage);
     }
 
 } // namespace worse

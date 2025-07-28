@@ -3,8 +3,6 @@
 #include "RHICommandList.hpp"
 #include "RHISyncPrimitive.hpp"
 
-#include <cstdint>
-
 namespace worse
 {
 

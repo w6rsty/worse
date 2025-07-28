@@ -27,9 +27,7 @@ namespace worse
         }
 
         m_loadQueue.push(path);
-        m_assets.emplace(
-            handle,
-            AssetSlot{.texture = nullptr, .state = AssetState::Queued});
+        m_assets.emplace(handle, AssetSlot{.texture = nullptr, .state = AssetState::Queued});
         return handle;
     }
 
@@ -44,8 +42,7 @@ namespace worse
 
             AssetHandle handle = m_hasher(path);
             AssetSlot& slot    = m_assets[handle];
-            WS_ASSERT_MSG(slot.state != AssetState::Loaded,
-                          "Asset already loaded");
+            WS_ASSERT_MSG(slot.state != AssetState::Loaded, "Asset already loaded");
 
             // Load the texture from the file system
             slot.texture = std::make_shared<RHITexture>(path);
@@ -57,9 +54,7 @@ namespace worse
             {
                 slot.state   = AssetState::Failed;
                 slot.texture = nullptr;
-                WS_LOG_ERROR("AssetServer",
-                             "Failed to load texture {}",
-                             path.string());
+                WS_LOG_ERROR("AssetServer", "Failed to load texture {}", path.string());
             }
         }
     }

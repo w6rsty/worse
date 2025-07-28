@@ -63,34 +63,29 @@ namespace worse
             layout.asValue<VkDescriptorSetLayout>();
 
         VkDescriptorSetAllocateInfo infoAlloc = {};
-        infoAlloc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        infoAlloc.pNext = pNext;
-        infoAlloc.descriptorSetCount = 1;
-        infoAlloc.pSetLayouts        = &vkLayout;
+        infoAlloc.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        infoAlloc.pNext                       = pNext;
+        infoAlloc.descriptorSetCount          = 1;
+        infoAlloc.pSetLayouts                 = &vkLayout;
 
         VkDescriptorSet set = VK_NULL_HANDLE;
         VkResult result;
 
         for (;;)
         {
-            infoAlloc.descriptorPool =
-                m_pools[m_rotateIndex][m_currentPoolIndex[m_rotateIndex]]
-                    .asValue<VkDescriptorPool>();
-            result =
-                vkAllocateDescriptorSets(RHIContext::device, &infoAlloc, &set);
+            infoAlloc.descriptorPool = m_pools[m_rotateIndex][m_currentPoolIndex[m_rotateIndex]].asValue<VkDescriptorPool>();
+            result                   = vkAllocateDescriptorSets(RHIContext::device, &infoAlloc, &set);
 
             if (result == VK_SUCCESS)
             {
                 return RHINativeHandle{set, RHINativeHandleType::DescriptorSet};
             }
 
-            if ((result == VK_ERROR_FRAGMENTED_POOL) ||
-                (result == VK_ERROR_OUT_OF_POOL_MEMORY))
+            if ((result == VK_ERROR_FRAGMENTED_POOL) || (result == VK_ERROR_OUT_OF_POOL_MEMORY))
             {
                 // try next pool
                 ++m_currentPoolIndex[m_rotateIndex];
-                if (m_currentPoolIndex[m_rotateIndex] >=
-                    m_pools[m_rotateIndex].size())
+                if (m_currentPoolIndex[m_rotateIndex] >= m_pools[m_rotateIndex].size())
                 {
                     createPool();
                 }
@@ -110,9 +105,7 @@ namespace worse
 
     RHIDescriptorAllocator::~RHIDescriptorAllocator()
     {
-        WS_LOG_DEBUG("Descriptor",
-                     "Destroying {} descriptor pools",
-                     m_pools[0].size() + m_pools[1].size());
+        WS_LOG_DEBUG("Descriptor", "Destroying {} descriptor pools", m_pools[0].size() + m_pools[1].size());
         for (RHINativeHandle pool : m_pools[0])
         {
             RHIDevice::deletionQueueAdd(pool);
@@ -129,9 +122,7 @@ namespace worse
 
         for (RHINativeHandle pool : m_pools[m_rotateIndex])
         {
-            vkResetDescriptorPool(RHIContext::device,
-                                  pool.asValue<VkDescriptorPool>(),
-                                  0);
+            vkResetDescriptorPool(RHIContext::device, pool.asValue<VkDescriptorPool>(), 0);
         }
         m_currentPoolIndex[m_rotateIndex] = 0;
     }
@@ -141,9 +132,7 @@ namespace worse
         return allocateInternal(layout, nullptr);
     }
 
-    RHINativeHandle
-    RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout,
-                                                u32 count)
+    RHINativeHandle RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout, u32 count)
     {
         WS_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
         // clang-format off
@@ -179,7 +168,7 @@ namespace worse
         layoutBindings[2].binding            = RHIConfig::HLSL_REGISTER_SHIFT_S + 1; // s1
         layoutBindings[2].descriptorCount    = 8;
         layoutBindings[2].descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
-    layoutBindings[2].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
+        layoutBindings[2].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT;
         layoutBindings[2].pImmutableSamplers = nullptr;
 
         layoutBindings[3].binding            = RHIConfig::HLSL_REGISTER_SHIFT_T + 0; // t0
@@ -207,10 +196,7 @@ namespace worse
         infoLayout.pBindings    = layoutBindings;
 
         VkDescriptorSetLayout vkLayout = VK_NULL_HANDLE;
-        WS_ASSERT_VK(vkCreateDescriptorSetLayout(RHIContext::device,
-                                                    &infoLayout,
-                                                    nullptr,
-                                                    &vkLayout));
+        WS_ASSERT_VK(vkCreateDescriptorSetLayout(RHIContext::device, &infoLayout, nullptr, &vkLayout));
         m_layout = RHINativeHandle{vkLayout, RHINativeHandleType::DescriptorSetLayout};
         RHIDevice::setResourceName(m_layout, "global_descriptor_set_layout");
         // clang-format on
@@ -281,8 +267,7 @@ namespace worse
             m_firstUpdate = false;
         }
 
-        m_set = m_allocator->allocateVariableSet(m_layout,
-                                                 RHIConfig::MIN_DESCRIPTORS);
+        m_set = m_allocator->allocateVariableSet(m_layout, RHIConfig::MIN_DESCRIPTORS);
 
         // write static descriptors
         {
@@ -291,16 +276,11 @@ namespace worse
                 write.dstSet = m_set.asValue<VkDescriptorSet>();
             }
 
-            vkUpdateDescriptorSets(RHIContext::device,
-                                   static_cast<u32>(m_staticWrites.size()),
-                                   m_staticWrites.data(),
-                                   0,
-                                   nullptr);
+            vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(m_staticWrites.size()), m_staticWrites.data(), 0, nullptr);
         }
     }
 
-    void VulkanGlobalSet::writeBindlessTextures(
-        std::span<RHIDescriptorWrite> updates)
+    void VulkanGlobalSet::writeBindlessTextures(std::span<RHIDescriptorWrite> updates)
     {
         WS_ASSERT(m_set);
 
@@ -319,8 +299,7 @@ namespace worse
             uint32_t rangeCount = 1;
 
             // Check for contiguous indices
-            while ((i + 1 < updates.size()) &&
-                   (updates[i + 1].index == rangeStart + rangeCount))
+            while ((i + 1 < updates.size()) && (updates[i + 1].index == rangeStart + rangeCount))
             {
                 ++rangeCount;
                 ++i;
@@ -333,8 +312,7 @@ namespace worse
         std::vector<VkDescriptorImageInfo> imageInfos(updates.size());
 
         uint32_t imageInfoIndex = 0;
-        uint32_t updatesIndex =
-            0; // Track position in the original updates array
+        uint32_t updatesIndex   = 0; // Track position in the original updates array
         for (usize i = 0; i < ranges.size(); ++i)
         {
             // clang-format off
@@ -352,8 +330,9 @@ namespace worse
                 // Bounds check to prevent heap buffer overflow
                 if (updatesIndex + j >= updates.size())
                 {
-                    WS_LOG_ERROR("VulkanDescriptor", "Access out of bounds: updatesIndex({}) + j({}) >= updates.size({})", 
-                               updatesIndex, j, updates.size());
+                    WS_LOG_ERROR("VulkanDescriptor",
+                                 "Access out of bounds: updatesIndex({}) + j({}) >= updates.size({})", 
+                                 updatesIndex, j, updates.size());
                     return;
                 }
                 
@@ -371,11 +350,7 @@ namespace worse
             // clang-format on
         }
 
-        vkUpdateDescriptorSets(RHIContext::device,
-                               static_cast<u32>(writes.size()),
-                               writes.data(),
-                               0,
-                               nullptr);
+        vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(writes.size()), writes.data(), 0, nullptr);
     }
 
     VulkanSpecificSet::VulkanSpecificSet(RHIDescriptorAllocator* allocator)
@@ -410,10 +385,7 @@ namespace worse
             return it->second.get();
         }
 
-        std::shared_ptr<RHIDescriptorSetLayout> layout =
-            std::make_shared<RHIDescriptorSetLayout>(descriptors,
-                                                     hash,
-                                                     pso.name);
+        std::shared_ptr<RHIDescriptorSetLayout> layout = std::make_shared<RHIDescriptorSetLayout>(descriptors, hash, pso.name);
         m_descriptorSetLayouts.emplace(hash, layout);
         return layout.get();
     }

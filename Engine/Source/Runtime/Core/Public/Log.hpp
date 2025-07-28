@@ -4,7 +4,6 @@
 #include <atomic>
 #include <array>
 #include <chrono>
-#include <cstdio>
 #include <cstring>
 #include <format>
 #include <thread>

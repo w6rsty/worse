@@ -16,7 +16,6 @@
 #include <vector>
 #include <limits>
 #include <memory>
-#include <cstdint>
 #include <semaphore> // synchronize immediate command
 #include <unordered_map>
 
@@ -46,8 +45,7 @@ namespace worse
         std::vector<char const*> getExtensionsInstance()
         {
             u32 sdlExtensionCount{0};
-            auto sdlExtensions =
-                SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
+            auto sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
             for (u32 i = 0; i < sdlExtensionCount; ++i)
             {
                 extensionsInstance.emplace_back(sdlExtensions[i]);
@@ -98,7 +96,7 @@ namespace worse
         }
 
         VkDebugUtilsMessengerCreateInfoEXT info{
-            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+            .sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
             .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -112,17 +110,12 @@ namespace worse
         void create()
         {
             WS_ASSERT_VK(
-                vkCreateDebugUtilsMessengerEXT(RHIContext::instance,
-                                               &debugMessenger::info,
-                                               nullptr,
-                                               &debugMessenger::messenger));
+                vkCreateDebugUtilsMessengerEXT(RHIContext::instance, &debugMessenger::info, nullptr, &debugMessenger::messenger));
         }
 
         void destory()
         {
-            vkDestroyDebugUtilsMessengerEXT(RHIContext::instance,
-                                            debugMessenger::messenger,
-                                            nullptr);
+            vkDestroyDebugUtilsMessengerEXT(RHIContext::instance, debugMessenger::messenger, nullptr);
         }
 
     } // namespace debugMessenger
@@ -132,15 +125,10 @@ namespace worse
         void select()
         {
             u32 gpuCount{0};
-            WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance,
-                                                    &gpuCount,
-                                                    nullptr));
+            WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance, &gpuCount, nullptr));
             std::vector<VkPhysicalDevice> gpus(gpuCount);
-            WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance,
-                                                    &gpuCount,
-                                                    gpus.data()));
-            WS_ASSERT_MSG(!gpus.empty(),
-                          "No physical devices found for Vulkan");
+            WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance, &gpuCount, gpus.data()));
+            WS_ASSERT_MSG(!gpus.empty(), "No physical devices found for Vulkan");
 
             RHIContext::physicalDevice = gpus[0]; // APPLE M3
         }
@@ -210,9 +198,7 @@ namespace worse
         RHIQueue* activeQueue = nullptr;
         EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
 
-        u32 getQueueFamilyIndex(
-            std::vector<VkQueueFamilyProperties> const& queueFamilies,
-            VkQueueFlags flags, bool dedicated = true)
+        u32 getQueueFamilyIndex(std::vector<VkQueueFamilyProperties> const& queueFamilies, VkQueueFlags flags, bool dedicated = true)
         {
             // compute only
             if ((flags & VK_QUEUE_COMPUTE_BIT) == VK_QUEUE_COMPUTE_BIT)
@@ -225,8 +211,7 @@ namespace worse
                     }
 
                     if ((queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT) &&
-                        ((queueFamilies[i].queueFlags &
-                          VK_QUEUE_GRAPHICS_BIT) == 0))
+                        ((queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
                     {
                         return i;
                     }
@@ -244,8 +229,7 @@ namespace worse
                     }
 
                     if ((queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT) &&
-                        ((queueFamilies[i].queueFlags &
-                          (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0))
+                        ((queueFamilies[i].queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0))
                     {
                         return i;
                     }
@@ -257,10 +241,8 @@ namespace worse
                 if ((queueFamilies[i].queueFlags & flags) == flags)
                 {
                     if (dedicated &&
-                        ((queueFamilies[i].queueFlags &
-                          VK_QUEUE_GRAPHICS_BIT) != 0) &&
-                        (i == indexGraphics || i == indexCompute ||
-                         i == indexTransfer))
+                        ((queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) &&
+                        (i == indexGraphics || i == indexCompute || i == indexTransfer))
                     {
                         continue; // skip graphics, compute, or transfer queues
                     }
@@ -268,30 +250,20 @@ namespace worse
                 }
             }
 
-            WS_ASSERT_MSG(
-                false,
-                "Failed to find a queue family with the requested flags");
+            WS_ASSERT_MSG(false, "Failed to find a queue family with the requested flags");
             return std::numeric_limits<u32>::max();
         }
 
         void detectQueueFamilyIndex(VkPhysicalDevice physicalDevice)
         {
             u32 queueFamilyCount{0};
-            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice,
-                                                     &queueFamilyCount,
-                                                     nullptr);
-            std::vector<VkQueueFamilyProperties> queueFamilies(
-                queueFamilyCount);
-            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice,
-                                                     &queueFamilyCount,
-                                                     queueFamilies.data());
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+            std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-            indexGraphics =
-                getQueueFamilyIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT);
-            indexCompute =
-                getQueueFamilyIndex(queueFamilies, VK_QUEUE_COMPUTE_BIT);
-            indexTransfer =
-                getQueueFamilyIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT);
+            indexGraphics = getQueueFamilyIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT);
+            indexCompute  = getQueueFamilyIndex(queueFamilies, VK_QUEUE_COMPUTE_BIT);
+            indexTransfer = getQueueFamilyIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT);
         }
 
         void destroy()
@@ -347,8 +319,7 @@ namespace worse
 
             VmaVulkanFunctions vulkanFunctions{};
             infoAllocator.pVulkanFunctions = &vulkanFunctions;
-            WS_ASSERT_VK(vmaImportVulkanFunctionsFromVolk(&infoAllocator,
-                                                          &vulkanFunctions));
+            WS_ASSERT_VK(vmaImportVulkanFunctionsFromVolk(&infoAllocator, &vulkanFunctions));
 
             WS_ASSERT_VK(vmaCreateAllocator(&infoAllocator, &vma::allocator));
         }
@@ -357,9 +328,7 @@ namespace worse
         {
             if (!allocations.empty())
             {
-                WS_LOG_WARN("VMA",
-                            "There are still {} allocations in VMA",
-                            allocations.size());
+                WS_LOG_WARN("VMA", "There are still {} allocations in VMA", allocations.size());
                 for (auto const& [handle, allocation] : allocations)
                 {
                     WS_LOG_WARN("VMA", "Allocation: {}", handle);
@@ -370,14 +339,12 @@ namespace worse
             vma::allocator = VK_NULL_HANDLE;
         }
 
-        void saveAllocation(VmaAllocation const& allocation,
-                            RHINativeHandle handle)
+        void saveAllocation(VmaAllocation const& allocation, RHINativeHandle handle)
         {
             WS_ASSERT(handle);
 
             std::lock_guard lock{mtxAllocation};
-            allocations.emplace(handle.asValue(),
-                                AllocationData{allocation, handle});
+            allocations.emplace(handle.asValue(), AllocationData{allocation, handle});
         }
 
         // thread safe
@@ -385,8 +352,7 @@ namespace worse
         {
             WS_ASSERT(handle);
             std::lock_guard lock{mtxAllocation};
-            if (auto it = allocations.find(handle.asValue());
-                it != allocations.end())
+            if (auto it = allocations.find(handle.asValue()); it != allocations.end())
             {
                 return &it->second;
             }
@@ -423,8 +389,7 @@ namespace worse
     namespace
     {
         std::mutex mtxDeletionQueue;
-        std::unordered_map<RHINativeHandleType, std::vector<RHINativeHandle>>
-            deletionQueue;
+        std::unordered_map<RHINativeHandleType, std::vector<RHINativeHandle>> deletionQueue;
 
         RHIResourceProvider* resourceProvider = nullptr;
     } // namespace
@@ -451,8 +416,7 @@ namespace worse
             infoInst.ppEnabledExtensionNames = extensionsInst.data();
             // clang-format on
 
-            WS_ASSERT_VK(
-                vkCreateInstance(&infoInst, nullptr, &RHIContext::instance));
+            WS_ASSERT_VK(vkCreateInstance(&infoInst, nullptr, &RHIContext::instance));
 
             volkLoadInstance(RHIContext::instance);
 
@@ -505,10 +469,7 @@ namespace worse
             infoDevice.ppEnabledExtensionNames = extensionsDevice.data();
             // clang-format on
 
-            WS_ASSERT_VK(vkCreateDevice(RHIContext::physicalDevice,
-                                        &infoDevice,
-                                        nullptr,
-                                        &RHIContext::device));
+            WS_ASSERT_VK(vkCreateDevice(RHIContext::physicalDevice, &infoDevice, nullptr, &RHIContext::device));
             RHIContext::backendType = RHIBackendType::Vulkan;
 
             volkLoadDevice(RHIContext::device);
@@ -516,8 +477,7 @@ namespace worse
             // version
             {
                 VkPhysicalDeviceProperties physicalDeviceProperties;
-                vkGetPhysicalDeviceProperties(RHIContext::physicalDevice,
-                                              &physicalDeviceProperties);
+                vkGetPhysicalDeviceProperties(RHIContext::physicalDevice, &physicalDeviceProperties);
                 // clang-format off
                 WS_LOG_INFO("RHI Backend", "Vulkan {}.{}.{}", 
                     std::to_string(VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion)),
@@ -722,17 +682,14 @@ namespace worse
             {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, descriptorCount}};
 
         VkDescriptorPoolCreateInfo infoPool = {};
-        infoPool.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        infoPool.flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        infoPool.maxSets = maxSets;
-        infoPool.poolSizeCount = static_cast<u32>(std::size(poolSizes));
-        infoPool.pPoolSizes    = poolSizes;
+        infoPool.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        infoPool.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        infoPool.maxSets                    = maxSets;
+        infoPool.poolSizeCount              = static_cast<u32>(std::size(poolSizes));
+        infoPool.pPoolSizes                 = poolSizes;
 
         VkDescriptorPool pool = VK_NULL_HANDLE;
-        WS_ASSERT_VK(vkCreateDescriptorPool(RHIContext::device,
-                                            &infoPool,
-                                            nullptr,
-                                            &pool));
+        WS_ASSERT_VK(vkCreateDescriptorPool(RHIContext::device, &infoPool, nullptr, &pool));
 
         return RHINativeHandle{pool, RHINativeHandleType::DescriptorPool};
     }
@@ -745,14 +702,14 @@ namespace worse
 
     void RHIDevice::memoryTextureCreate(RHITexture* texture)
     {
-        VkImageUsageFlags vkUsage      = 0;
-        RHITextureViewUsageFlags usage = texture->getUsage();
+        VkImageUsageFlags vkUsage = 0;
+        RHITextureViewFlags usage = texture->getUsage();
         // clang-format off
-        if (usage & RHITextureViewUsageFlagBits::Srv)         { vkUsage |= VK_IMAGE_USAGE_SAMPLED_BIT; }
-        if (usage & RHITextureViewUsageFlagBits::Uav)         { vkUsage |= VK_IMAGE_USAGE_STORAGE_BIT; }
-        if (usage & RHITextureViewUsageFlagBits::Rtv)         { vkUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; }
-        if (usage & RHITextureViewUsageFlagBits::Dsv)         { vkUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; }
-        if (usage & RHITextureViewUsageFlagBits::ClearOrBlit) { vkUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; }
+        if (usage & RHITextureViewFlagBits::ShaderReadView)      { vkUsage |= VK_IMAGE_USAGE_SAMPLED_BIT; }
+        if (usage & RHITextureViewFlagBits::UnorderedAccessView) { vkUsage |= VK_IMAGE_USAGE_STORAGE_BIT; }
+        if (usage & RHITextureViewFlagBits::RenderTargetView)    { vkUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; }
+        if (usage & RHITextureViewFlagBits::DepthStencilView)    { vkUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; }
+        if (usage & RHITextureViewFlagBits::ClearOrBlit)         { vkUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; }
 
         VkImageCreateInfo infoImage = {};
         infoImage.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -792,9 +749,7 @@ namespace worse
         WS_ASSERT_VK(result);
 
         texture->m_image = RHINativeHandle{image, RHINativeHandleType::Image};
-        vmaSetAllocationName(vma::allocator,
-                             allocation,
-                             texture->getName().c_str());
+        vmaSetAllocationName(vma::allocator, allocation, texture->getName().c_str());
         RHIDevice::setResourceName(texture->getImage(), texture->getName());
 
         vma::saveAllocation(allocation, texture->getImage());
@@ -807,18 +762,13 @@ namespace worse
         {
             {
                 std::lock_guard guard{vma::mtxAllocator};
-                vmaDestroyImage(vma::allocator,
-                                handle.asValue<VkImage>(),
-                                data->allocation);
+                vmaDestroyImage(vma::allocator, handle.asValue<VkImage>(), data->allocation);
             }
             vma::removeAllocation(handle);
         }
     }
 
-    RHINativeHandle RHIDevice::memoryBufferCreate(u32 size, u32 bufferUsage,
-                                                  u32 memoryProperty,
-                                                  void const* data,
-                                                  std::string_view name)
+    RHINativeHandle RHIDevice::memoryBufferCreate(u32 size, u32 bufferUsage, u32 memoryProperty, void const* data, std::string_view name)
     {
         // clang-format off
         VkBufferCreateInfo infoBuffer = {};
@@ -841,12 +791,8 @@ namespace worse
         VmaAllocation allocation    = VK_NULL_HANDLE;
 
         VkBuffer vkBuffer = VK_NULL_HANDLE;
-        VkResult result   = vmaCreateBuffer(vma::allocator,
-                                          &infoBuffer,
-                                          &infoAllocCreate,
-                                          &vkBuffer,
-                                          &allocation,
-                                          &infoAlloc);
+        VkResult result   = vmaCreateBuffer(vma::allocator, &infoBuffer, &infoAllocCreate, &vkBuffer, &allocation, &infoAlloc);
+
         if ((result == VK_ERROR_OUT_OF_DEVICE_MEMORY) ||
             (result == VK_ERROR_OUT_OF_HOST_MEMORY))
         {
@@ -883,9 +829,7 @@ namespace worse
         {
             {
                 std::lock_guard guard{vma::mtxAllocator};
-                vmaDestroyBuffer(vma::allocator,
-                                 handle.asValue<VkBuffer>(),
-                                 data->allocation);
+                vmaDestroyBuffer(vma::allocator, handle.asValue<VkBuffer>(), data->allocation);
             }
             vma::removeAllocation(handle);
         }

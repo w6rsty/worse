@@ -9,7 +9,7 @@ namespace worse
     RHITexture::RHITexture(RHITextureType const type, u32 const width,
                            u32 const height, u32 const depth, u32 mipCount,
                            RHIFormat const format,
-                           RHITextureViewUsageFlags const usage,
+                           RHITextureViewFlags const usage,
                            std::vector<RHITextureSlice> data,
                            std::string const& name)
         : RHIResource(name)
@@ -43,8 +43,8 @@ namespace worse
         m_depth    = data->depth;
         m_mipCount = data->mipLevels;
         m_format   = data->format;
-        m_usage    = RHITextureViewUsageFlagBits::Srv |
-                  RHITextureViewUsageFlagBits::ClearOrBlit;
+        m_usage    = RHITextureViewFlagBits::ShaderReadView |
+                  RHITextureViewFlagBits::ClearOrBlit;
 
         m_slices.resize(data->layers);            // only 1 now, no array
         m_slices[0].mips.resize(data->mipLevels); // mip 0 only

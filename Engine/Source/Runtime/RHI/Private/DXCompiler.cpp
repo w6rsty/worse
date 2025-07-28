@@ -1,8 +1,6 @@
 #include "DXCompiler.hpp"
 #include "Log.hpp"
 
-#include <cstdint>
-
 namespace worse
 {
 
@@ -57,16 +55,10 @@ namespace worse
         }
     }
 
-    CComPtr<IDxcBlob>
-    DXCompiler::compile(std::string const& source,
-                        std::vector<std::wstring> const& wArguments)
+    CComPtr<IDxcBlob> DXCompiler::compile(std::string const& source, std::vector<std::wstring> const& wArguments)
     {
         CComPtr<IDxcBlobEncoding> sourceBlob;
-        if (FAILED(
-                m_utils->CreateBlobFromPinned(source.data(),
-                                              static_cast<u32>(source.size()),
-                                              CP_UTF8,
-                                              &sourceBlob)))
+        if (FAILED(m_utils->CreateBlobFromPinned(source.data(), static_cast<u32>(source.size()), CP_UTF8, &sourceBlob)))
         {
             WS_LOG_ERROR("dxc", "Failed to load shader file");
         }
@@ -85,12 +77,7 @@ namespace worse
 
         CComPtr<IDxcResult> dxcResult = nullptr;
 
-        HRESULT result =
-            m_compiler->Compile(&buffer,
-                                wArgumentCPtrs.data(),
-                                static_cast<u32>(wArgumentCPtrs.size()),
-                                nullptr,
-                                IID_PPV_ARGS(&dxcResult));
+        HRESULT result = m_compiler->Compile(&buffer, wArgumentCPtrs.data(), static_cast<u32>(wArgumentCPtrs.size()), nullptr, IID_PPV_ARGS(&dxcResult));
 
         if (SUCCEEDED(result))
         {
@@ -102,10 +89,7 @@ namespace worse
             CComPtr<IDxcBlobEncoding> errorBlob;
             if (SUCCEEDED(dxcResult->GetErrorBuffer(&errorBlob)) && errorBlob)
             {
-                WS_LOG_ERROR(
-                    "dxc",
-                    "{}",
-                    static_cast<char const*>(errorBlob->GetBufferPointer()));
+                WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
                 return nullptr;
             }
         }

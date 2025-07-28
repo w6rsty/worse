@@ -1,8 +1,6 @@
 #pragma once
 #include "RHIResource.hpp"
 
-#include <cstdint>
-
 namespace worse
 {
 

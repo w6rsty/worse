@@ -11,8 +11,8 @@ namespace worse
     {
         // Helper function to get texture index with fallback
         usize getTextureIndex(
-            const std::optional<AssetHandle>& handle,
-            const std::unordered_map<AssetHandle, usize>& textureIndexMap,
+            std::optional<AssetHandle> const& handle,
+            std::unordered_map<AssetHandle, usize> const& textureIndexMap,
             RendererTexture defaultTexture)
         {
             if (handle.has_value())

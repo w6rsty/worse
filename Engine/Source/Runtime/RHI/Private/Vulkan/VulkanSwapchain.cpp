@@ -20,10 +20,7 @@ namespace worse
         getSurfaceCapabilities(VkSurfaceKHR const surface)
         {
             VkSurfaceCapabilitiesKHR capabilities = {};
-            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-                RHIContext::physicalDevice,
-                surface,
-                &capabilities));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(RHIContext::physicalDevice, surface, &capabilities));
             return capabilities;
         }
 
@@ -31,17 +28,9 @@ namespace worse
         {
             // TODO: support HDR format
             u32 surfaceFormatCount = 0;
-            WS_ASSERT_VK(
-                vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice,
-                                                     surface,
-                                                     &surfaceFormatCount,
-                                                     nullptr));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice, surface, &surfaceFormatCount, nullptr));
             std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
-            WS_ASSERT_VK(
-                vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice,
-                                                     surface,
-                                                     &surfaceFormatCount,
-                                                     surfaceFormats.data()));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice, surface, &surfaceFormatCount, surfaceFormats.data()));
 
             auto formatSelector = [](VkFormat format) -> u32
             {
@@ -81,10 +70,7 @@ namespace worse
                                    VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
 
             VkSurfaceCapabilitiesKHR capabilities = {};
-            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-                RHIContext::physicalDevice,
-                surface,
-                &capabilities));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(RHIContext::physicalDevice, surface, &capabilities));
 
             for (auto flag : flagBits)
             {
@@ -111,17 +97,9 @@ namespace worse
             }
 
             u32 presentModeCount = 0;
-            WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(
-                RHIContext::physicalDevice,
-                surface,
-                &presentModeCount,
-                nullptr));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(RHIContext::physicalDevice, surface, &presentModeCount, nullptr));
             std::vector<VkPresentModeKHR> presentModes(presentModeCount);
-            WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(
-                RHIContext::physicalDevice,
-                surface,
-                &presentModeCount,
-                presentModes.data()));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(RHIContext::physicalDevice, surface, &presentModeCount, presentModes.data()));
 
             for (auto mode : presentModes)
             {
@@ -131,9 +109,7 @@ namespace worse
                 }
             }
 
-            WS_LOG_WARN(
-                "Swapchain",
-                "Requested present mode not supported, falling back to FIFO");
+            WS_LOG_WARN("Swapchain", "Requested present mode not supported, falling back to FIFO");
             return VK_PRESENT_MODE_FIFO_KHR;
         }
 
@@ -156,22 +132,13 @@ namespace worse
         {
             VkSurfaceKHR surface = VK_NULL_HANDLE;
 
-            if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window*>(m_sdlWindow),
-                                          RHIContext::instance,
-                                          nullptr,
-                                          &surface))
+            if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window*>(m_sdlWindow), RHIContext::instance, nullptr, &surface))
             {
-                WS_LOG_ERROR("Swapchain",
-                             "Failed to create surface: {}",
-                             SDL_GetError());
+                WS_LOG_ERROR("Swapchain", "Failed to create surface: {}", SDL_GetError());
             }
 
             VkBool32 presentSupport{VK_FALSE};
-            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceSupportKHR(
-                RHIContext::physicalDevice,
-                RHIDevice::getQueueIndex(RHIQueueType::Graphics),
-                surface,
-                &presentSupport));
+            WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceSupportKHR(RHIContext::physicalDevice, RHIDevice::getQueueIndex(RHIQueueType::Graphics), surface, &presentSupport));
             WS_ASSERT_MSG(presentSupport, "Surface does not support present");
 
             m_surface = RHINativeHandle{surface, RHINativeHandleType::Surface};
@@ -197,16 +164,12 @@ namespace worse
 
         if (m_swapchain)
         {
-            vkDestroySwapchainKHR(RHIContext::device,
-                                  m_swapchain.asValue<VkSwapchainKHR>(),
-                                  nullptr);
+            vkDestroySwapchainKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), nullptr);
         }
 
         if (m_surface)
         {
-            vkDestroySurfaceKHR(RHIContext::instance,
-                                m_surface.asValue<VkSurfaceKHR>(),
-                                nullptr);
+            vkDestroySurfaceKHR(RHIContext::instance, m_surface.asValue<VkSurfaceKHR>(), nullptr);
         }
     }
 
@@ -290,9 +253,7 @@ namespace worse
             return;
         }
 
-        cmdList->getQueue()->present(m_swapchain,
-                                     m_imageIndex,
-                                     cmdList->getRenderingCompleteSemaphore());
+        cmdList->getQueue()->present(m_swapchain, m_imageIndex, cmdList->getRenderingCompleteSemaphore());
 
         if (m_isDirty)
         {
@@ -306,8 +267,7 @@ namespace worse
         WS_ASSERT(m_sdlWindow != nullptr);
         WS_ASSERT(m_surface.isValid());
 
-        VkSurfaceCapabilitiesKHR cap =
-            getSurfaceCapabilities(m_surface.asValue<VkSurfaceKHR>());
+        VkSurfaceCapabilitiesKHR cap = getSurfaceCapabilities(m_surface.asValue<VkSurfaceKHR>());
 
         if ((cap.currentExtent.width == 0) || (cap.currentExtent.height == 0))
         {
@@ -317,12 +277,8 @@ namespace worse
 
         surfaceFormat = getSurfaceFormat(m_surface.asValue<VkSurfaceKHR>());
 
-        m_width  = std::clamp(m_width,
-                             cap.minImageExtent.width,
-                             cap.maxImageExtent.width);
-        m_height = std::clamp(m_height,
-                              cap.minImageExtent.height,
-                              cap.maxImageExtent.height);
+        m_width  = std::clamp(m_width, cap.minImageExtent.width, cap.maxImageExtent.width);
+        m_height = std::clamp(m_height, cap.minImageExtent.height, cap.maxImageExtent.height);
 
         // swapchain creation
         {
@@ -345,18 +301,12 @@ namespace worse
             infoSwapchain.oldSwapchain             = m_swapchain.asValue<VkSwapchainKHR>();
             // clang-format on
 
-            WS_ASSERT_VK(vkCreateSwapchainKHR(
-                RHIContext::device,
-                &infoSwapchain,
-                nullptr,
-                reinterpret_cast<VkSwapchainKHR*>(&m_swapchain)));
+            WS_ASSERT_VK(vkCreateSwapchainKHR(RHIContext::device, &infoSwapchain, nullptr, reinterpret_cast<VkSwapchainKHR*>(&m_swapchain)));
 
             if (infoSwapchain.oldSwapchain != VK_NULL_HANDLE)
             {
                 RHIDevice::queueWaitAll();
-                vkDestroySwapchainKHR(RHIContext::device,
-                                      infoSwapchain.oldSwapchain,
-                                      nullptr);
+                vkDestroySwapchainKHR(RHIContext::device, infoSwapchain.oldSwapchain, nullptr);
             }
         }
 
@@ -364,20 +314,13 @@ namespace worse
         {
             u32 imageCount = 0;
             WS_ASSERT_VK(
-                vkGetSwapchainImagesKHR(RHIContext::device,
-                                        m_swapchain.asValue<VkSwapchainKHR>(),
-                                        &imageCount,
-                                        nullptr));
+                vkGetSwapchainImagesKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), &imageCount, nullptr));
             std::vector<VkImage> swapchainImages(imageCount);
             WS_ASSERT_VK(
-                vkGetSwapchainImagesKHR(RHIContext::device,
-                                        m_swapchain.asValue<VkSwapchainKHR>(),
-                                        &imageCount,
-                                        swapchainImages.data()));
+                vkGetSwapchainImagesKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), &imageCount, swapchainImages.data()));
             for (u32 i = 0; i < static_cast<u32>(swapchainImages.size()); ++i)
             {
-                m_rts[i] = RHINativeHandle{swapchainImages[i],
-                                           RHINativeHandleType::Image};
+                m_rts[i] = RHINativeHandle{swapchainImages[i], RHINativeHandleType::Image};
             }
         }
 
@@ -391,7 +334,6 @@ namespace worse
                     RHIDevice::deletionQueueAdd(m_rtvs[i]);
                 }
 
-                // clang-format off
                 VkImageViewCreateInfo infoIV = {};
                 infoIV.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
                 infoIV.image                 = m_rts[i].asValue<VkImage>();
@@ -399,15 +341,10 @@ namespace worse
                 infoIV.format                = surfaceFormat.format;
                 infoIV.subresourceRange      = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
                 infoIV.components            = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
-                // clang-format on
 
                 VkImageView imageView = VK_NULL_HANDLE;
-                WS_ASSERT_VK(vkCreateImageView(RHIContext::device,
-                                               &infoIV,
-                                               nullptr,
-                                               &imageView));
-                m_rtvs[i] =
-                    RHINativeHandle{imageView, RHINativeHandleType::ImageView};
+                WS_ASSERT_VK(vkCreateImageView(RHIContext::device, &infoIV, nullptr, &imageView));
+                m_rtvs[i] = RHINativeHandle{imageView, RHINativeHandleType::ImageView};
             }
         }
 
@@ -417,12 +354,9 @@ namespace worse
         }
 
         // create sync primtives
-        for (u32 i = 0; i < static_cast<u32>(m_imageAcquireSemaphores.size());
-             ++i)
+        for (u32 i = 0; i < static_cast<u32>(m_imageAcquireSemaphores.size()); ++i)
         {
-            m_imageAcquireSemaphores[i] = std::make_shared<RHISyncPrimitive>(
-                RHISyncPrimitiveType::BinarySemaphore,
-                std::format("image_acquire_{}", i).c_str());
+            m_imageAcquireSemaphores[i] = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::BinarySemaphore, std::format("image_acquire_{}", i).c_str());
         }
 
         WS_LOG_INFO("Swapchain",

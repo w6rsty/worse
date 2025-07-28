@@ -99,13 +99,12 @@ namespace worse
 
         // resources
         {
-            frameConstantBuffer =
-                std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
-                                            sizeof(FrameConstantData),
-                                            1,
-                                            &frameConstantData,
-                                            true,
-                                            "frameConstantBuffer");
+            frameConstantBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
+                                                              sizeof(FrameConstantData),
+                                                              1,
+                                                              &frameConstantData,
+                                                              true,
+                                                              "frameConstantBuffer");
 
             Renderer::createRasterizerStates();
             Renderer::createDepthStencilStates();
@@ -174,11 +173,7 @@ namespace worse
         updateBuffers(m_cmdList, camera, globalContext);
 
         // render passes
-        produceFrame(m_cmdList,
-                     globalContext,
-                     drawcalls,
-                     meshes,
-                     textureWrites);
+        produceFrame(m_cmdList, globalContext, drawcalls, meshes, textureWrites);
 
         blitToBackBuffer(m_cmdList);
 
@@ -204,20 +199,16 @@ namespace worse
     {
         if (m_cmdList->getState() == RHICommandListState::Recording)
         {
-            m_cmdList->insertBarrier(swapchain->getCurrentRt(),
-                                     RHIFormat::B8R8G8A8Unorm,
-                                     RHIImageLayout::PresentSource);
+            m_cmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource);
             m_cmdList->submit(swapchain->getImageAcquireSemaphore());
             swapchain->present(m_cmdList);
         }
     }
 
-    void Renderer::writeBindlessTextures(
-        ecs::ResourceArray<TextureWrite> textureWrites)
+    void Renderer::writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites)
     {
         std::vector<RHIDescriptorWrite> updates;
-        updates.reserve(static_cast<usize>(RendererTexture::Max) +
-                        textureWrites->data().size());
+        updates.reserve(static_cast<usize>(RendererTexture::Max) + textureWrites->data().size());
 
         // builtin textures (0-6)
         // clang-format off
@@ -239,9 +230,7 @@ namespace worse
         RHIDevice::updateBindlessTextures(updates);
     }
 
-    void Renderer::updateBuffers(RHICommandList* cmdList,
-                                 ecs::Resource<Camera> camera,
-                                 ecs::Resource<GlobalContext> globalContext)
+    void Renderer::updateBuffers(RHICommandList* cmdList, ecs::Resource<Camera> camera, ecs::Resource<GlobalContext> globalContext)
     {
         // update frame constant data
 
@@ -249,14 +238,10 @@ namespace worse
         frameConstantData.time       = globalContext->time;
         frameConstantData.projection = camera->getProjectionMatrix();
 
-        frameConstantData.view = camera->getViewMatrix();
-        frameConstantData.viewProjection =
-            frameConstantData.projection * frameConstantData.view;
+        frameConstantData.view           = camera->getViewMatrix();
+        frameConstantData.viewProjection = frameConstantData.projection * frameConstantData.view;
 
-        m_cmdList->updateBuffer(frameConstantBuffer.get(),
-                                0,
-                                sizeof(FrameConstantData),
-                                &frameConstantData);
+        m_cmdList->updateBuffer(frameConstantBuffer.get(), 0, sizeof(FrameConstantData), &frameConstantData);
 
         // prepare descriptor
 

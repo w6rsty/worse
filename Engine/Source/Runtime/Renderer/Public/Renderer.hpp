@@ -11,8 +11,6 @@
 #include "ECS/Resource.hpp"
 #include "ECS/Commands.hpp"
 
-#include <cstdint>
-
 namespace worse
 {
 

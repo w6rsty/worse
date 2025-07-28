@@ -2,7 +2,6 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
 
-#include "Types.hpp"
 #include "Event.hpp"
 #include "Window.hpp"
 #include "RHIDevice.hpp"
@@ -16,10 +15,7 @@ namespace worse
     {
         // clang-format off
         ImVec2 windowSize = ImGui::GetIO().DisplaySize;
-        ImGui::SetNextWindowPos(
-            ImVec2(windowSize.x * 0.5f, windowSize.y * 0.5f),
-            ImGuiCond_Always,
-            ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowPos(ImVec2(windowSize.x * 0.5f, windowSize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
         ImGui::Begin("#",
                         nullptr,
                         ImGuiWindowFlags_NoResize |

@@ -32,12 +32,8 @@ namespace worse
             // clang-format on
 
             VkCommandPool cmdPool = VK_NULL_HANDLE;
-            WS_ASSERT_VK(vkCreateCommandPool(RHIContext::device,
-                                             &infoCmdPool,
-                                             nullptr,
-                                             &cmdPool));
-            m_handle =
-                RHINativeHandle{cmdPool, RHINativeHandleType::CommandPool};
+            WS_ASSERT_VK(vkCreateCommandPool(RHIContext::device, &infoCmdPool, nullptr, &cmdPool));
+            m_handle = RHINativeHandle{cmdPool, RHINativeHandleType::CommandPool};
             RHIDevice::setResourceName(m_handle, name);
         }
 
@@ -45,10 +41,7 @@ namespace worse
         {
             for (u32 i = 0; i < static_cast<u32>(m_cmdLists.size()); ++i)
             {
-                m_cmdLists[i] = std::make_shared<RHICommandList>(
-                    this,
-                    m_handle,
-                    std::format("cmd_list_{}", i).c_str());
+                m_cmdLists[i] = std::make_shared<RHICommandList>(this, m_handle, std::format("cmd_list_{}", i).c_str());
             }
         }
     }
@@ -64,17 +57,14 @@ namespace worse
             cmdList.reset();
         }
 
-        vkDestroyCommandPool(RHIContext::device,
-                             m_handle.asValue<VkCommandPool>(),
-                             nullptr);
+        vkDestroyCommandPool(RHIContext::device, m_handle.asValue<VkCommandPool>(), nullptr);
     }
 
     void RHIQueue::wait()
     {
         // TODO: lock
 
-        WS_ASSERT_VK(vkQueueWaitIdle(
-            RHIDevice::getQueueHandle(m_type).asValue<VkQueue>()));
+        WS_ASSERT_VK(vkQueueWaitIdle(RHIDevice::getQueueHandle(m_type).asValue<VkQueue>()));
     }
 
     void RHIQueue::submit(void* cmdBuffer, u32 const waitFlags,
@@ -110,9 +100,8 @@ namespace worse
         // clang-format on
 
         VkCommandBufferSubmitInfo infoCmdBuffer = {};
-        infoCmdBuffer.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
-        infoCmdBuffer.commandBuffer =
-            *reinterpret_cast<VkCommandBuffer*>(&cmdBuffer);
+        infoCmdBuffer.sType                     = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+        infoCmdBuffer.commandBuffer             = *reinterpret_cast<VkCommandBuffer*>(&cmdBuffer);
 
         VkSubmitInfo2 infoSubmit            = {};
         infoSubmit.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
@@ -123,20 +112,15 @@ namespace worse
         infoSubmit.commandBufferInfoCount   = 1;
         infoSubmit.pCommandBufferInfos      = &infoCmdBuffer;
 
-        WS_ASSERT_VK(vkQueueSubmit2KHR(
-            RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(),
-            1,
-            &infoSubmit,
-            nullptr));
+        WS_ASSERT_VK(vkQueueSubmit2KHR(RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(), 1, &infoSubmit, nullptr));
     }
 
-    void RHIQueue::present(RHINativeHandle swapchain, u32 const imageIndex,
-                           RHISyncPrimitive* semaphoreWait)
+    void RHIQueue::present(RHINativeHandle swapchain, u32 const imageIndex, RHISyncPrimitive* semaphoreWait)
     {
         // TODO: lock
 
         VkSemaphore semaphoresWait[1] = {};
-        semaphoresWait[0] = semaphoreWait->getHandle().asValue<VkSemaphore>();
+        semaphoresWait[0]             = semaphoreWait->getHandle().asValue<VkSemaphore>();
 
         VkSwapchainKHR vkSwapchain = swapchain.asValue<VkSwapchainKHR>();
 
@@ -148,9 +132,7 @@ namespace worse
         infoPresent.pSwapchains        = &vkSwapchain;
         infoPresent.pImageIndices      = &imageIndex;
 
-        WS_ASSERT_VK(vkQueuePresentKHR(
-            RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(),
-            &infoPresent));
+        WS_ASSERT_VK(vkQueuePresentKHR(RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(), &infoPresent));
     }
 
     RHICommandList* RHIQueue::nextCommandList()
