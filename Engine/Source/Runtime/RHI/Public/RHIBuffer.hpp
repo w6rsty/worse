@@ -17,6 +17,9 @@ namespace worse
         static constexpr RHIBufferUsageFlags Uniform {0b1000'0000};
         // clang-format on
     };
+    static constexpr u8 VII_BIT       = 0b0001'0000;
+    static constexpr u8 VII_MASK      = 0b0000'1111;
+    static constexpr u8 VII_ONLT_MASK = 0b0011'1111;
 
     class RHIBuffer : public RHIResource
     {
@@ -44,8 +47,8 @@ namespace worse
         }
 
         // update mapped buffer data
-        void update(RHICommandList* cmdList, void const* cpuData,
-                    u32 const size);
+        void update(RHICommandList* cmdList, void const* cpuData, u32 const size);
+
         void resetOffset()
         {
             m_offset      = 0;
@@ -53,11 +56,11 @@ namespace worse
         }
 
         // clang-format off
-        RHIBufferUsageFlags getUsage() const         { return m_usage; }
-        u32       getStride() const       { return m_stride; }
-        u32       getOffset() const       { return m_offset; }
-        u32       getElementCount() const { return m_elementCount; }
-        u32       getSize() const         { return m_size; }
+        RHIBufferUsageFlags getUsage() const        { return m_usage; }
+        u32                 getStride() const       { return m_stride; }
+        u32                 getOffset() const       { return m_offset; }
+        u32                 getElementCount() const { return m_elementCount; }
+        u32                 getSize() const         { return m_size; }
         void*               getMappedData() const   { return m_gpuData; }
         RHINativeHandle     getHandle() const       { return m_handle; }
         // clang-format on

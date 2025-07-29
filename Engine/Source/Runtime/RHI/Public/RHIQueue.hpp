@@ -32,7 +32,7 @@ namespace worse
     private:
         std::array<std::shared_ptr<RHICommandList>, 2> m_cmdLists = {nullptr};
         std::atomic<u32> m_index                                  = 0;
-        RHIQueueType m_type = RHIQueueType::Max;
+        RHIQueueType m_type                                       = RHIQueueType::Max;
         RHINativeHandle m_handle; // command pool
     };
 

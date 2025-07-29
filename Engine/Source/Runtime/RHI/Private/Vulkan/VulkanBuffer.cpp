@@ -12,10 +12,6 @@ namespace worse
         // prevent duplicate creation
         nativeDestroy();
 
-        static constexpr u8 VII_BIT       = 0b0001'0000;
-        static constexpr u8 VII_MASK      = 0b0000'1111;
-        static constexpr u8 VII_ONLT_MASK = 0b0011'1111;
-
         bool isVIIOnly     = false;
         bool isStorageOnly = false;
         bool isVIIStorage  = false;
@@ -23,13 +19,11 @@ namespace worse
 
         // validation
         {
-            WS_ASSERT_MSG(m_usage != RHIBufferUsageFlagBits::None,
-                          "RHIBuffer usage must not be None");
+            WS_ASSERT(m_usage != RHIBufferUsageFlagBits::None);
 
             if (m_usage & RHIBufferUsageFlagBits::Uniform)
             {
-                WS_ASSERT_MSG(m_usage == RHIBufferUsageFlagBits::Uniform,
-                              "RHIBuffer usage Uniform must be used exclusively");
+                WS_ASSERT((m_usage & RHIBufferUsageFlagBits::Uniform) == RHIBufferUsageFlagBits::Uniform);
 
                 isUniform = true;
 
@@ -75,15 +69,13 @@ namespace worse
             }
         }
 
-        VkBufferUsageFlags bufferUsage = 0;
-        VkMemoryPropertyFlags memoryProperty =
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        VkBufferUsageFlags bufferUsage       = 0;
+        VkMemoryPropertyFlags memoryProperty = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
         // buffer usage and memory properties
         {
 
-            if ((m_usage & RHIBufferUsageFlagBits::Vertex) ||
-                m_usage & RHIBufferUsageFlagBits::Instance)
+            if ((m_usage & RHIBufferUsageFlagBits::Vertex) || m_usage & RHIBufferUsageFlagBits::Instance)
             {
                 bufferUsage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             }

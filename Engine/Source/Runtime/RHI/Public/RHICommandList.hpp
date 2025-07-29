@@ -114,7 +114,7 @@ namespace worse
 
         std::atomic<RHICommandListState> m_state = RHICommandListState::Idle;
         RHIQueue* m_submissionQueue              = nullptr;
-        RHINativeHandle m_handle;
+        RHINativeHandle m_handle; // VkCommandBuffer
 
         bool m_isRenderPassActive = false;
     };
