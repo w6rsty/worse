@@ -5,3 +5,8 @@ add_subdirectory(Engine)
 add_subdirectory(FileSystem)
 add_subdirectory(Renderer)
 add_subdirectory(RHI)
+
+set_target_properties(
+    Asset Core ECS Engine FileSystem Renderer RHI
+    PROPERTIES FOLDER "Engine-Runtime"
+)
