@@ -20,16 +20,14 @@ if (SDL3_FOUND)
         message(STATUS "SDL3 include directory: ${SDL3_INCLUDE_DIRS}")
     endif()
 else()
-    message(STATUS "SDL3 not found, fetch from https://github.com/libsdl-org/SDL.git, tag ${SDL_VERSION}")
-endif()
-
-if(NOT SDL3_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        SDL3
-        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG ${SDL_VERSION}
-    )
+    message(STATUS "SDL3 not found, using local copy")
+    
+    # Use local SDL copy
+    set(SDL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../ThirdParty/SDL)
+    
+    if(NOT EXISTS ${SDL_ROOT})
+        message(FATAL_ERROR "SDL not found at ${SDL_ROOT}. Please run download_dependencies.sh first.")
+    endif()
 
     set(SDL_SHARED OFF CACHE BOOL "Build shared library" FORCE)
     set(SDL_STATIC ON CACHE BOOL "Build static library" FORCE)
@@ -37,7 +35,7 @@ if(NOT SDL3_FOUND)
     set(SDL_DISABLE_INSTALL ON CACHE BOOL "Disable installation" FORCE)
     set(SDL_ASSERTIONS disabled CACHE STRING "Enable internal sanity checks" FORCE)
 
-    FetchContent_MakeAvailable(SDL3)
+    add_subdirectory(${SDL_ROOT} ${CMAKE_BINARY_DIR}/sdl EXCLUDE_FROM_ALL)
 endif()
 
 # Create our own wrapper target

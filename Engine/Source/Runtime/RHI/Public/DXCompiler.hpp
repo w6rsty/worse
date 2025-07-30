@@ -16,8 +16,7 @@ namespace worse
         DXCompiler();
         ~DXCompiler();
 
-        CComPtr<IDxcBlob> compile(std::string const& source,
-                                  std::vector<std::wstring> const& wArguments);
+        CComPtr<IDxcBlob> compile(std::string const& source, std::vector<std::wstring> const& wArguments);
 
     private:
         static inline DXCompiler* s_instance = nullptr;
