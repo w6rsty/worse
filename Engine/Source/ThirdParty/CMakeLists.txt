@@ -5,18 +5,12 @@ set_target_properties(imgui PROPERTIES FOLDER "ThirdParty")
 
 add_subdirectory(SDL3)
 
-set(SPIRV_CROSS_CLI OFF CACHE BOOL "" FORCE)
-set(SPIRV_CROSS_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
-set(SPIRV_CROSS_ENABLE_MSL OFF CACHE BOOL "" FORCE)
-add_subdirectory(SPIRV-Cross)
+set(SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "" FORCE)
+set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "" FORCE)
+set(SPIRV_REFLECT_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(SPIRV-Reflect)
 set_target_properties(
-    spirv-cross-c
-    spirv-cross-core
-    spirv-cross-cpp
-    spirv-cross-glsl
-    spirv-cross-hlsl
-    spirv-cross-reflect
-    spirv-cross-util
+    spirv-reflect-static
     PROPERTIES FOLDER "ThirdParty"
 )
 

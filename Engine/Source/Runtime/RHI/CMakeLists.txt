@@ -27,7 +27,7 @@ target_link_libraries(${MODULE_NAME}
         GPUOpen::VulkanMemoryAllocator
         Vulkan-Headers
         DXC
-        spirv-cross-hlsl
+        spirv-reflect-static
         imgui
     PUBLIC
         volk_headers

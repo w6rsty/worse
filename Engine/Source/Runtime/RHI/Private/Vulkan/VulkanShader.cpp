@@ -2,63 +2,96 @@
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
 
-#include "spirv_cross/spirv.hpp"
-#include "spirv_cross/spirv_hlsl.hpp"
+#include "spirv_reflect.h"
 
 namespace worse
 {
     namespace
     {
-        void
-        spirvExtractDescriptor(spirv_cross::CompilerHLSL const& hlsl,
-                               spirv_cross::ShaderResources shaderResources,
-                               RHIDescriptorType const descriptorType,
-                               RHIShaderStageFlags const shaderStage,
-                               std::vector<RHIDescriptor>& descriptors)
+        RHIDescriptorType spvReflectDescriptorTypeToRHI(SpvReflectDescriptorType const type)
         {
-            spirv_cross::SmallVector<spirv_cross::Resource> resources;
-            switch (descriptorType)
+            switch (type)
             {
-                // clang-format off
-            case RHIDescriptorType::Texture:          resources = shaderResources.separate_images;       break;
-            case RHIDescriptorType::TextureStorage:   resources = shaderResources.storage_images;        break;
-            case RHIDescriptorType::PushConstant:     resources = shaderResources.push_constant_buffers; break;
-            case RHIDescriptorType::UniformBuffer:    resources = shaderResources.uniform_buffers;       break;
-            case RHIDescriptorType::StructuredBuffer: resources = shaderResources.storage_buffers;       break;
-            default:                                                                                     break;
-                // clang-format on
+            case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                return RHIDescriptorType::Texture;
+            case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                return RHIDescriptorType::TextureStorage;
+            case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                return RHIDescriptorType::UniformBuffer;
+            case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+                return RHIDescriptorType::StructuredBuffer;
+            default:
+                return RHIDescriptorType::Max;
             }
+        }
 
-            RHIImageLayout layout = RHIImageLayout::Undefined;
-            layout                = descriptorType == RHIDescriptorType::TextureStorage
-                                        ? RHIImageLayout::General
-                                        : layout;
-            layout                = descriptorType == RHIDescriptorType::Texture
-                                        ? RHIImageLayout::ShaderRead
-                                        : layout;
-
-            for (spirv_cross::Resource const& resource : resources)
+        // 提取指定类型的描述符
+        void spvExtractDescriptor(SpvReflectShaderModule const& reflection,
+                                  RHIDescriptorType const descriptorType,
+                                  RHIShaderStageFlags const shaderStage,
+                                  std::vector<RHIDescriptor>& descriptors)
+        {
+            if (descriptorType == RHIDescriptorType::PushConstant)
             {
-                // clang-format off
-                RHIDescriptor descriptor = {};
-                descriptor.name          = resource.name;
-                descriptor.space         = hlsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-                descriptor.slot          = hlsl.get_decoration(resource.id, spv::DecorationBinding);
-                descriptor.stageFlags    = shaderStage;
-                descriptor.type          = descriptorType;
-                descriptor.layout        = layout;
+                u32 pushConstantCount = 0;
+                spvReflectEnumeratePushConstantBlocks(&reflection, &pushConstantCount, nullptr);
+                std::vector<SpvReflectBlockVariable*> pushConstants(pushConstantCount);
+                spvReflectEnumeratePushConstantBlocks(&reflection, &pushConstantCount, pushConstants.data());
 
-                auto spirvType = hlsl.get_type(resource.type_id);
-                if ((descriptorType == RHIDescriptorType::PushConstant) ||
-                    (descriptorType == RHIDescriptorType::UniformBuffer))
+                for (SpvReflectBlockVariable const* block : pushConstants)
                 {
-                    descriptor.size = static_cast<u32>(hlsl.get_declared_struct_size(spirvType));
-                }
-                descriptor.isArray     = spirvType.array.size() > 0;
-                descriptor.arrayLength = descriptor.isArray ? spirvType.array[0] : 0;
-                // clang-format on
+                    RHIDescriptor descriptor = {};
+                    descriptor.name          = block->name;
+                    descriptor.stageFlags    = shaderStage;
+                    descriptor.type          = RHIDescriptorType::PushConstant;
+                    descriptor.size          = static_cast<u32>(block->size);
 
-                descriptors.push_back(descriptor);
+                    descriptors.push_back(descriptor);
+                }
+            }
+            else
+            {
+                u32 descriptorSetCount = 0;
+                spvReflectEnumerateDescriptorSets(&reflection, &descriptorSetCount, nullptr);
+                std::vector<SpvReflectDescriptorSet*> descriptorSets(descriptorSetCount);
+                spvReflectEnumerateDescriptorSets(&reflection, &descriptorSetCount, descriptorSets.data());
+
+                RHIImageLayout layout = RHIImageLayout::Undefined;
+                layout                = descriptorType == RHIDescriptorType::TextureStorage
+                                            ? RHIImageLayout::General
+                                            : layout;
+                layout                = descriptorType == RHIDescriptorType::Texture
+                                            ? RHIImageLayout::ShaderRead
+                                            : layout;
+
+                for (SpvReflectDescriptorSet const* set : descriptorSets)
+                {
+                    for (u32 i = 0; i < set->binding_count; ++i)
+                    {
+                        SpvReflectDescriptorBinding const* binding = set->bindings[i];
+
+                        if (spvReflectDescriptorTypeToRHI(binding->descriptor_type) != descriptorType)
+                        {
+                            continue;
+                        }
+
+                        RHIDescriptor descriptor = {};
+                        descriptor.name          = binding->name;
+                        descriptor.space         = set->set;
+                        descriptor.slot          = binding->binding;
+                        descriptor.stageFlags    = shaderStage;
+                        descriptor.type          = spvReflectDescriptorTypeToRHI(binding->descriptor_type);
+                        descriptor.layout        = layout;
+
+                        if (descriptorType == RHIDescriptorType::UniformBuffer)
+                        {
+                            descriptor.size = static_cast<u32>(binding->block.size);
+                        }
+                        descriptor.isArray     = binding->array.dims_count > 0;
+                        descriptor.arrayLength = binding->array.dims_count > 0 ? binding->array.dims[0] : 0;
+                        descriptors.push_back(descriptor);
+                    }
+                }
             }
         }
     } // namespace
@@ -118,12 +151,10 @@ namespace worse
             return shader;
         }
 
-        // clang-format off
         VkShaderModuleCreateInfo infoShader = {};
         infoShader.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         infoShader.pCode                    = static_cast<u32*>(codeBlob->GetBufferPointer());
         infoShader.codeSize                 = codeBlob->GetBufferSize();
-        // clang-format on
 
         VkShaderModule vkShader = VK_NULL_HANDLE;
         WS_ASSERT_VK(vkCreateShaderModule(RHIContext::device, &infoShader, nullptr, &vkShader));
@@ -142,22 +173,20 @@ namespace worse
         WS_ASSERT(spirvData != nullptr);
         WS_ASSERT(spirvSize > 0);
 
-        spirv_cross::CompilerHLSL hlsl{spirvData, spirvSize};
-        spirv_cross::ShaderResources resources = hlsl.get_shader_resources();
+        SpvReflectShaderModule reflection{};
+        spvReflectCreateShaderModule(spirvSize * sizeof(u32), spirvData, &reflection);
 
-        // clang-format off
         RHIShaderStageFlags shaderStage = rhiShaderStageFlags(shaderType);
-        // Texture
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::Texture,          shaderStage, m_descriptors);
-        // RWTexture
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::TextureStorage,   shaderStage, m_descriptors);
-        // [[vk::push_constant]]
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::PushConstant,     shaderStage, m_descriptors);
-        // cbuffer / uniform buffer
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::UniformBuffer,    shaderStage, m_descriptors);
-        // RWStructuredBuffer / storage buffer
-        spirvExtractDescriptor(hlsl, resources, RHIDescriptorType::StructuredBuffer, shaderStage, m_descriptors);
-        // clang-format on
-    }
 
+        // Texture
+        spvExtractDescriptor(reflection, RHIDescriptorType::Texture, shaderStage, m_descriptors);
+        // RWTexture
+        spvExtractDescriptor(reflection, RHIDescriptorType::TextureStorage, shaderStage, m_descriptors);
+        // [[vk::push_constant]]
+        spvExtractDescriptor(reflection, RHIDescriptorType::PushConstant, shaderStage, m_descriptors);
+        // uniform buffer(cbuffer)
+        spvExtractDescriptor(reflection, RHIDescriptorType::UniformBuffer, shaderStage, m_descriptors);
+        // storage buffer(RWStructuredBuffer)
+        spvExtractDescriptor(reflection, RHIDescriptorType::StructuredBuffer, shaderStage, m_descriptors);
+    }
 } // namespace worse
