@@ -30,10 +30,6 @@ else()
         GIT_SHALLOW TRUE
     )
     
-    # Set SDL3 options before fetching
-    set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
-    set(SDL_STATIC_ENABLED_BY_DEFAULT ON)
-    
     FetchContent_MakeAvailable(SDL3)
     
     message(STATUS "SDL3 downloaded and configured")

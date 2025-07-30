@@ -8,7 +8,7 @@ namespace worse
     namespace
     {
         // clang-format off
-        constexpr std::array<std::string, 3> supporteImagedExtensions = {
+        std::array<std::string, 3> supporteImagedExtensions = {
             ".png",
             ".jpg",
         };

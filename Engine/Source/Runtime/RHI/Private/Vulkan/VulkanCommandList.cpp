@@ -13,6 +13,7 @@
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
 
+#include <mutex>
 #include <unordered_map>
 
 namespace worse

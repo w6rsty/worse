@@ -4,6 +4,7 @@
 
 #include <span>
 #include <array>
+#include <unordered_map>
 
 namespace worse
 {

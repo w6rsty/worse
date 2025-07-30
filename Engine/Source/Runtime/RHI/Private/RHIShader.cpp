@@ -1,6 +1,6 @@
-#include "Math/Hash.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "FileSystem.hpp"
+#include "Math/Hash.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
 
@@ -114,7 +114,7 @@ namespace worse
         // generate hash
         {
             std::hash<std::string> hasher;
-            m_hash = math::hashCombine(m_hash, hasher(m_path));
+            m_hash = math::hashCombine(m_hash, hasher(m_path.string()));
 
             // TODO: hash definitions
         }

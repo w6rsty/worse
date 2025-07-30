@@ -1,6 +1,7 @@
 #include "Input/Controller.hpp"
 #include "Log.hpp"
 
+#include "Math/Base.hpp"
 #include "SDL3/SDL_gamepad.h"
 
 namespace worse
@@ -100,8 +101,8 @@ namespace worse
             return;
         }
 
-        f32 low  = std::clamp(lowFrequency, 0.0f, 1.0f);
-        f32 high = std::clamp(highFrequency, 0.0f, 1.0f);
+        f32 low  = math::clamp(lowFrequency, 0.0f, 1.0f);
+        f32 high = math::clamp(highFrequency, 0.0f, 1.0f);
 
         if (!SDL_RumbleGamepad(static_cast<SDL_Gamepad*>(m_handle),
                                static_cast<u16>(low * 65535.0f),

@@ -78,7 +78,7 @@ namespace worse::math
             f32 roll      = std::atan2(sinr_cosp, cosr_cosp);
 
             f32 sinp = 2.0f * (w * y - z * x);
-            f32 pitch = std::abs(sinp) >= 1.0f ? std::copysign(M_PI / 2, sinp) : std::asin(sinp);
+            f32 pitch = std::abs(sinp) >= 1.0f ? std::copysign(math::PI / 2, sinp) : std::asin(sinp);
 
             f32 siny_cosp = 2.0f * (w * z + x * y);
             f32 cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
