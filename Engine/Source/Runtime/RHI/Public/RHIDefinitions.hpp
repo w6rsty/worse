@@ -254,7 +254,7 @@ namespace worse
     }
 
     // convert RHI shader stage flags to vulkan shader stage flags
-    constexpr VkShaderStageFlags
+    inline VkShaderStageFlags
     vulkanShaderStageFlags(RHIShaderStageFlags const stageFlags)
     {
         VkShaderStageFlags flags = 0;

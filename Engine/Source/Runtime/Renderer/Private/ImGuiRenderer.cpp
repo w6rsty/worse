@@ -4,6 +4,7 @@
 
 #include "Event.hpp"
 #include "Window.hpp"
+#include "Platform.hpp"
 #include "RHIDevice.hpp"
 #include "Renderer.hpp"
 #include "ImGuiRenderer.hpp"
@@ -13,7 +14,6 @@ namespace worse
 
     void defaultPage(int state)
     {
-        // clang-format off
         ImVec2 windowSize = ImGui::GetIO().DisplaySize;
         ImGui::SetNextWindowPos(ImVec2(windowSize.x * 0.5f, windowSize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
         ImGui::Begin("#",
@@ -26,7 +26,6 @@ namespace worse
                 );
         ImGui::Text("No page registered for state: %d", state);
         ImGui::End();
-        // clang-format on
     }
 
     namespace
@@ -44,8 +43,10 @@ namespace worse
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
+        std::filesystem::path fontPath = std::filesystem::path{worse::EngineDirectory} / "Binary/Fonts/NotoSerifSC-Regular.ttf";
+        
         io.Fonts->AddFontFromFileTTF(
-            "/Users/w6rsty/dev/Cpp/worse/Engine/Binary/Fonts/NotoSerifSC-Regular.ttf",
+            fontPath.string().c_str(),
             18.0f,
             nullptr,
             io.Fonts->GetGlyphRangesChineseSimplifiedCommon()

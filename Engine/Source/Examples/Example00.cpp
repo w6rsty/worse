@@ -28,14 +28,6 @@ struct PlayerTag
 {
 };
 
-enum class AppState
-{
-    Undefined,
-    Begin,
-    Main,
-    End
-};
-
 class World
 {
 public:
@@ -47,11 +39,10 @@ public:
         End,
     };
 
-    inline static ecs::Entity player    = ecs::Entity::null();
-    inline static float cameraMoveSpeed = 5.0f;
-    inline static float cameraLookSpeed = 4.0f;
-    inline static math::Vector3 cameraOffset =
-        math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
+    inline static ecs::Entity player         = ecs::Entity::null();
+    inline static float cameraMoveSpeed      = 5.0f;
+    inline static float cameraLookSpeed      = 5.0f;
+    inline static math::Vector3 cameraOffset = math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
 
     static void initialize(ecs::Commands commands,
                            ecs::ResourceArray<StandardMaterial> materials,
@@ -71,14 +62,34 @@ public:
             );
         });
 
-        auto defaultMaterial = materials->add(StandardMaterial{
+        auto spawnMaterial = materials->add(StandardMaterial{
             .albedo = math::Vector4{0.8f, 0.2f, 0.4f, 1.0f},
         });
 
-        PageRouter<AppState>& router = ImGuiRenderer::registerStates<AppState>(commands, AppState::Begin);
-        router.registerPage(AppState::Begin, [defaultMaterial, &router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        PageRouter<State>& router = ImGuiRenderer::registerStates<State>(commands, State::Begin);
+        router.registerPage(State::Begin, [spawnMaterial, &router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
         {
-            ImGui::Begin("Welcome to Worse Engine!");
+            ImGui::Begin("图形已死");
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+            ImGui::Text("W/A/S/D");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::Text("Move around");
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.8f, 0.2f, 1.0f));
+            ImGui::Text("Q/E");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::Text("Move down/up");
+
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 0.2f, 0.8f, 1.0f));
+            ImGui::Text("P");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::Text("Toggle wireframe mode");
+
+            ImGui::Text("LEFT CLICK and MOUSE MOVE to look around");
 
             if (ImGui::Button("Spawn"))
             {
@@ -94,7 +105,7 @@ public:
                         },
                     },
                     Mesh3D{.index = meshIndex, .primitiveTopology = RHIPrimitiveTopology::PointList},
-                    MeshMaterial{defaultMaterial}
+                    MeshMaterial{spawnMaterial}
                 );
             }
 
@@ -102,13 +113,13 @@ public:
 
             if (ImGui::Button("Next page"))
             {
-                router.transfer(AppState::Main);
+                router.transfer(State::Main);
             }
 
             ImGui::End();
         });
 
-        router.registerPage(AppState::Main, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        router.registerPage(State::Main, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
         {
             ImGui::Begin("Main Page");
 
@@ -117,7 +128,7 @@ public:
 
             if (ImGui::Button("Back"))
             {
-                router.transfer(AppState::Begin);
+                router.transfer(State::Begin);
             }
 
             ImGui::SameLine();
@@ -263,28 +274,17 @@ public:
         ecs::ResourceArray<Mesh> meshes
     )
     {
-        auto vegetation = materials->add(StandardMaterial{
-            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_albedo.png"),
-            .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_normal-ogl.png"),
-            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_roughness.png"),
-            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/square-block-vegetation-bl/square-blocks-vegetation_ao.png"),
+        usize bronzeMaterial = materials->add(StandardMaterial{
+            .albedo = math::Vector4(0.8f, 0.5f, 0.2f, 1.0f),
+            .metallic = 0.8f,
+            .roughness = 0.2f,
         });
 
-        auto marble = materials->add(StandardMaterial{
-            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_albedo.png"),
-            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_Roughness.png"),
-            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/stringy-marble-bl/stringy_marble_ao.png"),
+        usize groundMaterial = materials->add(StandardMaterial{
+            .albedo = math::Vector4(0.2f, 0.8f, 0.2f, 1.0f),
+            .metallic = 0.1f,
+            .roughness = 0.5f,
         });
-
-        auto gold = materials->add(StandardMaterial{
-            .albedoTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_albedo.png"),
-            .normalTexture           = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_normal-ogl.png"),
-            .metallic                = 1.0f,
-            .roughnessTexture        = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_roughness.png"),
-            .ambientOcclusionTexture = assetServer->submitLoading("/Users/w6rsty/Downloads/assests/PBR-Textures/hammered-gold-bl/hammered-gold_ao.png"),
-        });
-
-        assetServer->load();
         
         // floor
         commands.spawn(
@@ -293,7 +293,7 @@ public:
                 .scale = math::Vector3{10.0f, 1.0f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{vegetation}
+            MeshMaterial{groundMaterial}
         );
         commands.spawn(
             LocalTransform{
@@ -301,34 +301,29 @@ public:
                 .scale = math::Vector3{10.0f, 1.0f, 10.0f}
             },
             Mesh3D{meshes.add(Quad3D{})},
-            MeshMaterial{marble}
+            MeshMaterial{groundMaterial}
         );
 
+        // box
         commands.spawn(
             LocalTransform{
-                .position = math::Vector3{-2.5f, 2.0f, 0.0f},
-                .rotation = math::Quaternion::fromAxisAngle(math::Vector3::Y(), math::toRadians(30.0f)),
+                .position = math::Vector3{-2.5f, 2.5f, 0.0f},
                 .scale = math::Vector3{4.0f, 4.0f, 4.0f},
             },
-            Mesh3D{meshes.add(Cube{})},
-            MeshMaterial{gold}
+            Mesh3D{meshes.add(Sphere{})},
+            MeshMaterial{bronzeMaterial}
         );
 
+        // point primitives
         commands.spawn(
             LocalTransform{
                 .position = math::Vector3{2.5f, 2.0f, 0.0f},
             },
-            Mesh3D{meshes.add(Sphere{
-                .radius = 2.0f,
-                .segments = 64,
-                .rings = 64,
-            }),
-            RHIPrimitiveTopology::PointList},
+            Mesh3D{meshes.add(Capsule3D{}), RHIPrimitiveTopology::PointList},
             MeshMaterial{materials->add(StandardMaterial{
                 .albedo = math::Vector4(0.8f, 0.5f, 0.5f, 1.0f),
             })}
         );
-
 
         player = commands.spawn(
             LocalTransform{
@@ -338,9 +333,9 @@ public:
                 .segments = 16,
             })},
             MeshMaterial{materials->add(StandardMaterial{
+                .albedo = math::Vector4(0.4f, 0.2f, 0.8f, 1.0f),
                 .metallic = 0.1f,
                 .roughness = 0.8f,
-                .emissive = math::Vector4(0.0f, 0.2f, 0.0f, 1.0f),
             })}
         );
     }

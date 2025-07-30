@@ -35,4 +35,17 @@ if(PROJECT_IS_TOP_LEVEL)
     endif()
 endif()
 
+if(MSVC)
+    add_compile_options(/Zc:preprocessor)
+endif()
+
+if(WIN32)
+    add_compile_definitions(WS_PLATFORM_WINDOWS)
+elseif(APPLE)
+    add_compile_definitions(WS_PLATFORM_APPLE)
+endif()
+
+set(WS_ENGINE_DIR "${CMAKE_SOURCE_DIR}/Engine")
+add_compile_definitions(WS_ENGINE_DIR="${WS_ENGINE_DIR}")
+
 add_subdirectory(Engine/Source)

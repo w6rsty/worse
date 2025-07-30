@@ -1,4 +1,5 @@
 #include "Types.hpp"
+#include "Platform.hpp"
 #include "RHIBuffer.hpp"
 #include "RHIShader.hpp"
 #include "RHIVertex.hpp"
@@ -78,42 +79,42 @@ namespace worse
 
     void Renderer::createShaders()
     {
-        std::filesystem::path resourceRoot = "/Users/w6rsty/dev/Cpp/worse";
-        std::filesystem::path shaderPath = resourceRoot / "Engine" / "Shaders";
+        std::filesystem::path shaderDir = std::filesystem::path{worse::EngineDirectory} / "Shaders";
+        WS_LOG_INFO("Renderer", "Shader directory: {}", shaderDir.string());
 
         // clang-format off
         shaders[RendererShader::PlaceholderV] = std::make_shared<RHIShader>("PlaceholderV");
-        shaders[RendererShader::PlaceholderV]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::PlaceholderV]->compile(shaderDir / "Placeholder.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::PlaceholderP] = std::make_shared<RHIShader>("PlaceholderP");
-        shaders[RendererShader::PlaceholderP]->compile(shaderPath / "Placeholder.hlsl", RHIShaderType::Pixel);
+        shaders[RendererShader::PlaceholderP]->compile(shaderDir / "Placeholder.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::DepthPrepassV] = std::make_shared<RHIShader>("DepthPrepassV");
-        shaders[RendererShader::DepthPrepassV]->compile(shaderPath / "DepthPrepass.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::DepthPrepassV]->compile(shaderDir / "DepthPrepass.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::DepthPrepassP] = std::make_shared<RHIShader>("DepthPrepassP");
-        shaders[RendererShader::DepthPrepassP]->compile(shaderPath / "DepthPrepass.hlsl", RHIShaderType::Pixel);
+        shaders[RendererShader::DepthPrepassP]->compile(shaderDir / "DepthPrepass.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::KuwaharaC] = std::make_shared<RHIShader>("KuwaharaC");
-        shaders[RendererShader::KuwaharaC]->compile(shaderPath / "Kuwahara.hlsl", RHIShaderType::Compute);
+        shaders[RendererShader::KuwaharaC]->compile(shaderDir / "Kuwahara.hlsl", RHIShaderType::Compute);
 
         shaders[RendererShader::LineV] = std::make_shared<RHIShader>("LineV");
-        shaders[RendererShader::LineV]->compile(shaderPath / "Line.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::LineV]->compile(shaderDir / "Line.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::LineP] = std::make_shared<RHIShader>("LineP");
-        shaders[RendererShader::LineP]->compile(shaderPath / "Line.hlsl", RHIShaderType::Pixel);
+        shaders[RendererShader::LineP]->compile(shaderDir / "Line.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::PointV] = std::make_shared<RHIShader>("PointV");
-        shaders[RendererShader::PointV]->compile(shaderPath / "Point.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::PointV]->compile(shaderDir / "Point.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::PointP] = std::make_shared<RHIShader>("PointP");
-        shaders[RendererShader::PointP]->compile(shaderPath / "Point.hlsl", RHIShaderType::Pixel);
+        shaders[RendererShader::PointP]->compile(shaderDir / "Point.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::PBRV] = std::make_shared<RHIShader>("PBRV");
-        shaders[RendererShader::PBRV]->compile(shaderPath / "PBR.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::PBRV]->compile(shaderDir / "PBR.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::PBRP] = std::make_shared<RHIShader>("PBRP");
-        shaders[RendererShader::PBRP]->compile(shaderPath / "PBR.hlsl", RHIShaderType::Pixel);
+        shaders[RendererShader::PBRP]->compile(shaderDir / "PBR.hlsl", RHIShaderType::Pixel);
 
         shaders[RendererShader::DistortionV] = std::make_shared<RHIShader>("DistortionV");
-        shaders[RendererShader::DistortionV]->compile(shaderPath / "Distortion.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
+        shaders[RendererShader::DistortionV]->compile(shaderDir / "Distortion.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::DistortionP] = std::make_shared<RHIShader>("DistortionP");
-        shaders[RendererShader::DistortionP]->compile(shaderPath / "Distortion.hlsl", RHIShaderType::Pixel);
+        shaders[RendererShader::DistortionP]->compile(shaderDir / "Distortion.hlsl", RHIShaderType::Pixel);
         // clang-format on
     }
 

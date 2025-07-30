@@ -31,8 +31,8 @@ namespace worse::math
 
         constexpr f32 elementSum() const     { return x + y; }
         constexpr f32 elementProduct() const { return x * y; }
-        constexpr f32 elementMax() const     { return std::fmax(x, y); }
-        constexpr f32 elementMin() const     { return std::fmin(x, y); }
+        f32 elementMax() const     { return std::fmax(x, y); }
+        f32 elementMin() const     { return std::fmin(x, y); }
         
         constexpr Vector2  operator+(Vector2 const& other) const { return Vector2(x + other.x, y + other.y); }
         constexpr Vector2  operator-(Vector2 const& other) const { return Vector2(x - other.x, y - other.y); }
@@ -95,8 +95,8 @@ namespace worse::math
 
         constexpr f32 elementSum() const     { return x + y + z; }
         constexpr f32 elementProduct() const { return x * y * z; }
-        constexpr f32 elementMax() const     { return std::fmax(x, std::fmax(y, z)); }
-        constexpr f32 elementMin() const     { return std::fmin(x, std::fmin(y, z)); }
+        f32 elementMax() const     { return std::fmax(x, std::fmax(y, z)); }
+        f32 elementMin() const     { return std::fmin(x, std::fmin(y, z)); }
 
         constexpr Vector3 operator+(Vector3 const& other) const { return Vector3(x + other.x, y + other.y, z + other.z); }
         constexpr Vector3 operator-(Vector3 const& other) const { return Vector3(x - other.x, y - other.y, z - other.z); }
@@ -162,8 +162,8 @@ namespace worse::math
         
         constexpr f32 elementSum() const     { return x + y + z + w; }
         constexpr f32 elementProduct() const { return x * y * z * w; }
-        constexpr f32 elementMax() const     { return std::fmax(x, std::fmax(y, std::fmax(z, w))); }
-        constexpr f32 elementMin() const     { return std::fmin(x, std::fmin(y, std::fmin(z, w))); }
+        f32 elementMax() const     { return std::fmax(x, std::fmax(y, std::fmax(z, w))); }
+        f32 elementMin() const     { return std::fmin(x, std::fmin(y, std::fmin(z, w))); }
         
         constexpr Vector4  operator+(Vector4 const& other) const { return Vector4(x + other.x, y + other.y, z + other.z, w + other.w); }
         constexpr Vector4  operator-(Vector4 const& other) const { return Vector4(x - other.x, y - other.y, z - other.z, w - other.w); }
@@ -224,8 +224,8 @@ namespace worse::math
 
         constexpr i32 elementSum() const     { return x + y; }
         constexpr i32 elementProduct() const { return x * y; }
-        constexpr i32 elementMax() const     { return std::max(x, y); }
-        constexpr i32 elementMin() const     { return std::min(x, y); }
+        i32 elementMax() const     { return std::max(x, y); }
+        i32 elementMin() const     { return std::min(x, y); }
 
         constexpr Vector2i operator+(Vector2i const& other) const     { return Vector2i(x + other.x, y + other.y); }
         constexpr Vector2i operator-(Vector2i const& other) const     { return Vector2i(x - other.x, y - other.y); }
@@ -253,8 +253,8 @@ namespace worse::math
 
         constexpr i32 elementSum() const     { return x + y + z; }
         constexpr i32 elementProduct() const { return x * y * z; }
-        constexpr i32 elementMax() const     { return std::max(x, std::max(y, z)); }
-        constexpr i32 elementMin() const     { return std::min(x, std::min(y, z)); }
+        i32 elementMax() const     { return std::max(x, std::max(y, z)); }
+        i32 elementMin() const     { return std::min(x, std::min(y, z)); }
 
         constexpr Vector3i operator+(Vector3i const& other) const     { return Vector3i(x + other.x, y + other.y, z + other.z); }
         constexpr Vector3i operator-(Vector3i const& other) const     { return Vector3i(x - other.x, y - other.y, z - other.z); }
@@ -283,8 +283,8 @@ namespace worse::math
 
         constexpr i32 elementSum() const     { return x + y + z + w; }
         constexpr i32 elementProduct() const { return x * y * z * w; }
-        constexpr i32 elementMax() const     { return std::max(x, std::max(y, std::max(z, w))); }
-        constexpr i32 elementMin() const     { return std::min(x, std::min(y, std::min(z, w))); }
+        i32 elementMax() const     { return std::max(x, std::max(y, std::max(z, w))); }
+        i32 elementMin() const     { return std::min(x, std::min(y, std::min(z, w))); }
 
         constexpr Vector4i operator+(Vector4i const& other) const     { return Vector4i(x + other.x, y + other.y, z + other.z, w + other.w); }
         constexpr Vector4i operator-(Vector4i const& other) const     { return Vector4i(x - other.x, y - other.y, z - other.z, w - other.w); }
@@ -303,9 +303,9 @@ namespace worse::math
     inline constexpr f32 lengthSquared(Vector3 const& v) { return v.x * v.x + v.y * v.y + v.z * v.z; }
     inline constexpr f32 lengthSquared(Vector4 const& v) { return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w; }
     
-    inline constexpr f32 length(Vector2 const& v) { return std::sqrt(lengthSquared(v)); }
-    inline constexpr f32 length(Vector3 const& v) { return std::sqrt(lengthSquared(v)); }
-    inline constexpr f32 length(Vector4 const& v) { return std::sqrt(lengthSquared(v)); }
+    inline f32 length(Vector2 const& v) { return std::sqrt(lengthSquared(v)); }
+    inline f32 length(Vector3 const& v) { return std::sqrt(lengthSquared(v)); }
+    inline f32 length(Vector4 const& v) { return std::sqrt(lengthSquared(v)); }
 
     inline constexpr Vector2 normalize(Vector2 const& v) { return v / length(v); }
     inline constexpr Vector3 normalize(Vector3 const& v) { return v / length(v); }
@@ -319,16 +319,16 @@ namespace worse::math
     inline constexpr Vector3 reciprocal(Vector3 const& v) { return Vector3(1.0f / v.x, 1.0f / v.y, 1.0f / v.z); }
     inline constexpr Vector4 reciprocal(Vector4 const& v) { return Vector4(1.0f / v.x, 1.0f / v.y, 1.0f / v.z, 1.0f / v.w); }
 
-    inline constexpr bool eq(Vector2 const& a, Vector2 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y); }
-    inline constexpr bool eq(Vector3 const& a, Vector3 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y) && worse::math::equal(a.z, b.z); }
-    inline constexpr bool eq(Vector4 const& a, Vector4 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y) && worse::math::equal(a.z, b.z) && worse::math::equal(a.w, b.w); }
+    inline bool eq(Vector2 const& a, Vector2 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y); }
+    inline bool eq(Vector3 const& a, Vector3 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y) && worse::math::equal(a.z, b.z); }
+    inline bool eq(Vector4 const& a, Vector4 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y) && worse::math::equal(a.z, b.z) && worse::math::equal(a.w, b.w); }
     inline constexpr bool eq(Vector2i const& a, Vector2i const& b) { return a.x == b.x && a.y == b.y; }
     inline constexpr bool eq(Vector3i const& a, Vector3i const& b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
     inline constexpr bool eq(Vector4i const& a, Vector4i const& b) { return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w; }
 
-    inline constexpr bool neq(Vector2 const& a, Vector2 const& b) { return !eq(a, b); }
-    inline constexpr bool neq(Vector3 const& a, Vector3 const& b) { return !eq(a, b); }
-    inline constexpr bool neq(Vector4 const& a, Vector4 const& b) { return !eq(a, b); }
+    inline bool neq(Vector2 const& a, Vector2 const& b) { return !eq(a, b); }
+    inline bool neq(Vector3 const& a, Vector3 const& b) { return !eq(a, b); }
+    inline bool neq(Vector4 const& a, Vector4 const& b) { return !eq(a, b); }
     inline constexpr bool neq(Vector2i const& a, Vector2i const& b) { return !eq(a, b); }
     inline constexpr bool neq(Vector3i const& a, Vector3i const& b) { return !eq(a, b); }
     inline constexpr bool neq(Vector4i const& a, Vector4i const& b) { return !eq(a, b); }
@@ -343,23 +343,23 @@ namespace worse::math
     inline constexpr f32 distanceSquared(Vector2 const& a, Vector2 const& b) { return lengthSquared(a - b); }
     inline constexpr f32 distanceSquared(Vector3 const& a, Vector3 const& b) { return lengthSquared(a - b); }
 
-    inline constexpr f32 distance(Vector2 const& a, Vector2 const& b) { return length(a - b); }
-    inline constexpr f32 distance(Vector3 const& a, Vector3 const& b) { return length(a - b); }
+    inline f32 distance(Vector2 const& a, Vector2 const& b) { return length(a - b); }
+    inline f32 distance(Vector3 const& a, Vector3 const& b) { return length(a - b); }
 
-    inline constexpr bool isNormalized(Vector2 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
-    inline constexpr bool isNormalized(Vector3 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
-    inline constexpr bool isNormalized(Vector4 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
+    inline bool isNormalized(Vector2 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
+    inline bool isNormalized(Vector3 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
+    inline bool isNormalized(Vector4 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
 
-    inline constexpr bool isIdentity(Vector2 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f); }
-    inline constexpr bool isIdentity(Vector3 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f) && worse::math::equal(v.z, 1.0f); }
-    inline constexpr bool isIdentity(Vector4 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f) && worse::math::equal(v.z, 1.0f) && worse::math::equal(v.w, 1.0f); }
+    inline bool isIdentity(Vector2 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f); }
+    inline bool isIdentity(Vector3 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f) && worse::math::equal(v.z, 1.0f); }
+    inline bool isIdentity(Vector4 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f) && worse::math::equal(v.z, 1.0f) && worse::math::equal(v.w, 1.0f); }
     inline constexpr bool isIdentity(Vector2i const& v) { return v.x == 1 && v.y == 1; }
     inline constexpr bool isIdentity(Vector3i const& v) { return v.x == 1 && v.y == 1 && v.z == 1; }
     inline constexpr bool isIdentity(Vector4i const& v) { return v.x == 1 && v.y == 1 && v.z == 1 && v.w == 1; }
 
-    inline constexpr bool isZero(Vector2 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f); }
-    inline constexpr bool isZero(Vector3 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f) && worse::math::equal(v.z, 0.0f); }
-    inline constexpr bool isZero(Vector4 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f) && worse::math::equal(v.z, 0.0f) && worse::math::equal(v.w, 0.0f); }
+    inline bool isZero(Vector2 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f); }
+    inline bool isZero(Vector3 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f) && worse::math::equal(v.z, 0.0f); }
+    inline bool isZero(Vector4 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f) && worse::math::equal(v.z, 0.0f) && worse::math::equal(v.w, 0.0f); }
     inline constexpr bool isZero(Vector2i const& v) { return v.x == 0 && v.y == 0; }
     inline constexpr bool isZero(Vector3i const& v) { return v.x == 0 && v.y == 0 && v.z == 0; }
     inline constexpr bool isZero(Vector4i const& v) { return v.x == 0 && v.y == 0 && v.z == 0 && v.w == 0; }

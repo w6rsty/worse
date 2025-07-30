@@ -1,5 +1,6 @@
 #include "DXCompiler.hpp" // Do not move
 #include "Log.hpp"
+#include "Platform.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
 #include "RHITexture.hpp"
@@ -24,26 +25,20 @@ namespace worse
 
     namespace validation
     {
-        char const* name{"VK_LAYER_KHRONOS_validation"}; // macOS
+        char const* name{"VK_LAYER_KHRONOS_validation"};
     } // namespace validation
 
     namespace extensions
     {
-        std::vector extensionsInstance{
-            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-        };
-
-        std::vector extensionsDevice{
-            "VK_KHR_portability_subset",     // macOS
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME, // presentation
-            VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
-            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-            VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME,
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-        };
-
         std::vector<char const*> getExtensionsInstance()
         {
+            std::vector<char const*> extensionsInstance{};
+
+            if (worse::CurrentPlatform == worse::Platform::Apple)
+            {
+                extensionsInstance.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+            }
+
             u32 sdlExtensionCount{0};
             auto sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
             for (u32 i = 0; i < sdlExtensionCount; ++i)
@@ -60,6 +55,20 @@ namespace worse
 
         std::vector<char const*> getExtensionsDevice()
         {
+            // must have
+            std::vector<char const*> extensionsDevice{
+                VK_KHR_SWAPCHAIN_EXTENSION_NAME, // presentation
+                VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+                VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+                VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME,
+                VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+            };
+
+            if (worse::CurrentPlatform == worse::Platform::Apple)
+            {
+                extensionsDevice.emplace_back("VK_KHR_portability_subset");
+            }
+
             return extensionsDevice;
         }
     } // namespace extensions
@@ -198,6 +207,13 @@ namespace worse
         RHIQueue* activeQueue = nullptr;
         EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
 
+        /**
+         * @brief 从队列族属性中获取符合条件的队列族索引
+         * @param queueFamilies 查询到的队列族属性列表
+         * @param flags 需要的队列标志
+         * @param dedicated 是否需要独立的队列族
+         * @return 符合条件的队列族索引
+         */
         u32 getQueueFamilyIndex(std::vector<VkQueueFamilyProperties> const& queueFamilies, VkQueueFlags flags, bool dedicated = true)
         {
             // compute only
@@ -251,7 +267,7 @@ namespace worse
             }
 
             WS_ASSERT_MSG(false, "Failed to find a queue family with the requested flags");
-            return std::numeric_limits<u32>::max();
+            return 0;
         }
 
         void detectQueueFamilyIndex(VkPhysicalDevice physicalDevice)
@@ -261,9 +277,12 @@ namespace worse
             std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-            indexGraphics = getQueueFamilyIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT);
-            indexCompute  = getQueueFamilyIndex(queueFamilies, VK_QUEUE_COMPUTE_BIT);
-            indexTransfer = getQueueFamilyIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT);
+            // 找到一个支持图形和计算的队列族
+            indexGraphics = getQueueFamilyIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, false);
+            
+            // 未使用
+            indexCompute  = getQueueFamilyIndex(queueFamilies, VK_QUEUE_COMPUTE_BIT, false);
+            indexTransfer = getQueueFamilyIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT, false);
         }
 
         void destroy()
@@ -406,7 +425,7 @@ namespace worse
             VkInstanceCreateInfo infoInst    = {};
             infoInst.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
             infoInst.pNext                   = &debugMessenger::info;
-            infoInst.flags                   = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+            infoInst.flags                   =  (worse::CurrentPlatform == worse::Platform::Apple) ? VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR : 0;
             infoInst.pApplicationInfo        = &infoApp;
             infoInst.enabledLayerCount       = RHIConfig::enableValidationLayers ? 1u : 0u;
             infoInst.ppEnabledLayerNames     = &validation::name;
@@ -441,17 +460,25 @@ namespace worse
                     queues::indexTransfer,
                 };
 
-                for (auto const& index : queueFamilyIndices)
-                {
-                    // clang-format off
-                    VkDeviceQueueCreateInfo infoQueue = {};
-                    infoQueue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-                    infoQueue.queueFamilyIndex = index;
-                    infoQueue.queueCount       = 1;
-                    infoQueue.pQueuePriorities = &queuePriority;
-                    // clang-format on
-                    queueInfos.emplace_back(infoQueue);
-                };
+                // for (auto const& index : queueFamilyIndices)
+                // {
+                //     // clang-format off
+                //     VkDeviceQueueCreateInfo infoQueue = {};
+                //     infoQueue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                //     infoQueue.queueFamilyIndex = index;
+                //     infoQueue.queueCount       = 1;
+                //     infoQueue.pQueuePriorities = &queuePriority;
+                //     // clang-format on
+                //     queueInfos.emplace_back(infoQueue);
+                // };
+
+                // 暂时只启用 graphics 队列
+                VkDeviceQueueCreateInfo infoQueue = {};
+                infoQueue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                infoQueue.queueFamilyIndex = queueFamilyIndices[0];
+                infoQueue.queueCount       = 1;
+                infoQueue.pQueuePriorities = &queuePriority;
+                queueInfos.emplace_back(infoQueue);
             }
 
             deviceFeatures::detect();

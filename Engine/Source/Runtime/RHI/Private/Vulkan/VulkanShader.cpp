@@ -147,7 +147,7 @@ namespace worse
 
         if (!codeBlob)
         {
-            WS_LOG_ERROR("Shader", "Compilation failed");
+            WS_LOG_ERROR("Shader", "Compilation failed: {}", m_name);
             return shader;
         }
 

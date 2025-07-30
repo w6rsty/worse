@@ -4,6 +4,12 @@ add_subdirectory(imgui)
 set_target_properties(imgui PROPERTIES FOLDER "ThirdParty")
 
 add_subdirectory(SDL3)
+set_target_properties(
+    SDL_uclibc
+    SDL3_test
+    SDL3-shared
+    PROPERTIES FOLDER "ThirdParty"
+)
 
 set(SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "" FORCE)
 set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "" FORCE)

@@ -86,16 +86,24 @@ namespace worse
 
         if (FAILED(result))
         {
-            CComPtr<IDxcBlobEncoding> errorBlob;
-            if (SUCCEEDED(dxcResult->GetErrorBuffer(&errorBlob)) && errorBlob)
+            if (dxcResult)
             {
-                WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
-                return nullptr;
+                CComPtr<IDxcBlobEncoding> errorBlob = nullptr;
+                HRESULT res = dxcResult->GetErrorBuffer(&errorBlob);
+                bool suc = SUCCEEDED(res);
+                if (suc && errorBlob)
+                {
+                    WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
+                }
             }
+            return nullptr;
         }
 
         CComPtr<IDxcBlob> codeBlob = nullptr;
-        dxcResult->GetResult(&codeBlob);
+        if (dxcResult)
+        {
+            dxcResult->GetResult(&codeBlob);
+        }
 
         return codeBlob;
     }
