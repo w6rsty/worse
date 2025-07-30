@@ -20,8 +20,23 @@ if (SDL3_FOUND)
         message(STATUS "SDL3 include directory: ${SDL3_INCLUDE_DIRS}")
     endif()
 else()
-    message(STATUS "SDL3 not found")
-    # TODO: Download SDL3
+    message(STATUS "SDL3 not found, downloading from GitHub")
+    
+    include(FetchContent)
+    FetchContent_Declare(
+        SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG ${SDL_VERSION}
+        GIT_SHALLOW TRUE
+    )
+    
+    # Set SDL3 options before fetching
+    set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
+    set(SDL_STATIC_ENABLED_BY_DEFAULT ON)
+    
+    FetchContent_MakeAvailable(SDL3)
+    
+    message(STATUS "SDL3 downloaded and configured")
 endif()
 
 # Create our own wrapper target
