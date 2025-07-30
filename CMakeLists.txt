@@ -35,7 +35,4 @@ if(PROJECT_IS_TOP_LEVEL)
     endif()
 endif()
 
-# Download directory for third-party libraries
-set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR})
-
 add_subdirectory(Engine/Source)
