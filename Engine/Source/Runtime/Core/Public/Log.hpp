@@ -98,8 +98,9 @@ namespace worse
             Message msg;
             msg.time  = std::chrono::system_clock::now();
             msg.level = L;
-            std::strncpy(msg.target, target, sizeof(msg.target) - 1);
-            msg.target[sizeof(msg.target) - 1] = '\0';
+            usize target_len = std::min(strlen(target), sizeof(msg.target) - 1);
+            memcpy(msg.target, target, target_len);
+            msg.target[target_len] = '\0';
             auto res                           = std::format_to_n(
                 msg.text,
                 sizeof(msg.text) - 4, // 保留4个字符以便在需要时添加省略号
@@ -108,7 +109,8 @@ namespace worse
 
             if (res.size >= sizeof(msg.text) - 4)
             {
-                std::strncpy(msg.text + sizeof(msg.text) - 4, "...", 4);
+                memcpy(msg.text + sizeof(msg.text) - 4, "...", 3);
+                msg.text[sizeof(msg.text) - 1] = '\0';
             }
             else
             {

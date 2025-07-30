@@ -91,7 +91,13 @@ namespace worse
                       msg.time.time_since_epoch())
                       .count() %
                   1000;
-        auto tm = *std::localtime(&t);
+#ifdef _WIN32
+        struct tm tm;
+        localtime_s(&tm, &t);
+#else
+        struct tm tm;
+        localtime_r(&t, &tm);
+#endif
         int n   = std::snprintf(line,
                               size,
                               "%s%04d-%02d-%02dT%02d:%02d:%02d.%03lld%s ",
