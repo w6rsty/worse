@@ -8,26 +8,43 @@ target_link_libraries(Example00 PRIVATE
 
 # Post-build step to copy required DLLs
 if(WIN32)
-    # Find SDL3 DLL
+    # Check if SDL3 is available as a target
     if(TARGET SDL3::SDL3)
-        get_target_property(SDL3_DLL_PATH SDL3::SDL3 IMPORTED_LOCATION)
-        if(NOT SDL3_DLL_PATH)
-            get_target_property(SDL3_DLL_PATH SDL3::SDL3 IMPORTED_LOCATION_DEBUG)
+        # Check if this is an imported target (system SDL3)
+        get_target_property(SDL3_TYPE SDL3::SDL3 TYPE)
+        get_target_property(SDL3_IMPORTED SDL3::SDL3 IMPORTED)
+        
+        if(SDL3_IMPORTED)
+            # System SDL3 - try to get DLL path from imported target
+            get_target_property(SDL3_DLL_PATH SDL3::SDL3 IMPORTED_LOCATION)
+            if(NOT SDL3_DLL_PATH)
+                get_target_property(SDL3_DLL_PATH SDL3::SDL3 IMPORTED_LOCATION_DEBUG)
+            endif()
+            if(NOT SDL3_DLL_PATH)
+                get_target_property(SDL3_DLL_PATH SDL3::SDL3 IMPORTED_LOCATION_RELEASE)
+            endif()
+            
+            if(SDL3_DLL_PATH AND EXISTS ${SDL3_DLL_PATH})
+                message(STATUS "Found system SDL3 DLL at: ${SDL3_DLL_PATH}")
+                add_custom_command(TARGET Example00 POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        ${SDL3_DLL_PATH}
+                        $<TARGET_FILE_DIR:Example00>
+                    COMMENT "Copying system SDL3.dll to output directory"
+                )
+            else()
+                message(WARNING "Could not find system SDL3.dll location")
+            endif()
+        else()
+            # Downloaded SDL3 - use generator expression to copy from build location
+            message(STATUS "Using downloaded SDL3, will copy DLL after build")
+            add_custom_command(TARGET Example00 POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    $<TARGET_FILE:SDL3::SDL3>
+                    $<TARGET_FILE_DIR:Example00>
+                COMMENT "Copying downloaded SDL3.dll to output directory"
+            )
         endif()
-        if(NOT SDL3_DLL_PATH)
-            get_target_property(SDL3_DLL_PATH SDL3::SDL3 IMPORTED_LOCATION_RELEASE)
-        endif()
-    endif()
-
-    # Add post-build command to copy SDL3.dll
-    if(SDL3_DLL_PATH AND EXISTS ${SDL3_DLL_PATH})
-        message(STATUS "Found SDL3 DLL at: ${SDL3_DLL_PATH}")
-        add_custom_command(TARGET Example00 POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${SDL3_DLL_PATH}
-                $<TARGET_FILE_DIR:Example00>
-            COMMENT "Copying SDL3.dll to output directory"
-        )
     else()
         # Fallback: try to find SDL3.dll in common locations
         find_file(SDL3_DLL_FALLBACK

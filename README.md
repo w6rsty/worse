@@ -6,6 +6,10 @@ An experimental game engine for exploring rendering engine architecture, graphic
 
 ![Preview](./Pics/Preview.jpeg)
 
+Build this Target **Example00**
+
+> `clang_rt.asan_dynamic-x86_64.dll` in WindowSDK is needed if build for Windows
+
 - ImGui with custom page router
 - PBR rendering
 - PointList mehsh rendering
