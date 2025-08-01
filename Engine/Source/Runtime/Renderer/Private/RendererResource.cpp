@@ -444,9 +444,9 @@ namespace worse
         return samplers[sampler].get();
     }
 
-    Mesh* Renderer::getStandardMesh(geometry::GeometryType const type)
+    std::shared_ptr<Mesh> Renderer::getStandardMesh(geometry::GeometryType const type)
     {
-        return standardMeshes[type].get();
+        return standardMeshes[type];
     }
 
     RHIPipelineState const& Renderer::getPipelineState(RendererPSO const pso)

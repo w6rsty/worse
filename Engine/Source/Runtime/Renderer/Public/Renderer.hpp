@@ -10,6 +10,7 @@
 
 #include "ECS/Resource.hpp"
 #include "ECS/Commands.hpp"
+#include <memory>
 
 namespace worse
 {
@@ -22,7 +23,6 @@ namespace worse
         static void tick(ecs::Resource<DrawcallStorage> drawcalls,
                          ecs::Resource<Camera> camera,
                          ecs::Resource<GlobalContext> globalContext,
-                         ecs::ResourceArray<Mesh> meshes,
                          ecs::ResourceArray<TextureWrite> textureWrites);
 
         // swapchain
@@ -51,7 +51,7 @@ namespace worse
         static RHIShader* getShader(RendererShader const shader);
         static RHITexture* getTexture(RendererTexture const texture);
         static RHISampler* getSampler(RHISamplerType const sampler);
-        static Mesh* getStandardMesh(geometry::GeometryType const type);
+        static std::shared_ptr<Mesh> getStandardMesh(geometry::GeometryType const type);
         static RHIPipelineState const& getPipelineState(RendererPSO const pso);
         static RHIBuffer* getMaterialBuffer();
 
@@ -87,15 +87,9 @@ namespace worse
         // Passes
         // =====================================================================
 
-        static void passDpethPrepass(RHICommandList* cmdList,
-                                     ecs::Resource<DrawcallStorage> drawcalls,
-                                     ecs::ResourceArray<Mesh> meshes);
-        static void passColor(RHICommandList* cmdList,
-                              ecs::Resource<DrawcallStorage> drawcalls,
-                              ecs::ResourceArray<Mesh> meshes);
-        static void passWireFrame(RHICommandList* cmdList,
-                                  ecs::Resource<DrawcallStorage> drawcalls,
-                                  ecs::ResourceArray<Mesh> meshes);
+        static void passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
         static void passPostProcessing(RHICommandList* cmdList);
 
         static void passImGui(RHICommandList* cmdList);
@@ -104,7 +98,6 @@ namespace worse
         produceFrame(RHICommandList* cmdList,
                      ecs::Resource<GlobalContext> globalContext,
                      ecs::Resource<DrawcallStorage> drawcalls,
-                     ecs::ResourceArray<Mesh> meshes,
                      ecs::ResourceArray<TextureWrite> textureWrites);
 
     private:

@@ -11,9 +11,32 @@
 namespace worse
 {
 
+    struct RenderObject
+    {
+        Mesh* mesh;
+        MeshMaterial* material;
+
+        math::Matrix4 transform;
+    };
+
+    struct DrawContext
+    {
+        std::vector<RenderObject> opaqueObjects;
+
+        void Clear()
+        {
+            opaqueObjects.clear();
+        }
+    };
+
+    struct IRenderable
+    {
+        virtual void Draw(math::Matrix4 const& topMat, DrawContext& ctx) = 0;
+    };
+
     struct Drawcall
     {
-        u32 meshIndex     = 0;
+        std::weak_ptr<Mesh> mesh;
         u32 materialIndex = 0;
         math::Matrix4 transform;
     };
@@ -51,7 +74,7 @@ namespace worse
             if (mesh.primitiveTopology == RHIPrimitiveTopology::PointList)
             {
                 drawcalls->point.emplace_back(
-                    static_cast<u32>(mesh.index),
+                    mesh.mesh,
                     static_cast<u32>(material.index),
                     math::makeSRT(transform.scale,
                                 transform.rotation,
@@ -61,7 +84,7 @@ namespace worse
             else
             {
                 drawcalls->solid.emplace_back(
-                    static_cast<u32>(mesh.index),
+                    mesh.mesh,
                     static_cast<u32>(material.index),
                     math::makeSRT(transform.scale,
                                 transform.rotation,

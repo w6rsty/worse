@@ -11,12 +11,14 @@
 
 namespace worse
 {
+
+    class Mesh;
+
     // ECS index
     struct Mesh3D
     {
-        usize index;
-        RHIPrimitiveTopology primitiveTopology =
-            RHIPrimitiveTopology::TriangleList;
+        std::shared_ptr<Mesh> mesh;
+        RHIPrimitiveTopology primitiveTopology = RHIPrimitiveTopology::TriangleList;
     };
 
     struct StandardMesh3D
@@ -145,8 +147,8 @@ namespace worse
 
         ~Mesh();
 
-        // Release CPU resources
-        void clear();
+        void clearCPU();
+        void clearGPU();
 
         // TODO: Now just lod0
         void addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,

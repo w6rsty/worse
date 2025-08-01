@@ -18,35 +18,32 @@ namespace worse
         pushConstantData.setPadding(a, b);
     }
 
-    void Renderer::passDpethPrepass(RHICommandList* cmdList,
-                                    ecs::Resource<DrawcallStorage> drawcalls,
-                                    ecs::ResourceArray<Mesh> meshes)
+    void Renderer::passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
         // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::DepthPrepass));
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
-            Mesh* mesh = meshes.get(drawcall.meshIndex);
+            if (Mesh* mesh = drawcall.mesh.lock().get())
+            {
+                cmdList->setBufferVertex(mesh->getVertexBuffer());
+                cmdList->setBufferIndex(mesh->getIndexBuffer());
+    
+                pushConstantData.setModel(drawcall.transform);
+                cmdList->pushConstants(pushConstantData.asSpan());
+    
+                cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+            }
 
-            cmdList->setBufferVertex(mesh->getVertexBuffer());
-            cmdList->setBufferIndex(mesh->getIndexBuffer());
-
-            pushConstantData.setModel(drawcall.transform);
-            cmdList->pushConstants(pushConstantData.asSpan());
-
-            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
         }
 
         cmdList->renderPassEnd();
         // clang-format on
     }
 
-    void Renderer::passColor(RHICommandList* cmdList,
-                             ecs::Resource<DrawcallStorage> drawcalls,
-                             ecs::ResourceArray<Mesh> meshes)
+    void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PBR));
 
         std::array updates = {
@@ -57,63 +54,61 @@ namespace worse
         cmdList->updateSpecificSet(updates);
 
         for (Drawcall const& drawcall : drawcalls->solid)
-        {   
-            Mesh* mesh = meshes.get(drawcall.meshIndex);
+        {
+            if (Mesh* mesh = drawcall.mesh.lock().get())
+            {
+                cmdList->setBufferVertex(mesh->getVertexBuffer());
+                cmdList->setBufferIndex(mesh->getIndexBuffer());
 
-            cmdList->setBufferVertex(mesh->getVertexBuffer());
-            cmdList->setBufferIndex(mesh->getIndexBuffer());
+                pushConstantData.setModel(drawcall.transform);
+                pushConstantData.setMaterialId(drawcall.materialIndex);
 
-            pushConstantData.setModel(drawcall.transform);
-            pushConstantData.setMaterialId(drawcall.materialIndex);
-
-            cmdList->pushConstants(pushConstantData.asSpan());
-            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+                cmdList->pushConstants(pushConstantData.asSpan());
+                cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+            }
         }
 
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Point));
 
         for (Drawcall const& drawcall : drawcalls->point)
-        {   
-            Mesh* mesh = meshes.get(drawcall.meshIndex);
+        {
 
-            cmdList->setBufferVertex(mesh->getVertexBuffer());
-            // cmdList->setBufferIndex(mesh->getIndexBuffer());
+            if (Mesh* mesh = drawcall.mesh.lock().get())
+            {
+                cmdList->setBufferVertex(mesh->getVertexBuffer());
 
-            pushConstantData.setModel(drawcall.transform);
-            pushConstantData.setMaterialId(drawcall.materialIndex);
+                pushConstantData.setModel(drawcall.transform);
+                pushConstantData.setMaterialId(drawcall.materialIndex);
 
-            pushConstantData.setPadding(1.0f, 0.0f); // Point size
-            cmdList->pushConstants(pushConstantData.asSpan());
-            // cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
-            cmdList->draw(mesh->getVertexBuffer()->getElementCount());
+                pushConstantData.setPadding(1.0f, 0.0f); // Point size
+                cmdList->pushConstants(pushConstantData.asSpan());
+                cmdList->draw(mesh->getVertexBuffer()->getElementCount());
+            }
         }
 
         cmdList->renderPassEnd();
-        // clang-format on
     }
 
-    void Renderer::passWireFrame(RHICommandList* cmdList,
-                                 ecs::Resource<DrawcallStorage> drawcalls,
-                                 ecs::ResourceArray<Mesh> meshes)
+    void Renderer::passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        // clang-format off
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Wireframe));
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
-            Mesh* mesh = meshes.get(drawcall.meshIndex);
+            if (Mesh* mesh = drawcall.mesh.lock().get())
+            {
 
-            cmdList->setBufferVertex(mesh->getVertexBuffer());
-            cmdList->setBufferIndex(mesh->getIndexBuffer());
+                cmdList->setBufferVertex(mesh->getVertexBuffer());
+                cmdList->setBufferIndex(mesh->getIndexBuffer());
 
-            pushConstantData.setModel(drawcall.transform);
-            cmdList->pushConstants(pushConstantData.asSpan());
+                pushConstantData.setModel(drawcall.transform);
+                cmdList->pushConstants(pushConstantData.asSpan());
 
-            cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+                cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+            }
         }
 
         cmdList->renderPassEnd();
-        // clang-format on
     }
 
     void Renderer::passPostProcessing(RHICommandList* cmdList)
@@ -160,21 +155,17 @@ namespace worse
     void Renderer::produceFrame(RHICommandList* cmdList,
                                 ecs::Resource<GlobalContext> globalContext,
                                 ecs::Resource<DrawcallStorage> drawcalls,
-                                ecs::ResourceArray<Mesh> meshes,
                                 ecs::ResourceArray<TextureWrite> textureWrites)
     {
         Renderer::writeBindlessTextures(textureWrites);
 
-        passDpethPrepass(cmdList, drawcalls, meshes);
+        passDpethPrepass(cmdList, drawcalls);
 
-        Renderer::getRenderTarget(RendererTarget::Depth)
-            ->convertImageLayout(cmdList, RHIImageLayout::DepthReadOnly);
-
-        passColor(cmdList, drawcalls, meshes);
+        passColor(cmdList, drawcalls);
 
         if (globalContext->isWireFrameMode)
         {
-            passWireFrame(cmdList, drawcalls, meshes);
+            passWireFrame(cmdList, drawcalls);
         }
 
         passPostProcessing(cmdList);

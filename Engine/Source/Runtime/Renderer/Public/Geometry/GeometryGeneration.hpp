@@ -3,7 +3,6 @@
 #include "RHITypes.hpp"
 
 #include <vector>
-#include <cstdint>
 
 namespace worse::geometry
 {
@@ -181,7 +180,7 @@ namespace worse::geometry
         // Rings (excluding poles)
         for (u32 r = 1; r < rings; ++r)
         {
-            f32 phi = math::PI * static_cast<f32>(r) / static_cast<f32>(rings);
+            f32 phi    = math::PI * static_cast<f32>(r) / static_cast<f32>(rings);
             f32 sinPhi = std::sin(phi);
             f32 cosPhi = std::cos(phi);
 
@@ -437,7 +436,7 @@ namespace worse::geometry
 
         // --- Arc-length calculation for proportional V coordinate ---
         const f32 hemisphereArcLength = math::PI * 0.5f * radius;
-        const f32 totalArcLength = 2.0f * hemisphereArcLength + cylinderHeight;
+        const f32 totalArcLength      = 2.0f * hemisphereArcLength + cylinderHeight;
 
         // --- Vertices ---
         // A single loop to generate all vertices seamlessly
@@ -469,14 +468,14 @@ namespace worse::geometry
                 f32 arcDist_from_bottom = totalArcLength - currentArcDist;
                 phi                     = arcDist_from_bottom / radius;
                 effectiveRadius         = radius * std::sin(phi);
-                y            = -(radius * std::cos(phi) + halfCylinderHeight);
-                normal_y_dir = Vector3(0, -std::cos(phi), 0);
+                y                       = -(radius * std::cos(phi) + halfCylinderHeight);
+                normal_y_dir            = Vector3(0, -std::cos(phi), 0);
             }
             else // Cylinder body
             {
                 effectiveRadius = radius;
-                y = halfCylinderHeight - (currentArcDist - hemisphereArcLength);
-                normal_y_dir = Vector3(0, 0, 0);
+                y               = halfCylinderHeight - (currentArcDist - hemisphereArcLength);
+                normal_y_dir    = Vector3(0, 0, 0);
             }
 
             for (u32 s = 0; s <= segments; ++s)

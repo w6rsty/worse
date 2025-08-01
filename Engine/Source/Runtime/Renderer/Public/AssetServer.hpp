@@ -48,8 +48,7 @@ namespace worse
         RHITexture* getTexture(AssetHandle handle) const;
         usize getLoadedCount() const;
 
-        void eachAsset(std::function<void(AssetHandle, RHITexture*)> const&
-                           callback) const;
+        void eachAsset(std::function<void(AssetHandle, RHITexture*)> const& callback) const;
 
     private:
         mutable std::mutex m_mtx;

@@ -11,15 +11,20 @@ namespace worse
 
     Mesh::~Mesh()
     {
-        m_indexBuffer.reset();
-        m_vertexBuffer.reset();
+        // CPU 和 GPU 资源会自动释放
     }
 
-    void Mesh::clear()
+    void Mesh::clearCPU()
     {
         m_vertices.clear();
         m_indices.clear();
         m_subMeshes.clear();
+    }
+
+    void Mesh::clearGPU()
+    {
+        m_vertexBuffer.reset();
+        m_indexBuffer.reset();
     }
 
     void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,
@@ -67,17 +72,4 @@ namespace worse
                                                         "MeshIndexBuffer");
         }
     }
-
-    // clang-format off
-    void buildMeshes( ecs::QueryView<Mesh3D> view, ecs::ResourceArray<Mesh> meshes
-    )
-    {
-        view.each(
-        [&meshes]
-        (ecs::Entity entity, Mesh3D const& mesh3D)
-        {
-            meshes->get(mesh3D.index)->createGPUBuffers();
-        });
-    }
-    // clang-format on
 } // namespace worse

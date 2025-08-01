@@ -46,8 +46,7 @@ public:
 
     static void initialize(ecs::Commands commands,
                            ecs::ResourceArray<StandardMaterial> materials,
-                           ecs::Resource<AssetServer> assetServer,
-                           ecs::ResourceArray<Mesh> meshes)
+                           ecs::Resource<AssetServer> assetServer)
     {
         // clang-format off
         Camera& camera = commands.emplaceResource<Camera>()
@@ -93,9 +92,6 @@ public:
 
             if (ImGui::Button("Spawn"))
             {
-                auto meshes = commands.getResourceArray<Mesh>();
-                auto meshIndex = meshes.add(Sphere{});
-                meshes->get(meshIndex)->createGPUBuffers();
                 commands.spawn(
                     LocalTransform{
                         .position = math::Vector3{
@@ -104,7 +100,10 @@ public:
                             static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f
                         },
                     },
-                    Mesh3D{.index = meshIndex, .primitiveTopology = RHIPrimitiveTopology::PointList},
+                    Mesh3D{
+                        .mesh = Renderer::getStandardMesh(geometry::GeometryType::Sphere),
+                        .primitiveTopology = RHIPrimitiveTopology::PointList
+                    },
                     MeshMaterial{spawnMaterial}
                 );
             }
@@ -270,8 +269,7 @@ public:
     static void setupScene(
         ecs::Commands commands,
         ecs::ResourceArray<StandardMaterial> materials,
-        ecs::Resource<AssetServer> assetServer,
-        ecs::ResourceArray<Mesh> meshes
+        ecs::Resource<AssetServer> assetServer
     )
     {
         usize bronzeMaterial = materials->add(StandardMaterial{
@@ -292,7 +290,7 @@ public:
                 .position = math::Vector3{-5.0f, 0.0f, 0.0f},
                 .scale = math::Vector3{10.0f, 1.0f, 10.0f}
             },
-            Mesh3D{meshes.add(Quad3D{})},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Quad3D)},
             MeshMaterial{groundMaterial}
         );
         commands.spawn(
@@ -300,17 +298,17 @@ public:
                 .position = math::Vector3{5.0f, 0.0f, 0.0f},
                 .scale = math::Vector3{10.0f, 1.0f, 10.0f}
             },
-            Mesh3D{meshes.add(Quad3D{})},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Quad3D)},
             MeshMaterial{groundMaterial}
         );
 
-        // box
+        // sphere
         commands.spawn(
             LocalTransform{
                 .position = math::Vector3{-2.5f, 2.5f, 0.0f},
                 .scale = math::Vector3{4.0f, 4.0f, 4.0f},
             },
-            Mesh3D{meshes.add(Sphere{})},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere)},
             MeshMaterial{bronzeMaterial}
         );
 
@@ -319,7 +317,10 @@ public:
             LocalTransform{
                 .position = math::Vector3{2.5f, 2.0f, 0.0f},
             },
-            Mesh3D{meshes.add(Capsule3D{}), RHIPrimitiveTopology::PointList},
+            Mesh3D{
+                .mesh = Renderer::getStandardMesh(geometry::GeometryType::Capsule),
+                .primitiveTopology = RHIPrimitiveTopology::PointList
+            },
             MeshMaterial{materials->add(StandardMaterial{
                 .albedo = math::Vector4(0.8f, 0.5f, 0.5f, 1.0f),
             })}
@@ -329,9 +330,7 @@ public:
             LocalTransform{
                 .position = math::Vector3{0.0f, 10.0f, 0.0f},
             },
-            Mesh3D{meshes.add(Capsule3D{
-                .segments = 16,
-            })},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Capsule)},
             MeshMaterial{materials->add(StandardMaterial{
                 .albedo = math::Vector4(0.4f, 0.2f, 0.8f, 1.0f),
                 .metallic = 0.1f,
@@ -355,6 +354,17 @@ public:
         frameTimer.reset();
     }
     // clang-format on
+
+    static void cleanup(ecs::Commands commands, ecs::QueryView<Mesh3D> view)
+    {
+        view.each([&commands](ecs::Entity entity, Mesh3D& mesh)
+                  {
+                      if (mesh.mesh)
+                      {
+                          mesh.mesh.reset();
+                      }
+                  });
+    }
 };
 
 int main()
@@ -367,7 +377,6 @@ int main()
     schedule.addSystem<ecs::CoreStage::StartUp, &Renderer::initialize>();
     schedule.addSystem<ecs::CoreStage::StartUp, &World::initialize>();
     schedule.addSystem<ecs::CoreStage::StartUp, &World::setupScene>();
-    schedule.addSystem<ecs::CoreStage::StartUp, buildMeshes>();
     schedule.addSystem<ecs::CoreStage::StartUp, buildMaterials>();
     schedule.addSystem<ecs::CoreStage::StartUp, &ImGuiRenderer::initialize>();
 
@@ -378,6 +387,7 @@ int main()
     schedule.addSystem<ecs::CoreStage::Update, buildDrawcalls>();
     schedule.addSystem<ecs::CoreStage::Update, &Renderer::tick>();
 
+    schedule.addSystem<ecs::CoreStage::CleanUp, &World::cleanup>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &ImGuiRenderer::shutdown>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &Renderer::shutdown>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &Engine::shutdown>();
