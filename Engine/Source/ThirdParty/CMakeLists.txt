@@ -1,5 +1,8 @@
 add_subdirectory(dxc)
 
+add_subdirectory(fastgltf)
+set_target_properties(fastgltf PROPERTIES FOLDER "ThirdParty")
+
 add_subdirectory(imgui)
 set_target_properties(imgui PROPERTIES FOLDER "ThirdParty")
 
