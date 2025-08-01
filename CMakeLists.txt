@@ -26,7 +26,7 @@ if(PROJECT_IS_TOP_LEVEL)
         )
         if(NOT result EQUAL 0)
         endif()
-    elseif(WIN32)
+    elseif(WIN32 AND NOT MSVC)
         execute_process(
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     ${CMAKE_BINARY_DIR}/compile_commands.json

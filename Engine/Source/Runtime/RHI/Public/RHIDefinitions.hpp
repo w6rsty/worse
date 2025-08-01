@@ -9,15 +9,15 @@
 #include "volk.h"
 
 #ifdef DEBUG
-#define WS_ASSERT_VK(result)                                                   \
-    do                                                                         \
-    {                                                                          \
-        VkResult vkResult = (result);                                          \
-        if (vkResult != VK_SUCCESS)                                            \
-        {                                                                      \
-            WS_LOG_ERROR("RHI", "Vulkan error: {}", #result);                  \
-            WS_ASSERT(vkResult);                                               \
-        }                                                                      \
+#define WS_ASSERT_VK(result)                                                          \
+    do                                                                                \
+    {                                                                                 \
+        VkResult vkResult = (result);                                                 \
+        if (vkResult != VK_SUCCESS)                                                   \
+        {                                                                             \
+            WS_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
+            WS_ASSERT(vkResult);                                                      \
+        }                                                                             \
     } while (false)
 #else
 #define WS_ASSERT_VK(result)                                                   \
@@ -27,10 +27,12 @@
         (void)vkResult;                                                        \
     } while (false)
 #endif
+
 #endif
 
 namespace worse
 {
+   
     // fwd
     class RHINativeHandle;
     class RHIDevice;
@@ -144,8 +146,7 @@ namespace worse
         }
     }
 
-    constexpr VkSamplerMipmapMode
-    vulkanSamplerMipmapMode(RHIFilter const filter)
+    constexpr VkSamplerMipmapMode vulkanSamplerMipmapMode(RHIFilter const filter)
     {
         switch (filter)
         {
@@ -166,8 +167,7 @@ namespace worse
         Max
     };
 
-    constexpr VkSamplerAddressMode
-    vulkanSamplerAddressMode(RHISamplerAddressMode const addressMode)
+    constexpr VkSamplerAddressMode vulkanSamplerAddressMode(RHISamplerAddressMode const addressMode)
     {
         switch (addressMode)
         {
@@ -239,8 +239,7 @@ namespace worse
     }
 
     // convert RHI shader type to singoe vulkan shader stage flags
-    constexpr VkShaderStageFlags
-    vulkanShaderStageFlags(RHIShaderType const type)
+    constexpr VkShaderStageFlags vulkanShaderStageFlags(RHIShaderType const type)
     {
         switch (type)
         {
@@ -254,8 +253,7 @@ namespace worse
     }
 
     // convert RHI shader stage flags to vulkan shader stage flags
-    inline VkShaderStageFlags
-    vulkanShaderStageFlags(RHIShaderStageFlags const stageFlags)
+    inline VkShaderStageFlags vulkanShaderStageFlags(RHIShaderStageFlags const stageFlags)
     {
         VkShaderStageFlags flags = 0;
         if (stageFlags & RHIShaderStageFlagBits::Vertex)
@@ -299,8 +297,7 @@ namespace worse
         TriangleList,
     };
 
-    constexpr std::string
-    rhiPrimitiveTopologyToString(RHIPrimitiveTopology const topology)
+    constexpr std::string rhiPrimitiveTopologyToString(RHIPrimitiveTopology const topology)
     {
         switch (topology)
         {
@@ -376,8 +373,34 @@ namespace worse
         Max
     };
 
-    constexpr VkDescriptorType
-    vulkanDescriptorType(RHIDescriptorType const type)
+    constexpr std::string vulkanResultToString(VkResult const result)
+    {
+        switch (result)
+        {
+            // clang-format off
+        case VK_SUCCESS:                          return "VK_SUCCESS";
+        case VK_NOT_READY:                        return "VK_NOT_READY";
+        case VK_TIMEOUT:                          return "VK_TIMEOUT";
+        case VK_EVENT_SET:                        return "VK_EVENT_SET";
+        case VK_EVENT_RESET:                      return "VK_EVENT_RESET";
+        case VK_INCOMPLETE:                       return "VK_INCOMPLETE";
+        case VK_ERROR_OUT_OF_HOST_MEMORY:         return "VK_ERROR_OUT_OF_HOST_MEMORY";
+        case VK_ERROR_OUT_OF_DEVICE_MEMORY:       return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+        case VK_ERROR_INITIALIZATION_FAILED:      return "VK_ERROR_INITIALIZATION_FAILED";
+        case VK_ERROR_DEVICE_LOST:                return "VK_ERROR_DEVICE_LOST";
+        case VK_ERROR_MEMORY_MAP_FAILED:          return "VK_ERROR_MEMORY_MAP_FAILED";
+        case VK_ERROR_LAYER_NOT_PRESENT:          return "VK_ERROR_LAYER_NOT_PRESENT";
+        case VK_ERROR_EXTENSION_NOT_PRESENT:      return "VK_ERROR_EXTENSION_NOT_PRESENT";
+        case VK_ERROR_FEATURE_NOT_PRESENT:        return "VK_ERROR_FEATURE_NOT_PRESENT";
+        case VK_ERROR_INCOMPATIBLE_DRIVER:        return "VK_ERROR_INCOMPATIBLE_DRIVER";
+        case VK_ERROR_TOO_MANY_OBJECTS:           return "VK_ERROR_TOO_MANY_OBJECTS";
+        case VK_ERROR_FORMAT_NOT_SUPPORTED:       return "VK_ERROR_FORMAT_NOT_SUPPORTED";
+        default:                                   return "Unknown Vulkan Result";
+            // clang-format on
+        }
+    }
+
+    constexpr VkDescriptorType vulkanDescriptorType(RHIDescriptorType const type)
     {
         switch (type)
         {
@@ -392,8 +415,7 @@ namespace worse
         }
     }
 
-    constexpr std::string
-    rhiDescriptorTypeToString(RHIDescriptorType const type)
+    constexpr std::string rhiDescriptorTypeToString(RHIDescriptorType const type)
     {
         switch (type)
         {
@@ -551,8 +573,7 @@ namespace worse
         }
     }
 
-    constexpr VkPrimitiveTopology
-    vulkanPrimitiveTopology(RHIPrimitiveTopology const topology)
+    constexpr VkPrimitiveTopology vulkanPrimitiveTopology(RHIPrimitiveTopology const topology)
     {
         switch (topology)
         {
