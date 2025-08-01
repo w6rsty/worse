@@ -17,7 +17,7 @@ namespace worse
     // ECS index
     struct Mesh3D
     {
-        std::shared_ptr<Mesh> mesh;
+        Mesh* mesh;
         RHIPrimitiveTopology primitiveTopology = RHIPrimitiveTopology::TriangleList;
     };
 

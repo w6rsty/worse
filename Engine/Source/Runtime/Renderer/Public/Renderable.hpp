@@ -36,7 +36,7 @@ namespace worse
 
     struct Drawcall
     {
-        std::weak_ptr<Mesh> mesh;
+        Mesh* mesh;
         u32 materialIndex = 0;
         math::Matrix4 transform;
     };
@@ -58,7 +58,7 @@ namespace worse
     // clang-format off
     inline void buildDrawcalls(
         ecs::Commands commands,
-        ecs::QueryView<Mesh3D, LocalTransform> view,
+        ecs::QueryView<Mesh3D, LocalTransform, MeshMaterial> view,
         ecs::Resource<DrawcallStorage> drawcalls
     )
     {
@@ -66,19 +66,14 @@ namespace worse
 
         view.each(
         [&commands, &drawcalls]
-        (ecs::Entity entity, Mesh3D const& mesh, LocalTransform const& transform)
+        (ecs::Entity entity, Mesh3D const& mesh, LocalTransform const& transform, MeshMaterial const& material)
         {
-            // TODO: add a default material if not exists
-            MeshMaterial material = commands.getComponent<MeshMaterial>(entity);
-
             if (mesh.primitiveTopology == RHIPrimitiveTopology::PointList)
             {
                 drawcalls->point.emplace_back(
                     mesh.mesh,
                     static_cast<u32>(material.index),
-                    math::makeSRT(transform.scale,
-                                transform.rotation,
-                                transform.position)
+                    math::makeSRT(transform.scale, transform.rotation, transform.position)
                 );
             }
             else
@@ -86,9 +81,7 @@ namespace worse
                 drawcalls->solid.emplace_back(
                     mesh.mesh,
                     static_cast<u32>(material.index),
-                    math::makeSRT(transform.scale,
-                                transform.rotation,
-                                transform.position)
+                    math::makeSRT(transform.scale, transform.rotation, transform.position)
                 );
             }
         });

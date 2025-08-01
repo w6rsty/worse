@@ -9,6 +9,8 @@ namespace worse
 {
     namespace
     {
+        std::vector<StandardMaterialGPU> materialGPUs;
+
         // Helper function to get texture index with fallback
         usize getTextureIndex(
             std::optional<AssetHandle> const& handle,
@@ -34,19 +36,11 @@ namespace worse
 
     // clang-format off
     void buildMaterials(
-        ecs::QueryView<MeshMaterial> materialView, // in
         ecs::Resource<AssetServer> assetServer, // in
-        ecs::ResourceArray<TextureWrite> textureWrites, // out
         ecs::ResourceArray<StandardMaterial> materials, // in
-        ecs::ResourceArray<StandardMaterialGPU> materialGPUs
+        ecs::ResourceArray<TextureWrite> textureWrites // out
     )
     {
-        // Validate inputs
-        if (!assetServer || !textureWrites || !materials || !materialGPUs)
-        {
-            WS_LOG_ERROR("Material", "Invalid resource parameters in buildMaterials");
-            return;
-        }
         if (materials->empty())
         {
             // if no materials are defined, create a default material
@@ -64,7 +58,7 @@ namespace worse
 
             // skip renderer builtin textures
             usize index = static_cast<usize>(RendererTexture::Max);
-            assetServer->eachAsset(
+            assetServer->eachTexture(
             [&index, &textureWrites, &textureIndexMap]
             (AssetHandle handle, RHITexture* texture)
             {
@@ -74,8 +68,8 @@ namespace worse
             });
         }
 
-        materialGPUs->clear();
-        materialGPUs->data().resize(materials->size());
+        materialGPUs.clear();
+        materialGPUs.resize(materials->size());
 
         // Convert each CPU material to GPU format, maintaining index correspondence
         for (usize i = 0; i < materials->size(); ++i)
@@ -87,7 +81,7 @@ namespace worse
                 continue;
             }
 
-            StandardMaterialGPU& data = materialGPUs->data()[i];
+            StandardMaterialGPU& data = materialGPUs[i];
             data.albedo = material->albedo;
             
             // Map texture handles to indices using helper function
@@ -106,7 +100,7 @@ namespace worse
             data.emissiveTextureIndex = getTextureIndex(material->emissiveTexture, textureIndexMap, RendererTexture::DefaultEmissive);
         }
 
-        Renderer::createMaterialBuffers(materialGPUs->data());
+        Renderer::createMaterialBuffers(materialGPUs);
     }
     // clang-format on        
 

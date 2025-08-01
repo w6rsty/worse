@@ -31,27 +31,23 @@ namespace worse
         // submit command list and present image to swapchain
         static void submitAndPresent();
 
-        static void
-        createMaterialBuffers(std::span<StandardMaterialGPU> materials);
+        static void createMaterialBuffers(std::span<StandardMaterialGPU> materials);
 
-        static void
-        writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites);
+        static void writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites);
 
         static void setViewport(f32 const width, f32 const height);
         static RHIViewport const& getViewport();
 
         static RHIFormat getSwapchainFormat();
 
-        static RHIRasterizerState*
-        getRasterizerState(RendererRasterizerState const state);
-        static RHIDepthStencilState*
-        getDepthStencilState(RendererDepthStencilState const state);
+        static RHIRasterizerState* getRasterizerState(RendererRasterizerState const state);
+        static RHIDepthStencilState* getDepthStencilState(RendererDepthStencilState const state);
         static RHIBlendState* getBlendState(RendererBlendState const state);
         static RHITexture* getRenderTarget(RendererTarget const target);
         static RHIShader* getShader(RendererShader const shader);
         static RHITexture* getTexture(RendererTexture const texture);
         static RHISampler* getSampler(RHISamplerType const sampler);
-        static std::shared_ptr<Mesh> getStandardMesh(geometry::GeometryType const type);
+        static Mesh* getStandardMesh(geometry::GeometryType const type);
         static RHIPipelineState const& getPipelineState(RendererPSO const pso);
         static RHIBuffer* getMaterialBuffer();
 
@@ -59,13 +55,12 @@ namespace worse
         static math::Vector2 getResolutionOutput();
 
         static void setPushParameters(f32 a, f32 b);
-        static void setCameraPosition(math::Vector3 const& position);
-        static void setCameraForward(math::Vector3 const& forward);
 
     private:
         static void updateBuffers(RHICommandList* cmdList,
                                   ecs::Resource<Camera> camera,
-                                  ecs::Resource<GlobalContext> globalContext);
+                                  ecs::Resource<GlobalContext> globalContext,
+                                  ecs::ResourceArray<TextureWrite> textureWrites);
 
         // =====================================================================
         // Resources
@@ -94,14 +89,9 @@ namespace worse
 
         static void passImGui(RHICommandList* cmdList);
 
-        static void
-        produceFrame(RHICommandList* cmdList,
-                     ecs::Resource<GlobalContext> globalContext,
-                     ecs::Resource<DrawcallStorage> drawcalls,
-                     ecs::ResourceArray<TextureWrite> textureWrites);
-
-    private:
-        static inline u64 s_frameCount = 0;
+        static void produceFrame(RHICommandList* cmdList,
+                                 ecs::Resource<GlobalContext> globalContext,
+                                 ecs::Resource<DrawcallStorage> drawcalls);
     };
 
 } // namespace worse

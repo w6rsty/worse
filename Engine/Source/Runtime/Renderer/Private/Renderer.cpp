@@ -1,4 +1,3 @@
-#include "Log.hpp"
 #include "Window.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
@@ -18,14 +17,15 @@ namespace worse
 
     namespace
     {
+        u64 frameCount = 0;
+
         math::Vector2 resolutionRender = math::Vector2{0, 0};
         math::Vector2 resolutionOutput = math::Vector2{0, 0};
         RHIViewport viewport           = RHIViewport(0, 0, 0, 0);
 
         std::shared_ptr<RHISwapchain> swapchain = nullptr;
-        RHICommandList* m_cmdList               = nullptr;
+        RHICommandList* m_currentCmdList        = nullptr;
 
-        FrameConstantData frameConstantData            = {};
         std::shared_ptr<RHIBuffer> frameConstantBuffer = nullptr;
 
         class RendererResourceProvider : public RHIResourceProvider
@@ -34,8 +34,7 @@ namespace worse
             RendererResourceProvider()           = default;
             ~RendererResourceProvider() override = default;
 
-            std::pair<RHIShader*, RHIShader*>
-            getPlaceholderShader() const override
+            std::pair<RHIShader*, RHIShader*> getPlaceholderShader() const override
             {
                 return {Renderer::getShader(RendererShader::PlaceholderV),
                         Renderer::getShader(RendererShader::PlaceholderP)};
@@ -92,19 +91,19 @@ namespace worse
                 Window::getHandleSDL(),
                 Window::getWidth(),
                 Window::getHeight(),
-                RHIConfig::enableVSync ? RHIPresentMode::FIFO
-                                       : RHIPresentMode::Immediate,
-                "swapchain");
+                RHIConfig::enableVSync ? RHIPresentMode::FIFO : RHIPresentMode::Immediate,
+                "default_swapchain");
         }
 
         // resources
         {
-            frameConstantBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
+            FrameConstantData frameConstantData = {};
+            frameConstantBuffer                 = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
                                                               sizeof(FrameConstantData),
                                                               1,
                                                               &frameConstantData,
                                                               true,
-                                                              "frameConstantBuffer");
+                                                              "frame_constant_buffer");
 
             Renderer::createRasterizerStates();
             Renderer::createDepthStencilStates();
@@ -122,7 +121,6 @@ namespace worse
         commands.emplaceResource<GlobalContext>();
         commands.emplaceResource<DrawcallStorage>();
         commands.emplaceResourceArray<StandardMaterial>();
-        commands.emplaceResourceArray<StandardMaterialGPU>();
         commands.emplaceResourceArray<TextureWrite>();
         commands.emplaceResource<AssetServer>();
     }
@@ -139,15 +137,12 @@ namespace worse
             commands.removeResource<GlobalContext>();
             commands.removeResource<DrawcallStorage>();
             commands.removeResourceArray<StandardMaterial>();
-            commands.removeResourceArray<StandardMaterialGPU>();
             commands.removeResourceArray<TextureWrite>();
 
             commands.removeResource<AssetServer>();
         }
 
         RHIDevice::destroy();
-
-        WS_LOG_DEBUG("Renderer", "Finished {} frame", s_frameCount);
     }
 
     void Renderer::tick(ecs::Resource<DrawcallStorage> drawcalls,
@@ -159,27 +154,28 @@ namespace worse
         swapchain->acquireNextImage();
 
         RHIQueue* graphicsQueue = RHIDevice::getQueue(RHIQueueType::Graphics);
-        m_cmdList               = graphicsQueue->nextCommandList();
-        m_cmdList->begin();
+        m_currentCmdList        = graphicsQueue->nextCommandList();
+        m_currentCmdList->begin();
 
-        if (s_frameCount != 0)
+        if (frameCount != 0)
         {
             RHIDevice::deletionQueueFlush();
         }
 
-        updateBuffers(m_cmdList, camera, globalContext);
+        updateBuffers(m_currentCmdList, camera, globalContext, textureWrites);
 
         // render passes
-        produceFrame(m_cmdList, globalContext, drawcalls, textureWrites);
+        produceFrame(m_currentCmdList, globalContext, drawcalls);
 
-        blitToBackBuffer(m_cmdList);
+        // 将渲染结果拷贝到交换链图像
+        blitToBackBuffer(m_currentCmdList);
 
         // [Sumbit] wait image acquire semaphore(swapchain)
         //          signal rendering semaphore(CommandList)
         // [Present] wait rendering semaphore(CommandList)
         Renderer::submitAndPresent();
 
-        ++s_frameCount;
+        ++frameCount;
     } // namespace worse
 
     RHISwapchain* Renderer::getSwapchain()
@@ -194,11 +190,11 @@ namespace worse
 
     void Renderer::submitAndPresent()
     {
-        if (m_cmdList->getState() == RHICommandListState::Recording)
+        if (m_currentCmdList->getState() == RHICommandListState::Recording)
         {
-            m_cmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource);
-            m_cmdList->submit(swapchain->getImageAcquireSemaphore());
-            swapchain->present(m_cmdList);
+            m_currentCmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource);
+            m_currentCmdList->submit(swapchain->getImageAcquireSemaphore());
+            swapchain->present(m_currentCmdList);
         }
     }
 
@@ -227,23 +223,36 @@ namespace worse
         RHIDevice::updateBindlessTextures(updates);
     }
 
-    void Renderer::updateBuffers(RHICommandList* cmdList, ecs::Resource<Camera> camera, ecs::Resource<GlobalContext> globalContext)
+    void Renderer::updateBuffers(
+        RHICommandList* cmdList,
+        ecs::Resource<Camera> camera,
+        ecs::Resource<GlobalContext> globalContext,
+        ecs::ResourceArray<TextureWrite> textureWrites)
     {
         // update frame constant data
 
-        frameConstantData.deltaTime  = globalContext->deltaTime;
-        frameConstantData.time       = globalContext->time;
-        frameConstantData.projection = camera->getProjectionMatrix();
+        FrameConstantData frameConstantData = {};
+        frameConstantData.cameraPosition    = camera->getPosition();
+        frameConstantData.cameraForward     = camera->getForward();
+        frameConstantData.deltaTime         = globalContext->deltaTime;
+        frameConstantData.time              = globalContext->time;
+        frameConstantData.projection        = camera->getProjectionMatrix();
+        frameConstantData.view              = camera->getViewMatrix();
+        frameConstantData.viewProjection    = frameConstantData.projection * frameConstantData.view;
 
-        frameConstantData.view           = camera->getViewMatrix();
-        frameConstantData.viewProjection = frameConstantData.projection * frameConstantData.view;
-
-        m_cmdList->updateBuffer(frameConstantBuffer.get(), 0, sizeof(FrameConstantData), &frameConstantData);
+        m_currentCmdList->updateBuffer(frameConstantBuffer.get(), 0, sizeof(FrameConstantData), &frameConstantData);
 
         // prepare descriptor
 
+        // 重置描述符池
         RHIDevice::resetDescriptorAllocator();
+
+        // 重新写入全局描述符集 FrameConstantData
         RHIDevice::writeGlobalDescriptorSet();
+        // 重新写入纹理数组
+        Renderer::writeBindlessTextures(textureWrites);
+
+        // 重置管线特定描述符集
         RHIDevice::resetSpecificDescriptorSets();
     }
 
@@ -276,16 +285,6 @@ namespace worse
     math::Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
-    }
-
-    void Renderer::setCameraPosition(math::Vector3 const& position)
-    {
-        frameConstantData.cameraPosition = position;
-    }
-
-    void Renderer::setCameraForward(math::Vector3 const& forward)
-    {
-        frameConstantData.cameraForward = forward;
     }
 
 } // namespace worse

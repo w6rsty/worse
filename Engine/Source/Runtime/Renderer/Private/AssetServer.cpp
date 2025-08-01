@@ -1,5 +1,6 @@
 #include "Log.hpp"
 #include "Definitions.hpp"
+#include "Math/Hash.hpp"
 #include "AssetServer.hpp"
 
 namespace worse
@@ -10,7 +11,7 @@ namespace worse
         unloadAll();
     }
 
-    AssetHandle AssetServer::submitLoading(std::filesystem::path const& path)
+    AssetHandle AssetServer::addTexture(std::filesystem::path const& path)
     {
         std::lock_guard<std::mutex> lock(m_mtx);
 
@@ -27,7 +28,40 @@ namespace worse
         }
 
         m_loadQueue.push(path);
-        m_assets.emplace(handle, AssetSlot{.texture = nullptr, .state = AssetState::Queued});
+        m_assets.emplace(handle, TextureAssetSlot{.texture = nullptr, .state = AssetState::Queued});
+        return handle;
+    }
+
+    AssetHandle AssetServer::addMaterial(StandardMaterial const& material)
+    {
+        std::lock_guard<std::mutex> lock(m_mtx);
+
+        AssetHandle handle{};
+        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.albedo.x));
+        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.albedo.y));
+        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.albedo.z));
+        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.albedo.w));
+        handle = math::hashCombine(handle, material.albedoTexture.value_or(AssetHandle{}));
+        handle = math::hashCombine(handle, material.normalTexture.value_or(AssetHandle{}));
+        handle = math::hashCombine(handle, material.metallicTexture.value_or(AssetHandle{}));
+        handle = math::hashCombine(handle, material.metallic);
+        handle = math::hashCombine(handle, material.roughnessTexture.value_or(AssetHandle{}));
+        handle = math::hashCombine(handle, material.roughness);
+        handle = math::hashCombine(handle, material.ambientOcclusionTexture.value_or(AssetHandle{}));
+        handle = math::hashCombine(handle, material.emissiveTexture.value_or(AssetHandle{}));
+        handle = math::hashCombine(handle, material.emissive.x);
+        handle = math::hashCombine(handle, material.emissive.y);
+        handle = math::hashCombine(handle, material.emissive.z);
+        handle = math::hashCombine(handle, material.emissive.w);
+
+        auto it = m_materials.find(handle);
+        if (it != m_materials.end())
+        {
+            WS_LOG_WARN("AssetServer", "Material already exists with handle {}", handle);
+            return handle;
+        }
+
+        m_materials.emplace(handle, MaterialAssetSlot{.material = std::move(material)});
         return handle;
     }
 
@@ -40,8 +74,8 @@ namespace worse
             std::filesystem::path path = m_loadQueue.front();
             m_loadQueue.pop();
 
-            AssetHandle handle = m_hasher(path);
-            AssetSlot& slot    = m_assets[handle];
+            AssetHandle handle     = m_hasher(path);
+            TextureAssetSlot& slot = m_assets[handle];
             WS_ASSERT_MSG(slot.state != AssetState::Loaded, "Asset already loaded");
 
             // Load the texture from the file system
@@ -82,6 +116,17 @@ namespace worse
                    : nullptr;
     }
 
+    StandardMaterial const* AssetServer::getMaterial(AssetHandle handle) const
+    {
+        std::lock_guard<std::mutex> lock(m_mtx);
+        auto it = m_materials.find(handle);
+        if (it != m_materials.end())
+        {
+            return &it->second.material;
+        }
+        return nullptr;
+    }
+
     void AssetServer::unload(AssetHandle const handle)
     {
         std::lock_guard<std::mutex> lock(m_mtx);
@@ -103,7 +148,7 @@ namespace worse
         }
     }
 
-    void AssetServer::clean()
+    void AssetServer::cleanSlots()
     {
         std::lock_guard<std::mutex> lock(m_mtx);
         auto it = m_assets.begin();
@@ -132,7 +177,7 @@ namespace worse
                              });
     }
 
-    void AssetServer::eachAsset(
+    void AssetServer::eachTexture(
         std::function<void(AssetHandle, RHITexture*)> const& callback) const
     {
         std::lock_guard<std::mutex> lock(m_mtx);

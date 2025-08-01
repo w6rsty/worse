@@ -56,8 +56,8 @@ namespace worse
         PushConstantData& setF30(math::Vector3 const& f30)            { values.f30 = f30; return *this; }
         PushConstantData& setF31(math::Vector3 const& f31)            { values.f31 = f31; return *this; }
         PushConstantData& setF4(math::Vector4 const& f4)              { values.f4 = f4; return *this; }
-        PushConstantData& setMaterialId(u32 const id) { values.materialId = static_cast<u32>(id); return *this; }
-        PushConstantData& setTransparent(bool const enable)     { values.transparent = enable ? 1.0f : 0.0f; return *this; }
+        PushConstantData& setMaterialId(u32 const id)                 { values.materialId = static_cast<u32>(id); return *this; }
+        PushConstantData& setTransparent(bool const enable)           { values.transparent = enable ? 1.0f : 0.0f; return *this; }
         PushConstantData& setPadding(f32 const p0, f32 const p1)
         {
             values.padding[0] = p0;

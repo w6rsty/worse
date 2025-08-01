@@ -3,36 +3,14 @@
 #include "RendererDefinitions.hpp"
 
 #include "ECS/Resource.hpp"
-#include "ECS/QueryView.hpp"
-
-#include <optional>
 
 namespace worse
 {
+
     // ECS index
     struct MeshMaterial
     {
         usize index;
-    };
-
-    // Renderer texture
-    struct StandardMaterial
-    {
-        math::Vector4 albedo                     = math::Vector4::ONE();
-        std::optional<AssetHandle> albedoTexture = std::nullopt;
-
-        std::optional<AssetHandle> normalTexture = std::nullopt;
-
-        f32 metallic                               = 1.0f;
-        std::optional<AssetHandle> metallicTexture = std::nullopt;
-
-        f32 roughness                               = 1.0f;
-        std::optional<AssetHandle> roughnessTexture = std::nullopt;
-
-        std::optional<AssetHandle> ambientOcclusionTexture = std::nullopt;
-
-        math::Vector4 emissive                     = math::Vector4::ZERO();
-        std::optional<AssetHandle> emissiveTexture = std::nullopt;
     };
 
     struct StandardMaterialGPU
@@ -49,14 +27,17 @@ namespace worse
         math::Vector4 emissive;
     };
 
-    // clang-format off
+    /**
+     * @brief 编排初始化中注册的材质
+     *
+     * @param materialView 材质索引
+     * @param assetServer 资源服务器
+     * @param materials
+     * @param textureWrites
+     */
     void buildMaterials(
-        ecs::QueryView<MeshMaterial> materialView,
         ecs::Resource<AssetServer> assetServer,
-        ecs::ResourceArray<TextureWrite> textureWrites,
         ecs::ResourceArray<StandardMaterial> materials,
-        ecs::ResourceArray<StandardMaterialGPU> materialGPUs
-    );
-    // clang-format on 
+        ecs::ResourceArray<TextureWrite> textureWrites);
 
 } // namespace worse

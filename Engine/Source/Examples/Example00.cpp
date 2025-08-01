@@ -254,10 +254,6 @@ public:
             camera->setOrientation(newOrientation);
         }
 
-        // 更新渲染器
-        Renderer::setCameraPosition(camera->getPosition());
-        Renderer::setCameraForward(camera->getForward());
-
         if (Input::isKeyDown(KeyCode::P))
         {
             globalContext->isWireFrameMode = !globalContext->isWireFrameMode;
@@ -354,17 +350,6 @@ public:
         frameTimer.reset();
     }
     // clang-format on
-
-    static void cleanup(ecs::Commands commands, ecs::QueryView<Mesh3D> view)
-    {
-        view.each([&commands](ecs::Entity entity, Mesh3D& mesh)
-                  {
-                      if (mesh.mesh)
-                      {
-                          mesh.mesh.reset();
-                      }
-                  });
-    }
 };
 
 int main()
@@ -387,7 +372,6 @@ int main()
     schedule.addSystem<ecs::CoreStage::Update, buildDrawcalls>();
     schedule.addSystem<ecs::CoreStage::Update, &Renderer::tick>();
 
-    schedule.addSystem<ecs::CoreStage::CleanUp, &World::cleanup>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &ImGuiRenderer::shutdown>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &Renderer::shutdown>();
     schedule.addSystem<ecs::CoreStage::CleanUp, &Engine::shutdown>();

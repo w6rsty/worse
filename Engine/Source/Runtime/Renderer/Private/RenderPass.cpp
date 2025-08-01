@@ -25,7 +25,7 @@ namespace worse
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
-            if (Mesh* mesh = drawcall.mesh.lock().get())
+            if (Mesh* mesh = drawcall.mesh)
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
                 cmdList->setBufferIndex(mesh->getIndexBuffer());
@@ -55,7 +55,7 @@ namespace worse
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
-            if (Mesh* mesh = drawcall.mesh.lock().get())
+            if (Mesh* mesh = drawcall.mesh)
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
                 cmdList->setBufferIndex(mesh->getIndexBuffer());
@@ -73,7 +73,7 @@ namespace worse
         for (Drawcall const& drawcall : drawcalls->point)
         {
 
-            if (Mesh* mesh = drawcall.mesh.lock().get())
+            if (Mesh* mesh = drawcall.mesh)
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
 
@@ -95,7 +95,7 @@ namespace worse
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
-            if (Mesh* mesh = drawcall.mesh.lock().get())
+            if (Mesh* mesh = drawcall.mesh)
             {
 
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
@@ -154,11 +154,8 @@ namespace worse
 
     void Renderer::produceFrame(RHICommandList* cmdList,
                                 ecs::Resource<GlobalContext> globalContext,
-                                ecs::Resource<DrawcallStorage> drawcalls,
-                                ecs::ResourceArray<TextureWrite> textureWrites)
+                                ecs::Resource<DrawcallStorage> drawcalls)
     {
-        Renderer::writeBindlessTextures(textureWrites);
-
         passDpethPrepass(cmdList, drawcalls);
 
         passColor(cmdList, drawcalls);

@@ -27,7 +27,7 @@ namespace worse
         EnumArray<RendererShader, std::shared_ptr<RHIShader>>                       shaders;
         EnumArray<RendererTexture, std::shared_ptr<RHITexture>>                     textures;
         EnumArray<RHISamplerType, std::shared_ptr<RHISampler>>                      samplers;
-        EnumArray<geometry::GeometryType, std::shared_ptr<Mesh>>                    standardMeshes;
+        EnumArray<geometry::GeometryType, std::unique_ptr<Mesh>>                    standardMeshes;
         EnumArray<RendererPSO, RHIPipelineState>                                    pipelineStates;
 
         std::shared_ptr<RHIBuffer> materialBuffer;
@@ -260,7 +260,7 @@ namespace worse
 
         // clang-format off
         geometry::generateQuad3D(vertices, indices);
-        standardMeshes[geometry::GeometryType::Quad3D] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Quad3D] = std::make_unique<Mesh>();
         standardMeshes[geometry::GeometryType::Quad3D]->addGeometry(vertices,indices);
         standardMeshes[geometry::GeometryType::Quad3D]->createGPUBuffers();
 
@@ -268,7 +268,7 @@ namespace worse
         indices.clear();
 
         geometry::generateCube(vertices, indices);
-        standardMeshes[geometry::GeometryType::Cube] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Cube] = std::make_unique<Mesh>();
         standardMeshes[geometry::GeometryType::Cube]->addGeometry(vertices, indices);
         standardMeshes[geometry::GeometryType::Cube]->createGPUBuffers();
 
@@ -276,7 +276,7 @@ namespace worse
         indices.clear();
 
         geometry::generateSphere(vertices, indices);
-        standardMeshes[geometry::GeometryType::Sphere] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Sphere] = std::make_unique<Mesh>();
         standardMeshes[geometry::GeometryType::Sphere]->addGeometry(vertices, indices);
         standardMeshes[geometry::GeometryType::Sphere]->createGPUBuffers();
 
@@ -284,7 +284,7 @@ namespace worse
         indices.clear();
 
         geometry::generateCylinder(vertices, indices);
-        standardMeshes[geometry::GeometryType::Cylinder] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Cylinder] = std::make_unique<Mesh>();
         standardMeshes[geometry::GeometryType::Cylinder]->addGeometry(vertices, indices);
         standardMeshes[geometry::GeometryType::Cylinder]->createGPUBuffers();
 
@@ -292,7 +292,7 @@ namespace worse
         indices.clear();
 
         geometry::generateCapsule(vertices, indices);
-        standardMeshes[geometry::GeometryType::Capsule] = std::make_shared<Mesh>();
+        standardMeshes[geometry::GeometryType::Capsule] = std::make_unique<Mesh>();
         standardMeshes[geometry::GeometryType::Capsule]->addGeometry(vertices, indices);
         standardMeshes[geometry::GeometryType::Capsule]->createGPUBuffers();
         // clang-format on
@@ -381,16 +381,14 @@ namespace worse
         // clang-format on
     }
 
-    void
-    Renderer::createMaterialBuffers(std::span<StandardMaterialGPU> materials)
+    void Renderer::createMaterialBuffers(std::span<StandardMaterialGPU> materials)
     {
-        materialBuffer =
-            std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Storage,
-                                        sizeof(StandardMaterialGPU),
-                                        materials.size(),
-                                        materials.data(),
-                                        false,
-                                        "MaterialBuffer");
+        materialBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Storage,
+                                                     sizeof(StandardMaterialGPU),
+                                                     materials.size(),
+                                                     materials.data(),
+                                                     false,
+                                                     "MaterialBuffer");
     }
 
     void Renderer::destroyResources()
@@ -402,7 +400,10 @@ namespace worse
         shaders.fill(nullptr);
         textures.fill(nullptr);
         samplers.fill(nullptr);
-        standardMeshes.fill(nullptr);
+        for (auto& mesh : standardMeshes)
+        {
+            mesh.reset();
+        }
         // pipelineStates
         materialBuffer.reset();
     }
@@ -444,9 +445,9 @@ namespace worse
         return samplers[sampler].get();
     }
 
-    std::shared_ptr<Mesh> Renderer::getStandardMesh(geometry::GeometryType const type)
+    Mesh* Renderer::getStandardMesh(geometry::GeometryType const type)
     {
-        return standardMeshes[type];
+        return standardMeshes[type].get();
     }
 
     RHIPipelineState const& Renderer::getPipelineState(RendererPSO const pso)

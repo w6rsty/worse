@@ -631,8 +631,7 @@ namespace worse
         vkCmdBindIndexBuffer(m_handle.asValue<VkCommandBuffer>(), indexBuffer, offset, indexType);
     }
 
-    void RHICommandList::updateBuffer(RHIBuffer* buffer, u32 const offset,
-                                      u32 const size, void const* data)
+    void RHICommandList::updateBuffer(RHIBuffer* buffer, u32 const offset, u32 const size, void const* data)
     {
         // clang-format off
         bool synchronizeUpdate = true;

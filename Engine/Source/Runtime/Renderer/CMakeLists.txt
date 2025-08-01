@@ -27,4 +27,5 @@ target_link_libraries(${MODULE_NAME} PUBLIC
     Worse::Core
     Worse::RHI
     Worse::ECS
+    fastgltf
 )
