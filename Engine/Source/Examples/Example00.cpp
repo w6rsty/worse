@@ -39,7 +39,7 @@ public:
     inline static ecs::Entity player         = ecs::Entity::null();
     inline static float cameraMoveSpeed      = 5.0f;
     inline static float cameraLookSpeed      = 5.0f;
-    inline static math::Vector3 cameraOffset = math::Vector3{3.0f, 1.2f, 2.5f}; // 相机相对于 player 的偏移
+    inline static math::Vector3 cameraOffset = math::Vector3{0.0f, 0.2f, 2.5f}; // 相机相对于 player 的偏移
 
     inline static std::unique_ptr<Mesh> customMesh = nullptr;
 
@@ -121,7 +121,7 @@ public:
 
         // clang-format on
 
-        gltfManager->load(std::filesystem::path{EngineDirectory} / "Binary/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb", "helmet");
+        gltfManager->load(std::string(EngineDirectory) + "/Binary/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb", "helmet");
     }
 
     static void inputControll(
