@@ -314,7 +314,7 @@ namespace worse
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
-                .setClearColor(Color{0.2f, 0.2f, 0.2f, 1.0f})
+                .setClearColor(Color{0.02f, 0.02f, 0.02f, 1.0f})
                 .setClearDepth(2.0f)
                 .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PBR]);

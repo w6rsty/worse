@@ -39,7 +39,7 @@ public:
     inline static ecs::Entity player         = ecs::Entity::null();
     inline static float cameraMoveSpeed      = 5.0f;
     inline static float cameraLookSpeed      = 5.0f;
-    inline static math::Vector3 cameraOffset = math::Vector3{0.0f, 0.0f, 5.0f}; // 相机相对于 player 的偏移
+    inline static math::Vector3 cameraOffset = math::Vector3{3.0f, 1.2f, 2.5f}; // 相机相对于 player 的偏移
 
     inline static std::unique_ptr<Mesh> customMesh = nullptr;
 
@@ -246,18 +246,32 @@ public:
         ecs::ResourceArray<StandardMaterial> materials,
         ecs::Resource<AssetServer> assetServer)
     {
-        player = commands.spawn(
-            LocalTransform{},
+        commands.spawn(
+            LocalTransform{
+                .position = math::Vector3{0.0f, -1.0f, 0.0f},
+                .scale = math::Vector3(10, 0.1, 5),
+            },
             Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Cube)},
             MeshMaterial{materials->add(StandardMaterial{
-                .baseColor = math::Vector4(1.0f, 0.4f, 0.1f, 1.0f),
-                .metallic  = 0.1f,
+                .baseColor = math::Vector4(0.7f, 0.7f, 0.85f, 1.0f),
+                .metallic  = 0.3f,
                 .roughness = 0.8f,
+            })});
+
+        player = commands.spawn(
+            LocalTransform{},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere), RHIPrimitiveTopology::PointList},
+            MeshMaterial{materials->add(StandardMaterial{
+                .baseColor = math::Vector4(1, 0, 0, 1.0f),
             })});
     }
 
     static void drawglTFModel(ecs::Resource<glTFManager> gltfManager, ecs::Resource<DrawcallStorage> drawcallStorage)
     {
+        math::Matrix4 xform1 = math::makeSRT(
+            math::Vector3::ONE(),
+            math::Quaternion::IDENTITY(),
+            math::Vector3::ZERO());
         drawModel("helmet", math::Matrix4::IDENTITY(), *gltfManager.get(), drawcallStorage->ctx);
     }
 
