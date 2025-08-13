@@ -59,6 +59,42 @@ namespace worse
         return handle;
     }
 
+    AssetHandle AssetServer::addTextureMetallicRoughness(
+        std::filesystem::path const& pathMetallic,
+        std::filesystem::path const& pathRoughness)
+    {
+        std::hash<std::filesystem::path> hasher;
+        AssetHandle handle = {};
+        handle             = math::hashCombine(handle, hasher(pathMetallic));
+        handle             = math::hashCombine(handle, hasher(pathRoughness));
+
+        std::lock_guard<std::mutex> lock(m_mtxTexture);
+        auto it = m_textures.find(handle);
+        if (it != m_textures.end())
+        {
+            return handle; // already exists
+        }
+
+        std::string name                    = pathMetallic.filename().string() + "_" + pathRoughness.filename().string();
+        std::shared_ptr<RHITexture> texture = std::make_shared<RHITexture>(
+            pathMetallic,
+            pathRoughness,
+            std::filesystem::path{},
+            std::filesystem::path{},
+            name);
+        if (texture->isValid())
+        {
+            m_textures.emplace(handle, TextureAssetSlot{.texture = std::move(texture), .state = AssetState::Loaded});
+        }
+        else
+        {
+            m_textures.emplace(handle, TextureAssetSlot{.texture = nullptr, .state = AssetState::Failed});
+            WS_LOG_ERROR("AssetServer", "Failed to load metallic/roughness texture: {} and {}", pathMetallic.string(), pathRoughness.string());
+        }
+
+        return handle;
+    }
+
     AssetHandle AssetServer::addTexture(std::span<byte> data, std::string const& name)
     {
         if (data.empty())

@@ -119,7 +119,7 @@ PixelOutput main_ps(VertexOutput input)
     float3 color = emissive + Lo + ambient;
 
     output.color = float4(color, 1.0);
-    output.normal = float4(input.position.z, 0.0, 0.0, 1.0);
+    output.normal = float4(N, 1.0);
 
     return output;
 }

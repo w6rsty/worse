@@ -246,17 +246,22 @@ public:
         ecs::ResourceArray<StandardMaterial> materials,
         ecs::Resource<AssetServer> assetServer)
     {
+        usize grass = materials->add({
+            .baseColorTexture         = assetServer->addTexture(std::filesystem::path{EngineDirectory} / "Binary/Materials/square_block_vegetation/albedo.png"),
+            .normalTexture            = assetServer->addTexture(std::filesystem::path{EngineDirectory} / "Binary/Materials/square_block_vegetation/normal-ogl.png"),
+            .metallicRoughnessTexture = assetServer->addTextureMetallicRoughness(
+                std::filesystem::path{EngineDirectory} / "Binary/Materials/square_block_vegetation/metallic.png",
+                std::filesystem::path{EngineDirectory} / "Binary/Materials/square_block_vegetation/roughness.png"),
+            .ambientOcclusionTexture = assetServer->addTexture(std::filesystem::path{EngineDirectory} / "Binary/Materials/square_block_vegetation/ao.png"),
+        });
+
         commands.spawn(
             LocalTransform{
                 .position = math::Vector3{0.0f, -1.0f, 0.0f},
-                .scale = math::Vector3(10, 0.1, 5),
+                .scale    = math::Vector3(10, 0.1, 5),
             },
             Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Cube)},
-            MeshMaterial{materials->add(StandardMaterial{
-                .baseColor = math::Vector4(0.7f, 0.7f, 0.85f, 1.0f),
-                .metallic  = 0.3f,
-                .roughness = 0.8f,
-            })});
+            MeshMaterial{grass});
 
         player = commands.spawn(
             LocalTransform{},
@@ -271,7 +276,7 @@ public:
         math::Matrix4 xform1 = math::makeSRT(
             math::Vector3::ONE(),
             math::Quaternion::IDENTITY(),
-            math::Vector3::ZERO());
+            math::Vector3(2, 0, 0));
         drawModel("helmet", math::Matrix4::IDENTITY(), *gltfManager.get(), drawcallStorage->ctx);
     }
 

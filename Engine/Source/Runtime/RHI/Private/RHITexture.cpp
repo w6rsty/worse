@@ -88,6 +88,40 @@ namespace worse
         }
     }
 
+    RHITexture::RHITexture(std::filesystem::path const& rPath,
+                           std::filesystem::path const& gPath,
+                           std::filesystem::path const& bPath,
+                           std::filesystem::path const& aPath,
+                           std::string const& name)
+    {
+        if (std::optional<TextureLoadView> view = TextureImporter::combine(
+                TextureImporter::fromFile(rPath),
+                TextureImporter::fromFile(gPath),
+                TextureImporter::fromFile(bPath),
+                TextureImporter::fromFile(aPath)))
+        {
+            m_name     = name;
+            m_type     = view->type;
+            m_width    = view->width;
+            m_height   = view->height;
+            m_depth    = view->depth;
+            m_mipCount = view->mipLevels;
+            m_format   = view->format;
+            m_usage    = RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit;
+
+            m_slices.resize(view->layers);            // only 1 now, no array
+            m_slices[0].mips.resize(view->mipLevels); // mip 0 only
+            m_slices[0].mips[0].bytes.resize(view->size);
+
+            view->deferredCopyFn(reinterpret_cast<byte*>(m_slices[0].mips[0].bytes.data()));
+
+            if (!nativeCreate())
+            {
+                WS_LOG_ERROR("RHITexture", "Failed to create combined texture: {}", name);
+            }
+        }
+    }
+
     RHITexture::~RHITexture()
     {
         RHIDevice::deletionQueueAdd(m_rtv);

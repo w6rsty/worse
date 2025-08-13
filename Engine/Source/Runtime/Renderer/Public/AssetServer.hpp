@@ -77,10 +77,18 @@ namespace worse
         AssetHandle addTexture(std::filesystem::path const& path, LoadStrategy strategy = LoadStrategy::Deferred);
 
         /**
-         * @brief 使用内存中的数据立即创建纹理
+         * @brief 将独立的金属度和粗糙度纹理文件合并加载
          *
-         * @param data 纹理数据
-         * @return AssetHandle 资源句柄
+         * @note 立即加载
+         */
+        AssetHandle addTextureMetallicRoughness(
+            std::filesystem::path const& pathMetallic,
+            std::filesystem::path const& pathRoughness);
+
+        /**
+         * @brief 使用内存中的数据创建纹理
+         *
+         * @note 立即加载
          */
         AssetHandle addTexture(std::span<byte> data, std::string const& name);
 

@@ -95,13 +95,18 @@ namespace worse
         }
     } // namespace
 
-    std::optional<TextureLoadView>
-    TextureImporter::fromFile(std::filesystem::path const& path)
+    std::optional<TextureLoadView> TextureImporter::fromFile(std::filesystem::path const& path)
     {
+        // 传入空路径是有意提前退出
+        if (path.empty())
+        {
+            return std::nullopt;
+        }
+
         // 检查文件是否存在
         if (!FileSystem::isFileExists(path))
         {
-            WS_LOG_ERROR("Asset", "Failed to load texture. File {} not found", path.string());
+            WS_LOG_WARN("Asset", "Failed to load texture. File {} not found", path.string());
             return {};
         }
 
@@ -131,8 +136,7 @@ namespace worse
         return std::nullopt;
     }
 
-    std::optional<TextureLoadView>
-    TextureImporter::fromMemory(std::span<byte> data, std::string const& name)
+    std::optional<TextureLoadView> TextureImporter::fromMemory(std::span<byte> data, std::string const& name)
     {
         if (std::optional<TextureLoadView> textureData = std::move(loadFromMemoryCommon(data)))
         {
@@ -150,6 +154,78 @@ namespace worse
         }
 
         return std::nullopt;
+    }
+
+    std::optional<TextureLoadView> TextureImporter::combine(std::optional<TextureLoadView> r,
+                                                            std::optional<TextureLoadView> g,
+                                                            std::optional<TextureLoadView> b,
+                                                            std::optional<TextureLoadView> a)
+    {
+        // 至少一个通道必须存在
+        if (!r && !g && !b && !a)
+        {
+            return std::nullopt;
+        }
+
+        TextureLoadView const& ref = r ? *r : g ? *g
+                                          : b   ? *b
+                                                : *a;
+
+        auto checkMatch = [&](const std::optional<TextureLoadView>& opt) -> bool
+        {
+            if (!opt)
+            {
+                return true;
+            }
+            return (opt->width == ref.width) && (opt->height == ref.height) && (opt->depth == ref.depth);
+        };
+
+        if (!checkMatch(r) || !checkMatch(g) || !checkMatch(b) || !checkMatch(a))
+        {
+            return std::nullopt;
+        }
+
+        TextureLoadView out;
+        out.width     = ref.width;
+        out.height    = ref.height;
+        out.depth     = 1;
+        out.layers    = 1;
+        out.mipLevels = 1;
+        out.type      = ref.type;
+        out.format    = RHIFormat::R8G8B8A8Unorm;
+        out.size      = static_cast<usize>(out.width) * out.height * 4;
+
+        out.deferredCopyFn = [r, g, b, a, out](byte* dst)
+        {
+            // 中间缓冲区
+            std::vector<byte> bufR, bufG, bufB, bufA;
+
+            auto loadIf = [&](std::optional<TextureLoadView> const& opt, std::vector<byte>& buf)
+            {
+                if (!opt)
+                {
+                    return;
+                }
+                buf.resize(opt->size);
+                opt->deferredCopyFn(buf.data());
+            };
+
+            loadIf(r, bufR);
+            loadIf(g, bufG);
+            loadIf(b, bufB);
+            loadIf(a, bufA);
+
+            usize pixelCount = static_cast<usize>(out.width) * out.height;
+            for (usize i = 0; i < pixelCount; ++i)
+            {
+                dst[i * 4 + 0] = r ? bufR[i * 4 + 0] : std::byte{0};
+                dst[i * 4 + 1] = g ? bufG[i * 4 + 0] : std::byte{0};
+                dst[i * 4 + 2] = b ? bufB[i * 4 + 0] : std::byte{0};
+                dst[i * 4 + 3] = a ? bufA[i * 4 + 0] : std::byte{0};
+            }
+        };
+
+        return out;
     }
 
 } // namespace worse

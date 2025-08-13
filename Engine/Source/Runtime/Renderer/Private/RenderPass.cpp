@@ -56,6 +56,7 @@ namespace worse
     {
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PBR));
 
+        // 材质缓冲
         std::array updates = {
             RHIDescriptorWrite{.reg      = 0, // t0
                                .resource = {Renderer::getMaterialBuffer()},
@@ -72,8 +73,8 @@ namespace worse
 
                 pushConstantData.setModel(drawcall.transform);
                 pushConstantData.setMaterialId(drawcall.materialIndex);
-
                 cmdList->pushConstants(pushConstantData.asSpan());
+                
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
             }
         }
@@ -94,7 +95,6 @@ namespace worse
 
         for (Drawcall const& drawcall : drawcalls->point)
         {
-
             if (Mesh* mesh = drawcall.mesh)
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());

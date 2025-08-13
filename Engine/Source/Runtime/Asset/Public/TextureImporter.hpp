@@ -33,11 +33,17 @@ namespace worse
     class TextureImporter
     {
     public:
-        static std::optional<TextureLoadView>
-        fromFile(std::filesystem::path const& filepath);
+        static std::optional<TextureLoadView> fromFile(std::filesystem::path const& filepath);
 
-        static std::optional<TextureLoadView>
-        fromMemory(std::span<byte> data, std::string const& name);
+        static std::optional<TextureLoadView> fromMemory(std::span<byte> data, std::string const& name);
+
+        /**
+         * @brief 将多个单通道纹理合并
+         */
+        static std::optional<TextureLoadView> combine(std::optional<TextureLoadView> r = std::nullopt,
+                                                      std::optional<TextureLoadView> g = std::nullopt,
+                                                      std::optional<TextureLoadView> b = std::nullopt,
+                                                      std::optional<TextureLoadView> a = std::nullopt);
     };
 
 } // namespace worse

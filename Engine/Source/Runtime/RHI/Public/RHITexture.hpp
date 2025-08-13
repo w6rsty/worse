@@ -58,6 +58,14 @@ namespace worse
          * @brief 从内存数据创建纹理
          */
         RHITexture(std::span<byte> data, std::string const& name);
+        /**
+         * @brief 从多个通道的纹理文件创建纹理
+         */
+        RHITexture(std::filesystem::path const& rPath,
+                   std::filesystem::path const& gPath,
+                   std::filesystem::path const& bPath,
+                   std::filesystem::path const& aPath,
+                   std::string const& name);
         ~RHITexture();
 
         RHIImageLayout getImageLayout() const;
