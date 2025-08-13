@@ -78,86 +78,89 @@ namespace worse::geometry
         vertices.reserve(24);
         indices.reserve(36);
 
-        // clang-format off
-    
-        //                       +Y       +Z
-        //                        ^       ^
-        //                        |     /    
-        //                   +----|----/----+
-        //                  /|    |   /    /|
-        //                 / |    |  /    / |
-        //                /  |    | /    /  |
-        //               +---+----|/----+   |
-        //     -X - - - -|- -|- - * - - |- -|- - - - > +X
-        //               |   +---/|-----+---+
-        //               |  /   / |     |  /
-        //               | /   /  |     | /
-        //               |/   /   |     |/
-        //               +---/----|-----+
-        //                  /     |     
-        //               -Z       -Y     
-
         // front
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 0
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 1
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 2
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 3
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 0, -1), Vector4(1, 0, 0, 1)); // 0
+        vertices.emplace_back(Vector3(-0.5f * width, 0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, 0, -1), Vector4(1, 0, 0, 1));  // 1
+        vertices.emplace_back(Vector3(0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 0, -1), Vector4(1, 0, 0, 1));  // 2
+        vertices.emplace_back(Vector3(0.5f * width, 0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, 0, -1), Vector4(1, 0, 0, 1));   // 3
 
         // bottom
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 4
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, 0.5f * depth), Vector2(0, 1), Vector3(0, -1, 0), Vector4(1, 0, 0, 1));  // 4
         vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 5
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 6
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 7
+        vertices.emplace_back(Vector3(0.5f * width, -0.5f * height, 0.5f * depth), Vector2(1, 1), Vector3(0, -1, 0), Vector4(1, 0, 0, 1));   // 6
+        vertices.emplace_back(Vector3(0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, -1, 0), Vector4(1, 0, 0, 1));  // 7
 
         // back
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 8
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 9
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 10
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 11
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, 0.5f * depth), Vector2(1, 1), Vector3(0, 0, 1), Vector4(-1, 0, 0, 1)); // 8
+        vertices.emplace_back(Vector3(-0.5f * width, 0.5f * height, 0.5f * depth), Vector2(1, 0), Vector3(0, 0, 1), Vector4(-1, 0, 0, 1));  // 9
+        vertices.emplace_back(Vector3(0.5f * width, -0.5f * height, 0.5f * depth), Vector2(0, 1), Vector3(0, 0, 1), Vector4(-1, 0, 0, 1));  // 10
+        vertices.emplace_back(Vector3(0.5f * width, 0.5f * height, 0.5f * depth), Vector2(0, 0), Vector3(0, 0, 1), Vector4(-1, 0, 0, 1));   // 11
 
         // top
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 12
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 13
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 14
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 15
+        vertices.emplace_back(Vector3(-0.5f * width, 0.5f * height, 0.5f * depth), Vector2(0, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1));  // 12
+        vertices.emplace_back(Vector3(-0.5f * width, 0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 13
+        vertices.emplace_back(Vector3(0.5f * width, 0.5f * height, 0.5f * depth), Vector2(1, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1));   // 14
+        vertices.emplace_back(Vector3(0.5f * width, 0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1));  // 15
 
         // left
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 16
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 17
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 18
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 19
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, 0.5f * depth), Vector2(0, 1), Vector3(-1, 0, 0), Vector4(0, 0, -1, 1));  // 16
+        vertices.emplace_back(Vector3(-0.5f * width, 0.5f * height, 0.5f * depth), Vector2(0, 0), Vector3(-1, 0, 0), Vector4(0, 0, -1, 1));   // 17
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(-1, 0, 0), Vector4(0, 0, -1, 1)); // 18
+        vertices.emplace_back(Vector3(-0.5f * width, 0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(-1, 0, 0), Vector4(0, 0, -1, 1));  // 19
 
         // right
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 20
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 21
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 22
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 23
+        vertices.emplace_back(Vector3(0.5f * width, -0.5f * height, 0.5f * depth), Vector2(1, 1), Vector3(1, 0, 0), Vector4(0, 0, 1, 1));  // 20
+        vertices.emplace_back(Vector3(0.5f * width, 0.5f * height, 0.5f * depth), Vector2(1, 0), Vector3(1, 0, 0), Vector4(0, 0, 1, 1));   // 21
+        vertices.emplace_back(Vector3(0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(1, 0, 0), Vector4(0, 0, 1, 1)); // 22
+        vertices.emplace_back(Vector3(0.5f * width, 0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(1, 0, 0), Vector4(0, 0, 1, 1));  // 23
 
         // front (CCW when viewed from outside)
-        indices.emplace_back(0); indices.emplace_back(1); indices.emplace_back(2);
-        indices.emplace_back(2); indices.emplace_back(1); indices.emplace_back(3);
+        indices.emplace_back(0);
+        indices.emplace_back(2);
+        indices.emplace_back(1);
+        indices.emplace_back(2);
+        indices.emplace_back(3);
+        indices.emplace_back(1);
 
         // bottom (CCW when viewed from outside)
-        indices.emplace_back(4); indices.emplace_back(5); indices.emplace_back(6);
-        indices.emplace_back(6); indices.emplace_back(5); indices.emplace_back(7);
+        indices.emplace_back(4);
+        indices.emplace_back(6);
+        indices.emplace_back(5);
+        indices.emplace_back(6);
+        indices.emplace_back(7);
+        indices.emplace_back(5);
 
         // back (CCW when viewed from outside)
-        indices.emplace_back(8); indices.emplace_back(10); indices.emplace_back(9);
-        indices.emplace_back(9); indices.emplace_back(10); indices.emplace_back(11);
+        indices.emplace_back(8);
+        indices.emplace_back(10);
+        indices.emplace_back(9);
+        indices.emplace_back(9);
+        indices.emplace_back(10);
+        indices.emplace_back(11);
 
         // top (CCW when viewed from outside)
-        indices.emplace_back(12); indices.emplace_back(14); indices.emplace_back(13);
-        indices.emplace_back(13); indices.emplace_back(14); indices.emplace_back(15);
+        indices.emplace_back(12);
+        indices.emplace_back(14);
+        indices.emplace_back(13);
+        indices.emplace_back(13);
+        indices.emplace_back(14);
+        indices.emplace_back(15);
 
         // left (CCW when viewed from outside)
-        indices.emplace_back(16); indices.emplace_back(17); indices.emplace_back(18);
-        indices.emplace_back(18); indices.emplace_back(17); indices.emplace_back(19);
+        indices.emplace_back(16);
+        indices.emplace_back(17);
+        indices.emplace_back(18);
+        indices.emplace_back(18);
+        indices.emplace_back(17);
+        indices.emplace_back(19);
 
         // right (CCW when viewed from outside)
-        indices.emplace_back(20); indices.emplace_back(22); indices.emplace_back(21);
-        indices.emplace_back(21); indices.emplace_back(22); indices.emplace_back(23);
-
-        // clang-format on
+        indices.emplace_back(20);
+        indices.emplace_back(22);
+        indices.emplace_back(21);
+        indices.emplace_back(21);
+        indices.emplace_back(22);
+        indices.emplace_back(23);
     }
 
     static void generateSphere(std::vector<RHIVertexPosUvNrmTan>& vertices,
@@ -501,9 +504,9 @@ namespace worse::geometry
 
                 Vector3 position(x, y, z);
                 Vector2 uv(u, v_ratio);
-                Vector3 normal = normalize(Vector3(x, 0.0f, z) + normal_y_dir * radius);
+                Vector3 normal   = normalize(Vector3(x, 0.0f, z) + normal_y_dir * radius);
                 float handedness = (s % 2 == 0) ? 1.0f : -1.0f;
-                Vector4 tangent = Vector4(normalize(Vector3(-sinTheta, 0.0f, cosTheta)), handedness);
+                Vector4 tangent  = Vector4(normalize(Vector3(-sinTheta, 0.0f, cosTheta)), handedness);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
