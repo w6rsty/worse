@@ -194,12 +194,13 @@ namespace worse
 
         passColor(cmdList, drawcalls, assetServer);
 
+        passPostProcessing(cmdList);
+        
         if (globalContext->isWireFrameMode)
         {
             passWireFrame(cmdList, drawcalls);
         }
 
-        passPostProcessing(cmdList);
 
         passImGui(cmdList);
 

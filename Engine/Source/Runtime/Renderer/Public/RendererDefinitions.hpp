@@ -36,15 +36,13 @@ namespace worse
         PlaceholderP,
         DepthPrepassV,
         DepthPrepassP,
-        KuwaharaC,
+        PostFXC,
         LineV,
         LineP,
         PointV,
         PointP,
         PBRV,
         PBRP,
-        DistortionV,
-        DistortionP,
         Max
     };
 

@@ -95,4 +95,7 @@ struct Material
     float4 emissive;
 };
 
+// Constants
+static float const PI = 3.14159265359;
+
 #endif // WS_COMMON_HLSL

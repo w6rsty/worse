@@ -93,8 +93,8 @@ namespace worse
         shaders[RendererShader::DepthPrepassP] = std::make_shared<RHIShader>("DepthPrepassP");
         shaders[RendererShader::DepthPrepassP]->compile(shaderDir / "DepthPrepass.hlsl", RHIShaderType::Pixel);
 
-        shaders[RendererShader::KuwaharaC] = std::make_shared<RHIShader>("KuwaharaC");
-        shaders[RendererShader::KuwaharaC]->compile(shaderDir / "Kuwahara.hlsl", RHIShaderType::Compute);
+        shaders[RendererShader::PostFXC] = std::make_shared<RHIShader>("PostFXC");
+        shaders[RendererShader::PostFXC]->compile(shaderDir / "PostFX.hlsl", RHIShaderType::Compute);
 
         shaders[RendererShader::LineV] = std::make_shared<RHIShader>("LineV");
         shaders[RendererShader::LineV]->compile(shaderDir / "Line.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
@@ -110,11 +110,6 @@ namespace worse
         shaders[RendererShader::PBRV]->compile(shaderDir / "PBR.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
         shaders[RendererShader::PBRP] = std::make_shared<RHIShader>("PBRP");
         shaders[RendererShader::PBRP]->compile(shaderDir / "PBR.hlsl", RHIShaderType::Pixel);
-
-        shaders[RendererShader::DistortionV] = std::make_shared<RHIShader>("DistortionV");
-        shaders[RendererShader::DistortionV]->compile(shaderDir / "Distortion.hlsl", RHIShaderType::Vertex, RHIVertexType::PosUvNrmTan);
-        shaders[RendererShader::DistortionP] = std::make_shared<RHIShader>("DistortionP");
-        shaders[RendererShader::DistortionP]->compile(shaderDir / "Distortion.hlsl", RHIShaderType::Pixel);
         // clang-format on
     }
 
@@ -227,16 +222,16 @@ namespace worse
         samplers[RHISamplerType::CompareDepth] = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder, RHICompareOperation::Greater, true, 0.0f, 0.0f);
 
         // 邻近
-        samplers[RHISamplerType::PointClampEdge]      = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
-        samplers[RHISamplerType::PointClampBorder]    = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
-        samplers[RHISamplerType::PointWrap]           = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
+        samplers[RHISamplerType::PointClampEdge]   = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::PointClampBorder] = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
+        samplers[RHISamplerType::PointWrap]        = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
         // 双线性
         samplers[RHISamplerType::BilinearClampEdge]   = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
         samplers[RHISamplerType::BilinearClampBorder] = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
         samplers[RHISamplerType::BilinearWrap]        = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
         // 三线性
-        samplers[RHISamplerType::TrilinearClamp]      = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
-        samplers[RHISamplerType::AnisotropicClamp]    = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::TrilinearClamp]   = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::AnisotropicClamp] = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
     }
 
     void Renderer::createStandardMeshes()
@@ -335,7 +330,7 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::LineV))
                 .addShader(Renderer::getShader(RendererShader::LineP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Output)) // 渲染到后处理之后
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
                 .build();
@@ -363,7 +358,7 @@ namespace worse
             RHIPipelineStateBuilder()
                 .setName("PostProcessingPass")
                 .setType(RHIPipelineType::Compute)
-                .addShader(Renderer::getShader(RendererShader::KuwaharaC))
+                .addShader(Renderer::getShader(RendererShader::PostFXC))
                 .build();
         RHIDevice::getPipeline(pipelineStates[RendererPSO::PostProcessing]);
         // clang-format on
