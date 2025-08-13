@@ -194,12 +194,12 @@ namespace worse
             rasterizerState.polygonMode             = vulkanPolygonMode(m_state.rasterizerState->getPolygonMode());
             rasterizerState.cullMode                = vulkanCullModeFlags(m_state.rasterizerState->getCullMode());
             rasterizerState.frontFace               = vulkanFrontFace(m_state.rasterizerState->getFrontFace());
-            rasterizerState.lineWidth               = m_state.rasterizerState->getLineWidth();
-            rasterizerState.depthClampEnable        = m_state.rasterizerState->getDepthClampEnable() ? VK_TRUE : VK_FALSE;
             rasterizerState.depthBiasEnable         = m_state.rasterizerState->getDepthBias() != 0.0f ? VK_TRUE : VK_FALSE;
             rasterizerState.depthBiasConstantFactor = m_state.rasterizerState->getDepthBias();
-            rasterizerState.depthBiasClamp          = m_state.rasterizerState->getDepthBiasClamp();
             rasterizerState.depthBiasSlopeFactor    = m_state.rasterizerState->getDepthBiasSlopeFactor();
+            rasterizerState.depthClampEnable        = m_state.rasterizerState->getDepthClampEnable() ? VK_TRUE : VK_FALSE;
+            rasterizerState.depthBiasClamp          = m_state.rasterizerState->getDepthBiasClamp();
+            rasterizerState.lineWidth               = 1.0f;
 
             VkPipelineMultisampleStateCreateInfo multisampleState = {};
             multisampleState.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;

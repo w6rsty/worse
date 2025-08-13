@@ -9,6 +9,7 @@ namespace worse
 
     enum class RendererRasterizerState : usize
     {
+        DepthPrepass,
         Solid,
         Wireframe,
         Max

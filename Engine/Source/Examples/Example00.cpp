@@ -51,7 +51,7 @@ public:
         // clang-format off
         Camera& camera = commands.emplaceResource<Camera>()
             .setPosition(math::Vector3{0.0f, 10.0f, 20.0f})
-            .setPerspectiveParams(math::toRadians(60.0f), static_cast<float>(Window::getWidth()) / static_cast<float>(Window::getHeight()), 0.1f, 500.0f);
+            .setPerspectiveParams(math::toRadians(65.0f), static_cast<float>(Window::getWidth()) / static_cast<float>(Window::getHeight()), 0.1f, 100.0f);
 
         // 订阅窗口事件更新 AspectRatio
         EventBus::subscribe(EventType::WindowResized,
@@ -202,7 +202,8 @@ public:
             // 保持相机位置跟随，但不强制看向player
             math::Vector3 targetCameraPos  = playerPosition + cameraOffset;
             math::Vector3 currentCameraPos = camera->getPosition();
-            math::Vector3 newCameraPos     = math::lerp(currentCameraPos, targetCameraPos, cameraLookSpeed * globalContext->deltaTime);
+            float const lerpFactor         = std::max(0.01f, cameraLookSpeed * globalContext->deltaTime);
+            math::Vector3 newCameraPos     = math::lerp(currentCameraPos, targetCameraPos, lerpFactor);
             camera->setPosition(newCameraPos);
         }
         else
@@ -210,10 +211,11 @@ public:
             // 自动相机追踪
 
             // 平滑移动相机位置
+            float const positionLerpFactor   = std::max(0.01f, cameraLookSpeed * globalContext->deltaTime);
             math::Vector3 const newCameraPos = math::lerp(
-                camera->getPosition(),                     // 当前相机位置
-                playerPosition + cameraOffset,             // 目标相机位置
-                cameraLookSpeed * globalContext->deltaTime // lerp 增量
+                camera->getPosition(),         // 当前相机位置
+                playerPosition + cameraOffset, // 目标相机位置
+                positionLerpFactor             // lerp 增量（带最小值clamp）
             );
             camera->setPosition(newCameraPos);
 
@@ -224,10 +226,11 @@ public:
             up                                = math::cross(right, lookDirection);
 
             // 平滑旋转相机
+            float const rotationLerpFactor        = std::max(0.01f, cameraLookSpeed * globalContext->deltaTime);
             math::Quaternion const newOrientation = math::sLerp(
                 camera->getOrientation(),                                             // 当前相机朝向
                 math::Quaternion::fromMat3(math::Matrix3{right, up, -lookDirection}), // 目标相机朝向
-                cameraLookSpeed * globalContext->deltaTime                            // sLerp 增量
+                rotationLerpFactor                                                    // sLerp 增量（带最小值clamp）
             );
             camera->setOrientation(newOrientation);
         }

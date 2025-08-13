@@ -36,10 +36,9 @@ namespace worse
 
     void Renderer::createRasterizerStates()
     {
-        // clang-format off
-        rasterizerStates[RendererRasterizerState::Solid]     = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::Back);
-        rasterizerStates[RendererRasterizerState::Wireframe] = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None);
-        // clang-format on
+        rasterizerStates[RendererRasterizerState::DepthPrepass] = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::Back);
+        rasterizerStates[RendererRasterizerState::Solid]        = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::Back, RHIFrontFace::CCW, 1e-6f);
+        rasterizerStates[RendererRasterizerState::Wireframe]    = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None);
     }
 
     void Renderer::createDepthStencilStates()
@@ -287,7 +286,7 @@ namespace worse
                 .setName("DepthPrepass")
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::DepthPrepass))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::DepthPrepassV))

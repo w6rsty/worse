@@ -28,9 +28,6 @@ VertexOutput main_vs(VertexPosUvNrmTan input)
     output.tangent = normalize(mul(input.tangent.xyz, normalMatrix)) * input.tangent.w;
     output.bitangent = normalize(cross(output.normal, output.tangent));
 
-    // hack to avoid z-fighting
-    output.position.z += 1e-6;
-
     return output;
 }
 
@@ -122,7 +119,7 @@ PixelOutput main_ps(VertexOutput input)
     float3 color = emissive + Lo + ambient;
 
     output.color = float4(color, 1.0);
-    output.normal = float4(N, 1.0);
+    output.normal = float4(input.position.z, 0.0, 0.0, 1.0);
 
     return output;
 }
