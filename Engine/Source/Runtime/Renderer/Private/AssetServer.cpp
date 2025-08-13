@@ -124,21 +124,6 @@ namespace worse
         return handle;
     }
 
-    void AssetServer::setMaterialIndex(AssetHandle handle, u32 index)
-    {
-        std::lock_guard<std::mutex> lock(m_mtxMaterial);
-
-        auto it = m_materials.find(handle);
-        if (it != m_materials.end())
-        {
-            it->second.index = index;
-        }
-        else
-        {
-            WS_LOG_WARN("AssetServer", "Material {} does not exist", handle);
-        }
-    }
-
     void AssetServer::loadTexture()
     {
         std::lock_guard<std::mutex> lock(m_mtxTexture);
@@ -208,7 +193,7 @@ namespace worse
         auto it = m_materials.find(handle);
         if (it != m_materials.end())
         {
-            return it->second.index;
+            return it->second.index.value_or(0);
         }
         return 0;
     }

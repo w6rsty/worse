@@ -51,7 +51,8 @@ namespace worse
     struct MaterialAssetSlot
     {
         StandardMaterial material;
-        u32 index;
+        // 索引在构建材质时才会设置
+        std::optional<u32> index;
     };
 
     class AssetServer
@@ -87,13 +88,11 @@ namespace worse
          * @brief 立即添加纹理资源到服务器
          */
         AssetHandle addMaterial(StandardMaterial const& material);
-        void setMaterialIndex(AssetHandle handle, u32 index);
 
         /**
          * @brief 加载排队的纹理资源
          */
-        void
-        loadTexture();
+        void loadTexture();
         /**
          * @brief 释放纹理资源
          */

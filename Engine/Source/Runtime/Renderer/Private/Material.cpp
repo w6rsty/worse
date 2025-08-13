@@ -45,7 +45,7 @@ namespace worse
             materials.add(StandardMaterial{});
         }
 
-        // make sure material textures are loaded
+        // make sure texture files are loaded
         assetServer->loadTexture();
 
         // generate material indices map and descritpor write data
@@ -91,12 +91,13 @@ namespace worse
             data.emissiveTextureIndex          = getTextureIndex(materialECS->emissiveTexture, textureIndexMap, RendererTexture::DefaultEmissive);
         }
 
+        u32 assetServerMaterialIndex = materials->size();
         assetServer->eachMaterial(
             [&](AssetHandle handle, MaterialAssetSlot& slot)
             {
                 StandardMaterial const& material = slot.material;
 
-                usize index               = slot.index + materials->size();
+                usize index               = assetServerMaterialIndex++;
                 StandardMaterialGPU& data = materialGPUs[index];
 
                 data.baseColor                     = material.baseColor;

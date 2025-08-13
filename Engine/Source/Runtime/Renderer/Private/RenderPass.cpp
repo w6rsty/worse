@@ -78,7 +78,7 @@ namespace worse
             }
         }
 
-        for (auto const& object : drawcalls->ctx.opaqueObjects)
+        for (RenderObject const& object : drawcalls->ctx.opaqueObjects)
         {
             cmdList->setBufferVertex(object.mesh->getVertexBuffer());
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
@@ -195,12 +195,11 @@ namespace worse
         passColor(cmdList, drawcalls, assetServer);
 
         passPostProcessing(cmdList);
-        
+
         if (globalContext->isWireFrameMode)
         {
             passWireFrame(cmdList, drawcalls);
         }
-
 
         passImGui(cmdList);
 
