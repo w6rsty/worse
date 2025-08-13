@@ -5,19 +5,19 @@
 // Begin Toggles
 // =============================================================================
 
-#define FILTER_KUWAHARA
+// #define FILTER_KUWAHARA
 static int const KUWAHARA_RADIUS = 3;
 
 #define FILTER_ACES
 
+// #define FILTER_DITHERING
+
 #define FILTER_GAMMA_CORRECTION
-static float const GAMMA = 2.0;
+static float const GAMMA = 2.2;
 
 #define FILTER_VIGNETTE
 static float const VIGNETTE_START = 0.3;
 static float const VIGNETTE_END = 0.9;
-
-#define FILTER_DITHERING
 
 // =============================================================================
 // End Toggles
@@ -89,6 +89,13 @@ main_cs(uint3 id : SV_DispatchThreadID)
     finalColor = ACESFilm(finalColor);
 #endif
 
+#ifdef FILTER_DITHERING
+    float2 ditherCoord = float2(id.xy);
+    float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
+    dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
+    finalColor += dither;
+#endif
+
 #ifdef FILTER_GAMMA_CORRECTION
       finalColor = pow(finalColor, 1.0 / GAMMA);
 #endif
@@ -98,13 +105,6 @@ main_cs(uint3 id : SV_DispatchThreadID)
     float2 centered = uv - 0.5;
     float vignette = 1.0 - smoothstep(VIGNETTE_START, VIGNETTE_END, length(centered));
     finalColor *= vignette;
-#endif
-
-#ifdef FILTER_DITHERING
-    float2 ditherCoord = float2(id.xy);
-    float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
-    dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
-     finalColor += dither;
 #endif
 
     output[id.xy] = float4(finalColor, 1.0);
