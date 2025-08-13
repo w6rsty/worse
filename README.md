@@ -13,10 +13,13 @@ Build this Target **Example00**
 
 > `clang_rt.asan_dynamic-x86_64.dll` in WindowSDK is needed if build for Windows
 
-- ImGui with custom page router
-- PBR rendering
-- PointList mehsh rendering
-- PostProcessing, Vignette, Kuwahara Filtering, ACES Tonemapping
+### Features
+- Metallic-Roughness 材质系统
+- PBR
+- glTF 加载
+- 点图元绘制模式
+- ImGui 路由管理器
+- 后处理滤镜( Vignette, Kuwahara Filtering, ACES)
 
 ## Point Cloud Editor
 
