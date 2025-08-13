@@ -10,11 +10,11 @@ namespace worse
 
     public:
         RHISampler(
-            RHIFilter filterMin               = RHIFilter::Linear,
-            RHIFilter filterMag               = RHIFilter::Linear,
-            RHIFilter filterMipmap            = RHIFilter::Linear,
-            RHISamplerAddressMode addressMode = RHISamplerAddressMode::Wrap,
-            RHICompareOperation compareOp     = RHICompareOperation::Always,
+            RHIFilter filterMin,
+            RHIFilter filterMag,
+            RHIFilter filterMipmap,
+            RHISamplerAddressMode addressMode,
+            RHICompareOperation compareOp = RHICompareOperation::Never,
             bool enableCompare = false, f32 anisotroy = 0.0f,
             f32 mipLodBias = 0.0f);
         ~RHISampler();
@@ -26,7 +26,7 @@ namespace worse
         RHISamplerAddressMode getAddressMode() const   { return m_addressMode; }
         RHICompareOperation   getCompareOp() const     { return m_compareOp; }
         bool                  isCompareEnabled() const { return m_enableCompare; }
-        f32                 getAnisotroy() const     { return m_anisotroy; }
+        f32                   getAnisotroy() const     { return m_anisotroy; }
         RHINativeHandle       getHandle() const        { return m_handle; }
         // clang-format on
 

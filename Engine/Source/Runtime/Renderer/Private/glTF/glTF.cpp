@@ -1,335 +1,494 @@
-#include "Log.hpp"
 #include "glTF/glTF.hpp"
+#include "AssetServer.hpp"
+#include "Log.hpp"
+#include "Math/Transform.hpp"
+#include "RHITypes.hpp"
 
-#include "fastgltf/core.hpp"
+#include "MathElementTraits.hpp" // IWYU pragma: keep
+
+#include <span>
+#include <optional>
+#include <filesystem>
 
 namespace worse
 {
+    namespace
+    {
+        /**
+         * @brief 使用 AssetServer 加载 glTF 纹理
+         */
+        std::optional<AssetHandle> loadTexture(
+            fastgltf::Image const& image,
+            fastgltf::Asset const& asset,
+            AssetServer& assetServer,
+            std::filesystem::path const& parentDir,
+            std::string const& imageName)
+        {
+            AssetHandle handle = {};
 
-    glTFManager::glTFManager()
+            // clang-format off
+            std::visit(fastgltf::visitor{
+                [&](fastgltf::sources::BufferView view)
+                {
+                    auto& bufferView = asset.bufferViews[view.bufferViewIndex];
+                    auto& buffer      = asset.buffers[bufferView.bufferIndex];
+
+                    std::visit(fastgltf::visitor{
+                        [&](fastgltf::sources::Vector vector)
+                        {
+                            std::span<byte> data{vector.bytes.data() + bufferView.byteOffset, bufferView.byteLength};
+                            handle = assetServer.addTexture(data, imageName);
+                        },
+                        [&](fastgltf::sources::Array array)
+                        {
+                            std::span<byte> data{array.bytes.data() + bufferView.byteOffset, bufferView.byteLength};
+                            handle = assetServer.addTexture(data, imageName);
+                        },
+                        [&](auto arg)
+                        {
+                            WS_LOG_ERROR("glTF", "Unsupported buffer view type");
+                        }}, buffer.data);
+                },
+                [&](fastgltf::sources::URI path)
+                {
+                    WS_ASSERT(path.fileByteOffset == 0);
+                    WS_ASSERT(path.uri.isLocalPath());
+
+                    handle = assetServer.addTexture(parentDir / path.uri.fspath(), AssetServer::LoadStrategy::Immediate);
+                },
+                [&](fastgltf::sources::Vector vector)
+                {
+                    std::span<byte> data{vector.bytes.data(), vector.bytes.size()};
+                    handle = assetServer.addTexture(data, imageName);
+                },
+                [&](auto arg)
+                {
+                    WS_LOG_ERROR("glTF", "Unsupported image source type");
+                },
+            }, image.data);
+            // clang-format on
+
+            return handle;
+        }
+
+        /**
+         * @brief 计算切线和副切线
+         * @details 使用 Mikkelsen 算法计算
+         */
+        void calculateTangent(std::span<RHIVertexPosUvNrmTan> vertices, std::span<u32> indices)
+        {
+            // Store per-face data before averaging
+            std::vector<math::Vector3> tan1(vertices.size(), math::Vector3::ZERO());
+            std::vector<math::Vector3> tan2(vertices.size(), math::Vector3::ZERO());
+
+            // Iterate over all triangles in the primitive
+            for (usize i = 0; i < indices.size(); i += 3)
+            {
+                u32 i0 = indices[i];
+                u32 i1 = indices[i + 1];
+                u32 i2 = indices[i + 2];
+
+                RHIVertexPosUvNrmTan const& v0 = vertices[i0];
+                RHIVertexPosUvNrmTan const& v1 = vertices[i1];
+                RHIVertexPosUvNrmTan const& v2 = vertices[i2];
+
+                // Calculate edge vectors
+                math::Vector3 edge1 = v1.position - v0.position;
+                math::Vector3 edge2 = v2.position - v0.position;
+
+                // Calculate UV deltas
+                math::Vector2 uv1Delta = v1.uv - v0.uv;
+                math::Vector2 uv2Delta = v2.uv - v0.uv;
+
+                float f = 1.0f / (uv1Delta.x * uv2Delta.y - uv2Delta.x * uv1Delta.y);
+
+                math::Vector3 tangent;
+                math::Vector3 bitangent;
+
+                // Check for division by zero (e.g., degenerate UVs)
+                if (std::isinf(f) || std::isnan(f))
+                {
+                    // Default to something safe or just skip
+                    tangent   = math::Vector3(1.0f, 0.0f, 0.0f);
+                    bitangent = math::Vector3(0.0f, 1.0f, 0.0f);
+                }
+                else
+                {
+                    tangent   = (edge1 * uv2Delta.y - edge2 * uv1Delta.y) * f;
+                    bitangent = (edge1 * (-uv2Delta.x) + edge2 * uv1Delta.x) * f;
+                }
+
+                // Accumulate tangent and bitangent for each vertex
+                // Use verticesOffset to correctly index into the current primitive's vertices
+                tan1[i0] += tangent;
+                tan1[i1] += tangent;
+                tan1[i2] += tangent;
+            }
+
+            // Now, average and orthogonalize the tangents
+            for (usize i = 0; i < vertices.size(); ++i)
+            {
+                math::Vector3 const& n = vertices[i].normal;
+                math::Vector3 const& t = tan1[i];
+
+                // Gram-Schmidt orthogonalization: T' = T - (N · T)N
+                // Ensure the tangent is orthogonal to the normal
+                math::Vector3 tangent = math::normalize(t - n * math::dot(n, t));
+
+                // Calculate bitangent to find handedness
+                math::Vector3 bitangent = math::normalize(math::cross(n, t));
+
+                // Determine the handedness (the w component of the tangent)
+                // This is necessary for some normal mapping implementations
+                f32 handedness = (math::dot(math::cross(n, t), bitangent) < 0.0f) ? -1.0f : 1.0f;
+
+                // 组合切线和手性
+                vertices[i].tangent = math::Vector4(tangent, handedness);
+            }
+        }
+
+    } // namespace
+
+    void glTFMeshNode::draw(math::Matrix4 const& topMat, DrawContext& ctx)
+    {
+        math::Matrix4 const nodeTransform = topMat * localTransform;
+
+        for (glTFSurface const& surface : mesh->surfaces)
+        {
+            ctx.opaqueObjects.push_back(RenderObject{
+                .indexCount = surface.indexCount,
+                .startIndex = surface.startIndex,
+                .mesh       = mesh->mesh.get(),
+                .material   = surface.material,
+                .transform  = nodeTransform,
+            });
+        }
+
+        Node::draw(topMat, ctx);
+    }
+
+    glTFManager::glTFManager(AssetServer& assetServer)
+        : m_assetServer(assetServer)
     {
     }
+
     glTFManager::~glTFManager()
     {
     }
 
-    glTFModel* glTFManager::load(std::string const& filepath)
+    glTFModel* glTFManager::load(std::string const& filepath, std::string const& modelName)
     {
-
-        fastgltf::Parser parser{};
+        std::lock_guard<std::mutex> lock(m_mtxParser);
 
         auto gltfFile = fastgltf::GltfDataBuffer::FromPath(filepath);
         if (gltfFile.error() != fastgltf::Error::None)
         {
-            WS_LOG_ERROR("gltf", "Failed to load file {}", filepath);
+            WS_LOG_ERROR("glTF", "Failed to load file {}", filepath);
             return nullptr;
         }
 
         std::filesystem::path parentDir = std::filesystem::path(filepath).parent_path();
-        auto asset                      = parser.loadGltf(gltfFile.get(), parentDir, fastgltf::Options::None);
+        fastgltf::Options options       = fastgltf::Options::LoadExternalBuffers | fastgltf::Options::LoadExternalImages;
+        auto asset                      = m_parser.loadGltf(gltfFile.get(), parentDir, options);
 
         if (auto error = asset.error(); error != fastgltf::Error::None)
         {
-            WS_LOG_ERROR("gltf", "Failed to parse glTF {}", filepath);
+            WS_LOG_ERROR("glTF", "Failed to parse glTF {}", filepath);
             return nullptr;
         }
 
-        // glTFModel model;
+        std::unique_ptr<glTFModel> model = std::make_unique<glTFModel>();
 
-        // std::vector<glTFMesh*> meshes;
-        // std::vector<ImageSlot> images;
-        // std::vector<glTFMaterial*> materials;
-        // std::vector<std::shared_ptr<Node>> nodes;
+        // TODO: 读取 Samplers
 
-        // // Load samplers
-        // for (auto const& sampler : asset->samplers)
-        // {
-        //     auto& slot = *library.GetSamplerSlot();
-        //     m_device.CreateSampler(slot, {.min_filter = ExtractFilter(sampler.minFilter.value_or(fastgltf::Filter::Nearest)), .mag_filter = ExtractFilter(sampler.magFilter.value_or(fastgltf::Filter::Nearest)), .mipmap_mode = ExtractMipmapMode(sampler.minFilter.value_or(fastgltf::Filter::Nearest))});
-        //     model.samplers.push_back(slot);
-        // }
+        // =====================================================================
+        // 读取纹理文件
+        // =====================================================================
 
-        // // Load textures
-        // for (auto const& image : asset->images)
-        // {
-        //     ImageSlot slot = LoadImage(asset.get(), image, library);
+        // 暂存载入纹理，并保存纹理句柄，为加载失败的纹理分配默认纹理
+        std::vector<AssetHandle> textures;
+        textures.reserve(asset->images.size());
 
-        //     if (slot.content)
-        //     {
-        //         images.push_back(slot);
-        //         model.images[image.name.c_str()] = slot;
-        //     }
-        //     else
-        //     {
-        //         images.push_back(library.GetDefaultErrorImage());
-        //         LOG_WARN("Failed to load image {}", image.name);
-        //     }
-        // }
+        u32 anonymousTextureIndex = 0;
+        for (fastgltf::Image const& image : asset->images)
+        {
+            // 纹理可能没有名称，而 AssetServer 需要唯一的名称来生成句柄。
+            // 所以需要为匿名纹理生成唯一的名称
+            std::string textureName = modelName;
+            if (image.name.empty())
+            {
+                textureName += "_anonymous_image_" + std::to_string(anonymousTextureIndex++);
+            }
+            else
+            {
+                textureName += "_" + image.name;
+            }
 
-        // // Load material
-        // ASSERT(!asset->materials.empty(), "glTF has no material");
-        // model.material_buffer = *library.GetBufferSlot();
-        // m_device.CreateBuffer(model.material_buffer, {.size = sizeof(glTFPass::MaterialConstants) * asset->materials.size(), .buffer_usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, .memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU, .name = std::format("{}_buffer", filepath.Filename().ToString())});
-        // auto scene_constants = s_cast<glTFPass::MaterialConstants*>(model.material_buffer.content->info.pMappedData);
+            if (std::optional<AssetHandle> handle = loadTexture(image, asset.get(), m_assetServer, parentDir, textureName))
+            {
+                textures.push_back(handle.value());
+            }
+            else
+            {
+                textures.push_back(m_assetServer.getErrorTexture());
+                WS_LOG_WARN("gltf", "Faile to load {}", textureName);
+            }
+        }
 
-        // for (usize i = 0; i < asset->materials.size(); ++i)
-        // {
-        //     auto& mat = asset->materials[i];
+        // =====================================================================
+        // 读取材质
+        // =====================================================================
 
-        //     glTFMaterial* new_mat = glTFMaterialAllocator::Instance().ReuseOrAllocate();
-        //     materials.push_back(new_mat);
-        //     model.materials[mat.name.c_str()] = new_mat;
+        // 保存材质索引
+        std::vector<AssetHandle> materials;
+        materials.reserve(asset->materials.size());
 
-        //     scene_constants[i].base_color_factor.x        = mat.pbrData.baseColorFactor.x();
-        //     scene_constants[i].base_color_factor.y        = mat.pbrData.baseColorFactor.y();
-        //     scene_constants[i].base_color_factor.z        = mat.pbrData.baseColorFactor.z();
-        //     scene_constants[i].base_color_factor.w        = mat.pbrData.baseColorFactor.w();
-        //     scene_constants[i].metallicRoughnessFactors.x = mat.pbrData.metallicFactor;
-        //     scene_constants[i].metallicRoughnessFactors.y = mat.pbrData.roughnessFactor;
-        //     scene_constants[i].emissive_factor.x          = mat.emissiveFactor.x();
-        //     scene_constants[i].emissive_factor.y          = mat.emissiveFactor.y();
-        //     scene_constants[i].emissive_factor.z          = mat.emissiveFactor.z();
+        for (fastgltf::Material const& material : asset->materials)
+        {
+            AssetHandle materialHandle = m_assetServer.addMaterial(StandardMaterial{
+                .baseColor                = math::Vector4(material.pbrData.baseColorFactor.x(), material.pbrData.baseColorFactor.y(), material.pbrData.baseColorFactor.z(), material.pbrData.baseColorFactor.w()),
+                .baseColorTexture         = material.pbrData.baseColorTexture.has_value() ? std::make_optional(textures[material.pbrData.baseColorTexture->textureIndex]) : std::nullopt,
+                .normalTexture            = material.normalTexture.has_value() ? std::make_optional(textures[material.normalTexture->textureIndex]) : std::nullopt,
+                .metallic                 = material.pbrData.metallicFactor,
+                .metallicRoughnessTexture = material.pbrData.metallicRoughnessTexture.has_value() ? std::make_optional(textures[material.pbrData.metallicRoughnessTexture->textureIndex]) : std::nullopt,
+                .roughness                = material.pbrData.roughnessFactor,
+                .ambientOcclusionTexture  = material.occlusionTexture.has_value() ? std::make_optional(textures[material.occlusionTexture->textureIndex]) : std::nullopt,
+                .emissive                 = math::Vector4(material.emissiveFactor.x(), material.emissiveFactor.y(), material.emissiveFactor.z(), 1.0f),
+                .emissiveTexture          = material.emissiveTexture.has_value() ? std::make_optional(textures[material.emissiveTexture->textureIndex]) : std::nullopt,
+            });
 
-        //     MaterialPass pass_type = mat.alphaMode == fastgltf::AlphaMode::Blend ? MaterialPass::Transparent : MaterialPass::Opaque;
+            model->textures[std::string{material.name}] = materialHandle;
+            materials.push_back(materialHandle);
+        }
 
-        //     glTFPass::MaterialResources resources{
-        //         .base_color_texture                 = library.GetDefaultWhiteImage(),
-        //         .base_color_texture_sampler         = library.GetDefaultLinearSampler(),
-        //         .metallic_roughness_texture         = library.GetDefaultBlueImage(),
-        //         .metallic_roughness_texture_sampler = library.GetDefaultLinearSampler(),
-        //         .normal_texture                     = library.GetDefaultNormalImage(),
-        //         .normal_texture_sampler             = library.GetDefaultLinearSampler(),
-        //         .occlusion_texture                  = library.GetDefaultWhiteImage(),
-        //         .occlusion_texture_sampler          = library.GetDefaultLinearSampler(),
-        //         .emissive_texture                   = library.GetDefaultBlackImage(),
-        //         .emissive_texture_sampler           = library.GetDefaultLinearSampler(),
-        //         .data_buffer                        = model.material_buffer.content->buffer,
-        //         .data_buffer_offset                 = i * sizeof(glTFPass::MaterialConstants),
-        //     };
+        // =====================================================================
+        // 读取顶点和索引
+        // =====================================================================
 
-        //     if (mat.pbrData.baseColorTexture.has_value())
-        //     {
-        //         resources.base_color_texture         = images[asset->textures[mat.pbrData.baseColorTexture.value().textureIndex].imageIndex.value()];
-        //         resources.base_color_texture_sampler = model.samplers[asset->textures[mat.pbrData.baseColorTexture.value().textureIndex].samplerIndex.value()];
-        //     }
-        //     if (mat.pbrData.metallicRoughnessTexture.has_value())
-        //     {
-        //         resources.metallic_roughness_texture         = images[asset->textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex].imageIndex.value()];
-        //         resources.metallic_roughness_texture_sampler = model.samplers[asset->textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex].samplerIndex.value()];
-        //     }
-        //     if (mat.normalTexture.has_value())
-        //     {
-        //         resources.normal_texture         = images[asset->textures[mat.normalTexture.value().textureIndex].imageIndex.value()];
-        //         resources.normal_texture_sampler = model.samplers[asset->textures[mat.normalTexture.value().textureIndex].samplerIndex.value()];
-        //     }
-        //     if (mat.occlusionTexture.has_value())
-        //     {
-        //         resources.occlusion_texture         = images[asset->textures[mat.occlusionTexture.value().textureIndex].imageIndex.value()];
-        //         resources.occlusion_texture_sampler = model.samplers[asset->textures[mat.occlusionTexture.value().textureIndex].samplerIndex.value()];
-        //     }
-        //     if (mat.emissiveTexture.has_value())
-        //     {
-        //         resources.emissive_texture         = images[asset->textures[mat.emissiveTexture.value().textureIndex].imageIndex.value()];
-        //         resources.emissive_texture_sampler = model.samplers[asset->textures[mat.emissiveTexture.value().textureIndex].samplerIndex.value()];
-        //     }
+        std::vector<std::shared_ptr<glTFMesh>> meshes;
+        std::vector<RHIVertexPosUvNrmTan> vertices;
+        std::vector<u32> indices;
 
-        //     new_mat->data = m_pass.WriteMaterial(
-        //         m_device.m_device,
-        //         pass_type,
-        //         resources,
-        //         model.descriptor_allocator);
-        // }
+        for (fastgltf::Mesh const& mesh : asset->meshes)
+        {
+            std::shared_ptr<glTFMesh> newMesh = std::make_shared<glTFMesh>();
+            newMesh->name                     = mesh.name;
 
-        // std::vector<Vertex> vertices;
-        // std::vector<u16> indices_u16;
-        // std::vector<u32> indices_u32;
+            vertices.clear();
+            indices.clear();
 
-        // for (auto const& mesh : asset->meshes)
-        // {
-        //     glTFMesh* new_mesh = glTFMeshAllocator::Instance().ReuseOrAllocate();
-        //     meshes.push_back(new_mesh);
-        //     model.meshes[mesh.name.c_str()] = new_mesh;
-        //     new_mesh->name                  = mesh.name;
+            u32 verticesOffset = 0;
 
-        //     vertices.clear();
-        //     indices_u16.clear();
-        //     indices_u32.clear();
+            for (fastgltf::Primitive const& primitive : mesh.primitives)
+            {
+                glTFSurface& newSurface = newMesh->surfaces.emplace_back();
 
-        //     usize vertices_offset = 0;
-        //     IndexType index_type  = IndexType::Uint32;
+                verticesOffset = vertices.size();
 
-        //     for (auto const& p : mesh.primitives)
-        //     {
-        //         glTFSurface& new_surface = new_mesh->surfaces.emplace_back();
+                // load indexes
+                fastgltf::Accessor& indexAccessor = asset->accessors[primitive.indicesAccessor.value()];
+                newSurface.indexCount             = static_cast<u32>(indexAccessor.count);
 
-        //         vertices_offset = vertices.size();
+                if (indexAccessor.componentType == fastgltf::ComponentType::UnsignedShort)
+                {
+                    newSurface.startIndex = indices.size();
 
-        //         // load indexes
-        //         fastgltf::Accessor& index_accessor = asset->accessors[p.indicesAccessor.value()];
-        //         new_surface.count                  = s_cast<u32>(index_accessor.count);
+                    indices.reserve(indices.size() + indexAccessor.count);
+                    fastgltf::iterateAccessor<u16>(
+                        asset.get(),
+                        indexAccessor,
+                        [&](u16 index)
+                        {
+                            indices.push_back(static_cast<u32>(index) + verticesOffset);
+                        });
+                }
+                else
+                {
+                    newSurface.startIndex = indices.size();
 
-        //         if (index_accessor.componentType == fastgltf::ComponentType::UnsignedShort)
-        //         {
-        //             new_surface.start_index = indices_u16.size();
-        //             new_surface.index_type  = IndexType::Uint16;
-        //             index_type              = IndexType::Uint16;
+                    indices.reserve(indices.size() + indexAccessor.count);
+                    fastgltf::iterateAccessor<u32>(
+                        asset.get(),
+                        indexAccessor,
+                        [&](u32 index)
+                        {
+                            indices.push_back(index + verticesOffset);
+                        });
+                }
 
-        //             indices_u16.reserve(indices_u16.size() + index_accessor.count);
-        //             fastgltf::iterateAccessor<u16>(asset.get(), index_accessor, [&](u16 index)
-        //                                            {
-        //                                                indices_u16.push_back(index + vertices_offset);
-        //                                            });
-        //         }
-        //         else
-        //         {
-        //             new_surface.start_index = indices_u32.size();
-        //             new_surface.index_type  = IndexType::Uint32;
-        //             index_type              = IndexType::Uint32;
+                // load vertex positions
 
-        //             indices_u32.reserve(indices_u32.size() + index_accessor.count);
-        //             fastgltf::iterateAccessor<u32>(asset.get(), index_accessor, [&](u32 index)
-        //                                            {
-        //                                                indices_u32.push_back(index + vertices_offset);
-        //                                            });
-        //         }
+                fastgltf::Accessor& positionAccessor = asset->accessors[primitive.findAttribute("POSITION")->accessorIndex];
+                // Fit current size
+                vertices.resize(vertices.size() + positionAccessor.count);
 
-        //         // load vertex positions
+                fastgltf::iterateAccessorWithIndex<math::Vector3>(
+                    asset.get(),
+                    positionAccessor,
+                    [&](math::Vector3 const& position, usize index)
+                    {
+                        RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
+                        vtx.position              = position;
+                        // default
+                        vtx.normal  = math::Vector3::ZERO();
+                        vtx.uv      = math::Vector2::ZERO();
+                        vtx.tangent = math::Vector4::ZERO();
+                    });
 
-        //         fastgltf::Accessor& position_accessor = asset->accessors[p.findAttribute("POSITION")->accessorIndex];
-        //         // Fit current size
-        //         vertices.resize(vertices.size() + position_accessor.count);
+                // load vertex normals
+                fastgltf::Attribute const* normals = primitive.findAttribute("NORMAL");
+                if (normals != primitive.attributes.end())
+                {
+                    fastgltf::iterateAccessorWithIndex<math::Vector3>(
+                        asset.get(),
+                        asset->accessors[normals->accessorIndex],
+                        [&](math::Vector3 const& normal, usize index)
+                        {
+                            RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
+                            // glTF -> Vulkan
+                            vtx.normal                = -normal;
+                        });
+                }
+                else
+                {
+                    WS_LOG_WARN("gltf", "{} does not have attribute NORMAL", modelName);
+                }
 
-        //         fastgltf::iterateAccessorWithIndex<glm::vec3>(asset.get(), position_accessor, [&](glm::vec3 position, usize index)
-        //                                                       {
-        //                                                           Vertex new_vtx{
-        //                                                               .position = position};
-        //                                                           // Default values
-        //                                                           new_vtx.normal                    = {1, 0, 0};
-        //                                                           new_vtx.color                     = glm::vec4{1.f};
-        //                                                           new_vtx.uv_x                      = 0;
-        //                                                           new_vtx.uv_y                      = 0;
-        //                                                           vertices[vertices_offset + index] = new_vtx;
-        //                                                       });
+                // load UVs
+                fastgltf::Attribute const* uvs = primitive.findAttribute("TEXCOORD_0");
+                if (uvs != primitive.attributes.end())
+                {
 
-        //         // load vertex normals
-        //         auto normals = p.findAttribute("NORMAL");
-        //         if (normals != p.attributes.end())
-        //         {
-        //             fastgltf::iterateAccessorWithIndex<glm::vec3>(asset.get(), asset->accessors[(*normals).accessorIndex], [&](glm::vec3 normal, usize index)
-        //                                                           {
-        //                                                               vertices[vertices_offset + index].normal = normal;
-        //                                                           });
-        //         }
+                    fastgltf::iterateAccessorWithIndex<math::Vector2>(
+                        asset.get(),
+                        asset->accessors[uvs->accessorIndex],
+                        [&](math::Vector2 const& uv, usize index)
+                        {
+                            RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
+                            vtx.uv                    = uv;
+                        });
+                }
+                else
+                {
+                    WS_LOG_WARN("gltf", "{} does not have attribute TEXCOORD_0", modelName);
+                }
 
-        //         // load UVs
-        //         auto uvs = p.findAttribute("TEXCOORD_0");
-        //         if (uvs != p.attributes.end())
-        //         {
+                // load tangents
+                fastgltf::Attribute const* tangents = primitive.findAttribute("TANGENT");
+                if (tangents != primitive.attributes.end())
+                {
+                    fastgltf::iterateAccessorWithIndex<math::Vector4>(
+                        asset.get(),
+                        asset->accessors[tangents->accessorIndex],
+                        [&](math::Vector4 const& tangent, usize index)
+                        {
+                            RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
+                            vtx.tangent               = tangent;
+                        });
+                }
+                {
+                    WS_LOG_WARN("gltf", "{} does not have attribute TANGENT", modelName);
 
-        //             fastgltf::iterateAccessorWithIndex<glm::vec2>(asset.get(), asset->accessors[(*uvs).accessorIndex], [&](glm::vec2 uv, usize index)
-        //                                                           {
-        //                                                               vertices[vertices_offset + index].uv_x = uv.x;
-        //                                                               vertices[vertices_offset + index].uv_y = uv.y;
-        //                                                           });
-        //         }
+                    // TODO: 计算切线
+                    calculateTangent(vertices, indices);
+                }
 
-        //         // load vertex colors
-        //         auto colors = p.findAttribute("COLOR_0");
-        //         if (colors != p.attributes.end())
-        //         {
-        //             fastgltf::iterateAccessorWithIndex<glm::vec4>(asset.get(), asset->accessors[(*colors).accessorIndex], [&](glm::vec4 color, usize index)
-        //                                                           {
-        //                                                               vertices[vertices_offset + index].color = color;
-        //                                                           });
-        //         }
+                newSurface.material = materials[primitive.materialIndex.has_value() ? primitive.materialIndex.value() : 0];
+            }
 
-        //         new_surface.material = materials[p.materialIndex.has_value() ? p.materialIndex.value() : 0];
-        //     }
+            newMesh->mesh = std::make_unique<Mesh>();
+            newMesh->mesh->addGeometry(vertices, indices);
+            newMesh->mesh->createGPUBuffers();
+            newMesh->mesh->clearCPU();
 
-        //     if (index_type == IndexType::Uint16)
-        //     {
-        //         new_mesh->mesh_buffer = library.UploadMesh(
-        //             indices_u16.data(),
-        //             indices_u16.size() * sizeof(u16),
-        //             vertices);
-        //     }
-        //     else
-        //     {
-        //         new_mesh->mesh_buffer = library.UploadMesh(
-        //             indices_u32.data(),
-        //             indices_u32.size() * sizeof(u32),
-        //             vertices);
-        //     }
-        // }
+            meshes.push_back(newMesh);
+            model->meshes[std::string{mesh.name}] = newMesh;
+        }
 
-        // for (auto const& node : asset->nodes)
-        // {
-        //     std::shared_ptr<Node> new_node;
+        // =====================================================================
+        // 读取节点
+        // =====================================================================
 
-        //     if (node.meshIndex.has_value())
-        //     {
-        //         new_node                                    = std::make_shared<glTFMeshNode>();
-        //         s_cast<glTFMeshNode*>(new_node.get())->mesh = meshes[node.meshIndex.value()];
-        //     }
-        //     else
-        //     {
-        //         new_node = std::make_shared<Node>();
-        //     }
+        std::vector<std::shared_ptr<Node>> nodes;
+        for (fastgltf::Node const& node : asset->nodes)
+        {
+            std::shared_ptr<Node> newNode;
 
-        //     nodes.push_back(new_node);
-        //     model.nodes[node.name.c_str()];
+            // 为具有 mesh 的节点创建 glTFMeshNode； 否则创建 Node
+            if (node.meshIndex.has_value())
+            {
+                std::shared_ptr<glTFMeshNode> meshNode = std::make_shared<glTFMeshNode>();
 
-        //     std::visit(fastgltf::visitor{[&](fastgltf::math::fmat4x4 matrix)
-        //                                  {
-        //                                      std::memcpy(&new_node->local_transform, matrix.data(), sizeof(matrix));
-        //                                  },
-        //                                  [&](fastgltf::TRS tranform)
-        //                                  {
-        //                                      glm::vec3 translation(
-        //                                          tranform.translation[0],
-        //                                          tranform.translation[1],
-        //                                          tranform.translation[2]);
-        //                                      glm::quat rotation(
-        //                                          tranform.rotation[3],
-        //                                          tranform.rotation[0],
-        //                                          tranform.rotation[1],
-        //                                          tranform.rotation[2]);
-        //                                      glm::vec3 scale(
-        //                                          tranform.scale[0],
-        //                                          tranform.scale[1],
-        //                                          tranform.scale[2]);
+                meshNode->mesh = meshes[node.meshIndex.value()];
+                newNode        = meshNode;
+            }
+            else
+            {
+                newNode = std::make_shared<Node>();
+            }
 
-        //                                      glm::mat4 tm = glm::translate(glm::mat4(1.0f), translation);
-        //                                      glm::mat4 rm = glm::toMat4(rotation);
-        //                                      glm::mat4 sm = glm::scale(glm::mat4(1.0f), scale);
+            nodes.push_back(newNode);
+            model->nodes[std::string{node.name}];
 
-        //                                      new_node->local_transform = tm * rm * sm;
-        //                                  }},
-        //                node.transform);
-        // }
+            std::visit(
+                fastgltf::visitor{
+                    [&](fastgltf::math::fmat4x4 matrix)
+                    {
+                        std::memcpy(newNode->localTransform.data, matrix.data(), sizeof(math::Matrix4));
+                    },
+                    [&](fastgltf::TRS tranform)
+                    {
+                        math::Vector3 translation{tranform.translation[0], tranform.translation[1], tranform.translation[2]};
+                        math::Quaternion rotation{tranform.rotation[3], tranform.rotation[0], tranform.rotation[1], tranform.rotation[2]};
+                        math::Vector3 scale{tranform.scale[0], tranform.scale[1], tranform.scale[2]};
 
-        // // Load nodes hierarchy
-        // for (usize i = 0; i < asset->nodes.size(); ++i)
-        // {
-        //     fastgltf::Node& node              = asset->nodes[i];
-        //     std::shared_ptr<Node>& scene_node = nodes[i];
+                        math::Matrix4 tm = math::makeTranslation(translation);
+                        math::Matrix4 rm = rotation.toMat4();
+                        math::Matrix4 sm = math::makeScale(scale);
 
-        //     for (auto& child : node.children)
-        //     {
-        //         scene_node->children.push_back(nodes[child]);
-        //         nodes[child]->parent = scene_node;
-        //     }
-        // }
+                        newNode->localTransform = tm * rm * sm;
+                    }},
+                node.transform);
+        }
 
-        // for (auto& node : nodes)
-        // {
-        //     if (node->parent.lock() == nullptr)
-        //     {
-        //         model.top_nodes.push_back(node);
-        //         node->RefreshTransform(glm::mat4(1.0f));
-        //     }
-        // }
+        // =====================================================================
+        // 构建层次结构
+        // =====================================================================
 
-        // return m_model_storage.emplace_back(&model);
+        for (usize i = 0; i < asset->nodes.size(); ++i)
+        {
+            fastgltf::Node& node             = asset->nodes[i];
+            std::shared_ptr<Node>& sceneNode = nodes[i];
+
+            for (auto& child : node.children)
+            {
+                sceneNode->children.push_back(nodes[child]);
+                nodes[child]->parent = sceneNode;
+            }
+        }
+
+        for (std::shared_ptr<Node>& node : nodes)
+        {
+            if (!node->parent.lock())
+            {
+                model->topNodes.push_back(node);
+                node->refreshTransform(math::Matrix4::IDENTITY());
+            }
+        }
+
+        return m_modelStorage.emplace(modelName, std::move(model)).first->second.get();
     }
+
+    glTFModel* glTFManager::getModel(std::string const& modelName)
+    {
+        std::lock_guard<std::mutex> lock(m_mtxParser);
+
+        auto it = m_modelStorage.find(modelName);
+        if (it != m_modelStorage.end())
+        {
+            return it->second.get();
+        }
+        return nullptr;
+    }
+
 } // namespace worse

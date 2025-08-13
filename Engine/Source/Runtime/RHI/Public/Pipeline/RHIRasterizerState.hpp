@@ -14,7 +14,7 @@ namespace worse
         constexpr RHIRasterizerState(
             RHIPolygonMode const polygonMode = RHIPolygonMode::Solid,
             RHICullMode const cullMode       = RHICullMode::None,
-            RHIFrontFace const frontFace     = RHIFrontFace::CW,
+            RHIFrontFace const frontFace     = RHIFrontFace::CCW,
             f32 const lineWidth            = 1.0f,
             bool const depthClampEnable      = false,
             f32 const depthBias            = 0.0f,

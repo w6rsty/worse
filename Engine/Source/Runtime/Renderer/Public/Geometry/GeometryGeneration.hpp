@@ -1,3 +1,8 @@
+/**
+ * @file GeometryGeneration.hpp
+ * @brief Geometry generation utilities for 3D shapes. Using CCW winding order.
+ */
+
 #pragma once
 #include "Math/Math.hpp"
 #include "RHITypes.hpp"
@@ -23,6 +28,7 @@ namespace worse::geometry
     {
         using worse::math::Vector2;
         using worse::math::Vector3;
+        using worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -44,17 +50,18 @@ namespace worse::geometry
         //           2       /   |      3
         //                  -Z   -Y
 
-        vertices.emplace_back(Vector3(-0.5f * width,  0.0f,  0.5f * height), Vector2(0, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 0 top-left
-        vertices.emplace_back(Vector3( 0.5f * width,  0.0f,  0.5f * height), Vector2(1, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 1 top-right
-        vertices.emplace_back(Vector3(-0.5f * width,  0.0f, -0.5f * height), Vector2(0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 2 bottom-left
-        vertices.emplace_back(Vector3( 0.5f * width,  0.0f, -0.5f * height), Vector2(1, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 3 bottom-right
+        vertices.emplace_back(Vector3(-0.5f * width,  0.0f,  0.5f * height), Vector2(0, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 0 top-left
+        vertices.emplace_back(Vector3( 0.5f * width,  0.0f,  0.5f * height), Vector2(1, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 1 top-right
+        vertices.emplace_back(Vector3(-0.5f * width,  0.0f, -0.5f * height), Vector2(0, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 2 bottom-left
+        vertices.emplace_back(Vector3( 0.5f * width,  0.0f, -0.5f * height), Vector2(1, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 3 bottom-right
 
-        indices.emplace_back(3);
-        indices.emplace_back(2);
-        indices.emplace_back(0);
-        indices.emplace_back(3);
+        // CCW winding order when viewed from above (positive Y)
         indices.emplace_back(0);
         indices.emplace_back(1);
+        indices.emplace_back(2);
+        indices.emplace_back(2);
+        indices.emplace_back(1);
+        indices.emplace_back(3);
         // clang-format on
     }
 
@@ -64,6 +71,7 @@ namespace worse::geometry
     {
         using worse::math::Vector2;
         using worse::math::Vector3;
+        using worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -72,84 +80,82 @@ namespace worse::geometry
 
         // clang-format off
     
-        //                           +Y       +Z
-        //                            ^       ^
-        //             (9/12/17)      |      /    (11/14/21)
-        //                     \\     |     /    //
-        //                       +----|----/----+
-        //                      /|    |   /    /|
-        //                     / | (3/15/23)  / |
-        //                    /  |    | / \\ /  |
-        //      (1/13/19) == +---+----|/----+   |
-        //     -X - - - - - -|- -|- - * - - |- -|- - - - - - > +X
-        //                   |   +---/|-----+---+ == (6/10/20)
-        //                   |  / \\/ |     |  /
-        //                   | /   (4/8/16) | /
-        //                   |/   /   |     |/
-        //                   +---/----|-----+
-        //                 //   /     |     \\
-        //          (0/5/18)   /      |      (2/7/22)
-        //                   -Z       -Y     
+        //                       +Y       +Z
+        //                        ^       ^
+        //                        |     /    
+        //                   +----|----/----+
+        //                  /|    |   /    /|
+        //                 / |    |  /    / |
+        //                /  |    | /    /  |
+        //               +---+----|/----+   |
+        //     -X - - - -|- -|- - * - - |- -|- - - - > +X
+        //               |   +---/|-----+---+
+        //               |  /   / |     |  /
+        //               | /   /  |     | /
+        //               |/   /   |     |/
+        //               +---/----|-----+
+        //                  /     |     
+        //               -Z       -Y     
 
         // front
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 0
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 1
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 2
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)); // 3
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 0
+        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 1
+        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 2
+        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, 0, -1), Vector4(0, 1, 0, 1)); // 3
 
         // bottom
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 4
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 5
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 6
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, -1, 0), Vector3(1, 0, 0)); // 7
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 4
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 5
+        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 6
+        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(0, -1, 0), Vector4(1, 0, 0, 1)); // 7
 
         // back
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 8
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 9
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 10
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)); // 11
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 8
+        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 9
+        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 10
+        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 0, 1), Vector4(0, 1, 0, 1)); // 11
 
         // top
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 12
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 13
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 14
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)); // 15
+        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 12
+        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 13
+        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 14
+        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(0, 1, 0), Vector4(1, 0, 0, 1)); // 15
 
         // left
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 16
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 17
-        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 18
-        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0)); // 19
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height,  0.5f * depth), Vector2(0, 1), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 16
+        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height,  0.5f * depth), Vector2(0, 0), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 17
+        vertices.emplace_back(Vector3(-0.5f * width, -0.5f * height, -0.5f * depth), Vector2(1, 1), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 18
+        vertices.emplace_back(Vector3(-0.5f * width,  0.5f * height, -0.5f * depth), Vector2(1, 0), Vector3(-1, 0, 0), Vector4(0, 1, 0, 1)); // 19
 
         // right
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 20
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 21
-        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 22
-        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)); // 23
+        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height,  0.5f * depth), Vector2(1, 1), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 20
+        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height,  0.5f * depth), Vector2(1, 0), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 21
+        vertices.emplace_back(Vector3( 0.5f * width, -0.5f * height, -0.5f * depth), Vector2(0, 1), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 22
+        vertices.emplace_back(Vector3( 0.5f * width,  0.5f * height, -0.5f * depth), Vector2(0, 0), Vector3(1, 0, 0), Vector4(0, 1, 0, 1)); // 23
 
-        // front
+        // front (CCW when viewed from outside)
         indices.emplace_back(0); indices.emplace_back(1); indices.emplace_back(2);
         indices.emplace_back(2); indices.emplace_back(1); indices.emplace_back(3);
 
-        // bottom
+        // bottom (CCW when viewed from outside)
         indices.emplace_back(4); indices.emplace_back(5); indices.emplace_back(6);
         indices.emplace_back(6); indices.emplace_back(5); indices.emplace_back(7);
 
-        // back
-        indices.emplace_back(10); indices.emplace_back(9); indices.emplace_back(8);
-        indices.emplace_back(11); indices.emplace_back(9); indices.emplace_back(10);
+        // back (CCW when viewed from outside)
+        indices.emplace_back(8); indices.emplace_back(10); indices.emplace_back(9);
+        indices.emplace_back(9); indices.emplace_back(10); indices.emplace_back(11);
 
-        // top
-        indices.emplace_back(14); indices.emplace_back(13); indices.emplace_back(12);
-        indices.emplace_back(15); indices.emplace_back(13); indices.emplace_back(14);
+        // top (CCW when viewed from outside)
+        indices.emplace_back(12); indices.emplace_back(14); indices.emplace_back(13);
+        indices.emplace_back(13); indices.emplace_back(14); indices.emplace_back(15);
 
-        // left
+        // left (CCW when viewed from outside)
         indices.emplace_back(16); indices.emplace_back(17); indices.emplace_back(18);
         indices.emplace_back(18); indices.emplace_back(17); indices.emplace_back(19);
 
-        // right
-        indices.emplace_back(22); indices.emplace_back(21); indices.emplace_back(20);
-        indices.emplace_back(23); indices.emplace_back(21); indices.emplace_back(22);
+        // right (CCW when viewed from outside)
+        indices.emplace_back(20); indices.emplace_back(22); indices.emplace_back(21);
+        indices.emplace_back(21); indices.emplace_back(22); indices.emplace_back(23);
 
         // clang-format on
     }
@@ -160,6 +166,7 @@ namespace worse::geometry
     {
         using worse::math::Vector2;
         using worse::math::Vector3;
+        using worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -174,7 +181,7 @@ namespace worse::geometry
         vertices.emplace_back(Vector3(0.0f, radius, 0.0f),
                               Vector2(0.5f, 0.0f),
                               Vector3(0.0f, 1.0f, 0.0f),
-                              Vector3(1.0f, 0.0f, 0.0f));
+                              Vector4(1.0f, 0.0f, 0.0f, 1.0f));
         const u32 topPoleIndex = 0;
 
         // Rings (excluding poles)
@@ -198,7 +205,8 @@ namespace worse::geometry
                            static_cast<f32>(r) / static_cast<f32>(rings));
                 Vector3 normal = normalize(position);
                 // A robust tangent calculation
-                Vector3 tangent = normalize(Vector3(-sinTheta, 0.0f, cosTheta));
+                float handedness = (s % 2 == 0) ? 1.0f : -1.0f;
+                Vector4 tangent  = Vector4(normalize(Vector3(-sinTheta, 0.0f, cosTheta)), handedness);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
@@ -208,12 +216,12 @@ namespace worse::geometry
         vertices.emplace_back(Vector3(0.0f, -radius, 0.0f),
                               Vector2(0.5f, 1.0f),
                               Vector3(0.0f, -1.0f, 0.0f),
-                              Vector3(1.0f, 0.0f, 0.0f));
+                              Vector4(1.0f, 0.0f, 0.0f, 1.0f));
         const u32 bottomPoleIndex = static_cast<u32>(vertices.size() - 1);
 
         // --- Indices ---
 
-        // Top fan
+        // Top fan (CCW when viewed from outside)
         for (u32 s = 0; s < segments; ++s)
         {
             // vertex index for the first ring starts at 1 (after the top pole)
@@ -224,7 +232,7 @@ namespace worse::geometry
             indices.emplace_back(first);
         }
 
-        // Middle quads
+        // Middle quads (CCW when viewed from outside)
         for (u32 r = 0; r < rings - 2; ++r)
         {
             for (u32 s = 0; s < segments; ++s)
@@ -248,7 +256,7 @@ namespace worse::geometry
             }
         }
 
-        // Bottom fan
+        // Bottom fan (CCW when viewed from outside)
         // vertex index for the start of the last ring
         u32 lastRingStartIndex = 1 + (rings - 2) * (segments + 1);
         for (u32 s = 0; s < segments; ++s)
@@ -269,6 +277,7 @@ namespace worse::geometry
     {
         using worse::math::Vector2;
         using worse::math::Vector3;
+        using worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -305,15 +314,15 @@ namespace worse::geometry
 
                 Vector3 position(x, y, z);
                 Vector2 uv(u, v);
-                Vector3 normal = normalize(Vector3(x, 0.0f, z)); // 径向法线
-                Vector3 tangent =
-                    normalize(Vector3(-std::sin(theta), 0.0f, std::cos(theta)));
+                Vector3 normal   = normalize(Vector3(x, 0.0f, z)); // 径向法线
+                float handedness = (s % 2 == 0) ? 1.0f : -1.0f;
+                Vector4 tangent  = Vector4(normalize(Vector3(-std::sin(theta), 0.0f, std::cos(theta))), handedness);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
         }
 
-        // 生成侧面索引
+        // 生成侧面索引 (CCW when viewed from outside)
         for (u32 h = 0; h < heightSegments; ++h)
         {
             for (u32 s = 0; s < segments; ++s)
@@ -325,9 +334,9 @@ namespace worse::geometry
                 indices.emplace_back(second);
                 indices.emplace_back(first + 1);
 
+                indices.emplace_back(first + 1);
                 indices.emplace_back(second);
                 indices.emplace_back(second + 1);
-                indices.emplace_back(first + 1);
             }
         }
 
@@ -340,7 +349,7 @@ namespace worse::geometry
             Vector3 topCenter(0.0f, halfHeight, 0.0f);
             Vector2 topCenterUv(0.5f, 0.5f);
             Vector3 topNormal(0.0f, 1.0f, 0.0f);
-            Vector3 topTangent(1.0f, 0.0f, 0.0f);
+            Vector4 topTangent(1.0f, 0.0f, 0.0f, 1.0f);
 
             u32 topCenterIndex = currentVertexIndex;
             vertices.emplace_back(topCenter,
@@ -361,12 +370,13 @@ namespace worse::geometry
                 Vector2 uv(0.5f + 0.5f * std::cos(theta),
                            0.5f + 0.5f * std::sin(theta));
                 Vector3 normal(0.0f, 1.0f, 0.0f);
-                Vector3 tangent(1.0f, 0.0f, 0.0f);
+                float handedness = (s % 2 == 0) ? 1.0f : -1.0f;
+                Vector4 tangent(1.0f, 0.0f, 0.0f, handedness);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
 
-            // 顶盖索引
+            // 顶盖索引 (CCW when viewed from above)
             for (u32 s = 0; s < segments; ++s)
             {
                 indices.emplace_back(topCenterIndex);
@@ -383,7 +393,7 @@ namespace worse::geometry
             Vector3 bottomCenter(0.0f, -halfHeight, 0.0f);
             Vector2 bottomCenterUv(0.5f, 0.5f);
             Vector3 bottomNormal(0.0f, -1.0f, 0.0f);
-            Vector3 bottomTangent(1.0f, 0.0f, 0.0f);
+            Vector4 bottomTangent(1.0f, 0.0f, 0.0f, 1.0f);
 
             u32 bottomCenterIndex = currentVertexIndex;
             vertices.emplace_back(bottomCenter,
@@ -404,12 +414,12 @@ namespace worse::geometry
                 Vector2 uv(0.5f + 0.5f * std::cos(theta),
                            0.5f - 0.5f * std::sin(theta));
                 Vector3 normal(0.0f, -1.0f, 0.0f);
-                Vector3 tangent(1.0f, 0.0f, 0.0f);
+                Vector4 tangent(1.0f, 0.0f, 0.0f, 1.0f);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
 
-            // 底盖索引 (逆时针)
+            // 底盖索引 (CCW when viewed from below)
             for (u32 s = 0; s < segments; ++s)
             {
                 indices.emplace_back(bottomCenterIndex);
@@ -426,6 +436,7 @@ namespace worse::geometry
     {
         using worse::math::Vector2;
         using worse::math::Vector3;
+        using worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -490,15 +501,15 @@ namespace worse::geometry
 
                 Vector3 position(x, y, z);
                 Vector2 uv(u, v_ratio);
-                Vector3 normal =
-                    normalize(Vector3(x, 0.0f, z) + normal_y_dir * radius);
-                Vector3 tangent = normalize(Vector3(-sinTheta, 0.0f, cosTheta));
+                Vector3 normal = normalize(Vector3(x, 0.0f, z) + normal_y_dir * radius);
+                float handedness = (s % 2 == 0) ? 1.0f : -1.0f;
+                Vector4 tangent = Vector4(normalize(Vector3(-sinTheta, 0.0f, cosTheta)), handedness);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
         }
 
-        // --- Indices ---
+        // --- Indices --- (CCW when viewed from outside)
         for (u32 r = 0; r < rings; ++r)
         {
             for (u32 s = 0; s < segments; ++s)

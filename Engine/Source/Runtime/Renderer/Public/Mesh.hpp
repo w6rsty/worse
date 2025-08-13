@@ -1,7 +1,7 @@
 #pragma once
 #include "Math/BoundingBox.hpp"
-#include "RHIBuffer.hpp"
 #include "Geometry/GeometryGeneration.hpp"
+#include "RHIBuffer.hpp"
 
 #include "ECS/Resource.hpp"
 #include "ECS/QueryView.hpp"

@@ -20,11 +20,11 @@
         }                                                                             \
     } while (false)
 #else
-#define WS_ASSERT_VK(result)                                                   \
-    do                                                                         \
-    {                                                                          \
-        VkResult vkResult = (result);                                          \
-        (void)vkResult;                                                        \
+#define WS_ASSERT_VK(result)          \
+    do                                \
+    {                                 \
+        VkResult vkResult = (result); \
+        (void)vkResult;               \
     } while (false)
 #endif
 
@@ -32,7 +32,7 @@
 
 namespace worse
 {
-   
+
     // fwd
     class RHINativeHandle;
     class RHIDevice;
@@ -160,7 +160,7 @@ namespace worse
     enum class RHISamplerAddressMode
     {
         Wrap,
-        Mirror,
+        MirroredWrap,
         ClampToEdge,
         ClampToBorder,
         MirrorClampToEdge,
@@ -173,7 +173,7 @@ namespace worse
         {
             // clang-format off
         case RHISamplerAddressMode::Wrap:             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        case RHISamplerAddressMode::Mirror:           return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case RHISamplerAddressMode::MirroredWrap:     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
         case RHISamplerAddressMode::ClampToEdge:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         case RHISamplerAddressMode::ClampToBorder:    return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         case RHISamplerAddressMode::MirrorClampToEdge:return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
@@ -187,7 +187,7 @@ namespace worse
         CompareDepth,
         PointClampEdge,
         PointClampBorder,
-        Wrap,
+        PointWrap,
         BilinearClampEdge,
         BilinearClampBorder,
         BilinearWrap,

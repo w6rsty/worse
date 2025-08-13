@@ -35,14 +35,24 @@ namespace worse
     
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
             }
+        }
 
+        for (auto const& object : drawcalls->ctx.opaqueObjects)
+        {
+            cmdList->setBufferVertex(object.mesh->getVertexBuffer());
+            cmdList->setBufferIndex(object.mesh->getIndexBuffer());
+
+            pushConstantData.setModel(object.transform);
+            cmdList->pushConstants(pushConstantData.asSpan());
+            
+            cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
         cmdList->renderPassEnd();
         // clang-format on
     }
 
-    void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
+    void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
     {
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PBR));
 
@@ -66,6 +76,18 @@ namespace worse
                 cmdList->pushConstants(pushConstantData.asSpan());
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
             }
+        }
+
+        for (auto const& object : drawcalls->ctx.opaqueObjects)
+        {
+            cmdList->setBufferVertex(object.mesh->getVertexBuffer());
+            cmdList->setBufferIndex(object.mesh->getIndexBuffer());
+
+            pushConstantData.setModel(object.transform);
+            pushConstantData.setMaterialId(assetServer->getMaterialIndex(object.material));
+
+            cmdList->pushConstants(pushConstantData.asSpan());
+            cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
         cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Point));
@@ -106,6 +128,17 @@ namespace worse
 
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
             }
+        }
+
+        for (auto const& object : drawcalls->ctx.opaqueObjects)
+        {
+            cmdList->setBufferVertex(object.mesh->getVertexBuffer());
+            cmdList->setBufferIndex(object.mesh->getIndexBuffer());
+
+            pushConstantData.setModel(object.transform);
+
+            cmdList->pushConstants(pushConstantData.asSpan());
+            cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
         cmdList->renderPassEnd();
@@ -154,11 +187,12 @@ namespace worse
 
     void Renderer::produceFrame(RHICommandList* cmdList,
                                 ecs::Resource<GlobalContext> globalContext,
-                                ecs::Resource<DrawcallStorage> drawcalls)
+                                ecs::Resource<DrawcallStorage> drawcalls,
+                                ecs::Resource<AssetServer> assetServer)
     {
         passDpethPrepass(cmdList, drawcalls);
 
-        passColor(cmdList, drawcalls);
+        passColor(cmdList, drawcalls, assetServer);
 
         if (globalContext->isWireFrameMode)
         {
@@ -168,6 +202,8 @@ namespace worse
         passPostProcessing(cmdList);
 
         passImGui(cmdList);
+
+        drawcalls->ctx.clear();
     }
 
 } // namespace worse

@@ -45,12 +45,11 @@ PixelOutput main_ps(VertexOutput input)
 
     Material material = materials[getMaterialId()];
     
-    // Sample albedo only
-    float3 albedo = material.albedo.rgb;
-    float3 textureAlbedo = materialTextures[material.albedoTextureIndex].Sample(samplers[samplerBilinearWrap], input.uv).rgb;
-    albedo *= textureAlbedo;
+    float3 baseColor = material.baseColor.rgb;
+    float3 textureBaseColor = materialTextures[material.baseColorTextureIndex].Sample(samplers[samplerBilinearWrap], input.uv).rgb;
+    baseColor *= textureBaseColor;
 
-    output.color = float4(albedo, material.albedo.a);
+    output.color = float4(baseColor, material.baseColor.a);
 
     return output;
 }

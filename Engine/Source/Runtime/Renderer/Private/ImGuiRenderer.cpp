@@ -17,13 +17,12 @@ namespace worse
         ImVec2 windowSize = ImGui::GetIO().DisplaySize;
         ImGui::SetNextWindowPos(ImVec2(windowSize.x * 0.5f, windowSize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
         ImGui::Begin("#",
-                        nullptr,
-                        ImGuiWindowFlags_NoResize |
-                        ImGuiWindowFlags_NoMove |
-                        ImGuiWindowFlags_AlwaysAutoResize |
-                        ImGuiWindowFlags_NoCollapse |
-                        ImGuiWindowFlags_NoTitleBar
-                );
+                     nullptr,
+                     ImGuiWindowFlags_NoResize |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_AlwaysAutoResize |
+                         ImGuiWindowFlags_NoCollapse |
+                         ImGuiWindowFlags_NoTitleBar);
         ImGui::Text("No page registered for state: %d", state);
         ImGui::End();
     }
@@ -51,6 +50,7 @@ namespace worse
             nullptr,
             io.Fonts->GetGlyphRangesChineseSimplifiedCommon()
         );
+        io.DisplayFramebufferScale = ImVec2(2.0f, 2.0f);
 
         ImGuiStyle& style = ImGui::GetStyle();
 
@@ -175,6 +175,7 @@ namespace worse
 
         WS_ASSERT(ImGui_ImplVulkan_Init(&infoInit));
 
+        // 订阅 SDL 事件
         EventBus::subscribe(EventType::SDL, [](Event const& playload) {
             SDL_Event* event = static_cast<SDL_Event*>(std::get<void*>(playload));
             ImGui_ImplSDL3_ProcessEvent(event);

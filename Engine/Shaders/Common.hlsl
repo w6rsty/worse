@@ -1,17 +1,17 @@
 #ifndef WS_COMMON_HLSL
 #define WS_COMMON_HLSL
 
-static const uint samplerPointClampEdge;
-static const uint samplerPointClampBorder;
-static const uint samplerWrap;
-static const uint samplerBilinearClampEdge;
-static const uint samplerBilinearClampBorder;
-static const uint samplerBilinearWrap;
-static const uint samplerTrilinearClamp;
-static const uint samplerAnisotropicClamp;
+static uint const samplerPointClampEdge      = 0;
+static uint const samplerPointClampBorder    = 1;
+static uint const samplerPointWrap           = 2;
+static uint const samplerBilinearClampEdge   = 3;
+static uint const samplerBilinearClampBorder = 4;
+static uint const samplerBilinearWrap        = 5;
+static uint const samplerTrilinearClamp      = 6;
+static uint const samplerAnisotropicClamp    = 7;
 
-static const uint THREAD_GROUP_COUNT_X = 8;
-static const uint THREAD_GROUP_COUNT_Y = 8;
+static uint const THREAD_GROUP_COUNT_X = 8;
+static uint const THREAD_GROUP_COUNT_Y = 8;
 
 struct FrameConstantData
 {
@@ -77,20 +77,21 @@ struct VertexPosUvNrmTan
     float3 position : POSITION;
     float2 uv       : TEXCOORD;
     float3 normal   : NORMAL;
-    float3 tangent  : TANGENT;
+    float4 tangent  : TANGENT;
 };
 
 struct Material
 {
-    uint albedoTextureIndex;
+    uint baseColorTextureIndex;
     uint normalTextureIndex;
-    uint metallicTextureIndex;
-    uint roughnessTextureIndex;
+    uint metallicRoughnessTextureIndex;
     uint ambientOcclusionTextureIndex;
     uint emissiveTextureIndex;
     float metallic;
     float roughness;
-    float4 albedo;
+    float ambientOcclusion;
+    
+    float4 baseColor;
     float4 emissive;
 };
 

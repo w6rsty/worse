@@ -78,7 +78,7 @@ namespace worse
         math::Vector3 position = {0.0, 0.0, 0.0};
         math::Vector2 uv       = {0.0, 0.0};
         math::Vector3 normal   = {0.0, 0.0, 0.0};
-        math::Vector3 tangent  = {0.0, 0.0, 0.0};
+        math::Vector4 tangent  = {0.0, 0.0, 0.0, 0.0};
     };
 
 } // namespace worse

@@ -15,22 +15,22 @@ namespace worse
 
     struct StandardMaterialGPU
     {
-        u32 albedoTextureIndex;
+        u32 baseColorTextureIndex;
         u32 normalTextureIndex;
-        u32 metallicTextureIndex;
-        u32 roughnessTextureIndex;
+        u32 metallicRoughnessTextureIndex;
         u32 ambientOcclusionTextureIndex;
         u32 emissiveTextureIndex;
         f32 metallic;
         f32 roughness;
-        math::Vector4 albedo;
+        f32 ambientOcclusion;
+
+        math::Vector4 baseColor;
         math::Vector4 emissive;
     };
 
     /**
      * @brief 编排初始化中注册的材质
      *
-     * @param materialView 材质索引
      * @param assetServer 资源服务器
      * @param materials
      * @param textureWrites

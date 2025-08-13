@@ -1,3 +1,4 @@
+#include "glTF/glTF.hpp"
 #include "Window.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
@@ -57,7 +58,7 @@ namespace worse
                 samplers[RHISamplerType::CompareDepth]        = Renderer::getSampler(RHISamplerType::CompareDepth);
                 samplers[RHISamplerType::PointClampBorder]    = Renderer::getSampler(RHISamplerType::PointClampBorder);
                 samplers[RHISamplerType::PointClampEdge]      = Renderer::getSampler(RHISamplerType::PointClampEdge);
-                samplers[RHISamplerType::Wrap]                = Renderer::getSampler(RHISamplerType::Wrap);
+                samplers[RHISamplerType::PointWrap]                = Renderer::getSampler(RHISamplerType::PointWrap);
                 samplers[RHISamplerType::BilinearClampEdge]   = Renderer::getSampler(RHISamplerType::BilinearClampEdge);
                 samplers[RHISamplerType::BilinearClampBorder] = Renderer::getSampler(RHISamplerType::BilinearClampBorder);
                 samplers[RHISamplerType::BilinearWrap]        = Renderer::getSampler(RHISamplerType::BilinearWrap);
@@ -79,8 +80,7 @@ namespace worse
             // render resolution
             resolutionRender = {1200, 720};
             // output resolution
-            resolutionOutput = {static_cast<f32>(Window::getWidth()),
-                                static_cast<f32>(Window::getHeight())};
+            resolutionOutput = {static_cast<f32>(Window::getWidth()), static_cast<f32>(Window::getHeight())};
 
             Renderer::setViewport(resolutionRender.x, resolutionRender.y);
         }
@@ -122,7 +122,8 @@ namespace worse
         commands.emplaceResource<DrawcallStorage>();
         commands.emplaceResourceArray<StandardMaterial>();
         commands.emplaceResourceArray<TextureWrite>();
-        commands.emplaceResource<AssetServer>();
+        worse::AssetServer& assetServer = commands.emplaceResource<AssetServer>();
+        commands.emplaceResource<glTFManager>(assetServer);
     }
 
     void Renderer::shutdown(ecs::Commands commands)
@@ -138,8 +139,8 @@ namespace worse
             commands.removeResource<DrawcallStorage>();
             commands.removeResourceArray<StandardMaterial>();
             commands.removeResourceArray<TextureWrite>();
-
             commands.removeResource<AssetServer>();
+            commands.removeResource<glTFManager>();
         }
 
         RHIDevice::destroy();
@@ -148,7 +149,8 @@ namespace worse
     void Renderer::tick(ecs::Resource<DrawcallStorage> drawcalls,
                         ecs::Resource<Camera> camera,
                         ecs::Resource<GlobalContext> globalContext,
-                        ecs::ResourceArray<TextureWrite> textureWrites)
+                        ecs::ResourceArray<TextureWrite> textureWrites,
+                        ecs::Resource<AssetServer> assetServer)
     {
         // signal image acquire semaphore(swapchain)
         swapchain->acquireNextImage();
@@ -165,7 +167,7 @@ namespace worse
         updateBuffers(m_currentCmdList, camera, globalContext, textureWrites);
 
         // render passes
-        produceFrame(m_currentCmdList, globalContext, drawcalls);
+        produceFrame(m_currentCmdList, globalContext, drawcalls, assetServer);
 
         // 将渲染结果拷贝到交换链图像
         blitToBackBuffer(m_currentCmdList);
@@ -203,15 +205,14 @@ namespace worse
         std::vector<RHIDescriptorWrite> updates;
         updates.reserve(static_cast<usize>(RendererTexture::Max) + textureWrites->data().size());
 
-        // builtin textures (0-6)
+        // builtin textures (0-5)
         // clang-format off
         updates.emplace_back(0, 0, RHIDescriptorResource{Renderer::getTexture(RendererTexture::Placeholder)},             RHIDescriptorType::Texture);
         updates.emplace_back(0, 1, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAlbedo)},           RHIDescriptorType::Texture);
         updates.emplace_back(0, 2, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultNormal)},           RHIDescriptorType::Texture);
-        updates.emplace_back(0, 3, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultMetallic)},         RHIDescriptorType::Texture);
-        updates.emplace_back(0, 4, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultRoughness)},        RHIDescriptorType::Texture);
-        updates.emplace_back(0, 5, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAmbientOcclusion)}, RHIDescriptorType::Texture);
-        updates.emplace_back(0, 6, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultEmissive)},         RHIDescriptorType::Texture);
+        updates.emplace_back(0, 3, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultMetallicRoughness)},         RHIDescriptorType::Texture);
+        updates.emplace_back(0, 4, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAmbientOcclusion)}, RHIDescriptorType::Texture);
+        updates.emplace_back(0, 5, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultEmissive)},         RHIDescriptorType::Texture);
         
         // dynamic textures
         for (auto const& textureWrite : textureWrites->data())

@@ -216,7 +216,7 @@ namespace worse
         m_samplerInfos[RHISamplerType::CompareDepth].sampler        = samplers[RHISamplerType::CompareDepth]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::PointClampEdge].sampler      = samplers[RHISamplerType::PointClampEdge]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::PointClampBorder].sampler    = samplers[RHISamplerType::PointClampBorder]->getHandle().asValue<VkSampler>();
-        m_samplerInfos[RHISamplerType::Wrap].sampler                = samplers[RHISamplerType::Wrap]->getHandle().asValue<VkSampler>();
+        m_samplerInfos[RHISamplerType::PointWrap].sampler                = samplers[RHISamplerType::PointWrap]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::BilinearClampEdge].sampler   = samplers[RHISamplerType::BilinearClampEdge]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::BilinearClampBorder].sampler = samplers[RHISamplerType::BilinearClampBorder]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::BilinearWrap].sampler        = samplers[RHISamplerType::BilinearWrap]->getHandle().asValue<VkSampler>();

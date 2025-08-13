@@ -27,8 +27,7 @@ namespace worse
         m_indexBuffer.reset();
     }
 
-    void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices,
-                           std::vector<u32> const& indices)
+    void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices, std::vector<u32> const& indices)
     {
         SubMesh subMesh;
 
@@ -55,21 +54,23 @@ namespace worse
             return;
         }
 
-        m_vertexBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Vertex,
-                                                     sizeof(RHIVertexPosUvNrmTan),
-                                                     m_vertices.size(),
-                                                     m_vertices.data(),
-                                                     false,
-                                                     "MeshVertexBuffer");
+        m_vertexBuffer = std::make_shared<RHIBuffer>(
+            RHIBufferUsageFlagBits::Vertex,
+            sizeof(RHIVertexPosUvNrmTan),
+            m_vertices.size(),
+            m_vertices.data(),
+            false,
+            "MeshVertexBuffer");
 
         if (m_indices.size() != 0)
         {
-            m_indexBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Index,
-                                                        sizeof(u32),
-                                                        m_indices.size(),
-                                                        m_indices.data(),
-                                                        false,
-                                                        "MeshIndexBuffer");
+            m_indexBuffer = std::make_shared<RHIBuffer>(
+                RHIBufferUsageFlagBits::Index,
+                sizeof(u32),
+                m_indices.size(),
+                m_indices.data(),
+                false,
+                "MeshIndexBuffer");
         }
     }
 } // namespace worse

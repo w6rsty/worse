@@ -52,6 +52,8 @@ namespace worse
     {
         Render,
         Output,
+        GBufferNormal,
+        GBufferAlbedo,
         Depth,
         Max,
     };
@@ -62,8 +64,7 @@ namespace worse
         Placeholder,
         DefaultAlbedo,
         DefaultNormal,
-        DefaultMetallic,
-        DefaultRoughness,
+        DefaultMetallicRoughness,
         DefaultAmbientOcclusion,
         DefaultEmissive,
         Max,
@@ -74,13 +75,12 @@ namespace worse
         switch (texture)
         {
             // clang-format off
-        case RendererTexture::Placeholder:             return "Placeholder";
-        case RendererTexture::DefaultNormal:           return "DefaultNormal";
-        case RendererTexture::DefaultMetallic:         return "DefaultMetallic";
-        case RendererTexture::DefaultRoughness:        return "DefaultRoughness";
-        case RendererTexture::DefaultAmbientOcclusion: return "DefaultAmbientOcclusion";
-        case RendererTexture::DefaultEmissive:         return "DefaultEmissive";
-        default:                                       return "Unknown";
+        case RendererTexture::Placeholder:              return "Placeholder";
+        case RendererTexture::DefaultNormal:            return "DefaultNormal";
+        case RendererTexture::DefaultMetallicRoughness: return "DefaultMetallicRoughness";
+        case RendererTexture::DefaultAmbientOcclusion:  return "DefaultAmbientOcclusion";
+        case RendererTexture::DefaultEmissive:          return "DefaultEmissive";
+        default:                                        return "Unknown";
             // clang-format on
         }
     }

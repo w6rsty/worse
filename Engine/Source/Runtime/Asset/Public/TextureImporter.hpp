@@ -2,17 +2,21 @@
 #include "Types.hpp"
 #include "RHITypes.hpp"
 
-#include <memory>
+#include <span>
+#include <optional>
 #include <functional>
 #include <filesystem>
 
 namespace worse
 {
-    // Holds texture properties and a deferred copy function
-    struct DeferredTextureCopy
+    /**
+     * @brief 已加载纹理数据的内存引用视图
+     */
+    struct TextureLoadView
     {
         using CopyFn = std::function<void(byte*)>;
 
+        // 获取已加载到内存中的纹理数据，然后释放内存
         CopyFn deferredCopyFn;
         i32 width;
         i32 height;
@@ -29,9 +33,11 @@ namespace worse
     class TextureImporter
     {
     public:
-        // Load a texture file, return nullptr if failed
-        static std::unique_ptr<DeferredTextureCopy>
-        FromFile(std::filesystem::path const& filepath);
+        static std::optional<TextureLoadView>
+        fromFile(std::filesystem::path const& filepath);
+
+        static std::optional<TextureLoadView>
+        fromMemory(std::span<byte> data, std::string const& name);
     };
 
 } // namespace worse

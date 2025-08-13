@@ -13,8 +13,11 @@ namespace worse
 
     struct RenderObject
     {
+        u32 indexCount;
+        u32 startIndex;
+
         Mesh* mesh;
-        MeshMaterial* material;
+        AssetHandle material;
 
         math::Matrix4 transform;
     };
@@ -23,7 +26,7 @@ namespace worse
     {
         std::vector<RenderObject> opaqueObjects;
 
-        void Clear()
+        void clear()
         {
             opaqueObjects.clear();
         }
@@ -31,7 +34,7 @@ namespace worse
 
     struct IRenderable
     {
-        virtual void Draw(math::Matrix4 const& topMat, DrawContext& ctx) = 0;
+        virtual void draw(math::Matrix4 const& topMat, DrawContext& ctx) = 0;
     };
 
     struct Drawcall
@@ -43,6 +46,9 @@ namespace worse
 
     struct DrawcallStorage
     {
+        // TODO: temporary hack
+        DrawContext ctx;
+
         std::vector<Drawcall> solid;
         std::vector<Drawcall> wireframe;
         std::vector<Drawcall> point;

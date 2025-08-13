@@ -1,6 +1,6 @@
 #include "imgui.h"
 
-#include "ECS/Commands.hpp"
+#include "Platform.hpp"
 #include "Log.hpp"
 #include "Event.hpp"
 #include "Math/Math.hpp"
@@ -11,22 +11,19 @@
 #include "Input/Input.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "ImGuiRenderer.hpp"
-
 #include "Material.hpp"
 #include "Camera.hpp"
 #include "Renderable.hpp"
 #include "AssetServer.hpp"
+#include "glTF/glTF.hpp"
 
+#include "ECS/Commands.hpp"
 #include "ECS/QueryView.hpp"
 #include "ECS/Resource.hpp"
 #include "ECS/Registry.hpp"
 #include "ECS/Schedule.hpp"
 
 using namespace worse;
-
-struct PlayerTag
-{
-};
 
 class World
 {
@@ -42,17 +39,21 @@ public:
     inline static ecs::Entity player         = ecs::Entity::null();
     inline static float cameraMoveSpeed      = 5.0f;
     inline static float cameraLookSpeed      = 5.0f;
-    inline static math::Vector3 cameraOffset = math::Vector3{0.0f, 8.0f, 6.0f}; // 相机相对于 player 的偏移
+    inline static math::Vector3 cameraOffset = math::Vector3{0.0f, 0.0f, 5.0f}; // 相机相对于 player 的偏移
 
-    static void initialize(ecs::Commands commands,
-                           ecs::ResourceArray<StandardMaterial> materials,
-                           ecs::Resource<AssetServer> assetServer)
+    inline static std::unique_ptr<Mesh> customMesh = nullptr;
+
+    static void initialize(
+        ecs::Commands commands,
+        ecs::ResourceArray<StandardMaterial> materials,
+        ecs::Resource<glTFManager> gltfManager)
     {
         // clang-format off
         Camera& camera = commands.emplaceResource<Camera>()
-            .setPosition(math::Vector3{0.0f, 9.0f, 12.0f})
-            .setPerspectiveParams(math::toRadians(60.0f), 1200.0f/720.0f, 0.1f, 500.0f);
+            .setPosition(math::Vector3{0.0f, 10.0f, 20.0f})
+            .setPerspectiveParams(math::toRadians(60.0f), static_cast<float>(Window::getWidth()) / static_cast<float>(Window::getHeight()), 0.1f, 500.0f);
 
+        // 订阅窗口事件更新 AspectRatio
         EventBus::subscribe(EventType::WindowResized,
         [&camera](Event const& payload)
         {
@@ -61,12 +62,8 @@ public:
             );
         });
 
-        auto spawnMaterial = materials->add(StandardMaterial{
-            .albedo = math::Vector4{0.8f, 0.2f, 0.4f, 1.0f},
-        });
-
         PageRouter<State>& router = ImGuiRenderer::registerStates<State>(commands, State::Begin);
-        router.registerPage(State::Begin, [spawnMaterial, &router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
+        router.registerPage(State::Begin, [&router](ecs::Commands commands, ecs::Resource<GlobalContext> globalContext)
         {
             ImGui::Begin("图形已死");
 
@@ -89,26 +86,6 @@ public:
             ImGui::Text("Toggle wireframe mode");
 
             ImGui::Text("LEFT CLICK and MOUSE MOVE to look around");
-
-            if (ImGui::Button("Spawn"))
-            {
-                commands.spawn(
-                    LocalTransform{
-                        .position = math::Vector3{
-                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f,
-                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f,
-                            static_cast<float>(rand()) / RAND_MAX * 5.0f - 1.0f
-                        },
-                    },
-                    Mesh3D{
-                        .mesh = Renderer::getStandardMesh(geometry::GeometryType::Sphere),
-                        .primitiveTopology = RHIPrimitiveTopology::PointList
-                    },
-                    MeshMaterial{spawnMaterial}
-                );
-            }
-
-            ImGui::SameLine();
 
             if (ImGui::Button("Next page"))
             {
@@ -141,15 +118,16 @@ public:
 
             ImGui::End();
         });
+
         // clang-format on
+
+        gltfManager->load(std::filesystem::path{EngineDirectory} / "Binary/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb", "helmet");
     }
 
-    // clang-format off
     static void inputControll(
         ecs::Commands commands,
         ecs::Resource<Camera> camera,
-        ecs::Resource<GlobalContext> globalContext
-    )
+        ecs::Resource<GlobalContext> globalContext)
     {
         if (Input::isKeyDown(KeyCode::Escape))
         {
@@ -158,7 +136,7 @@ public:
 
         // 获取player的位置和变换
         LocalTransform& playerTransform = commands.getComponent<LocalTransform>(player);
-        math::Vector3 playerPosition = playerTransform.position;
+        math::Vector3 playerPosition    = playerTransform.position;
 
         float const moveSpeed = cameraMoveSpeed * globalContext->deltaTime;
 
@@ -207,10 +185,10 @@ public:
         if (manualCameraControl)
         {
             // 手动相机控制（右键按住时）
-            float const mouseSensitivity      = 0.002f;
-            float const thumbStickSensitivity = 5.0f;
+            float const mouseSensitivity        = 0.002f;
+            float const thumbStickSensitivity   = 5.0f;
             math::Vector2 const thumbStickDelta = Input::getThumbStickRight() * thumbStickSensitivity;
-            math::Vector2 const delta = Input::getMouseDelta() + thumbStickDelta;
+            math::Vector2 const delta           = Input::getMouseDelta() + thumbStickDelta;
 
             float const yaw   = -delta.x * mouseSensitivity;
             float const pitch = -delta.y * mouseSensitivity;
@@ -233,8 +211,8 @@ public:
 
             // 平滑移动相机位置
             math::Vector3 const newCameraPos = math::lerp(
-                camera->getPosition(), // 当前相机位置
-                playerPosition + cameraOffset, // 目标相机位置
+                camera->getPosition(),                     // 当前相机位置
+                playerPosition + cameraOffset,             // 目标相机位置
                 cameraLookSpeed * globalContext->deltaTime // lerp 增量
             );
             camera->setPosition(newCameraPos);
@@ -247,9 +225,9 @@ public:
 
             // 平滑旋转相机
             math::Quaternion const newOrientation = math::sLerp(
-                camera->getOrientation(), // 当前相机朝向
+                camera->getOrientation(),                                             // 当前相机朝向
                 math::Quaternion::fromMat3(math::Matrix3{right, up, -lookDirection}), // 目标相机朝向
-                cameraLookSpeed * globalContext->deltaTime // sLerp 增量
+                cameraLookSpeed * globalContext->deltaTime                            // sLerp 增量
             );
             camera->setOrientation(newOrientation);
         }
@@ -259,97 +237,38 @@ public:
             globalContext->isWireFrameMode = !globalContext->isWireFrameMode;
         }
     }
-    // clang-format on
 
-    // clang-format off
     static void setupScene(
         ecs::Commands commands,
         ecs::ResourceArray<StandardMaterial> materials,
-        ecs::Resource<AssetServer> assetServer
-    )
+        ecs::Resource<AssetServer> assetServer)
     {
-        usize bronzeMaterial = materials->add(StandardMaterial{
-            .albedo = math::Vector4(0.8f, 0.5f, 0.2f, 1.0f),
-            .metallic = 0.8f,
-            .roughness = 0.2f,
-        });
-
-        usize groundMaterial = materials->add(StandardMaterial{
-            .albedo = math::Vector4(0.2f, 0.8f, 0.2f, 1.0f),
-            .metallic = 0.1f,
-            .roughness = 0.5f,
-        });
-        
-        // floor
-        commands.spawn(
-            LocalTransform{
-                .position = math::Vector3{-5.0f, 0.0f, 0.0f},
-                .scale = math::Vector3{10.0f, 1.0f, 10.0f}
-            },
-            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Quad3D)},
-            MeshMaterial{groundMaterial}
-        );
-        commands.spawn(
-            LocalTransform{
-                .position = math::Vector3{5.0f, 0.0f, 0.0f},
-                .scale = math::Vector3{10.0f, 1.0f, 10.0f}
-            },
-            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Quad3D)},
-            MeshMaterial{groundMaterial}
-        );
-
-        // sphere
-        commands.spawn(
-            LocalTransform{
-                .position = math::Vector3{-2.5f, 2.5f, 0.0f},
-                .scale = math::Vector3{4.0f, 4.0f, 4.0f},
-            },
-            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere)},
-            MeshMaterial{bronzeMaterial}
-        );
-
-        // point primitives
-        commands.spawn(
-            LocalTransform{
-                .position = math::Vector3{2.5f, 2.0f, 0.0f},
-            },
-            Mesh3D{
-                .mesh = Renderer::getStandardMesh(geometry::GeometryType::Capsule),
-                .primitiveTopology = RHIPrimitiveTopology::PointList
-            },
-            MeshMaterial{materials->add(StandardMaterial{
-                .albedo = math::Vector4(0.8f, 0.5f, 0.5f, 1.0f),
-            })}
-        );
-
         player = commands.spawn(
-            LocalTransform{
-                .position = math::Vector3{0.0f, 10.0f, 0.0f},
-            },
-            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Capsule)},
+            LocalTransform{},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Cube)},
             MeshMaterial{materials->add(StandardMaterial{
-                .albedo = math::Vector4(0.4f, 0.2f, 0.8f, 1.0f),
-                .metallic = 0.1f,
+                .baseColor = math::Vector4(1.0f, 0.4f, 0.1f, 1.0f),
+                .metallic  = 0.1f,
                 .roughness = 0.8f,
-            })}
-        );
+            })});
     }
-    // clang-format on
 
-    // clang-format off
+    static void drawglTFModel(ecs::Resource<glTFManager> gltfManager, ecs::Resource<DrawcallStorage> drawcallStorage)
+    {
+        drawModel("helmet", math::Matrix4::IDENTITY(), *gltfManager.get(), drawcallStorage->ctx);
+    }
+
     static void update(
         ecs::Commands commands,
         ecs::QueryView<LocalTransform> view,
         ecs::Resource<GlobalContext> globalContext,
-        ecs::Resource<Camera> camera
-    )
+        ecs::Resource<Camera> camera)
     {
         static profiling::Stopwatch frameTimer;
         globalContext->deltaTime = frameTimer.elapsedSec();
         globalContext->time += globalContext->deltaTime;
         frameTimer.reset();
     }
-    // clang-format on
 };
 
 int main()
@@ -368,6 +287,7 @@ int main()
     schedule.addSystem<ecs::CoreStage::Update, &Engine::tick>();
     schedule.addSystem<ecs::CoreStage::Update, &World::inputControll>();
     schedule.addSystem<ecs::CoreStage::Update, &World::update>();
+    schedule.addSystem<ecs::CoreStage::Update, &World::drawglTFModel>();
     schedule.addSystem<ecs::CoreStage::Update, &ImGuiRenderer::tick>();
     schedule.addSystem<ecs::CoreStage::Update, buildDrawcalls>();
     schedule.addSystem<ecs::CoreStage::Update, &Renderer::tick>();
@@ -378,9 +298,7 @@ int main()
 
     profiling::Stopwatch mainTimer;
     schedule.initialize(registry);
-    WS_LOG_INFO("Main",
-                "ECS schedule initialized in {} ms",
-                mainTimer.elapsedMs());
+    WS_LOG_INFO("Main", "ECS schedule initialized in {} ms", mainTimer.elapsedMs());
 
     while (!Window::shouldClose())
     {

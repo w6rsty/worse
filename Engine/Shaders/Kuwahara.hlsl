@@ -1,5 +1,10 @@
 #include "Common.hlsl"
 
+#define FILTER_ACES
+#define FILTER_GAMMA_CORRECTION
+#define FILTER_VIGNETTE
+#define FILTER_DITHERING
+
 Texture2D<float4> albedoTexture : register(t0, space1);
 RWTexture2D<float4> output : register(u0, space1);
 
@@ -73,23 +78,32 @@ void main_cs(uint3 id : SV_DispatchThreadID)
 
     // float3 filteredColor = ACESFilm(bestMean.rgb);
 
-    // float3 filteredColor = ACESFilm(albedoTexture[center].rgb);
+#ifdef FILTER_ACES
+    float3 filteredColor = ACESFilm(albedoTexture[center].rgb);
+#else
     float3 filteredColor  = albedoTexture[center].rgb;
+#endif
 
+#ifdef FILTER_GAMMA_CORRECTION
     // Apply gamma correction
-    // filteredColor = pow(filteredColor, 1.0f / 2.2f);
+    filteredColor = pow(filteredColor, 1.0f / 2.2f);
+#endif
 
+#ifdef FILTER_VIGNETTE
     // Add vignette effect
     float2 uv = float2(id.xy) / float2(dims);
     float2 centered = uv - 0.5f;
     float vignette = 1.0f - smoothstep(0.3f, 0.9f, length(centered));
     filteredColor *= vignette;
+#endif
 
+#ifdef FILTER_DITHERING
     // Add dithering to prevent color banding
     float2 ditherCoord = float2(id.xy);
     float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
     dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
     filteredColor += dither;
+#endif
 
     output[id.xy] = float4(filteredColor, 1.0f);
 }

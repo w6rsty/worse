@@ -10,7 +10,6 @@
 
 #include "ECS/Resource.hpp"
 #include "ECS/Commands.hpp"
-#include <memory>
 
 namespace worse
 {
@@ -23,7 +22,8 @@ namespace worse
         static void tick(ecs::Resource<DrawcallStorage> drawcalls,
                          ecs::Resource<Camera> camera,
                          ecs::Resource<GlobalContext> globalContext,
-                         ecs::ResourceArray<TextureWrite> textureWrites);
+                         ecs::ResourceArray<TextureWrite> textureWrites,
+                         ecs::Resource<AssetServer> assetServer);
 
         // swapchain
         static RHISwapchain* getSwapchain();
@@ -83,7 +83,8 @@ namespace worse
         // =====================================================================
 
         static void passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
-        static void passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls,
+                              ecs::Resource<AssetServer> assetServer);
         static void passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
         static void passPostProcessing(RHICommandList* cmdList);
 
@@ -91,7 +92,8 @@ namespace worse
 
         static void produceFrame(RHICommandList* cmdList,
                                  ecs::Resource<GlobalContext> globalContext,
-                                 ecs::Resource<DrawcallStorage> drawcalls);
+                                 ecs::Resource<DrawcallStorage> drawcalls,
+                                 ecs::Resource<AssetServer> assetServer);
     };
 
 } // namespace worse

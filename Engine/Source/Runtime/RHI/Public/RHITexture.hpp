@@ -2,6 +2,7 @@
 #include "Types.hpp"
 #include "RHIResource.hpp"
 
+#include <span>
 #include <filesystem>
 
 namespace worse
@@ -40,25 +41,37 @@ namespace worse
 
     public:
         RHITexture() = default;
-        // only accept mip 0 texture or texture array
+        /**
+         * @brief 创建纹理
+         *
+         * @note only accept mip 0 texture or texture array
+         */
         RHITexture(RHITextureType const type, u32 const width, u32 const height,
                    u32 const depth, u32 const mipCount, RHIFormat const format,
                    RHITextureViewFlags const usage,
                    std::vector<RHITextureSlice> data, std::string const& name);
+        /**
+         * @brief 从文件加载纹理
+         */
         RHITexture(std::filesystem::path const& path);
+        /**
+         * @brief 从内存数据创建纹理
+         */
+        RHITexture(std::span<byte> data, std::string const& name);
         ~RHITexture();
 
         RHIImageLayout getImageLayout() const;
-        void convertImageLayout(RHICommandList* cmdList,
-                                RHIImageLayout const layout) const;
+        /**
+         * @brief 使用图像屏障转换图像布局
+         */
+        void convertImageLayout(RHICommandList* cmdList, RHIImageLayout const layout) const;
 
         bool isFormatDepth() const;
         bool isFormatStencil() const;
 
         bool hasShaderReadData() const;
         RHITextureSlice const& getSlice(usize const arrayIndex) const;
-        RHITextureMip const& getMip(usize const arrayIndex,
-                                    usize const mipIndex) const;
+        RHITextureMip const& getMip(usize const arrayIndex, usize const mipIndex) const;
 
         bool isValid() const;
 

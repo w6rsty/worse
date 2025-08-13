@@ -77,14 +77,12 @@ namespace worse
         void copy(RHITexture const* source, RHITexture const* destination);
         void copy(RHITexture const* source, RHISwapchain const* destination);
 
-        void
-        pushConstants(std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
+        void pushConstants(std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
 
         void setBufferVertex(RHIBuffer* buffer);
         void setBufferIndex(RHIBuffer* buffer);
 
-        void updateBuffer(RHIBuffer* buffer, u32 const offset, u32 const size,
-                          void const* data);
+        void updateBuffer(RHIBuffer* buffer, u32 const offset, u32 const size, void const* data);
 
         // get global set 0 and bind
         void bindGlobalSet();

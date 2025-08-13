@@ -23,7 +23,7 @@ namespace worse
         EnumArray<RendererRasterizerState, std::shared_ptr<RHIRasterizerState>>     rasterizerStates;
         EnumArray<RendererDepthStencilState, std::shared_ptr<RHIDepthStencilState>> depthStencilStates;
         EnumArray<RendererBlendState, std::shared_ptr<RHIBlendState>>               blendStates;
-        EnumArray<RendererTarget, std::shared_ptr<RHITexture>>                      renderTargets;
+        EnumArray<RendererTarget, std::unique_ptr<RHITexture>>                      renderTargets;
         EnumArray<RendererShader, std::shared_ptr<RHIShader>>                       shaders;
         EnumArray<RendererTexture, std::shared_ptr<RHITexture>>                     textures;
         EnumArray<RHISamplerType, std::shared_ptr<RHISampler>>                      samplers;
@@ -37,8 +37,8 @@ namespace worse
     void Renderer::createRasterizerStates()
     {
         // clang-format off
-        rasterizerStates[RendererRasterizerState::Solid]     = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::None, RHIFrontFace::CCW, 1.0f, false, 0.0f, 0.0f, 0.0f);
-        rasterizerStates[RendererRasterizerState::Wireframe] = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None, RHIFrontFace::CCW, 1.0f, false, 0.0f, 0.0f, 0.0f);
+        rasterizerStates[RendererRasterizerState::Solid]     = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::Back);
+        rasterizerStates[RendererRasterizerState::Wireframe] = std::make_shared<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None);
         // clang-format on
     }
 
@@ -63,18 +63,18 @@ namespace worse
 
     void Renderer::createRendererTarget()
     {
-        // clang-format off
         math::Vector2 renderResolution = getResolutionRender();
-        u32 renderWidth  = static_cast<u32>(renderResolution.x);
-        u32 renderHeight = static_cast<u32>(renderResolution.y);
+        u32 renderWidth                = static_cast<u32>(renderResolution.x);
+        u32 renderHeight               = static_cast<u32>(renderResolution.y);
 
         RHIFormat standardFormat = RHIFormat::B8R8G8A8Unorm;
 
         std::vector<RHITextureSlice> dummy;
-        renderTargets[RendererTarget::Render] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "render");
-        renderTargets[RendererTarget::Output] = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "output");
-        renderTargets[RendererTarget::Depth]  = std::make_shared<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, RHIFormat::D32Float, RHITextureViewFlagBits::DepthStencilView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "depth");
-        // clang-format on
+        renderTargets[RendererTarget::Render]        = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "render");
+        renderTargets[RendererTarget::Output]        = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "output");
+        renderTargets[RendererTarget::GBufferNormal] = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_normal");
+        renderTargets[RendererTarget::GBufferAlbedo] = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_albedo");
+        renderTargets[RendererTarget::Depth]         = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, RHIFormat::D32Float, RHITextureViewFlagBits::DepthStencilView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "depth");
     }
 
     void Renderer::createShaders()
@@ -120,18 +120,16 @@ namespace worse
 
     void Renderer::createTextures()
     {
-        // clang-format off
-
         {
-            u32 const width = 4;
+            u32 const width  = 4;
             u32 const height = 4;
-            u32 const white = 0xFFFFFFFF;
-            u32 const grey = 0xFF808080;
+            u32 const white  = 0xFFFFFFFF;
+            u32 const grey   = 0xFF808080;
             u32 pixels[static_cast<usize>(width * height)];
             for (usize i = 0; i < static_cast<usize>(width * height); ++i)
             {
-                usize x = i % width;
-                usize y = i / width;
+                usize x   = i % width;
+                usize y   = i / width;
                 pixels[i] = ((x + y) % 2 == 0) ? white : grey;
             }
             RHITextureMip mip;
@@ -141,7 +139,7 @@ namespace worse
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
-        
+
             textures[RendererTexture::Placeholder] = std::make_shared<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "Placeholder");
         }
         // Default Albedo Map: (1.0, 1.0, 1.0, 1.0) = (255, 255, 255, 255) in RGBA8
@@ -154,7 +152,7 @@ namespace worse
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
-        
+
             textures[RendererTexture::DefaultAlbedo] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultAlbedo");
         }
         // Default Normal Map: (0.5, 0.5, 1.0, 1.0) in tangent space = (128, 128, 255, 255) in RGBA8
@@ -167,10 +165,10 @@ namespace worse
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
-        
+
             textures[RendererTexture::DefaultNormal] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultNormal");
         }
-        // Default Metallic: 0.0 (non-metallic) = (0, 0, 0, 255) in RGBA8
+        // Default Metallic Roughness: 1.0
         {
             u32 metallic = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
             RHITextureMip mip;
@@ -180,21 +178,8 @@ namespace worse
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
-        
-            textures[RendererTexture::DefaultMetallic] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultMetallic");
-        }
-        // Default Roughness: 0.5 (medium roughness) = (128, 128, 128, 255) in RGBA8
-        {
-            u32 roughness = 0xFF808080; // ABGR format: A=255, B=128, G=128, R=128
-            RHITextureMip mip;
-            mip.bytes.resize(4);
-            std::memcpy(mip.bytes.data(), &roughness, 4);
-            RHITextureSlice slice;
-            slice.mips.push_back(mip);
-            std::vector<RHITextureSlice> data;
-            data.push_back(slice);
-        
-            textures[RendererTexture::DefaultRoughness] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultRoughness");
+
+            textures[RendererTexture::DefaultMetallicRoughness] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultMetallic");
         }
         // Default Ambient Occlusion: 1.0 (no occlusion) = (255, 255, 255, 255) in RGBA8
         {
@@ -206,7 +191,7 @@ namespace worse
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
-        
+
             textures[RendererTexture::DefaultAmbientOcclusion] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultAmbientOcclusion");
         }
         // Default Emissive: (0.0, 0.0, 0.0) (no emission) = (0, 0, 0, 255) in RGBA8
@@ -219,11 +204,10 @@ namespace worse
             slice.mips.push_back(mip);
             std::vector<RHITextureSlice> data;
             data.push_back(slice);
-        
+
             textures[RendererTexture::DefaultEmissive] = std::make_shared<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultEmissive");
         }
 
-        // clang-format on
         for (usize i = 0; i < textures.size(); ++i)
         {
             if (auto& texture = textures[i]; !texture || !texture->isValid())
@@ -240,17 +224,19 @@ namespace worse
 
     void Renderer::createSamplers()
     {
-        // clang-format off
-        samplers[RHISamplerType::CompareDepth]        = std::make_shared<RHISampler>(RHIFilter::Linear,  RHIFilter::Linear,  RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder, RHICompareOperation::Greater, true,  0.0f, 0.0f);
-        samplers[RHISamplerType::PointClampEdge]      = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge,   RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::PointClampBorder]    = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder, RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::Wrap]                = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::Wrap,          RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::BilinearClampEdge]   = std::make_shared<RHISampler>(RHIFilter::Linear,  RHIFilter::Linear,  RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge,   RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::BilinearClampBorder] = std::make_shared<RHISampler>(RHIFilter::Linear,  RHIFilter::Linear,  RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder, RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::BilinearWrap]        = std::make_shared<RHISampler>(RHIFilter::Linear,  RHIFilter::Linear,  RHIFilter::Nearest, RHISamplerAddressMode::Wrap,          RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::TrilinearClamp]      = std::make_shared<RHISampler>(RHIFilter::Linear,  RHIFilter::Linear,  RHIFilter::Linear,  RHISamplerAddressMode::ClampToEdge,   RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        samplers[RHISamplerType::AnisotropicClamp]    = std::make_shared<RHISampler>(RHIFilter::Linear,  RHIFilter::Linear,  RHIFilter::Linear,  RHISamplerAddressMode::ClampToEdge,   RHICompareOperation::Never,   false, 0.0f, 0.0f);
-        // clang-format on
+        samplers[RHISamplerType::CompareDepth] = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder, RHICompareOperation::Greater, true, 0.0f, 0.0f);
+
+        // 邻近
+        samplers[RHISamplerType::PointClampEdge]      = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::PointClampBorder]    = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
+        samplers[RHISamplerType::PointWrap]           = std::make_shared<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
+        // 双线性
+        samplers[RHISamplerType::BilinearClampEdge]   = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::BilinearClampBorder] = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
+        samplers[RHISamplerType::BilinearWrap]        = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
+        // 三线性
+        samplers[RHISamplerType::TrilinearClamp]      = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::AnisotropicClamp]    = std::make_shared<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
     }
 
     void Renderer::createStandardMeshes()
@@ -329,6 +315,8 @@ namespace worse
                 .addShader(Renderer::getShader(RendererShader::PBRV))
                 .addShader(Renderer::getShader(RendererShader::PBRP))
                 .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetColorTexture(1, Renderer::getRenderTarget(RendererTarget::GBufferNormal))
+                .setRenderTargetColorTexture(2, Renderer::getRenderTarget(RendererTarget::GBufferAlbedo))
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
@@ -396,7 +384,12 @@ namespace worse
         rasterizerStates.fill(nullptr);
         depthStencilStates.fill(nullptr);
         blendStates.fill(nullptr);
-        renderTargets.fill(nullptr);
+
+        for (auto& renderTarget : renderTargets)
+        {
+            renderTarget.reset();
+        }
+
         shaders.fill(nullptr);
         textures.fill(nullptr);
         samplers.fill(nullptr);

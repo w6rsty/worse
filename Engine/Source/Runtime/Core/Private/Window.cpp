@@ -142,16 +142,6 @@ namespace worse
         s_height = h;
     }
 
-    u32 Window::getWidth()
-    {
-        return s_width;
-    }
-
-    u32 Window::getHeight()
-    {
-        return s_height;
-    }
-
     void Window::setPosition(i32 const x, i32 const y)
     {
         SDL_SetWindowPosition(s_window,

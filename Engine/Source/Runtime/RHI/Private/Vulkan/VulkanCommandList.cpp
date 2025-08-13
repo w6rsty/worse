@@ -625,9 +625,7 @@ namespace worse
 
         VkBuffer indexBuffer  = buffer->getHandle().asValue<VkBuffer>();
         VkDeviceSize offset   = 0;
-        VkIndexType indexType = (buffer->getStride() == sizeof(u16))
-                                    ? VK_INDEX_TYPE_UINT16
-                                    : VK_INDEX_TYPE_UINT32;
+        VkIndexType indexType = (buffer->getStride() == sizeof(u16)) ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
         vkCmdBindIndexBuffer(m_handle.asValue<VkCommandBuffer>(), indexBuffer, offset, indexType);
     }
 
@@ -681,8 +679,7 @@ namespace worse
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(m_pipeline);
 
-        VkDescriptorSet vkSet =
-            RHIDevice::getGlobalDescriptorSet().asValue<VkDescriptorSet>();
+        VkDescriptorSet vkSet = RHIDevice::getGlobalDescriptorSet().asValue<VkDescriptorSet>();
 
         VkPipelineBindPoint bindPoint = (m_pso.type == RHIPipelineType::Graphics)
                                             ? VK_PIPELINE_BIND_POINT_GRAPHICS
@@ -760,14 +757,11 @@ namespace worse
             case RHIDescriptorType::TextureStorage:
             {
                 RHITexture* texture = desc.resource.texture;
-                texture             = texture
-                                          ? texture
-                                          : RHIDevice::getResourceProvider()->getPlaceholderTexture();
+                texture             = texture ? texture : RHIDevice::getResourceProvider()->getPlaceholderTexture();
 
-                VkDescriptorType vkType =
-                    (desc.type == RHIDescriptorType::Texture)
-                        ? VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
-                        : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+                VkDescriptorType vkType = (desc.type == RHIDescriptorType::Texture)
+                                              ? VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+                                              : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
                 u32 shift = (desc.type == RHIDescriptorType::Texture)
                                 ? RHIConfig::HLSL_REGISTER_SHIFT_T

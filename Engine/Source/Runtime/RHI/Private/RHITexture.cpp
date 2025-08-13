@@ -24,36 +24,68 @@ namespace worse
 
         m_slices = data;
 
-        WS_ASSERT(nativeCreate());
+        if (!nativeCreate())
+        {
+            WS_LOG_ERROR("RHITexture", "Failed to create texture: {}", name);
+        }
     }
 
     RHITexture::RHITexture(std::filesystem::path const& path)
     {
-        auto data = TextureImporter::FromFile(path);
-        if (!data)
+        if (std::optional<TextureLoadView> view = TextureImporter::fromFile(path))
         {
-            WS_LOG_ERROR("RHITexture", "Failed to load texture");
+            m_name     = path.filename().string();
+            m_type     = view->type;
+            m_width    = view->width;
+            m_height   = view->height;
+            m_depth    = view->depth;
+            m_mipCount = view->mipLevels;
+            m_format   = view->format;
+            m_usage    = RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit;
+
+            m_slices.resize(view->layers);            // only 1 now, no array
+            m_slices[0].mips.resize(view->mipLevels); // mip 0 only
+            m_slices[0].mips[0].bytes.resize(view->size);
+
+            view->deferredCopyFn(reinterpret_cast<byte*>(m_slices[0].mips[0].bytes.data()));
+
+            if (!nativeCreate())
+            {
+                WS_LOG_ERROR("RHITexture", "Failed to create texture from file: {}", path.string());
+            }
+        }
+    }
+
+    RHITexture::RHITexture(std::span<byte> data, std::string const& name)
+    {
+        if (data.empty())
+        {
+            WS_LOG_ERROR("RHITexture", "Empty texture data");
             return;
         }
 
-        m_name     = path.filename().string();
-        m_type     = data->type;
-        m_width    = data->width;
-        m_height   = data->height;
-        m_depth    = data->depth;
-        m_mipCount = data->mipLevels;
-        m_format   = data->format;
-        m_usage    = RHITextureViewFlagBits::ShaderReadView |
-                  RHITextureViewFlagBits::ClearOrBlit;
+        if (std::optional<TextureLoadView> view = TextureImporter::fromMemory(data, name))
+        {
+            m_name     = name;
+            m_type     = RHITextureType::Texture2D;
+            m_width    = view->width;
+            m_height   = view->height;
+            m_depth    = view->depth;
+            m_mipCount = view->mipLevels;
+            m_format   = view->format;
+            m_usage    = RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit;
 
-        m_slices.resize(data->layers);            // only 1 now, no array
-        m_slices[0].mips.resize(data->mipLevels); // mip 0 only
-        m_slices[0].mips[0].bytes.resize(data->size);
+            m_slices.resize(view->layers);            // only 1 now, no array
+            m_slices[0].mips.resize(view->mipLevels); // mip
+            m_slices[0].mips[0].bytes.resize(view->size);
 
-        data->deferredCopyFn(
-            reinterpret_cast<byte*>(m_slices[0].mips[0].bytes.data()));
+            view->deferredCopyFn(reinterpret_cast<byte*>(m_slices[0].mips[0].bytes.data()));
 
-        WS_ASSERT(nativeCreate());
+            if (!nativeCreate())
+            {
+                WS_LOG_ERROR("RHITexture", "Failed to create texture from memory");
+            }
+        }
     }
 
     RHITexture::~RHITexture()
@@ -67,12 +99,10 @@ namespace worse
 
     RHIImageLayout RHITexture::getImageLayout() const
     {
-        return m_image ? RHICommandList::getImageLayout(m_image)
-                       : RHIImageLayout::Max;
+        return m_image ? RHICommandList::getImageLayout(m_image) : RHIImageLayout::Max;
     }
 
-    void RHITexture::convertImageLayout(RHICommandList* cmdList,
-                                        RHIImageLayout const layout) const
+    void RHITexture::convertImageLayout(RHICommandList* cmdList, RHIImageLayout const layout) const
     {
         cmdList->insertBarrier(m_image, m_format, layout);
     }
@@ -103,8 +133,7 @@ namespace worse
         return m_slices[arrayIndex];
     }
 
-    RHITextureMip const& RHITexture::getMip(usize const arrayIndex,
-                                            usize const mipIndex) const
+    RHITextureMip const& RHITexture::getMip(usize const arrayIndex, usize const mipIndex) const
     {
         WS_ASSERT(arrayIndex < m_slices.size());
         WS_ASSERT(mipIndex < m_mipCount);
