@@ -21,7 +21,21 @@ namespace worse
     void Renderer::passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
         // clang-format off
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::DepthPrepass));
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("DepthPrepass")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::DepthPrepass))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::DepthPrepassV))
+                .addShader(Renderer::getShader(RendererShader::DepthPrepassP))
+                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .setClearDepth(0.0f) // clear with far value
+                .build());
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
@@ -37,7 +51,7 @@ namespace worse
             }
         }
 
-        for (auto const& object : drawcalls->ctx.opaqueObjects)
+        for (RenderObject const& object : drawcalls->ctx.opaqueObjects)
         {
             cmdList->setBufferVertex(object.mesh->getVertexBuffer());
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
@@ -54,7 +68,25 @@ namespace worse
 
     void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
     {
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::PBR));
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("PBR")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PBRV))
+                .addShader(Renderer::getShader(RendererShader::PBRP))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetColorTexture(1, Renderer::getRenderTarget(RendererTarget::GBufferNormal))
+                .setRenderTargetColorTexture(2, Renderer::getRenderTarget(RendererTarget::GBufferAlbedo))
+                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .setClearColor(Color{0.02f, 0.02f, 0.02f, 1.0f})
+                .setClearDepth(2.0f)
+                .build());
 
         // 材质缓冲
         std::array updates = {
@@ -91,7 +123,22 @@ namespace worse
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::Point));
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("Point")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::PointList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::PointV))
+                .addShader(Renderer::getShader(RendererShader::PointP))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .setClearDepth(2.0f)
+                .build());
 
         for (Drawcall const& drawcall : drawcalls->point)
         {
@@ -113,7 +160,20 @@ namespace worse
 
     void Renderer::passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::Wireframe));
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("WireFrame")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Wireframe))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::LineV))
+                .addShader(Renderer::getShader(RendererShader::LineP))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Output)) // 渲染到后处理之后
+                .setScissor({0, 0, 1200, 720})
+                .setViewport(Renderer::getViewport())
+                .build());
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
@@ -130,7 +190,7 @@ namespace worse
             }
         }
 
-        for (auto const& object : drawcalls->ctx.opaqueObjects)
+        for (RenderObject const& object : drawcalls->ctx.opaqueObjects)
         {
             cmdList->setBufferVertex(object.mesh->getVertexBuffer());
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
@@ -155,7 +215,12 @@ namespace worse
         // 转换为通用布局以便计算着色器写入
         cmdList->insertBarrier(frameOutput->getImage(), frameOutput->getFormat(), RHIImageLayout::General);
 
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::PostFX));
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("PostFX")
+                .setType(RHIPipelineType::Compute)
+                .addShader(Renderer::getShader(RendererShader::PostFXC))
+                .build());
 
         std::array updates = {
             RHIDescriptorWrite{.reg      = 0, // t0

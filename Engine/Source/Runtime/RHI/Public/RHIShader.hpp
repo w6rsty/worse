@@ -54,7 +54,7 @@ namespace worse
         RHIShaderType                     getShaderType() const  { return m_shaderType; }
         RHIVertexType                     getVertexType() const  { return m_vertexType; }
         RHIInputLayout const&             getInputLayout() const { return m_inputLayout; }
-        u64                     getHash() const        { return m_hash; }
+        u64                               getHash() const        { return m_hash; }
         RHINativeHandle                   getHandle() const      { return m_shaderModule; }
         // clang-format on
 

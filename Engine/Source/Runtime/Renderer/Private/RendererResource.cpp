@@ -5,9 +5,7 @@
 #include "RHIVertex.hpp"
 #include "RHITexture.hpp"
 #include "RHISampler.hpp"
-#include "RHIDevice.hpp"
 #include "Pipeline/RHIBlendState.hpp"
-#include "Pipeline/RHIPipelineState.hpp"
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
 #include "Renderer.hpp"
@@ -27,7 +25,6 @@ namespace worse
         EnumArray<RendererTexture, std::unique_ptr<RHITexture>> textures;
         EnumArray<RHISamplerType, std::unique_ptr<RHISampler>> samplers;
         EnumArray<geometry::GeometryType, std::unique_ptr<Mesh>> standardMeshes;
-        EnumArray<RendererPSOType, RHIPipelineState> pipelineStates;
 
         std::shared_ptr<RHIBuffer> materialBuffer;
     } // namespace
@@ -263,91 +260,6 @@ namespace worse
         // clang-format on
     }
 
-    void Renderer::createPipelineStates()
-    {
-        // clang-format off
-        pipelineStates[RendererPSOType::DepthPrepass] =
-            RHIPipelineStateBuilder()
-                .setName("DepthPrepass")
-                .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::DepthPrepass))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
-                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::DepthPrepassV))
-                .addShader(Renderer::getShader(RendererShader::DepthPrepassP))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-                .setScissor({0, 0, 1200, 720})
-                .setViewport(Renderer::getViewport())
-                .setClearDepth(0.0f) // clear with far value
-                .build();
-        RHIDevice::getPipeline(pipelineStates[RendererPSOType::DepthPrepass]);
-
-        pipelineStates[RendererPSOType::PBR] =
-            RHIPipelineStateBuilder()
-                .setName("PBR")
-                .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
-                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PBRV))
-                .addShader(Renderer::getShader(RendererShader::PBRP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
-                .setRenderTargetColorTexture(1, Renderer::getRenderTarget(RendererTarget::GBufferNormal))
-                .setRenderTargetColorTexture(2, Renderer::getRenderTarget(RendererTarget::GBufferAlbedo))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-                .setScissor({0, 0, 1200, 720})
-                .setViewport(Renderer::getViewport())
-                .setClearColor(Color{0.02f, 0.02f, 0.02f, 1.0f})
-                .setClearDepth(2.0f)
-                .build();
-        RHIDevice::getPipeline(pipelineStates[RendererPSOType::PBR]);
-
-        pipelineStates[RendererPSOType::Wireframe] =
-            RHIPipelineStateBuilder()
-                .setName("WireFrame")
-                .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Wireframe))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::Off))
-                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::LineV))
-                .addShader(Renderer::getShader(RendererShader::LineP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Output)) // 渲染到后处理之后
-                .setScissor({0, 0, 1200, 720})
-                .setViewport(Renderer::getViewport())
-                .build();
-        RHIDevice::getPipeline(pipelineStates[RendererPSOType::Wireframe]);
-
-        pipelineStates[RendererPSOType::Point] =
-            RHIPipelineStateBuilder()
-                .setName("Point")
-                .setType(RHIPipelineType::Graphics)
-                .setPrimitiveTopology(RHIPrimitiveTopology::PointList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
-                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
-                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PointV))
-                .addShader(Renderer::getShader(RendererShader::PointP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-                .setScissor({0, 0, 1200, 720})
-                .setViewport(Renderer::getViewport())
-                .setClearDepth(2.0f)
-                .build();
-        RHIDevice::getPipeline(pipelineStates[RendererPSOType::Point]);
-
-        pipelineStates[RendererPSOType::PostFX] =
-            RHIPipelineStateBuilder()
-                .setName("PostFX")
-                .setType(RHIPipelineType::Compute)
-                .addShader(Renderer::getShader(RendererShader::PostFXC))
-                .build();
-        RHIDevice::getPipeline(pipelineStates[RendererPSOType::PostFX]);
-        // clang-format on
-    }
-
     void Renderer::createMaterialBuffers(std::span<StandardMaterialGPU> materials)
     {
         materialBuffer = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Storage,
@@ -442,11 +354,6 @@ namespace worse
     Mesh* Renderer::getStandardMesh(geometry::GeometryType const type)
     {
         return standardMeshes[type].get();
-    }
-
-    RHIPipelineState const& Renderer::getPipelineState(RendererPSOType const pso)
-    {
-        return pipelineStates[pso];
     }
 
     RHIBuffer* Renderer::getMaterialBuffer()

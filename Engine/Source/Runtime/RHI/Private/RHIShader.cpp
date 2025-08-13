@@ -10,8 +10,7 @@
 
 namespace worse
 {
-    std::string
-    PreprocessIncludesParser::recursiveParse(std::filesystem::path const& path)
+    std::string PreprocessIncludesParser::recursiveParse(std::filesystem::path const& path)
     {
         std::filesystem::path canonicalPath;
         try
@@ -96,6 +95,7 @@ namespace worse
 
     RHIShader::~RHIShader()
     {
+        RHIDevice::deletionQueueAdd(m_shaderModule);
     }
 
     void RHIShader::compile(std::filesystem::path const& filepath, RHIShaderType const shaderType, RHIVertexType const vertexType)
@@ -124,7 +124,9 @@ namespace worse
             profiling::Stopwatch sw;
             m_state        = RHIShaderCompilationState::Compiling;
             m_shaderModule = nativeCompile();
-            RHIDevice::deletionQueueAdd(m_shaderModule);
+
+            // 创建后缓存，不立即放入删除队列，转而在析构函数中处理
+
             m_state = m_shaderModule
                           ? RHIShaderCompilationState::CompiledSuccess
                           : RHIShaderCompilationState::CompiledFailure;

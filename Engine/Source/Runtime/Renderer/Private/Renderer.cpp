@@ -54,17 +54,15 @@ namespace worse
             EnumArray<RHISamplerType, RHISampler*> getSamplers() const override
             {
                 EnumArray<RHISamplerType, RHISampler*> samplers;
-                // clang-format off
                 samplers[RHISamplerType::CompareDepth]        = Renderer::getSampler(RHISamplerType::CompareDepth);
                 samplers[RHISamplerType::PointClampBorder]    = Renderer::getSampler(RHISamplerType::PointClampBorder);
                 samplers[RHISamplerType::PointClampEdge]      = Renderer::getSampler(RHISamplerType::PointClampEdge);
-                samplers[RHISamplerType::PointWrap]                = Renderer::getSampler(RHISamplerType::PointWrap);
+                samplers[RHISamplerType::PointWrap]           = Renderer::getSampler(RHISamplerType::PointWrap);
                 samplers[RHISamplerType::BilinearClampEdge]   = Renderer::getSampler(RHISamplerType::BilinearClampEdge);
                 samplers[RHISamplerType::BilinearClampBorder] = Renderer::getSampler(RHISamplerType::BilinearClampBorder);
                 samplers[RHISamplerType::BilinearWrap]        = Renderer::getSampler(RHISamplerType::BilinearWrap);
                 samplers[RHISamplerType::TrilinearClamp]      = Renderer::getSampler(RHISamplerType::TrilinearClamp);
                 samplers[RHISamplerType::AnisotropicClamp]    = Renderer::getSampler(RHISamplerType::AnisotropicClamp);
-                // clang-format on
                 return samplers;
             }
         } resourceProvider;
@@ -98,12 +96,13 @@ namespace worse
         // resources
         {
             FrameConstantData frameConstantData = {};
-            frameConstantBuffer                 = std::make_shared<RHIBuffer>(RHIBufferUsageFlagBits::Uniform,
-                                                              sizeof(FrameConstantData),
-                                                              1,
-                                                              &frameConstantData,
-                                                              true,
-                                                              "frame_constant_buffer");
+            frameConstantBuffer                 = std::make_shared<RHIBuffer>(
+                RHIBufferUsageFlagBits::Uniform,
+                sizeof(FrameConstantData),
+                1,
+                &frameConstantData,
+                true,
+                "frame_constant_buffer");
 
             Renderer::createRasterizerStates();
             Renderer::createDepthStencilStates();
@@ -113,7 +112,6 @@ namespace worse
             Renderer::createTextures();
             Renderer::createSamplers();
             Renderer::createStandardMeshes();
-            Renderer::createPipelineStates();
         }
 
         RHIDevice::setResourceProvider(&resourceProvider);
@@ -146,11 +144,12 @@ namespace worse
         RHIDevice::destroy();
     }
 
-    void Renderer::tick(ecs::Resource<DrawcallStorage> drawcalls,
-                        ecs::Resource<Camera> camera,
-                        ecs::Resource<GlobalContext> globalContext,
-                        ecs::ResourceArray<TextureWrite> textureWrites,
-                        ecs::Resource<AssetServer> assetServer)
+    void Renderer::tick(
+        ecs::Resource<DrawcallStorage> drawcalls,
+        ecs::Resource<Camera> camera,
+        ecs::Resource<GlobalContext> globalContext,
+        ecs::ResourceArray<TextureWrite> textureWrites,
+        ecs::Resource<AssetServer> assetServer)
     {
         // signal image acquire semaphore(swapchain)
         swapchain->acquireNextImage();
@@ -158,11 +157,6 @@ namespace worse
         RHIQueue* graphicsQueue = RHIDevice::getQueue(RHIQueueType::Graphics);
         m_currentCmdList        = graphicsQueue->nextCommandList();
         m_currentCmdList->begin();
-
-        if (frameCount != 0)
-        {
-            RHIDevice::deletionQueueFlush();
-        }
 
         updateBuffers(m_currentCmdList, camera, globalContext, textureWrites);
 
