@@ -21,7 +21,7 @@ namespace worse
     void Renderer::passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
         // clang-format off
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::DepthPrepass));
+        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::DepthPrepass));
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
@@ -54,7 +54,7 @@ namespace worse
 
     void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
     {
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PBR));
+        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::PBR));
 
         // 材质缓冲
         std::array updates = {
@@ -74,7 +74,7 @@ namespace worse
                 pushConstantData.setModel(drawcall.transform);
                 pushConstantData.setMaterialId(drawcall.materialIndex);
                 cmdList->pushConstants(pushConstantData.asSpan());
-                
+
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
             }
         }
@@ -91,7 +91,7 @@ namespace worse
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Point));
+        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::Point));
 
         for (Drawcall const& drawcall : drawcalls->point)
         {
@@ -113,7 +113,7 @@ namespace worse
 
     void Renderer::passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::Wireframe));
+        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::Wireframe));
 
         for (Drawcall const& drawcall : drawcalls->solid)
         {
@@ -150,10 +150,12 @@ namespace worse
         RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
         RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
 
+        // 保证渲染完成
         cmdList->insertBarrier(frameRender->getImage(), frameRender->getFormat(), RHIImageLayout::ShaderRead);
+        // 转换为通用布局以便计算着色器写入
         cmdList->insertBarrier(frameOutput->getImage(), frameOutput->getFormat(), RHIImageLayout::General);
 
-        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSO::PostProcessing));
+        cmdList->setPipelineState(Renderer::getPipelineState(RendererPSOType::PostFX));
 
         std::array updates = {
             RHIDescriptorWrite{.reg      = 0, // t0

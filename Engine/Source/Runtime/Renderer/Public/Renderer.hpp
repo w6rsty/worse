@@ -48,7 +48,7 @@ namespace worse
         static RHITexture* getTexture(RendererTexture const texture);
         static RHISampler* getSampler(RHISamplerType const sampler);
         static Mesh* getStandardMesh(geometry::GeometryType const type);
-        static RHIPipelineState const& getPipelineState(RendererPSO const pso);
+        static RHIPipelineState const& getPipelineState(RendererPSOType const pso);
         static RHIBuffer* getMaterialBuffer();
 
         static math::Vector2 getResolutionRender();

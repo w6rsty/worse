@@ -85,13 +85,13 @@ namespace worse
     }
 
     // builtin pipeline
-    enum class RendererPSO : usize
+    enum class RendererPSOType : usize
     {
         DepthPrepass,
         PBR,
         Wireframe,
         Point,
-        PostProcessing,
+        PostFX,
         Max
     };
 
