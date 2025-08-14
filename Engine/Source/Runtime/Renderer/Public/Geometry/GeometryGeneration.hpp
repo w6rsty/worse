@@ -174,7 +174,6 @@ namespace worse::geometry
         vertices.clear();
         indices.clear();
 
-        // +2 for the top and bottom pole vertices
         vertices.reserve((segments + 1) * (rings - 1) + 2);
         indices.reserve(segments * rings * 6);
 
@@ -207,9 +206,12 @@ namespace worse::geometry
                 Vector2 uv(static_cast<f32>(s) / static_cast<f32>(segments),
                            static_cast<f32>(r) / static_cast<f32>(rings));
                 Vector3 normal = normalize(position);
-                // A robust tangent calculation
-                float handedness = (s % 2 == 0) ? 1.0f : -1.0f;
-                Vector4 tangent  = Vector4(normalize(Vector3(-sinTheta, 0.0f, cosTheta)), handedness);
+
+                // CORRECTED: Tangent handedness should be consistent.
+                // The bitangent can be calculated in the shader as:
+                // bitangent = cross(normal, tangent.xyz) * tangent.w
+                Vector4 tangent =
+                    Vector4(normalize(Vector3(-sinTheta, 0.0f, cosTheta)), 1.0f);
 
                 vertices.emplace_back(position, uv, normal, tangent);
             }
@@ -230,9 +232,11 @@ namespace worse::geometry
             // vertex index for the first ring starts at 1 (after the top pole)
             u32 first  = 1 + s;
             u32 second = 1 + s + 1;
+            // CORRECTED: Winding order was (pole, second, first), which is CW.
+            // Swapped to (pole, first, second) for CCW.
             indices.emplace_back(topPoleIndex);
-            indices.emplace_back(second);
             indices.emplace_back(first);
+            indices.emplace_back(second);
         }
 
         // Middle quads (CCW when viewed from outside)
@@ -249,12 +253,15 @@ namespace worse::geometry
                 u32 i2 = second_row_start + s;
                 u32 i3 = second_row_start + s + 1;
 
+                // CORRECTED: Winding order was CW. Swapped to CCW.
+                // Original Triangle 1: i0, i2, i1 (CW)
+                // Original Triangle 2: i1, i2, i3 (CW)
                 indices.emplace_back(i0);
-                indices.emplace_back(i2);
                 indices.emplace_back(i1);
+                indices.emplace_back(i2);
 
-                indices.emplace_back(i1);
                 indices.emplace_back(i2);
+                indices.emplace_back(i1);
                 indices.emplace_back(i3);
             }
         }
@@ -266,9 +273,11 @@ namespace worse::geometry
         {
             u32 first  = lastRingStartIndex + s;
             u32 second = lastRingStartIndex + s + 1;
+            // CORRECTED: Winding order was (pole, first, second), which is CW
+            // when viewed from outside. Swapped to (pole, second, first) for CCW.
             indices.emplace_back(bottomPoleIndex);
-            indices.emplace_back(first);
             indices.emplace_back(second);
+            indices.emplace_back(first);
         }
     }
 
