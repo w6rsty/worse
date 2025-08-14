@@ -52,18 +52,20 @@ namespace worse
 
     void Renderer::createRendererTarget()
     {
-        math::Vector2 renderResolution = getResolutionRender();
-        u32 renderWidth                = static_cast<u32>(renderResolution.x);
-        u32 renderHeight               = static_cast<u32>(renderResolution.y);
-
-        RHIFormat standardFormat = RHIFormat::B8R8G8A8Unorm;
+        math::Vector2 resolution = getResolutionRender();
+        u32 width                = static_cast<u32>(resolution.x);
+        u32 height               = static_cast<u32>(resolution.y);
 
         std::vector<RHITextureSlice> dummy;
-        renderTargets[RendererTarget::Render]        = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "render");
-        renderTargets[RendererTarget::Output]        = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "output");
-        renderTargets[RendererTarget::GBufferNormal] = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_normal");
-        renderTargets[RendererTarget::GBufferAlbedo] = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, standardFormat, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_albedo");
-        renderTargets[RendererTarget::Depth]         = std::make_unique<RHITexture>(RHITextureType::Texture2D, renderWidth, renderHeight, 1, 1, RHIFormat::D32Float, RHITextureViewFlagBits::DepthStencilView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "depth");
+
+        renderTargets[RendererTarget::SceneHDR]  = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "render");
+        renderTargets[RendererTarget::ScreenHDR] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "output");
+
+        // GBuffer
+        renderTargets[RendererTarget::GBufferNormal] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::B8R8G8A8Unorm, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_normal");
+        renderTargets[RendererTarget::GBufferAlbedo] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::B8R8G8A8Unorm, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_albedo");
+
+        renderTargets[RendererTarget::Depth] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::D32Float, RHITextureViewFlagBits::DepthStencilView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "depth");
     }
 
     void Renderer::createShaders()

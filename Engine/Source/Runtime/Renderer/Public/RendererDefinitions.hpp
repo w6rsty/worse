@@ -49,8 +49,11 @@ namespace worse
 
     enum class RendererTarget : usize
     {
-        Render,
-        Output,
+        // 渲染目标
+        SceneHDR,
+        // 后处理目标
+        ScreenHDR,
+        // GBuffers
         GBufferNormal,
         GBufferAlbedo,
         Depth,
@@ -83,17 +86,6 @@ namespace worse
             // clang-format on
         }
     }
-
-    // builtin pipeline
-    enum class RendererPSOType : usize
-    {
-        DepthPrepass,
-        PBR,
-        Wireframe,
-        Point,
-        PostFX,
-        Max
-    };
 
     struct TextureWrite
     {

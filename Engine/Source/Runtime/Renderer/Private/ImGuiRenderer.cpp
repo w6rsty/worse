@@ -162,7 +162,7 @@ namespace worse
         infoInit.UseDynamicRendering = true;
 
         VkFormat colorFormats[] = {
-            vulkanFormat(Renderer::getRenderTarget(RendererTarget::Output)->getFormat())
+            vulkanFormat(Renderer::getRenderTarget(RendererTarget::ScreenHDR)->getFormat())
         };
 
         VkPipelineRenderingCreateInfoKHR infoRendering = {};

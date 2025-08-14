@@ -181,7 +181,7 @@ namespace worse
 
     void Renderer::blitToBackBuffer(RHICommandList* cmdList)
     {
-        cmdList->blit(getRenderTarget(RendererTarget::Output), swapchain.get());
+        cmdList->blit(getRenderTarget(RendererTarget::ScreenHDR), swapchain.get());
     }
 
     void Renderer::submitAndPresent()

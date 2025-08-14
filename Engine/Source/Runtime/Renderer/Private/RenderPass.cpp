@@ -78,7 +78,7 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PBRV))
                 .addShader(Renderer::getShader(RendererShader::PBRP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::SceneHDR))
                 .setRenderTargetColorTexture(1, Renderer::getRenderTarget(RendererTarget::GBufferNormal))
                 .setRenderTargetColorTexture(2, Renderer::getRenderTarget(RendererTarget::GBufferAlbedo))
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
@@ -133,7 +133,7 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PointV))
                 .addShader(Renderer::getShader(RendererShader::PointP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Render))
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::SceneHDR))
                 .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
@@ -170,7 +170,7 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::LineV))
                 .addShader(Renderer::getShader(RendererShader::LineP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::Output)) // 渲染到后处理之后
+                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::ScreenHDR)) // 渲染到后处理之后
                 .setScissor({0, 0, 1200, 720})
                 .setViewport(Renderer::getViewport())
                 .build());
@@ -207,8 +207,8 @@ namespace worse
     void Renderer::passPostProcessing(RHICommandList* cmdList)
     {
         // clang-format off
-        RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::Render);
-        RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::Output);
+        RHITexture* frameRender = Renderer::getRenderTarget(RendererTarget::SceneHDR);
+        RHITexture* frameOutput = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
 
         // 保证渲染完成
         cmdList->insertBarrier(frameRender->getImage(), frameRender->getFormat(), RHIImageLayout::ShaderRead);
@@ -242,7 +242,7 @@ namespace worse
     void Renderer::passImGui(RHICommandList* cmdList)
     {
         cmdList->imguiPassBegin(
-            Renderer::getRenderTarget(RendererTarget::Output),
+            Renderer::getRenderTarget(RendererTarget::ScreenHDR),
             math::Rectangle{
                 0,
                 0,
