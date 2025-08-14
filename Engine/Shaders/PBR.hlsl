@@ -60,6 +60,7 @@ PixelOutput main_ps(VertexOutput input)
     ao = materialTextures[material.ambientOcclusionTextureIndex].Sample(samplers[samplerBilinearWrap], input.uv).r;
 
     float3 emissive = materialTextures[material.emissiveTextureIndex].Sample(samplers[samplerBilinearWrap], input.uv).rgb;
+    emissive *= material.emissive.rgb;
 
     // Normal mapping
     float3 N = normalize(input.normal);
@@ -77,8 +78,8 @@ PixelOutput main_ps(VertexOutput input)
     N = normalize(mul(normalMap, TBN));
     
     float3 lightDirection = frameData.cameraForward;
-    float3 const lightColor = float3(1.0, 1.0, 1.0);
-    float const lightIntensity = 5.0;
+    float3 const lightColor = float3(1.0, 0.95, 0.85);
+    float const lightIntensity = 3.0;
     
     float3 V = normalize(frameData.cameraPosition - input.worldPos); // View direction
     float3 L = -lightDirection; // Light direction

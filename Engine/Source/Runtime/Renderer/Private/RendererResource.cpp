@@ -65,6 +65,12 @@ namespace worse
         renderTargets[RendererTarget::GBufferNormal] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::B8R8G8A8Unorm, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_normal");
         renderTargets[RendererTarget::GBufferAlbedo] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::B8R8G8A8Unorm, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "gbuffer_albedo");
 
+        renderTargets[RendererTarget::BloomDownSampleStage0] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "bloom_downsample_stage0");
+        renderTargets[RendererTarget::BloomDownSampleStage1] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 2, height / 2, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "bloom_downsample_stage1");
+        renderTargets[RendererTarget::BloomDownSampleStage2] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 4, height / 4, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "bloom_downsample_stage2");
+        renderTargets[RendererTarget::BloomDownSampleStage3] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 8, height / 8, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "bloom_downsample_stage3");
+        renderTargets[RendererTarget::BloomFinal]            = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewFlagBits::RenderTargetView | RHITextureViewFlagBits::UnorderedAccessView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "bloom_final");
+
         renderTargets[RendererTarget::Depth] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::D32Float, RHITextureViewFlagBits::DepthStencilView | RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, dummy, "depth");
     }
 
@@ -92,6 +98,8 @@ namespace worse
     shaders[RendererShader::shaderName##C]->compile(shaderDir / #shaderName ".hlsl", RHIShaderType::Compute);
 
         MAKE_SHADER_C(PostFX);
+        MAKE_SHADER_C(BloomBrightFilter);
+        MAKE_SHADER_C(BloomUpscale);
 
 #undef MAKE_SHADER_C
     }
@@ -172,9 +180,9 @@ namespace worse
 
             textures[RendererTexture::DefaultAmbientOcclusion] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewFlagBits::ShaderReadView | RHITextureViewFlagBits::ClearOrBlit, data, "DefaultAmbientOcclusion");
         }
-        // Default Emissive: (0.0, 0.0, 0.0) (no emission) = (0, 0, 0, 255) in RGBA8
+        // Default Emissive factor: (1.0, 1.0, 1.0)
         {
-            u32 emissive = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
+            u32 emissive = 0xFFFFFFFF; // ABGR format: A=255, B=0, G=0, R=0
             RHITextureMip mip;
             mip.bytes.resize(4);
             std::memcpy(mip.bytes.data(), &emissive, 4);

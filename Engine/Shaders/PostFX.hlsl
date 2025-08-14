@@ -8,6 +8,8 @@
 // #define FILTER_KUWAHARA
 static int const KUWAHARA_RADIUS = 3;
 
+#define FILTER_BLOOM
+
 #define FILTER_ACES
 
 // #define FILTER_DITHERING
@@ -23,14 +25,15 @@ static float const VIGNETTE_END = 0.9;
 // End Toggles
 // =============================================================================
 
-Texture2D<float4> input : register(t0, space1);
+Texture2D<float4> input0 : register(t0, space1);
+Texture2D<float4> input1 : register(t1, space1);
 RWTexture2D<float4> output : register(u0, space1);
 
-[numthreads(THREAD_GROUP_COUNT_X, THREAD_GROUP_COUNT_Y, 1)] void
-main_cs(uint3 id : SV_DispatchThreadID)
+[numthreads(THREAD_GROUP_COUNT_X, THREAD_GROUP_COUNT_Y, 1)]
+void main_cs(uint3 id : SV_DispatchThreadID)
 {
     uint2 dims;
-    input.GetDimensions(dims.x, dims.y);
+    input0.GetDimensions(dims.x, dims.y);
 
     if (id.x >= dims.x || id.y >= dims.y)
     {
@@ -39,7 +42,7 @@ main_cs(uint3 id : SV_DispatchThreadID)
 
     int2 center = int2(id.xy);
 
-    float3 finalColor = input[center].rgb;
+    float3 finalColor = input0[center].rgb;
 
 #ifdef FILTER_KUWAHARA
     int2 const regionOffsets[4] = {
@@ -65,7 +68,7 @@ main_cs(uint3 id : SV_DispatchThreadID)
                 int2 offset = center + regionOffsets[r] + int2(x, y);
                 offset = clamp(offset, int2(0, 0), dims - 1);
 
-                float4 color = input[offset];
+                float4 color = input0[offset];
                 mean += color;
                 sqSum += color * color;
                 ++count;
@@ -83,29 +86,36 @@ main_cs(uint3 id : SV_DispatchThreadID)
         }
     }
     finalColor = bestMean.rgb;
-#endif
+#endif FILTER_KUWAHARA
+
+#ifdef FILTER_BLOOM
+    float2 uvBloom = (float2(id.xy) + 0.5) / float2(dims);
+    float3 bloomColor = input1.SampleLevel(samplers[samplerBilinearWrap], uvBloom, 0).rgb;
+
+    finalColor += bloomColor;
+#endif FILTER_BLOOM
 
 #ifdef FILTER_ACES
     finalColor = ACESFilm(finalColor);
-#endif
+#endif FILTER_ACES
 
 #ifdef FILTER_DITHERING
     float2 ditherCoord = float2(id.xy);
     float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
     dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
     finalColor += dither;
-#endif
+#endif FILTER_DITHERING
 
 #ifdef FILTER_GAMMA_CORRECTION
       finalColor = pow(finalColor, 1.0 / GAMMA);
-#endif
+#endif FILTER_GAMMA_CORRECTION
 
 #ifdef FILTER_VIGNETTE
     float2 uv = float2(id.xy) / float2(dims);
     float2 centered = uv - 0.5;
     float vignette = 1.0 - smoothstep(VIGNETTE_START, VIGNETTE_END, length(centered));
     finalColor *= vignette;
-#endif
+#endif FILTER_VIGNETTE
 
     output[id.xy] = float4(finalColor, 1.0);
 }

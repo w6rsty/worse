@@ -37,13 +37,15 @@ namespace worse
         PlaceholderP,
         DepthPrepassV,
         DepthPrepassP,
-        PostFXC,
         LineV,
         LineP,
         PointV,
         PointP,
         PBRV,
         PBRP,
+        PostFXC,
+        BloomBrightFilterC,
+        BloomUpscaleC,
         Max
     };
 
@@ -56,6 +58,11 @@ namespace worse
         // GBuffers
         GBufferNormal,
         GBufferAlbedo,
+        BloomDownSampleStage0,
+        BloomDownSampleStage1,
+        BloomDownSampleStage2,
+        BloomDownSampleStage3,
+        BloomFinal,
         Depth,
         Max,
     };

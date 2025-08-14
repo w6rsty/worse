@@ -265,9 +265,10 @@ public:
 
         player = commands.spawn(
             LocalTransform{},
-            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere), RHIPrimitiveTopology::PointList},
+            Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere)},
             MeshMaterial{materials->add(StandardMaterial{
-                .baseColor = math::Vector4(1, 0, 0, 1.0f),
+                .baseColor = math::Vector4(0.1, 0.1, 0.1, 1.0f),
+                .emissive = math::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
             })});
     }
 

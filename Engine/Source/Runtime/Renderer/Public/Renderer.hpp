@@ -84,6 +84,7 @@ namespace worse
         static void passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls,
                               ecs::Resource<AssetServer> assetServer);
         static void passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passBloom(RHICommandList* cmdList);
         static void passPostProcessing(RHICommandList* cmdList);
 
         static void passImGui(RHICommandList* cmdList);
