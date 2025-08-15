@@ -113,7 +113,6 @@ namespace worse
 
         // for bind global descriptor set once
         bool m_isFirstGraphicsPass = true;
-        bool m_isFirstComputePass  = true;
         RHIPipelineState m_pso;
         RHIPipeline* m_pipeline = nullptr;
 

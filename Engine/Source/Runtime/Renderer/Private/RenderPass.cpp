@@ -125,8 +125,8 @@ namespace worse
 
             pushConstantData.setModel(object.transform);
             pushConstantData.setMaterialId(assetServer->getMaterialIndex(object.material));
-
             cmdList->pushConstants(pushConstantData.asSpan());
+
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
@@ -158,6 +158,7 @@ namespace worse
 
                 pushConstantData.setPadding(2.0f, 0.0f); // Point size
                 cmdList->pushConstants(pushConstantData.asSpan());
+
                 cmdList->draw(mesh->getVertexBuffer()->getElementCount());
             }
         }
@@ -204,8 +205,8 @@ namespace worse
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
 
             pushConstantData.setModel(object.transform);
-
             cmdList->pushConstants(pushConstantData.asSpan());
+
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
@@ -244,7 +245,6 @@ namespace worse
                                .type     = RHIDescriptorType::TextureStorage},
         };
         cmdList->updateSpecificSet(updatesBrightFilter);
-        cmdList->pushConstants(pushConstantData.asSpan());
         cmdList->dispatch(bloomInitial->getWidth() / 8, bloomInitial->getHeight() / 8, 1);
 
         // Initial -> Stage0 | x2
@@ -288,7 +288,6 @@ namespace worse
                                .type     = RHIDescriptorType::TextureStorage},
         };
         cmdList->updateSpecificSet(updatesUpscale);
-        cmdList->pushConstants(pushConstantData.asSpan());
         cmdList->dispatch(bloomFinal->getWidth() / 8, bloomFinal->getHeight() / 8, 1);
     }
 
@@ -323,8 +322,6 @@ namespace worse
         };
         cmdList->updateSpecificSet(updates);
 
-        cmdList->pushConstants(pushConstantData.asSpan());
-
         math::Vector2 resolutionOutput = Renderer::getResolutionOutput();
         cmdList->dispatch(resolutionOutput.x / 8, resolutionOutput.y / 8, 1);
     }
@@ -342,10 +339,11 @@ namespace worse
         cmdList->imguiPassEnd(ImGui::GetDrawData());
     }
 
-    void Renderer::produceFrame(RHICommandList* cmdList,
-                                ecs::Resource<GlobalContext> globalContext,
-                                ecs::Resource<DrawcallStorage> drawcalls,
-                                ecs::Resource<AssetServer> assetServer)
+    void Renderer::produceFrame(
+        RHICommandList* cmdList,
+        ecs::Resource<GlobalContext> globalContext,
+        ecs::Resource<DrawcallStorage> drawcalls,
+        ecs::Resource<AssetServer> assetServer)
     {
         passDpethPrepass(cmdList, drawcalls);
 
@@ -357,10 +355,6 @@ namespace worse
 
         if (globalContext->isWireFrameMode)
         {
-            // Post-processing -> Wireframe: screen buffer synchronization
-            RHITexture* screenTexture = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
-            cmdList->insertBarrier(screenTexture->getImage(), screenTexture->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite);
-
             passWireFrame(cmdList, drawcalls);
         }
 

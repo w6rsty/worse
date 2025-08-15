@@ -98,7 +98,6 @@ namespace worse
 
         m_state               = RHICommandListState::Recording;
         m_isFirstGraphicsPass = true;
-        m_isFirstComputePass  = true;
     }
 
     void RHICommandList::submit(RHISyncPrimitive* semaphoreWait)
@@ -293,10 +292,9 @@ namespace worse
             bindGlobalSet();
             m_isFirstGraphicsPass = false;
         }
-        if ((m_pso.type == RHIPipelineType::Compute) && m_isFirstComputePass)
+        if (m_pso.type == RHIPipelineType::Compute)
         {
             bindGlobalSet();
-            m_isFirstComputePass = false;
         }
 
         bindSpecificSet();
