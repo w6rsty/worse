@@ -37,10 +37,10 @@ void main_cs(uint3 threadID : SV_DispatchThreadID)
     float2 uv = (threadID.xy + 0.5) / resolution;
     float2 texelSize = 1.0 / resolution;
 
-    float3 sample0 = upscaleFilter(input0, uv, texelSize, 4.0);
-    float3 sample1 = upscaleFilter(input1, uv, texelSize, 3.0);
-    float3 sample2 = upscaleFilter(input2, uv, texelSize, 2.0);
-    float3 sample3 = upscaleFilter(input3, uv, texelSize, 1.0);
+    float3 sample0 = upscaleFilter(input0, uv, texelSize, 1.0);
+    float3 sample1 = upscaleFilter(input1, uv, texelSize, 2.0);
+    float3 sample2 = upscaleFilter(input2, uv, texelSize, 3.0);
+    float3 sample3 = upscaleFilter(input3, uv, texelSize, 4.0);
 
     float3 bloom = (sample0 + sample1 + sample2 + sample3) * 0.25;
 
