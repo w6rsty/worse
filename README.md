@@ -20,6 +20,7 @@ Build this Target **Example00**
 - 点图元绘制模式
 - ImGui 路由管理器
 - 后处理滤镜( Vignette, Kuwahara Filtering, ACES)
+- Bloom
 
 ## Point Cloud Editor
 

@@ -156,7 +156,7 @@ namespace worse
                 pushConstantData.setModel(drawcall.transform);
                 pushConstantData.setMaterialId(drawcall.materialIndex);
 
-                pushConstantData.setPadding(1.0f, 0.0f); // Point size
+                pushConstantData.setPadding(2.0f, 0.0f); // Point size
                 cmdList->pushConstants(pushConstantData.asSpan());
                 cmdList->draw(mesh->getVertexBuffer()->getElementCount());
             }
