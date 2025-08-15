@@ -96,6 +96,15 @@ struct Material
 };
 
 // Constants
-static float const PI = 3.14159265359;
+static float const PI          = 3.14159265359f;
+static float const FLT_MIN     = 0.00000001f;
+static float const FLT_MAX_16  = 32767.0f;
+static float const FLT_MAX_16U = 65535.0f;
+
+// Saturation
+float  saturate_16(float x)  { return clamp(x, 0.0f, FLT_MAX_16U); }
+float2 saturate_16(float2 x) { return clamp(x, 0.0f, FLT_MAX_16U); }
+float3 saturate_16(float3 x) { return clamp(x, 0.0f, FLT_MAX_16U); }
+float4 saturate_16(float4 x) { return clamp(x, 0.0f, FLT_MAX_16U); }
 
 #endif // WS_COMMON_HLSL

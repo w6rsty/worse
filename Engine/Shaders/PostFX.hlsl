@@ -12,7 +12,7 @@ static int const KUWAHARA_RADIUS = 3;
 
 #define FILTER_ACES
 
-// #define FILTER_DITHERING
+#define FILTER_DITHERING
 
 #define FILTER_GAMMA_CORRECTION
 static float const GAMMA = 2.2;
@@ -30,19 +30,17 @@ Texture2D<float4> input1 : register(t1, space1);
 RWTexture2D<float4> output : register(u0, space1);
 
 [numthreads(THREAD_GROUP_COUNT_X, THREAD_GROUP_COUNT_Y, 1)]
-void main_cs(uint3 id : SV_DispatchThreadID)
+void main_cs(uint3 threadID : SV_DispatchThreadID)
 {
-    uint2 dims;
-    input0.GetDimensions(dims.x, dims.y);
+    uint2 resolution;
+    input0.GetDimensions(resolution.x, resolution.y);
 
-    if (id.x >= dims.x || id.y >= dims.y)
+    if (any(threadID.xy >= resolution))
     {
         return;
     }
 
-    int2 center = int2(id.xy);
-
-    float3 finalColor = input0[center].rgb;
+    float3 finalColor = input0[threadID.xy].rgb;
 
 #ifdef FILTER_KUWAHARA
     int2 const regionOffsets[4] = {
@@ -65,8 +63,8 @@ void main_cs(uint3 id : SV_DispatchThreadID)
         {
             for (int x = 0; x < regionSize; ++x)
             {
-                int2 offset = center + regionOffsets[r] + int2(x, y);
-                offset = clamp(offset, int2(0, 0), dims - 1);
+                int2 offset = threadID.xy + regionOffsets[r] + int2(x, y);
+                offset = clamp(offset, int2(0, 0), resolution - 1);
 
                 float4 color = input0[offset];
                 mean += color;
@@ -89,7 +87,7 @@ void main_cs(uint3 id : SV_DispatchThreadID)
 #endif FILTER_KUWAHARA
 
 #ifdef FILTER_BLOOM
-    float2 uvBloom = (float2(id.xy) + 0.5) / float2(dims);
+    float2 uvBloom = (float2(threadID.xy) + 0.5) / float2(resolution);
     float3 bloomColor = input1.SampleLevel(samplers[samplerBilinearWrap], uvBloom, 0).rgb;
 
     finalColor += bloomColor;
@@ -100,7 +98,7 @@ void main_cs(uint3 id : SV_DispatchThreadID)
 #endif FILTER_ACES
 
 #ifdef FILTER_DITHERING
-    float2 ditherCoord = float2(id.xy);
+    float2 ditherCoord = float2(threadID.xy);
     float dither = frac(sin(dot(ditherCoord, float2(12.9898, 78.233))) * 43758.5453);
     dither = (dither - 0.5) / 255.0; // Scale to 8-bit precision
     finalColor += dither;
@@ -111,11 +109,11 @@ void main_cs(uint3 id : SV_DispatchThreadID)
 #endif FILTER_GAMMA_CORRECTION
 
 #ifdef FILTER_VIGNETTE
-    float2 uv = float2(id.xy) / float2(dims);
+    float2 uv = float2(threadID.xy) / float2(resolution);
     float2 centered = uv - 0.5;
     float vignette = 1.0 - smoothstep(VIGNETTE_START, VIGNETTE_END, length(centered));
     finalColor *= vignette;
 #endif FILTER_VIGNETTE
 
-    output[id.xy] = float4(finalColor, 1.0);
+    output[threadID.xy] = float4(finalColor, 1.0);
 }

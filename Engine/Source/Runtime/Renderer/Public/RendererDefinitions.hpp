@@ -44,8 +44,7 @@ namespace worse
         PBRV,
         PBRP,
         PostFXC,
-        BloomBrightFilterC,
-        BloomDownSampleC,
+        BloomLuminanceC,
         BloomUpscaleC,
         Max
     };

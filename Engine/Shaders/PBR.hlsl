@@ -79,7 +79,7 @@ PixelOutput main_ps(VertexOutput input)
     
     float3 lightDirection = frameData.cameraForward;
     float3 const lightColor = float3(1.0, 0.95, 0.85);
-    float const lightIntensity = 3.0;
+    float const lightIntensity = 5.0;
     
     float3 V = normalize(frameData.cameraPosition - input.worldPos); // View direction
     float3 L = -lightDirection; // Light direction

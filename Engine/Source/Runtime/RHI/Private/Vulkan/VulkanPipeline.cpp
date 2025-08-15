@@ -39,8 +39,7 @@ namespace worse
         }
     } // namespace
 
-    void
-    RHIPipeline::nativeCreate(RHIPipelineState const& pipelineState, RHIDescriptorSetLayout const& descriptorSetLayout)
+    void RHIPipeline::nativeCreate(RHIPipelineState const& pipelineState, RHIDescriptorSetLayout const& descriptorSetLayout)
     {
         // clang-format off
         m_state = pipelineState;

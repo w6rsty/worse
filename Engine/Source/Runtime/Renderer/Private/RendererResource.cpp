@@ -99,8 +99,7 @@ namespace worse
     shaders[RendererShader::shaderName##C]->compile(shaderDir / #shaderName ".hlsl", RHIShaderType::Compute);
 
         MAKE_SHADER_C(PostFX);
-        MAKE_SHADER_C(BloomBrightFilter);
-        MAKE_SHADER_C(BloomDownSample);
+        MAKE_SHADER_C(BloomLuminance);
         MAKE_SHADER_C(BloomUpscale);
 
 #undef MAKE_SHADER_C

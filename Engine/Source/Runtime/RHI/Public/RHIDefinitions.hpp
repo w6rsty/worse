@@ -380,6 +380,8 @@ namespace worse
         static constexpr RHIAccessFlags None              {0x00000000ULL};
         static constexpr RHIAccessFlags ShaderRead        {0x00000020ULL};
         static constexpr RHIAccessFlags ShaderWrite       {0x00000040ULL};
+        static constexpr RHIAccessFlags TransferRead      {0x00000800ULL};
+        static constexpr RHIAccessFlags TransferWrite     {0x00001000ULL};
         static constexpr RHIAccessFlags MemoryRead        {0x00008000ULL};
         static constexpr RHIAccessFlags MemoryWrite       {0x00010000ULL};
         static constexpr RHIAccessFlags ShaderSampledRead {0x100000000ULL};

@@ -267,9 +267,8 @@ public:
             LocalTransform{},
             Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere)},
             MeshMaterial{materials->add(StandardMaterial{
-                .baseColor = math::Vector4(0.1, 0.1, 0.1, 1.0f),
+                .baseColor = math::Vector4(0.2, 0.2, 0.2, 1.0f),
                 .metallic  = 0.8f,
-                .emissive = math::Vector4(0.7f, 0.8f, 0.6f, 1.0f),
             })});
     }
 
