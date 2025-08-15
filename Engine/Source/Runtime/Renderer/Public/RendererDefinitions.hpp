@@ -45,6 +45,7 @@ namespace worse
         PBRP,
         PostFXC,
         BloomBrightFilterC,
+        BloomDownSampleC,
         BloomUpscaleC,
         Max
     };
@@ -58,6 +59,7 @@ namespace worse
         // GBuffers
         GBufferNormal,
         GBufferAlbedo,
+        BloomInitial,
         BloomDownSampleStage0,
         BloomDownSampleStage1,
         BloomDownSampleStage2,

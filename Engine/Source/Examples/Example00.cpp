@@ -268,7 +268,8 @@ public:
             Mesh3D{Renderer::getStandardMesh(geometry::GeometryType::Sphere)},
             MeshMaterial{materials->add(StandardMaterial{
                 .baseColor = math::Vector4(0.1, 0.1, 0.1, 1.0f),
-                .emissive = math::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
+                .metallic  = 0.8f,
+                .emissive = math::Vector4(0.7f, 0.8f, 0.6f, 1.0f),
             })});
     }
 

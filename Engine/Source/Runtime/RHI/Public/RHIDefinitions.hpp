@@ -373,6 +373,39 @@ namespace worse
         Max
     };
 
+    WS_DEFINE_FLAGS(RHIAccess, u64);
+    // clang-format off
+    struct RHIAccessFlagBits
+    {
+        static constexpr RHIAccessFlags None              {0x00000000ULL};
+        static constexpr RHIAccessFlags ShaderRead        {0x00000020ULL};
+        static constexpr RHIAccessFlags ShaderWrite       {0x00000040ULL};
+        static constexpr RHIAccessFlags MemoryRead        {0x00008000ULL};
+        static constexpr RHIAccessFlags MemoryWrite       {0x00010000ULL};
+        static constexpr RHIAccessFlags ShaderSampledRead {0x100000000ULL};
+        static constexpr RHIAccessFlags ShaderStorageRead {0x200000000ULL};
+        static constexpr RHIAccessFlags ShaderStorageWrite{0x400000000ULL};
+    };
+    // clang-format on
+
+    WS_DEFINE_FLAGS(RHIPipelineStage, u64);
+    // clang-format off
+    struct RHIPipelineStageFlagBits
+    {
+        static constexpr RHIPipelineStageFlags None          {0x00000000ULL};
+        static constexpr RHIPipelineStageFlags TopOfPipe     {0x00000001ULL};
+        static constexpr RHIPipelineStageFlags DrawIndirect  {0x00000002ULL};
+        static constexpr RHIPipelineStageFlags VertexInput   {0x00000004ULL};
+        static constexpr RHIPipelineStageFlags VertexShader  {0x00000008ULL};
+        static constexpr RHIPipelineStageFlags FragmentShader{0x00000080ULL};
+        static constexpr RHIPipelineStageFlags ComputeShader {0x00000800ULL};
+        static constexpr RHIPipelineStageFlags Transfer      {0x00001000ULL};
+        static constexpr RHIPipelineStageFlags BottomOfPipe  {0x00002000ULL};       
+        static constexpr RHIPipelineStageFlags AllGraphics   {0x00008000ULL};
+        static constexpr RHIPipelineStageFlags AllCommands   {0x00010000ULL};
+    };
+    // clang-format on
+
     constexpr std::string vulkanResultToString(VkResult const result)
     {
         switch (result)

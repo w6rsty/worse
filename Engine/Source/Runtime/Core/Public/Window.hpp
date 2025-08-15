@@ -41,7 +41,7 @@ namespace worse
 
     private:
         static inline u32 s_width  = 1200;
-        static inline u32 s_height = 720;
+        static inline u32 s_height = 800;
 
         static inline std::string s_title = "Window";
         static inline WindowMode s_mode   = WindowMode::Windowed;

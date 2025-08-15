@@ -64,10 +64,10 @@ namespace worse
             WS_ASSERT(viewType != VK_IMAGE_VIEW_TYPE_MAX_ENUM);
 
             VkImageViewCreateInfo infoImageView = {};
-            infoImageView.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            infoImageView.image    = image.asValue<VkImage>();
-            infoImageView.viewType = viewType;
-            infoImageView.format   = vulkanFormat(texture->getFormat());
+            infoImageView.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            infoImageView.image                 = image.asValue<VkImage>();
+            infoImageView.viewType              = viewType;
+            infoImageView.format                = vulkanFormat(texture->getFormat());
             infoImageView.subresourceRange.aspectMask =
                 vulkanImageAspectFlags(texture->getFormat());
             infoImageView.subresourceRange.baseMipLevel = 0;
@@ -135,7 +135,7 @@ namespace worse
                     RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
             {
 
-                cmdList->insertBarrier(m_image, m_format, layout);
+                cmdList->insertBarrier(m_image, m_format, layout, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryWrite);
 
                 RHIDevice::cmdImmediateSubmit(cmdList);
             }

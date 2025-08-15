@@ -188,7 +188,7 @@ namespace worse
     {
         if (m_currentCmdList->getState() == RHICommandListState::Recording)
         {
-            m_currentCmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource);
+            m_currentCmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::BottomOfPipe, RHIAccessFlagBits::MemoryRead);
             m_currentCmdList->submit(swapchain->getImageAcquireSemaphore());
             swapchain->present(m_currentCmdList);
         }

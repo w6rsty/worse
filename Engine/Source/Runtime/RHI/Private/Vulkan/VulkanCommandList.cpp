@@ -342,7 +342,14 @@ namespace worse
         vkCmdSetScissor(m_handle.asValue<VkCommandBuffer>(), 0, 1, &vkScissor);
     }
 
-    void RHICommandList::insertBarrier(RHINativeHandle image, RHIFormat const format, RHIImageLayout const layoutNew)
+    void RHICommandList::insertBarrier(
+        RHINativeHandle image,
+        RHIFormat const format,
+        RHIImageLayout const layoutNew,
+        RHIPipelineStageFlags const srcStage,
+        RHIAccessFlags const srcAccess,
+        RHIPipelineStageFlags const dstStage,
+        RHIAccessFlags const dstAccess)
     {
         WS_ASSERT(m_state == RHICommandListState::Recording);
         WS_ASSERT(image);
@@ -355,10 +362,10 @@ namespace worse
         // clang-format off
         VkImageMemoryBarrier2 imageBarrier = {};
         imageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-        imageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-        imageBarrier.srcAccessMask                   = VK_ACCESS_2_MEMORY_WRITE_BIT;
-        imageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-        imageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+        imageBarrier.srcStageMask                    = static_cast<VkPipelineStageFlags2>(srcStage);
+        imageBarrier.srcAccessMask                   = static_cast<VkAccessFlags2>(srcAccess);
+        imageBarrier.dstStageMask                    = static_cast<VkPipelineStageFlags2>(dstStage);
+        imageBarrier.dstAccessMask                   = static_cast<VkAccessFlags2>(dstAccess);
         imageBarrier.oldLayout                       = vulkanImageLayout(currentLayout);
         imageBarrier.newLayout                       = vulkanImageLayout(layoutNew);
         imageBarrier.image                           = image.asValue<VkImage>();
@@ -448,7 +455,7 @@ namespace worse
         RHIImageLayout initialLayout = source->getImageLayout();
 
         source->convertImageLayout(this, RHIImageLayout::TransferSource);
-        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::TransferDestination);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::TransferDestination, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite);
 
         RHIFilter filter = (source->getWidth() == destination->getWidth() &&
                             source->getHeight() == destination->getHeight())
@@ -495,7 +502,7 @@ namespace worse
 
         // restore layout
         source->convertImageLayout(this, initialLayout);
-        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::PresentSource);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::PresentSource, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::BottomOfPipe, RHIAccessFlagBits::MemoryRead);
     }
 
     void RHICommandList::copy(RHITexture const* source,
@@ -554,7 +561,7 @@ namespace worse
         RHIImageLayout sourceInitialLayout = source->getImageLayout();
 
         source->convertImageLayout(this, RHIImageLayout::TransferSource);
-        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::TransferDestination);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::TransferDestination, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite);
 
         VkImageCopy2 region                  = {};
         region.sType                         = VK_STRUCTURE_TYPE_IMAGE_COPY_2;
@@ -583,7 +590,7 @@ namespace worse
 
         // restore
         source->convertImageLayout(this, sourceInitialLayout);
-        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::PresentSource);
+        insertBarrier(destination->getCurrentRt(), destination->getFormat(), RHIImageLayout::PresentSource, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::BottomOfPipe, RHIAccessFlagBits::MemoryRead);
     }
 
     void RHICommandList::pushConstants(

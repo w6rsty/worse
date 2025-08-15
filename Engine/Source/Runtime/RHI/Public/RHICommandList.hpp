@@ -1,5 +1,6 @@
 #pragma once
 #include "Math/Rectangle.hpp"
+#include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
 #include "RHIDescriptor.hpp"
@@ -68,8 +69,14 @@ namespace worse
         void setViewport(RHIViewport const& viewport);
         void setScissor(math::Rectangle const& scissor);
 
-        void insertBarrier(RHINativeHandle const image, RHIFormat const format,
-                           RHIImageLayout const layoutNew);
+        void insertBarrier(
+            RHINativeHandle const image,
+            RHIFormat const format,
+            RHIImageLayout const layoutNew,
+            RHIPipelineStageFlags const srcStage = RHIPipelineStageFlagBits::AllCommands,
+            RHIAccessFlags const srcAccess       = RHIAccessFlagBits::MemoryRead,
+            RHIPipelineStageFlags const dstStage = RHIPipelineStageFlagBits::AllCommands,
+            RHIAccessFlags const dstAccess       = RHIAccessFlagBits::MemoryWrite | RHIAccessFlagBits::MemoryWrite);
 
         void blit(RHITexture const* source, RHITexture const* destination);
         void blit(RHITexture const* source, RHISwapchain const* destination);

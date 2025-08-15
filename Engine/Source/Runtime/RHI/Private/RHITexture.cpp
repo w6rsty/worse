@@ -138,7 +138,7 @@ namespace worse
 
     void RHITexture::convertImageLayout(RHICommandList* cmdList, RHIImageLayout const layout) const
     {
-        cmdList->insertBarrier(m_image, m_format, layout);
+        cmdList->insertBarrier(m_image, m_format, layout, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryWrite);
     }
 
     bool RHITexture::isFormatDepth() const

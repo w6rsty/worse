@@ -20,7 +20,8 @@ namespace worse
 
     void Renderer::passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        // clang-format off
+        RHITexture* depthTexture = Renderer::getRenderTarget(RendererTarget::Depth);
+
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
                 .setName("DepthPrepass")
@@ -31,8 +32,8 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::DepthPrepassV))
                 .addShader(Renderer::getShader(RendererShader::DepthPrepassP))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-                .setScissor({0, 0, 1200, 720})
+                .setRenderTargetDepthTexture(depthTexture)
+                .setScissor({0, 0, depthTexture->getWidth(), depthTexture->getHeight()})
                 .setViewport(Renderer::getViewport())
                 .setClearDepth(0.0f) // clear with far value
                 .build());
@@ -43,10 +44,10 @@ namespace worse
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
                 cmdList->setBufferIndex(mesh->getIndexBuffer());
-    
+
                 pushConstantData.setModel(drawcall.transform);
                 cmdList->pushConstants(pushConstantData.asSpan());
-    
+
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
             }
         }
@@ -58,16 +59,22 @@ namespace worse
 
             pushConstantData.setModel(object.transform);
             cmdList->pushConstants(pushConstantData.asSpan());
-            
+
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
         }
 
         cmdList->renderPassEnd();
-        // clang-format on
+
+        cmdList->insertBarrier(depthTexture->getImage(), depthTexture->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::AllGraphics, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::AllGraphics, RHIAccessFlagBits::MemoryRead);
     }
 
     void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
     {
+        RHITexture* sceneHDR      = Renderer::getRenderTarget(RendererTarget::SceneHDR);
+        RHITexture* gBufferNormal = Renderer::getRenderTarget(RendererTarget::GBufferNormal);
+        RHITexture* gBufferAlbedo = Renderer::getRenderTarget(RendererTarget::GBufferAlbedo);
+        RHITexture* depthTexture  = Renderer::getRenderTarget(RendererTarget::Depth);
+
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
                 .setName("PBR")
@@ -78,11 +85,11 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PBRV))
                 .addShader(Renderer::getShader(RendererShader::PBRP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::SceneHDR))
-                .setRenderTargetColorTexture(1, Renderer::getRenderTarget(RendererTarget::GBufferNormal))
-                .setRenderTargetColorTexture(2, Renderer::getRenderTarget(RendererTarget::GBufferAlbedo))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-                .setScissor({0, 0, 1200, 720})
+                .setRenderTargetColorTexture(0, sceneHDR)
+                .setRenderTargetColorTexture(1, gBufferNormal)
+                .setRenderTargetColorTexture(2, gBufferAlbedo)
+                .setRenderTargetDepthTexture(depthTexture)
+                .setScissor({0, 0, sceneHDR->getWidth(), sceneHDR->getHeight()})
                 .setViewport(Renderer::getViewport())
                 .setClearColor(Color{0.02f, 0.02f, 0.02f, 1.0f})
                 .setClearDepth(2.0f)
@@ -133,9 +140,9 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PointV))
                 .addShader(Renderer::getShader(RendererShader::PointP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::SceneHDR))
-                .setRenderTargetDepthTexture(Renderer::getRenderTarget(RendererTarget::Depth))
-                .setScissor({0, 0, 1200, 720})
+                .setRenderTargetColorTexture(0, sceneHDR)
+                .setRenderTargetDepthTexture(depthTexture)
+                .setScissor({0, 0, sceneHDR->getWidth(), sceneHDR->getHeight()})
                 .setViewport(Renderer::getViewport())
                 .setClearDepth(2.0f)
                 .build());
@@ -160,6 +167,8 @@ namespace worse
 
     void Renderer::passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
+        RHITexture* screenHDR = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
+
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
                 .setName("WireFrame")
@@ -170,8 +179,8 @@ namespace worse
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::LineV))
                 .addShader(Renderer::getShader(RendererShader::LineP))
-                .setRenderTargetColorTexture(0, Renderer::getRenderTarget(RendererTarget::ScreenHDR)) // 渲染到后处理之后
-                .setScissor({0, 0, 1200, 720})
+                .setRenderTargetColorTexture(0, screenHDR) // 渲染到后处理之后
+                .setScissor({0, 0, screenHDR->getWidth(), screenHDR->getHeight()})
                 .setViewport(Renderer::getViewport())
                 .build());
 
@@ -205,17 +214,23 @@ namespace worse
 
     void Renderer::passBloom(RHICommandList* cmdList)
     {
-        RHITexture* scene  = Renderer::getRenderTarget(RendererTarget::SceneHDR);
-        RHITexture* stage0 = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage0);
-        RHITexture* stage1 = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage1);
-        RHITexture* stage2 = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage2);
-        RHITexture* stage3 = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage3);
-        RHITexture* bloom  = Renderer::getRenderTarget(RendererTarget::BloomFinal);
+        RHITexture* scene = Renderer::getRenderTarget(RendererTarget::SceneHDR);
+
+        RHITexture* bloomInitial = Renderer::getRenderTarget(RendererTarget::BloomInitial);
+        RHITexture* bloomStage0  = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage0);
+        RHITexture* bloomStage1  = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage1);
+        RHITexture* bloomStage2  = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage2);
+        RHITexture* bloomStage3  = Renderer::getRenderTarget(RendererTarget::BloomDownSampleStage3);
+        RHITexture* bloomFinal   = Renderer::getRenderTarget(RendererTarget::BloomFinal);
+
+        // Copy Scene to Bloom Initial
+        cmdList->copy(scene, bloomInitial);
 
         // Downsample
-        // Scene(Luminance filter) -> Stage0 | x0.5  
-        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage0->getImage(), stage0->getFormat(), RHIImageLayout::General);
+        // Initial(Luminance filter) -> Stage0 | x2
+        cmdList->insertBarrier(bloomInitial->getImage(), bloomInitial->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage0->getImage(), bloomStage0->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
                 .setName("BloomBrightFilter")
@@ -225,58 +240,49 @@ namespace worse
 
         std::array updatesBrightFilter = {
             RHIDescriptorWrite{.reg      = 0, // t0
-                               .resource = {scene},
+                               .resource = {bloomInitial},
                                .type     = RHIDescriptorType::Texture},
             RHIDescriptorWrite{.reg      = 0, // u0
-                               .resource = {stage0},
+                               .resource = {bloomStage0},
                                .type     = RHIDescriptorType::TextureStorage},
         };
         cmdList->updateSpecificSet(updatesBrightFilter);
         pushConstantData.setF4(math::Vector4::ZERO());
-        pushConstantData.setF2(math::Vector2(1.0f, 1.5f));
+        pushConstantData.setF2(math::Vector2(0.8f, 1.0f));
         cmdList->pushConstants(pushConstantData.asSpan());
-        cmdList->dispatch(stage0->getWidth() / 8, stage0->getHeight() / 8, 1);
+        cmdList->dispatch(bloomStage0->getWidth() / 8, bloomStage0->getHeight() / 8, 1);
 
-        // Satge0 -> Stage1 | x2
-        cmdList->insertBarrier(stage0->getImage(), stage0->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage1->getImage(), stage1->getFormat(), RHIImageLayout::General);
-        // cmdList->setPipelineState(
-        //     RHIPipelineStateBuilder()
-        //         .setName("BloomDownSample")
-        //         .setType(RHIPipelineType::Compute)
-        //         .addShader(Renderer::getShader(RendererShader::BloomDownSampleC))
-        //         .build());
+        // Stage0 -> Stage1 | x4
+        cmdList->blit(bloomStage0, bloomStage1);
 
-        // std::array updatesDownSample = {
+        // cmdList->insertBarrier(bloomStage0->getImage(), bloomStage0->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        // cmdList->insertBarrier(bloomStage1->getImage(), bloomStage1->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::None, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+        // updatesBrightFilter = {
         //     RHIDescriptorWrite{.reg      = 0, // t0
-        //                        .resource = {stage0},
+        //                        .resource = {bloomStage0},
         //                        .type     = RHIDescriptorType::Texture},
         //     RHIDescriptorWrite{.reg      = 0, // u0
-        //                        .resource = {stage1},
+        //                        .resource = {bloomStage1},
         //                        .type     = RHIDescriptorType::TextureStorage},
         // };
-        // cmdList->updateSpecificSet(updatesDownSample);
+        // cmdList->updateSpecificSet(updatesBrightFilter);
         // pushConstantData.setF4(math::Vector4::ZERO());
+        // pushConstantData.setF2(math::Vector2(0.8f, 1.0f));
         // cmdList->pushConstants(pushConstantData.asSpan());
-        // cmdList->dispatch(stage1->getWidth() / 8, stage1->getHeight() / 8, 1);
-        cmdList->blit(stage0, stage1);
+        // cmdList->dispatch(bloomStage1->getWidth() / 8, bloomStage1->getHeight() / 8, 1);
 
-        // Stage1 -> Stage2 | x4
-        cmdList->insertBarrier(stage1->getImage(), stage1->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage2->getImage(), stage2->getFormat(), RHIImageLayout::General);
-        cmdList->blit(stage1, stage2);
+        // Stage1 -> Stage2 | x8
+        cmdList->blit(bloomStage1, bloomStage2);
 
-        // Stage2 -> Stage3 | x8
-        cmdList->insertBarrier(stage2->getImage(), stage2->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage3->getImage(), stage3->getFormat(), RHIImageLayout::General);
-        cmdList->blit(stage2, stage3);
+        // Stage2 -> Stage3 | x16
+        cmdList->blit(bloomStage2, bloomStage3);
 
         // Upsacle and Additive blend
-        cmdList->insertBarrier(stage0->getImage(), stage0->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage1->getImage(), stage1->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage2->getImage(), stage2->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(stage3->getImage(), stage3->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(bloom->getImage(), bloom->getFormat(), RHIImageLayout::General);
+        cmdList->insertBarrier(bloomStage0->getImage(), bloomStage0->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage1->getImage(), bloomStage1->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage2->getImage(), bloomStage2->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage3->getImage(), bloomStage3->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomFinal->getImage(), bloomFinal->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -287,24 +293,28 @@ namespace worse
 
         std::array updatesUpscale = {
             RHIDescriptorWrite{.reg      = 0, // t0
-                               .resource = {stage0},
+                               .resource = {bloomStage0},
                                .type     = RHIDescriptorType::Texture},
             RHIDescriptorWrite{.reg      = 1, // t1
-                               .resource = {stage1},
+                               .resource = {bloomStage1},
                                .type     = RHIDescriptorType::Texture},
             RHIDescriptorWrite{.reg      = 2, // t2
-                               .resource = {stage2},
+                               .resource = {bloomStage2},
                                .type     = RHIDescriptorType::Texture},
             RHIDescriptorWrite{.reg      = 3, // t3
-                               .resource = {stage3},
+                               .resource = {bloomStage3},
                                .type     = RHIDescriptorType::Texture},
             RHIDescriptorWrite{.reg      = 0, // u0
-                               .resource = {bloom},
+                               .resource = {bloomFinal},
                                .type     = RHIDescriptorType::TextureStorage},
         };
         cmdList->updateSpecificSet(updatesUpscale);
         cmdList->pushConstants(pushConstantData.asSpan());
-        cmdList->dispatch(bloom->getWidth() / 8, bloom->getHeight() / 8, 1);
+        cmdList->dispatch(bloomFinal->getWidth() / 8, bloomFinal->getHeight() / 8, 1);
+
+        cmdList->renderPassEnd();
+
+        cmdList->insertBarrier(bloomFinal->getImage(), bloomFinal->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderSampledRead);
     }
 
     void Renderer::passPostProcessing(RHICommandList* cmdList)
@@ -314,9 +324,9 @@ namespace worse
         RHITexture* screen = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
 
         // 同步
-        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(bloom->getImage(), bloom->getFormat(), RHIImageLayout::ShaderRead);
-        cmdList->insertBarrier(screen->getImage(), screen->getFormat(), RHIImageLayout::General);
+        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloom->getImage(), bloom->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(screen->getImage(), screen->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -372,6 +382,10 @@ namespace worse
 
         if (globalContext->isWireFrameMode)
         {
+            // Post-processing -> Wireframe: screen buffer synchronization
+            RHITexture* screenTexture = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
+            cmdList->insertBarrier(screenTexture->getImage(), screenTexture->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite);
+
             passWireFrame(cmdList, drawcalls);
         }
 
