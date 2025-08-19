@@ -226,14 +226,17 @@ namespace worse
     {
         // update frame constant data
 
-        FrameConstantData frameConstantData = {};
-        frameConstantData.cameraPosition    = camera->getPosition();
-        frameConstantData.cameraForward     = camera->getForward();
-        frameConstantData.deltaTime         = globalContext->deltaTime;
-        frameConstantData.time              = globalContext->time;
-        frameConstantData.projection        = camera->getProjectionMatrix();
-        frameConstantData.view              = camera->getViewMatrix();
-        frameConstantData.viewProjection    = frameConstantData.projection * frameConstantData.view;
+        FrameConstantData frameConstantData     = {};
+        frameConstantData.cameraPosition        = camera->getPosition();
+        frameConstantData.cameraForward         = camera->getForward();
+        frameConstantData.deltaTime             = globalContext->deltaTime;
+        frameConstantData.time                  = globalContext->time;
+        frameConstantData.projection            = camera->getProjectionMatrix();
+        frameConstantData.view                  = camera->getViewMatrix();
+        frameConstantData.viewProjection        = frameConstantData.projection * frameConstantData.view;
+        frameConstantData.viewProjectionInverse = math::inverse(frameConstantData.viewProjection);
+
+        auto mat = frameConstantData.viewProjection * frameConstantData.viewProjectionInverse;
 
         m_currentCmdList->updateBuffer(frameConstantBuffer.get(), 0, sizeof(FrameConstantData), &frameConstantData);
 

@@ -80,10 +80,12 @@ namespace worse
         // Passes
         // =====================================================================
 
-        static void passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
-        static void passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls,
-                              ecs::Resource<AssetServer> assetServer);
-        static void passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passDepthPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passShadowMap(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
+        static void passGBuffer(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls,
+                                ecs::Resource<AssetServer> assetServer);
+        static void passLight(RHICommandList* cmdList);
+        static void passDebugWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls);
         static void passBloom(RHICommandList* cmdList);
         static void passPostProcessing(RHICommandList* cmdList);
 

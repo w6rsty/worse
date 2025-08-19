@@ -15,25 +15,42 @@ static uint const THREAD_GROUP_COUNT_Y = 8;
 
 struct FrameConstantData
 {
-    float deltaTime;
-    float time;
-    float2 padding0; // align to 16 bytes
+    float  deltaTime;
+    float  time;
+    float  cameraNear;
+    float  cameraFar;
 
     float3 cameraPosition;
-    float cameraNear;
-    float3 cameraForward;
-    float cameraFar;
-    float4 padding1; // align to 16 bytes
+    float padding0;
 
-    float4x4 view;
-    float4x4 projection;
-    float4x4 viewProjection;
+    float3 cameraForward;
+    float padding1;
+
+    matrix view;
+    matrix projection;
+    matrix viewProjection;
+    matrix viewProjectionInverse;
 };
 
 struct PushConstantData
 {
-    float4x4 transform;
-    float4x4 values;
+    matrix transform;
+    matrix values;
+};
+
+struct LightParameters
+{
+    float4 color;
+
+    float3 position;
+    float  intensity;
+
+    float3 direction;
+    float  range;
+
+    float  angle;
+    uint   flags;
+    float2 padding;
 };
 
 // ================================================================================
@@ -47,6 +64,7 @@ Texture2D<float4> materialTextures[]      : register(t0, space0);
 
 [[vk::push_constant]] PushConstantData pushData;
 
+matrix getMatrix()      { return pushData.values; }
 float2 getF2()          { return float2(pushData.values._m00, pushData.values._m10); }
 float3 getF30()         { return float3(pushData.values._m20, pushData.values._m30, pushData.values._m01); }
 float3 getF31()         { return float3(pushData.values._m11, pushData.values._m21, pushData.values._m31); }
@@ -80,20 +98,31 @@ struct VertexPosUvNrmTan
     float4 tangent  : TANGENT;
 };
 
-struct Material
+struct MaterialParameters
 {
-    uint baseColorTextureIndex;
-    uint normalTextureIndex;
-    uint metallicRoughnessTextureIndex;
-    uint ambientOcclusionTextureIndex;
-    uint emissiveTextureIndex;
-    float metallic;
-    float roughness;
-    float ambientOcclusion;
+    uint   baseColorTextureIndex;
+    uint   normalTextureIndex;
+    uint   metallicRoughnessTextureIndex;
+    uint   ambientOcclusionTextureIndex;
+
+    uint   emissiveTextureIndex;
+    float  metallic;
+    float  roughness;
+    float  ambientOcclusion;
     
     float4 baseColor;
+
     float4 emissive;
+
+    uint   flags;
+    uint   padding[3];
 };
+
+bool HasBaseColorTexture(MaterialParameters params)         { return (params.flags & (1 << 0)) != 0; }
+bool HasNormalTexture(MaterialParameters params)            { return (params.flags & (1 << 1)) != 0; }
+bool HasMetallicRoughnessTexture(MaterialParameters params) { return (params.flags & (1 << 2)) != 0; }
+bool HasAmbientOcclusionTexture(MaterialParameters params)  { return (params.flags & (1 << 3)) != 0; }
+bool HasEmissiveTexture(MaterialParameters params)          { return (params.flags & (1 << 4)) != 0; }
 
 // Constants
 static float const PI          = 3.14159265359f;
@@ -106,5 +135,16 @@ float  saturate_16(float x)  { return clamp(x, 0.0f, FLT_MAX_16U); }
 float2 saturate_16(float2 x) { return clamp(x, 0.0f, FLT_MAX_16U); }
 float3 saturate_16(float3 x) { return clamp(x, 0.0f, FLT_MAX_16U); }
 float4 saturate_16(float4 x) { return clamp(x, 0.0f, FLT_MAX_16U); }
+
+float3 ScreenToWorldPosition(float2 uv, float depth)
+{
+    float x              = uv.x * 2.0f - 1.0f;
+    float y              = (1.0f - uv.y) * 2.0f - 1.0f;
+    float4 positionClip  = float4(x, y, depth, 1.0f);
+    float4 positionWorld = mul(frameData.viewProjectionInverse, positionClip);
+    return positionWorld.xyz / positionWorld.w;
+}
+
+#include "CommonStructs.hlsl"
 
 #endif // WS_COMMON_HLSL

@@ -3,6 +3,7 @@
 #include "Renderer.hpp"
 
 #include <vector>
+#include <optional>
 #include <unordered_map>
 
 namespace worse
@@ -11,11 +12,9 @@ namespace worse
     {
         std::vector<StandardMaterialGPU> materialGPUs;
 
-        // Helper function to get texture index with fallback
-        usize getTextureIndex(
+        std::optional<usize> getTextureIndex(
             std::optional<AssetHandle> const& handle,
-            std::unordered_map<AssetHandle, usize> const& textureIndexMap,
-            RendererTexture fallback)
+            std::unordered_map<AssetHandle, usize> const& textureIndexMap)
         {
             if (handle.has_value())
             {
@@ -30,7 +29,8 @@ namespace worse
                     "Texture handle {} not found in texture map, using default",
                     handle.value());
             }
-            return static_cast<usize>(fallback);
+
+            return std::nullopt;
         }
     } // namespace
 
@@ -78,17 +78,44 @@ namespace worse
             StandardMaterial* materialECS = materials.get(i);
 
             StandardMaterialGPU& data = materialGPUs[i];
+            data.flags                = 0;
 
             data.baseColor = materialECS->baseColor;
 
-            data.baseColorTextureIndex         = getTextureIndex(materialECS->baseColorTexture, textureIndexMap, RendererTexture::DefaultAlbedo);
-            data.normalTextureIndex            = getTextureIndex(materialECS->normalTexture, textureIndexMap, RendererTexture::DefaultNormal);
-            data.metallic                      = materialECS->metallic;
-            data.metallicRoughnessTextureIndex = getTextureIndex(materialECS->metallicRoughnessTexture, textureIndexMap, RendererTexture::DefaultMetallicRoughness);
-            data.roughness                     = materialECS->roughness;
-            data.ambientOcclusionTextureIndex  = getTextureIndex(materialECS->ambientOcclusionTexture, textureIndexMap, RendererTexture::DefaultAmbientOcclusion);
-            data.emissive                      = materialECS->emissive;
-            data.emissiveTextureIndex          = getTextureIndex(materialECS->emissiveTexture, textureIndexMap, RendererTexture::DefaultEmissive);
+            if (getTextureIndex(materialECS->baseColorTexture, textureIndexMap).has_value())
+            {
+                data.baseColorTextureIndex = getTextureIndex(materialECS->baseColorTexture, textureIndexMap).value();
+                data.flags |= 1 << 0;
+            }
+            if (getTextureIndex(materialECS->normalTexture, textureIndexMap).has_value())
+            {
+                data.normalTextureIndex = getTextureIndex(materialECS->normalTexture, textureIndexMap).value();
+                data.flags |= 1 << 1;
+            }
+            data.metallic  = materialECS->metallic;
+            data.roughness = materialECS->roughness;
+            if (getTextureIndex(materialECS->metallicRoughnessTexture, textureIndexMap).has_value())
+            {
+                data.metallicRoughnessTextureIndex = getTextureIndex(materialECS->metallicRoughnessTexture, textureIndexMap).value();
+                data.flags |= 1 << 2;
+            }
+            data.ambientOcclusion = materialECS->ambientOcclusion;
+            if (getTextureIndex(materialECS->ambientOcclusionTexture, textureIndexMap).has_value())
+            {
+                data.ambientOcclusionTextureIndex = getTextureIndex(materialECS->ambientOcclusionTexture, textureIndexMap).value();
+                data.flags |= 1 << 3;
+            }
+            data.emissive = materialECS->emissive;
+            if (getTextureIndex(materialECS->emissiveTexture, textureIndexMap).has_value())
+            {
+                data.emissiveTextureIndex = getTextureIndex(materialECS->emissiveTexture, textureIndexMap).value();
+                data.flags |= 1 << 4;
+            }
+
+            // encode flags
+            if (data.baseColorTextureIndex)
+            {
+            }
         }
 
         u32 assetServerMaterialIndex = materials->size();
@@ -99,16 +126,38 @@ namespace worse
 
                 usize index               = assetServerMaterialIndex++;
                 StandardMaterialGPU& data = materialGPUs[index];
+                data.flags                = 0;
 
                 data.baseColor                     = material.baseColor;
-                data.baseColorTextureIndex         = getTextureIndex(material.baseColorTexture, textureIndexMap, RendererTexture::DefaultAlbedo);
-                data.normalTextureIndex            = getTextureIndex(material.normalTexture, textureIndexMap, RendererTexture::DefaultNormal);
+                if (getTextureIndex(material.baseColorTexture, textureIndexMap).has_value())
+                {
+                    data.baseColorTextureIndex = getTextureIndex(material.baseColorTexture, textureIndexMap).value();
+                    data.flags |= 1 << 0;
+                }
+                if (getTextureIndex(material.normalTexture, textureIndexMap).has_value())
+                {
+                    data.normalTextureIndex = getTextureIndex(material.normalTexture, textureIndexMap).value();
+                    data.flags |= 1 << 1;
+                }
                 data.metallic                      = material.metallic;
-                data.metallicRoughnessTextureIndex = getTextureIndex(material.metallicRoughnessTexture, textureIndexMap, RendererTexture::DefaultMetallicRoughness);
                 data.roughness                     = material.roughness;
-                data.ambientOcclusionTextureIndex  = getTextureIndex(material.ambientOcclusionTexture, textureIndexMap, RendererTexture::DefaultAmbientOcclusion);
+                if (getTextureIndex(material.metallicRoughnessTexture, textureIndexMap).has_value())
+                {
+                    data.metallicRoughnessTextureIndex = getTextureIndex(material.metallicRoughnessTexture, textureIndexMap).value();
+                    data.flags |= 1 << 2;
+                }
+                data.ambientOcclusion              = material.ambientOcclusion;
+                if (getTextureIndex(material.ambientOcclusionTexture, textureIndexMap).has_value())
+                {
+                    data.ambientOcclusionTextureIndex = getTextureIndex(material.ambientOcclusionTexture, textureIndexMap).value();
+                    data.flags |= 1 << 3;
+                }
                 data.emissive                      = material.emissive;
-                data.emissiveTextureIndex          = getTextureIndex(material.emissiveTexture, textureIndexMap, RendererTexture::DefaultEmissive);
+                if (getTextureIndex(material.emissiveTexture, textureIndexMap).has_value())
+                {
+                    data.emissiveTextureIndex = getTextureIndex(material.emissiveTexture, textureIndexMap).value();
+                    data.flags |= 1 << 4;
+                }
 
                 slot.index = index;
             });

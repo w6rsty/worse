@@ -17,7 +17,6 @@ VertexOutput main_vs(VertexPosUvNrmTan input)
 
     output.uv = input.uv;
     output.normal = normalize(mul(input.normal, (float3x3)pushData.transform));
-    // output.tangent = normalize(mul(input.tangent, (float3x3)pushData.transform));
 
     return output;
 }

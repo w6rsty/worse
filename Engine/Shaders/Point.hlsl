@@ -1,6 +1,6 @@
 #include "Common.hlsl"
 
-StructuredBuffer<Material> materials : register(t0, space1);
+StructuredBuffer<MaterialParameters> materialParams : register(t0, space1);
 
 struct VertexOutput
 {
@@ -43,11 +43,9 @@ PixelOutput main_ps(VertexOutput input)
 {
     PixelOutput output;
 
-    Material material = materials[getMaterialId()];
-    
+    MaterialParameters material = materialParams[getMaterialId()];
+
     float3 baseColor = material.baseColor.rgb;
-    float3 textureBaseColor = materialTextures[material.baseColorTextureIndex].Sample(samplers[samplerBilinearWrap], input.uv).rgb;
-    baseColor *= textureBaseColor;
 
     output.color = float4(baseColor, material.baseColor.a);
 

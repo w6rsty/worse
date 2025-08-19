@@ -19,13 +19,18 @@ namespace worse
         u32 normalTextureIndex;
         u32 metallicRoughnessTextureIndex;
         u32 ambientOcclusionTextureIndex;
+
         u32 emissiveTextureIndex;
         f32 metallic;
         f32 roughness;
         f32 ambientOcclusion;
 
         math::Vector4 baseColor;
+
         math::Vector4 emissive;
+
+        u32 flags;
+        u32 padding[3];
     };
 
     /**

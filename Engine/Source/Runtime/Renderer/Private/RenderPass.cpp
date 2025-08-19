@@ -18,9 +18,9 @@ namespace worse
         pushConstantData.setPadding(a, b);
     }
 
-    void Renderer::passDpethPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
+    void Renderer::passDepthPrepass(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        RHITexture* depthTexture = Renderer::getRenderTarget(RendererTarget::Depth);
+        RHITexture* depthTexture = Renderer::getRenderTarget(RendererTarget::DepthGBuffer);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -45,7 +45,7 @@ namespace worse
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
                 cmdList->setBufferIndex(mesh->getIndexBuffer());
 
-                pushConstantData.setModel(drawcall.transform);
+                pushConstantData.setTransform(drawcall.transform);
                 cmdList->pushConstants(pushConstantData.asSpan());
 
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
@@ -57,7 +57,7 @@ namespace worse
             cmdList->setBufferVertex(object.mesh->getVertexBuffer());
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
 
-            pushConstantData.setModel(object.transform);
+            pushConstantData.setTransform(object.transform);
             cmdList->pushConstants(pushConstantData.asSpan());
 
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
@@ -68,28 +68,89 @@ namespace worse
         cmdList->insertBarrier(depthTexture->getImage(), depthTexture->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::AllGraphics, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::AllGraphics, RHIAccessFlagBits::MemoryRead);
     }
 
-    void Renderer::passColor(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
+    void Renderer::passShadowMap(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
-        RHITexture* sceneHDR      = Renderer::getRenderTarget(RendererTarget::SceneHDR);
-        RHITexture* gBufferNormal = Renderer::getRenderTarget(RendererTarget::GBufferNormal);
-        RHITexture* gBufferAlbedo = Renderer::getRenderTarget(RendererTarget::GBufferAlbedo);
-        RHITexture* depthTexture  = Renderer::getRenderTarget(RendererTarget::Depth);
+        RHITexture* depthLight = Renderer::getRenderTarget(RendererTarget::DepthLight);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
-                .setName("PBR")
+                .setName("DepthLight")
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::SolidCullBack))
+                .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadWrite))
+                .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
+                .addShader(Renderer::getShader(RendererShader::DepthLightV))
+                .addShader(Renderer::getShader(RendererShader::DepthLightP))
+                .setRenderTargetDepthTexture(depthLight)
+                .setScissor({0, 0, depthLight->getWidth(), depthLight->getHeight()})
+                .setViewport(Renderer::getViewport())
+                .setClearDepth(0.0f) // clear with far value
+                .build());
+
+        static math::Matrix4 lightSpaceMatrix =
+            math::projectionOrtho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f) *
+            math::lookAt(
+                math::Vector3(-0.3f, -1.0f, -0.5f),
+                math::Vector3(0.0f, 0.0f, 0.0f),
+                math::Vector3(0, 1, 0));
+        pushConstantData.setMatrix(lightSpaceMatrix);
+
+        for (Drawcall const& drawcall : drawcalls->solid)
+        {
+            if (Mesh* mesh = drawcall.mesh)
+            {
+                cmdList->setBufferVertex(mesh->getVertexBuffer());
+                cmdList->setBufferIndex(mesh->getIndexBuffer());
+
+                pushConstantData.setTransform(drawcall.transform);
+                cmdList->pushConstants(pushConstantData.asSpan());
+
+                cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
+            }
+        }
+
+        for (RenderObject const& object : drawcalls->ctx.opaqueObjects)
+        {
+            cmdList->setBufferVertex(object.mesh->getVertexBuffer());
+            cmdList->setBufferIndex(object.mesh->getIndexBuffer());
+
+            pushConstantData.setTransform(object.transform);
+            cmdList->pushConstants(pushConstantData.asSpan());
+
+            cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
+        }
+
+        cmdList->renderPassEnd();
+
+        cmdList->insertBarrier(depthLight->getImage(), depthLight->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+    }
+
+    void Renderer::passGBuffer(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
+    {
+        RHITexture* gbufferAlbedo   = Renderer::getRenderTarget(RendererTarget::GBufferAlbedo);
+        RHITexture* gbufferNormal   = Renderer::getRenderTarget(RendererTarget::GBufferNormal);
+        RHITexture* gbufferMaterial = Renderer::getRenderTarget(RendererTarget::GBufferMaterial);
+        RHITexture* depthTexture    = Renderer::getRenderTarget(RendererTarget::DepthGBuffer);
+        RHITexture* depthLight      = Renderer::getRenderTarget(RendererTarget::DepthLight);
+        RHITexture* gbufferPosition = Renderer::getRenderTarget(RendererTarget::GBufferPosition);
+
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("GBuffer")
+                .setType(RHIPipelineType::Graphics)
+                .setPrimitiveTopology(RHIPrimitiveTopology::TriangleList)
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::SolidCullBack))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
-                .addShader(Renderer::getShader(RendererShader::PBRV))
-                .addShader(Renderer::getShader(RendererShader::PBRP))
-                .setRenderTargetColorTexture(0, sceneHDR)
-                .setRenderTargetColorTexture(1, gBufferNormal)
-                .setRenderTargetColorTexture(2, gBufferAlbedo)
+                .addShader(Renderer::getShader(RendererShader::GBufferV))
+                .addShader(Renderer::getShader(RendererShader::GBufferP))
+                .setRenderTargetColorTexture(0, gbufferAlbedo)
+                .setRenderTargetColorTexture(1, gbufferNormal)
+                .setRenderTargetColorTexture(2, gbufferMaterial)
+                .setRenderTargetColorTexture(3, gbufferPosition)
                 .setRenderTargetDepthTexture(depthTexture)
-                .setScissor({0, 0, sceneHDR->getWidth(), sceneHDR->getHeight()})
+                .setScissor({0, 0, gbufferAlbedo->getWidth(), gbufferAlbedo->getHeight()})
                 .setViewport(Renderer::getViewport())
                 .setClearColor(Color{0.02f, 0.02f, 0.02f, 1.0f})
                 .setClearDepth(2.0f)
@@ -103,6 +164,14 @@ namespace worse
         };
         cmdList->updateSpecificSet(updates);
 
+        static math::Matrix4 lightSpaceMatrix =
+            math::projectionOrtho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f) *
+            math::lookAt(
+                math::Vector3(-0.3f, -1.0f, -0.5f),
+                math::Vector3(0.0f, 0.0f, 0.0f),
+                math::Vector3(0, 1, 0));
+        pushConstantData.setMatrix(lightSpaceMatrix);
+
         for (Drawcall const& drawcall : drawcalls->solid)
         {
             if (Mesh* mesh = drawcall.mesh)
@@ -110,7 +179,7 @@ namespace worse
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
                 cmdList->setBufferIndex(mesh->getIndexBuffer());
 
-                pushConstantData.setModel(drawcall.transform);
+                pushConstantData.setTransform(drawcall.transform);
                 pushConstantData.setMaterialId(drawcall.materialIndex);
                 cmdList->pushConstants(pushConstantData.asSpan());
 
@@ -123,7 +192,7 @@ namespace worse
             cmdList->setBufferVertex(object.mesh->getVertexBuffer());
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
 
-            pushConstantData.setModel(object.transform);
+            pushConstantData.setTransform(object.transform);
             pushConstantData.setMaterialId(assetServer->getMaterialIndex(object.material));
             cmdList->pushConstants(pushConstantData.asSpan());
 
@@ -135,14 +204,14 @@ namespace worse
                 .setName("Point")
                 .setType(RHIPipelineType::Graphics)
                 .setPrimitiveTopology(RHIPrimitiveTopology::PointList)
-                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::Solid))
+                .setRasterizerState(Renderer::getRasterizerState(RendererRasterizerState::SolidCullBack))
                 .setDepthStencilState(Renderer::getDepthStencilState(RendererDepthStencilState::ReadGreaterEqual))
                 .setBlendState(Renderer::getBlendState(RendererBlendState::Off))
                 .addShader(Renderer::getShader(RendererShader::PointV))
                 .addShader(Renderer::getShader(RendererShader::PointP))
-                .setRenderTargetColorTexture(0, sceneHDR)
+                .setRenderTargetColorTexture(0, gbufferAlbedo)
                 .setRenderTargetDepthTexture(depthTexture)
-                .setScissor({0, 0, sceneHDR->getWidth(), sceneHDR->getHeight()})
+                .setScissor({0, 0, gbufferAlbedo->getWidth(), gbufferAlbedo->getHeight()})
                 .setViewport(Renderer::getViewport())
                 .setClearDepth(2.0f)
                 .build());
@@ -153,7 +222,7 @@ namespace worse
             {
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
 
-                pushConstantData.setModel(drawcall.transform);
+                pushConstantData.setTransform(drawcall.transform);
                 pushConstantData.setMaterialId(drawcall.materialIndex);
 
                 pushConstantData.setPadding(2.0f, 0.0f); // Point size
@@ -164,9 +233,65 @@ namespace worse
         }
 
         cmdList->renderPassEnd();
+
+        cmdList->insertBarrier(gbufferAlbedo->getImage(), gbufferAlbedo->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(gbufferNormal->getImage(), gbufferNormal->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(gbufferMaterial->getImage(), gbufferMaterial->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
     }
 
-    void Renderer::passWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
+    void Renderer::passLight(RHICommandList* cmdList)
+    {
+        RHITexture* gbufferAlbedo   = Renderer::getRenderTarget(RendererTarget::GBufferAlbedo);
+        RHITexture* gbufferNormal   = Renderer::getRenderTarget(RendererTarget::GBufferNormal);
+        RHITexture* gbufferMaterial = Renderer::getRenderTarget(RendererTarget::GBufferMaterial);
+        RHITexture* depthGBuffer    = Renderer::getRenderTarget(RendererTarget::DepthGBuffer);
+        RHITexture* depthLight      = Renderer::getRenderTarget(RendererTarget::DepthLight);
+        RHITexture* scene           = Renderer::getRenderTarget(RendererTarget::SceneHDR);
+
+        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::None, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+
+        cmdList->setPipelineState(
+            RHIPipelineStateBuilder()
+                .setName("Light")
+                .setType(RHIPipelineType::Compute)
+                .addShader(Renderer::getShader(RendererShader::LightC))
+                .build());
+
+        std::array updates = {
+            RHIDescriptorWrite{.reg      = 0, // t0
+                               .resource = {gbufferAlbedo},
+                               .type     = RHIDescriptorType::Texture},
+            RHIDescriptorWrite{.reg      = 1, // t1
+                               .resource = {gbufferNormal},
+                               .type     = RHIDescriptorType::Texture},
+            RHIDescriptorWrite{.reg      = 2, // t2
+                               .resource = {gbufferMaterial},
+                               .type     = RHIDescriptorType::Texture},
+            RHIDescriptorWrite{.reg      = 3, // t3
+                               .resource = {depthGBuffer},
+                               .type     = RHIDescriptorType::Texture},
+            RHIDescriptorWrite{.reg      = 4, // t4
+                               .resource = {depthLight},
+                               .type     = RHIDescriptorType::Texture},
+            RHIDescriptorWrite{.reg      = 0, // u0
+                               .resource = {scene},
+                               .type     = RHIDescriptorType::TextureStorage},
+        };
+        cmdList->updateSpecificSet(updates);
+
+        // static math::Matrix4 lightSpaceMatrix =
+        //     math::projectionOrtho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f) *
+        //     math::lookAt(
+        //         math::Vector3(-0.3f, -1.0f, -0.5f),
+        //         math::Vector3(0.0f, 0.0f, 0.0f),
+        //         math::Vector3(0, 1, 0));
+        // pushConstantData.setMatrix(lightSpaceMatrix);
+        // cmdList->pushConstants(pushConstantData.asSpan());
+
+        cmdList->dispatch(scene->getWidth() / 8, scene->getHeight() / 8, 1);
+    }
+
+    void Renderer::passDebugWireFrame(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
     {
         RHITexture* screenHDR = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
 
@@ -192,7 +317,7 @@ namespace worse
                 cmdList->setBufferVertex(mesh->getVertexBuffer());
                 cmdList->setBufferIndex(mesh->getIndexBuffer());
 
-                pushConstantData.setModel(drawcall.transform);
+                pushConstantData.setTransform(drawcall.transform);
                 cmdList->pushConstants(pushConstantData.asSpan());
 
                 cmdList->drawIndexed(mesh->getIndexBuffer()->getElementCount(), 0, 0, 0, 1);
@@ -204,7 +329,7 @@ namespace worse
             cmdList->setBufferVertex(object.mesh->getVertexBuffer());
             cmdList->setBufferIndex(object.mesh->getIndexBuffer());
 
-            pushConstantData.setModel(object.transform);
+            pushConstantData.setTransform(object.transform);
             cmdList->pushConstants(pushConstantData.asSpan());
 
             cmdList->drawIndexed(object.indexCount, object.startIndex, 0, 0, 1);
@@ -322,8 +447,7 @@ namespace worse
         };
         cmdList->updateSpecificSet(updates);
 
-        math::Vector2 resolutionOutput = Renderer::getResolutionOutput();
-        cmdList->dispatch(resolutionOutput.x / 8, resolutionOutput.y / 8, 1);
+        cmdList->dispatch(screen->getWidth() / 8, screen->getHeight() / 8, 1);
     }
 
     void Renderer::passImGui(RHICommandList* cmdList)
@@ -345,9 +469,13 @@ namespace worse
         ecs::Resource<DrawcallStorage> drawcalls,
         ecs::Resource<AssetServer> assetServer)
     {
-        passDpethPrepass(cmdList, drawcalls);
+        passDepthPrepass(cmdList, drawcalls);
 
-        passColor(cmdList, drawcalls, assetServer);
+        passShadowMap(cmdList, drawcalls);
+
+        passGBuffer(cmdList, drawcalls, assetServer);
+
+        passLight(cmdList);
 
         passBloom(cmdList);
 
@@ -355,7 +483,7 @@ namespace worse
 
         if (globalContext->isWireFrameMode)
         {
-            passWireFrame(cmdList, drawcalls);
+            passDebugWireFrame(cmdList, drawcalls);
         }
 
         // passImGui(cmdList);

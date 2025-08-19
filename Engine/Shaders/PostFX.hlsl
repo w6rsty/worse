@@ -12,12 +12,12 @@ static int const KUWAHARA_RADIUS = 3;
 
 #define FILTER_ACES
 
-#define FILTER_DITHERING
+// #define FILTER_DITHERING
 
 #define FILTER_GAMMA_CORRECTION
 static float const GAMMA = 2.2;
 
-#define FILTER_VIGNETTE
+// #define FILTER_VIGNETTE
 static float const VIGNETTE_START = 0.3;
 static float const VIGNETTE_END = 0.9;
 

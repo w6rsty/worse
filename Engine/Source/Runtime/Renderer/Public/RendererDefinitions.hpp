@@ -10,7 +10,8 @@ namespace worse
     enum class RendererRasterizerState : usize
     {
         DepthPrepass,
-        Solid,
+        SolidCullBack,
+        SolidCullNone,
         Wireframe,
         Max
     };
@@ -37,12 +38,15 @@ namespace worse
         PlaceholderP,
         DepthPrepassV,
         DepthPrepassP,
+        DepthLightV,
+        DepthLightP,
         LineV,
         LineP,
         PointV,
         PointP,
-        PBRV,
-        PBRP,
+        GBufferV,
+        GBufferP,
+        LightC,
         PostFXC,
         BloomLuminanceC,
         BloomUpscaleC,
@@ -55,16 +59,20 @@ namespace worse
         SceneHDR,
         // 后处理目标
         ScreenHDR,
-        // GBuffers
-        GBufferNormal,
+        // GBuffer
+        GBufferPosition,
         GBufferAlbedo,
+        GBufferNormal,
+        GBufferMaterial,
+        // bloom
         BloomInitial,
         BloomDownSampleStage0,
         BloomDownSampleStage1,
         BloomDownSampleStage2,
         BloomDownSampleStage3,
         BloomFinal,
-        Depth,
+        DepthGBuffer,
+        DepthLight,
         Max,
     };
 

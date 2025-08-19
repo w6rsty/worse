@@ -9,15 +9,15 @@ RWTexture2D<float4> output : register(u0, space1);
 float3 upscaleFilter(Texture2D<float4> src, float2 uv, float2 texelSize, float bloomSpread)
 {
     // 3x3 Gussian kernel
-    float3 c0 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2(-1.0, -1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
-    float3 c1 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2(-1.0,  1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
-    float3 c2 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2( 1.0, -1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
-    float3 c3 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2( 1.0,  1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
-    float3 c4 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2(-1.0,  0.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
-    float3 c5 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2( 1.0,  0.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
-    float3 c6 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2( 0.0, -1.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
-    float3 c7 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2( 0.0,  1.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
-    float3 c8 = src.SampleLevel(samplers[samplerBilinearWrap], uv + texelSize * float2( 0.0,  0.0) * bloomSpread, 0).rgb * (4.0 / 16.0);
+    float3 c0 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2(-1.0, -1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
+    float3 c1 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2(-1.0,  1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
+    float3 c2 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2( 1.0, -1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
+    float3 c3 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2( 1.0,  1.0) * bloomSpread, 0).rgb * (1.0 / 16.0);
+    float3 c4 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2(-1.0,  0.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
+    float3 c5 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2( 1.0,  0.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
+    float3 c6 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2( 0.0, -1.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
+    float3 c7 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2( 0.0,  1.0) * bloomSpread, 0).rgb * (2.0 / 16.0);
+    float3 c8 = src.SampleLevel(samplers[samplerBilinearClampEdge], uv + texelSize * float2( 0.0,  0.0) * bloomSpread, 0).rgb * (4.0 / 16.0);
 
     return c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8;
 }

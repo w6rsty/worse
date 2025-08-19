@@ -1,8 +1,23 @@
 #ifndef UTILS_HLSL
 #define UTILS_HLSL
 
+float FastSqrt(float x)
+{
+    return (float)(asfloat(0x1fbd1df5 + (asint(x) >> 1)));
+}
+
+float3x3 MakeTangentToWorldMatrix(float3 normal, float3 tangent)
+{
+    // re-orthogonalize T with respect to N
+    tangent = normalize(tangent - dot(tangent, normal) * normal);
+    // compute bitangent
+    float3 bitangent = cross(normal, tangent);
+    // create matrix
+    return float3x3(tangent, bitangent, normal);
+}
+
 // =============================================================================
-// Begin PBR
+// PBR
 // =============================================================================
 
 // Fresnel-Schlick approximation
@@ -49,7 +64,7 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
 }
 
 // =============================================================================
-// End PBR
+// Tonemapping
 // =============================================================================
 
 float3 ACESFilm(float3 x)
@@ -61,5 +76,31 @@ float3 ACESFilm(float3 x)
     float e = 0.14;
     return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
 }
+
+// =============================================================================
+// Color Space
+// =============================================================================
+
+float3 SRGBToLinear(float3 color)
+{
+    float3 linearLow  = color / 12.92;
+    float3 linearHigh = pow((color + 0.055) / 1.055, 2.4f);
+    float3 isHigh     = step(0.0404482362771082, color);
+    return lerp(linearLow, linearHigh, isHigh);
+}
+
+// =============================================================================
+// Luminance
+// =============================================================================
+
+// 在 SRGB 色彩空间中的亮度加权因子
+static float3 const SRGB_COLOR_SPACE_COEFFICIENT = float3(0.299f, 0.587f, 0.114f);
+
+// Convert color to luminance
+float Luminance(float3 color)
+{
+    return max(dot(color, SRGB_COLOR_SPACE_COEFFICIENT), FLT_MIN);
+}
+
 
 #endif

@@ -297,41 +297,78 @@ namespace worse::math
         }
         f32 invDet = 1.0f / det;
         return Matrix3(
-            (m.m11 * m.m22 - m.m12 * m.m21) * invDet, (m.m02 * m.m21 - m.m01 * m.m22) * invDet, (m.m01 * m.m12 - m.m02 * m.m11) * invDet,           
-            (m.m12 * m.m20 - m.m10 * m.m22) * invDet, (m.m00 * m.m22 - m.m02 * m.m20) * invDet, (m.m02 * m.m10 - m.m00 * m.m12) * invDet,           
-            (m.m10 * m.m21 - m.m11 * m.m20) * invDet, (m.m01 * m.m20 - m.m00 * m.m21) * invDet, (m.m00 * m.m11 - m.m01 * m.m10) * invDet
+            (m.m11 * m.m22 - m.m12 * m.m21) * invDet, // C00
+            (m.m12 * m.m20 - m.m10 * m.m22) * invDet, // C01
+            (m.m10 * m.m21 - m.m11 * m.m20) * invDet, // C02
+
+            (m.m02 * m.m21 - m.m01 * m.m22) * invDet, // C10
+            (m.m00 * m.m22 - m.m02 * m.m20) * invDet, // C11
+            (m.m01 * m.m20 - m.m00 * m.m21) * invDet, // C12
+
+            (m.m01 * m.m12 - m.m02 * m.m11) * invDet, // C20
+            (m.m02 * m.m10 - m.m00 * m.m12) * invDet, // C21
+            (m.m00 * m.m11 - m.m01 * m.m10) * invDet  // C22
         );
     }
     inline constexpr Matrix4 inverse(Matrix4 const& m)
     {
-        f32 det = determinant(m);
-        if (det == 0)
+        // 使用Cramer法则（伴随矩阵法）求逆
+        // 为了提高可读性和减少错误，我们先创建一些临时变量
+        f32 const m00 = m.m00, m01 = m.m01, m02 = m.m02, m03 = m.m03;
+        f32 const m10 = m.m10, m11 = m.m11, m12 = m.m12, m13 = m.m13;
+        f32 const m20 = m.m20, m21 = m.m21, m22 = m.m22, m23 = m.m23;
+        f32 const m30 = m.m30, m31 = m.m31, m32 = m.m32, m33 = m.m33;
+
+        // 计算第一行和第二行元素构成的 2x2 子行列式，用于后续计算
+        f32 const s0 = m00 * m11 - m10 * m01;
+        f32 const s1 = m00 * m12 - m10 * m02;
+        f32 const s2 = m00 * m13 - m10 * m03;
+        f32 const s3 = m01 * m12 - m11 * m02;
+        f32 const s4 = m01 * m13 - m11 * m03;
+        f32 const s5 = m02 * m13 - m12 * m03;
+
+        // 计算第三行和第四行元素构成的 2x2 子行列式
+        f32 const c0 = m20 * m31 - m30 * m21;
+        f32 const c1 = m20 * m32 - m30 * m22;
+        f32 const c2 = m20 * m33 - m30 * m23;
+        f32 const c3 = m21 * m32 - m31 * m22;
+        f32 const c4 = m21 * m33 - m31 * m23;
+        f32 const c5 = m22 * m33 - m32 * m23;
+
+        // 利用拉普拉斯展开计算 4x4 行列式
+        // det = s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0
+        f32 const det = s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
+
+        if (det == 0.0f)
         {
-            return Matrix4::NANM();
+            return Matrix4::NANM(); // 矩阵不可逆
         }
-        f32 invDet = 1.0f / det;
+
+        f32 const invDet = 1.0f / det;
+        
+        // 计算伴随矩阵（辅因子矩阵的转置）的每个元素，并乘以 1/det
+        // 直接计算出逆矩阵的每个元素
         return Matrix4(
-            (m.m11 * m.m22 * m.m33 + m.m12 * m.m23 * m.m31 + m.m13 * m.m21 * m.m32 - m.m13 * m.m22 * m.m31 - m.m11 * m.m23 * m.m32 - m.m12 * m.m21 * m.m33) * invDet,        
-            (m.m03 * m.m22 * m.m31 + m.m01 * m.m23 * m.m32 + m.m02 * m.m21 * m.m33 - m.m02 * m.m22 * m.m31 - m.m03 * m.m23 * m.m32 - m.m01 * m.m21 * m.m33) * invDet,
-            (m.m03 * m.m12 * m.m31 + m.m01 * m.m13 * m.m32 + m.m02 * m.m11 * m.m33 - m.m02 * m.m12 * m.m31 - m.m03 * m.m13 * m.m32 - m.m01 * m.m11 * m.m33) * invDet,
-            (m.m03 * m.m12 * m.m21 + m.m01 * m.m13 * m.m22 + m.m02 * m.m11 * m.m23 - m.m02 * m.m12 * m.m21 - m.m03 * m.m13 * m.m22 - m.m01 * m.m11 * m.m23) * invDet,
+            ( m11 * c5 - m12 * c4 + m13 * c3) * invDet,
+            (-m01 * c5 + m02 * c4 - m03 * c3) * invDet,
+            ( m31 * s5 - m32 * s4 + m33 * s3) * invDet,
+            (-m21 * s5 + m22 * s4 - m23 * s3) * invDet,
 
-            (m.m10 * m.m22 * m.m33 + m.m12 * m.m23 * m.m30 + m.m13 * m.m20 * m.m32 - m.m13 * m.m22 * m.m30 - m.m10 * m.m23 * m.m32 - m.m12 * m.m20 * m.m33) * invDet,
-            (m.m02 * m.m22 * m.m30 + m.m00 * m.m23 * m.m32 + m.m03 * m.m20 * m.m32 - m.m03 * m.m22 * m.m30 - m.m02 * m.m23 * m.m32 - m.m00 * m.m20 * m.m33) * invDet,
-            (m.m03 * m.m12 * m.m30 + m.m00 * m.m13 * m.m32 + m.m02 * m.m10 * m.m33 - m.m02 * m.m12 * m.m30 - m.m03 * m.m13 * m.m32 - m.m00 * m.m10 * m.m33) * invDet,
-            (m.m02 * m.m12 * m.m30 + m.m00 * m.m13 * m.m32 + m.m02 * m.m10 * m.m33 - m.m02 * m.m12 * m.m30 - m.m03 * m.m13 * m.m32 - m.m00 * m.m10 * m.m33) * invDet,
+            (-m10 * c5 + m12 * c2 - m13 * c1) * invDet,
+            ( m00 * c5 - m02 * c2 + m03 * c1) * invDet,
+            (-m30 * s5 + m32 * s2 - m33 * s1) * invDet,
+            ( m20 * s5 - m22 * s2 + m23 * s1) * invDet,
 
-            (m.m10 * m.m21 * m.m33 + m.m11 * m.m23 * m.m30 + m.m13 * m.m20 * m.m31 - m.m13 * m.m21 * m.m30 - m.m10 * m.m23 * m.m31 - m.m11 * m.m20 * m.m33) * invDet,
-            (m.m03 * m.m21 * m.m30 + m.m01 * m.m23 * m.m31 + m.m03 * m.m20 * m.m31 - m.m03 * m.m21 * m.m30 - m.m01 * m.m23 * m.m30 - m.m01 * m.m20 * m.m33) * invDet,
-            (m.m03 * m.m11 * m.m30 + m.m01 * m.m13 * m.m31 + m.m03 * m.m10 * m.m33 - m.m03 * m.m11 * m.m30 - m.m01 * m.m13 * m.m30 - m.m01 * m.m10 * m.m33) * invDet,
-            (m.m03 * m.m11 * m.m20 + m.m01 * m.m13 * m.m21 + m.m02 * m.m10 * m.m23 - m.m02 * m.m11 * m.m20 - m.m03 * m.m13 * m.m21 - m.m01 * m.m10 * m.m23) * invDet,
+            ( m10 * c4 - m11 * c2 + m13 * c0) * invDet,
+            (-m00 * c4 + m01 * c2 - m03 * c0) * invDet,
+            ( m30 * s4 - m31 * s2 + m33 * s0) * invDet,
+            (-m20 * s4 + m21 * s2 - m23 * s0) * invDet,
 
-            (m.m10 * m.m21 * m.m32 + m.m11 * m.m22 * m.m30 + m.m12 * m.m20 * m.m31 - m.m12 * m.m21 * m.m30 - m.m10 * m.m22 * m.m31 - m.m11 * m.m20 * m.m32) * invDet,
-            (m.m02 * m.m21 * m.m30 + m.m00 * m.m22 * m.m31 + m.m01 * m.m20 * m.m32 - m.m01 * m.m21 * m.m30 - m.m02 * m.m22 * m.m31 - m.m00 * m.m20 * m.m32) * invDet,
-            (m.m03 * m.m11 * m.m30 + m.m01 * m.m12 * m.m31 + m.m02 * m.m10 * m.m32 - m.m02 * m.m11 * m.m30 - m.m03 * m.m12 * m.m31 - m.m01 * m.m10 * m.m32) * invDet,
-            (m.m02 * m.m11 * m.m20 + m.m00 * m.m12 * m.m21 + m.m01 * m.m10 * m.m22 - m.m01 * m.m11 * m.m20 - m.m02 * m.m12 * m.m21 - m.m00 * m.m10 * m.m22) * invDet
+            (-m10 * c3 + m11 * c1 - m12 * c0) * invDet,
+            ( m00 * c3 - m01 * c1 + m02 * c0) * invDet,
+            (-m30 * s3 + m31 * s1 - m32 * s0) * invDet,
+            ( m20 * s3 - m21 * s1 + m22 * s0) * invDet
         );
     }
-
     // clang-format on
 } // namespace worse::math
