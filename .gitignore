@@ -1,8 +1,10 @@
 .cache/
 .vscode/
+.vs/
+.idea/
 
 # build directories
-Engine/Build/
+Worse/Build/
 
 # clangd database
 compile_commands.json

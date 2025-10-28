@@ -1,0 +1,11 @@
+include_guard()
+
+set(WORSE_ROOT_DIR ${CMAKE_SOURCE_DIR})
+set(WORSE_DEFAULT_CXX_STANDARD 20)
+
+# Use folders in IDEs
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# Force C++ standard
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
