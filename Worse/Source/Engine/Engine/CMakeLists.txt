@@ -2,9 +2,9 @@ include(${CMAKE_SOURCE_DIR}/CMake/BuildTool/BuildTool.cmake)
 
 DeclareModule(Engine)
 
-    PrivateDependencyModuleAdd(Renderer)
+    PrivateDependencyModuleAdd(Core)
+    PrivateDependencyModuleAdd(ECS)
     PrivateDependencyModuleAdd(RHI)
-
-    PublicDependencyModuleAdd(Core)
+    PrivateDependencyModuleAdd(Renderer)
 
 EndDeclareModule()

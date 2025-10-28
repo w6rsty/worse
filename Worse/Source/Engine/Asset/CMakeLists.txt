@@ -4,6 +4,7 @@ DeclareModule(Asset)
 
     PrivateDependencyModuleAdd(Core)
     PrivateDependencyModuleAdd(FileSystem)
+    
     PrivateDependencyModuleAdd(stb)
 
 EndDeclareModule()

@@ -4,8 +4,8 @@ function(PrintHeader MSG WIDTH)
     string(LENGTH "${MSG}" MSG_LEN)
 
     set(FILL_CHAR "=")
-    set(LEFT_BRACKET "[")
-    set(RIGHT_BRACKET "]")
+    set(LEFT_BRACKET " ")
+    set(RIGHT_BRACKET " ")
 
     math(EXPR BRACKETED_LEN "${MSG_LEN} + 2")
     math(EXPR TOTAL_FILL "${WIDTH} - ${BRACKETED_LEN}")
@@ -28,6 +28,6 @@ macro(MessageScope FUNC)
 
     cmake_language(CALL ${FUNC} ${ARGN})
 
-    PrintHeader("Done ${FUNC}" 80)
+    PrintHeader("Finish ${FUNC}" 80)
     message(STATUS "\n")
 endmacro()

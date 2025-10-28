@@ -279,7 +279,7 @@ namespace worse
 
             // 找到一个支持图形和计算的队列族
             indexGraphics = getQueueFamilyIndex(queueFamilies, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, false);
-            
+
             // 未使用
             indexCompute  = getQueueFamilyIndex(queueFamilies, VK_QUEUE_COMPUTE_BIT, false);
             indexTransfer = getQueueFamilyIndex(queueFamilies, VK_QUEUE_TRANSFER_BIT, false);
@@ -474,10 +474,10 @@ namespace worse
 
                 // 暂时只启用 graphics 队列
                 VkDeviceQueueCreateInfo infoQueue = {};
-                infoQueue.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-                infoQueue.queueFamilyIndex = queueFamilyIndices[0];
-                infoQueue.queueCount       = 1;
-                infoQueue.pQueuePriorities = &queuePriority;
+                infoQueue.sType                   = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                infoQueue.queueFamilyIndex        = queueFamilyIndices[0];
+                infoQueue.queueCount              = 1;
+                infoQueue.pQueuePriorities        = &queuePriority;
                 queueInfos.emplace_back(infoQueue);
             }
 

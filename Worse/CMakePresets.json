@@ -1,12 +1,25 @@
 {
-    "version": 2,
+    "version": 3,
     "configurePresets": [
         {
             "name": "default",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/Build/${presetName}",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "SPIRV_REFLECT_EXECUTABLE": "OFF",
+                "SPIRV_REFLECT_STATIC_LIB": "ON",
+                "SPIRV_REFLECT_INSTALL": "OFF",
+                "VULKAN_HEADERS_INSTALL_DIR": "${sourceDir}/Source/ThirdParty/Vulkan-Headers"
+            }
+        },
+        {
+            "name": "test",
+            "inherits": [
+                "default"
+            ],
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/CMake/Toolchains/macOS-aarch64-Clang.toolchain.cmake",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             }
         }
     ]
