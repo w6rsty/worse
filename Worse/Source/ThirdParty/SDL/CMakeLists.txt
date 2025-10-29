@@ -1,6 +1,6 @@
 find_package(SDL3 QUIET)
 
-set(SDL_VERSION release-3.2.14)
+set(SDL_VERSION release-3.2.24)
 
 if (SDL3_FOUND)
     message(STATUS "Found SDL3 in system")
