@@ -78,6 +78,13 @@ function(__CollectConfigs)
         set(__${__CURRENT_MODULE_NAME}_CPP_STANDARD ${WORSE_DEFAULT_CXX_STANDARD} PARENT_SCOPE)
     endif()
 
+    if (DEFINED __${__CURRENT_MODULE_NAME}_PUBLIC_PCH)
+        set(__${__CURRENT_MODULE_NAME}_PUBLIC_PCH "${__${__CURRENT_MODULE_NAME}_PUBLIC_PCH}" PARENT_SCOPE)
+    endif()
+    if (DEFINED __${__CURRENT_MODULE_NAME}_PRIVATE_PCH)
+        set(__${__CURRENT_MODULE_NAME}_PRIVATE_PCH "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}" PARENT_SCOPE)
+    endif()
+
     # Register properties
 
     set_target_properties(${__CURRENT_MODULE_NAME} PROPERTIES
@@ -89,6 +96,10 @@ function(__CollectConfigs)
             "${__${__CURRENT_MODULE_NAME}_PUBLIC_DEFINITIONS}"
         PRIVATE_DEFINITIONS
             "${__${__CURRENT_MODULE_NAME}_PRIVATE_DEFINITIONS}"
+        PUBLIC_PRECOMPILE_HEADER
+            "${__${__CURRENT_MODULE_NAME}_PUBLIC_PCH}"
+        PRIVATE_PRECOMPILE_HEADER
+            "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}"
         CXX_STANDARD
             "${__${__CURRENT_MODULE_NAME}_CPP_STANDARD}")
 endfunction()
@@ -113,6 +124,7 @@ function(EndDeclareModule)
         ${CMAKE_CURRENT_SOURCE_DIR}/private/*.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/private/*.cpp)
     
+    # TODO: Group module internal folders
     source_group("public" FILES ${MODULE_PUBLIC_SOURCES})
     source_group("private" FILES ${MODULE_PRIVATE_SOURCES})
 
@@ -126,11 +138,11 @@ function(EndDeclareModule)
         PRIVATE 
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
-    if (DEFINED __${MODULE_NAME}_PUBLIC_PCH)
-        target_precompile_headers(${__CURRENT_MODULE_NAME} PUBLIC ${__${MODULE_NAME}_PUBLIC_PCH})
+    if (__${__CURRENT_MODULE_NAME}_PUBLIC_PCH)
+        target_precompile_headers(${__CURRENT_MODULE_NAME} PUBLIC "${__${__CURRENT_MODULE_NAME}_PUBLIC_PCH}")
     endif()
-    if (DEFINED __${MODULE_NAME}_PRIVATE_PCH)
-        target_precompile_headers(${__CURRENT_MODULE_NAME} PRIVATE ${__${MODULE_NAME}_PRIVATE_PCH})
+    if (__${__CURRENT_MODULE_NAME}_PRIVATE_PCH)
+        target_precompile_headers(${__CURRENT_MODULE_NAME} PRIVATE "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}")
     endif()
 
     unset(__CURRENT_MODULE_NAME PARENT_SCOPE)
@@ -154,6 +166,14 @@ function(DisplayModuleProperties MODULE_NAME)
     get_target_property(private_definitions ${MODULE_NAME} PRIVATE_DEFINITIONS)
     if (private_definitions)
         message(STATUS " - Private Defs: ${private_definitions}")
+    endif()
+    get_target_property(public_pch ${MODULE_NAME} PUBLIC_PRECOMPILE_HEADER)
+    if (public_pch)
+        message(STATUS " - Public PCH: ${public_pch}")
+    endif()
+    get_target_property(private_pch ${MODULE_NAME} PRIVATE_PRECOMPILE_HEADER)
+    if (private_pch)
+        message(STATUS " - Private PCH: ${private_pch}")
     endif()
     get_target_property(cpp_standard ${MODULE_NAME} CXX_STANDARD)
     if (cpp_standard)
