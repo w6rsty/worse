@@ -5,7 +5,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace worse
+namespace Worse
 {
 
     class RHINativeHandle
@@ -42,7 +42,8 @@ namespace worse
             return *this;
         }
 
-        template <typename T> T asValue() const
+        template <typename T>
+        T asValue() const
         {
             using Type = std::remove_cvref_t<T>;
             static_assert(sizeof(Type) == sizeof(void*), "Invalid cast");
@@ -123,4 +124,4 @@ namespace worse
         }
     };
 
-} // namespace worse
+} // namespace Worse

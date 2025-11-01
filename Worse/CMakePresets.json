@@ -18,7 +18,7 @@
                 "default"
             ],
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/CMake/Toolchains/macOS-aarch64-Clang.toolchain.cmake",
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/CMake/ToolChains/Windows-x64-Clang.toolchain.cmake",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             }
         }

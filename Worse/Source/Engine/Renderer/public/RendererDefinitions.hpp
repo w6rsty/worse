@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <string>
 
-namespace worse
+namespace Worse
 {
 
     enum class RendererRasterizerState : usize
@@ -109,4 +109,4 @@ namespace worse
         usize index;
     };
 
-} // namespace worse
+} // namespace Worse

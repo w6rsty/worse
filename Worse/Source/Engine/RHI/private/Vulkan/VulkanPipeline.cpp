@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -317,4 +317,4 @@ namespace worse
                     shaderNames);
     }
 
-} // namespace worse
+} // namespace Worse

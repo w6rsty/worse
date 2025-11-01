@@ -4,7 +4,7 @@
 
 #include <span>
 
-namespace worse
+namespace Worse
 {
 
     class FrameConstantData
@@ -73,5 +73,4 @@ namespace worse
         // clang-format on
     };
 
-} // namespace worse
-
+} // namespace Worse

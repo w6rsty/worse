@@ -1,7 +1,7 @@
 #include "RHISampler.hpp"
 #include "RHIDevice.hpp"
 
-namespace worse
+namespace Worse
 {
     RHISampler::RHISampler(RHIFilter filterMin, RHIFilter filterMag,
                            RHIFilter filterMipmap,
@@ -24,4 +24,4 @@ namespace worse
     {
         RHIDevice::deletionQueueAdd(m_handle);
     }
-} // namespace worse
+} // namespace Worse

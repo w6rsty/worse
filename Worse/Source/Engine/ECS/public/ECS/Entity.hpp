@@ -2,7 +2,7 @@
 #include <limits>
 #include <cstdint>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     struct Entity
@@ -42,4 +42,4 @@ namespace worse::ecs
         // clang-format on
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

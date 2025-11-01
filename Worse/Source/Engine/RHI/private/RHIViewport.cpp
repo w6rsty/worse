@@ -1,6 +1,6 @@
 #include "RHIViewport.hpp"
 
-namespace worse
+namespace Worse
 {
     RHIViewport::RHIViewport(f32 const x, f32 const y, f32 const width,
                              f32 const height, f32 const depthMin,
@@ -32,4 +32,4 @@ namespace worse
         return width / height;
     }
 
-} // namespace worse
+} // namespace Worse

@@ -11,7 +11,7 @@
 #include "ECS/Resource.hpp"
 #include "ECS/Commands.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class Renderer
@@ -97,4 +97,4 @@ namespace worse
                                  ecs::Resource<AssetServer> assetServer);
     };
 
-} // namespace worse
+} // namespace Worse

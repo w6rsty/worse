@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace worse
+namespace Worse
 {
     struct GlobalContext
     {
@@ -37,4 +37,4 @@ namespace worse
         math::Vector3 scale       = math::Vector3::ONE();
     };
 
-} // namespace worse
+} // namespace Worse

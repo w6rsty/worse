@@ -3,7 +3,7 @@
 #include <array>
 #include <string>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -43,4 +43,4 @@ namespace worse
         return std::filesystem::is_directory(path);
     }
 
-} // namespace worse
+} // namespace Worse

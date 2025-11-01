@@ -35,6 +35,6 @@ else()
     message(STATUS "SDL3 downloaded and configured")
 endif()
 
-# Create our own wrapper target
+# adapter
 add_library(SDL INTERFACE)
 target_link_libraries(SDL INTERFACE SDL3::SDL3)

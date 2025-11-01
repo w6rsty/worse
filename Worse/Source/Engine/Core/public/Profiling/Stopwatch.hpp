@@ -3,7 +3,7 @@
 
 #include <chrono>
 
-namespace worse::profiling
+namespace Worse::profiling
 {
 
     class Stopwatch
@@ -38,4 +38,4 @@ namespace worse::profiling
         TimePoint m_start;
     };
 
-} // namespace worse::profiling
+} // namespace Worse::profiling

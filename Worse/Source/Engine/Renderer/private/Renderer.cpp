@@ -13,7 +13,7 @@
 
 #include <memory>
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -120,7 +120,7 @@ namespace worse
         commands.emplaceResource<DrawcallStorage>();
         commands.emplaceResourceArray<StandardMaterial>();
         commands.emplaceResourceArray<TextureWrite>();
-        worse::AssetServer& assetServer = commands.emplaceResource<AssetServer>();
+        Worse::AssetServer& assetServer = commands.emplaceResource<AssetServer>();
         commands.emplaceResource<glTFManager>(assetServer);
     }
 
@@ -285,4 +285,4 @@ namespace worse
         return resolutionOutput;
     }
 
-} // namespace worse
+} // namespace Worse

@@ -4,7 +4,7 @@
 
 #include "ECS/Resource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     // ECS index
@@ -45,4 +45,4 @@ namespace worse
         ecs::ResourceArray<StandardMaterial> materials,
         ecs::ResourceArray<TextureWrite> textureWrites);
 
-} // namespace worse
+} // namespace Worse

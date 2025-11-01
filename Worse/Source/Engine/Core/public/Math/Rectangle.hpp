@@ -1,7 +1,7 @@
 #pragma once
 #include "Types.hpp"
 
-namespace worse::math
+namespace Worse::math
 {
 
     struct Rectangle
@@ -12,4 +12,4 @@ namespace worse::math
         u32 height = 0;
     };
 
-} // namespace worse::math
+} // namespace Worse::math

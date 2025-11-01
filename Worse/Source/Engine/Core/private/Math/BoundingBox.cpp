@@ -1,6 +1,6 @@
 #include "Math/BoundingBox.hpp"
 
-namespace worse::math
+namespace Worse::math
 {
 
     BoundingBox::BoundingBox()

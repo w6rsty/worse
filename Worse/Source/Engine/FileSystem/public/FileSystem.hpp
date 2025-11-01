@@ -1,7 +1,7 @@
 #pragma once
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
 
     class FileSystem
@@ -17,4 +17,4 @@ namespace worse
         static bool isDirectoryExists(std::filesystem::path const& path);
     };
 
-} // namespace worse
+} // namespace Worse

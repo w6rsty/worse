@@ -16,7 +16,7 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
     namespace map
@@ -621,7 +621,6 @@ namespace worse
         VkBuffer vertexBuffer = buffer->getHandle().asValue<VkBuffer>();
         VkDeviceSize offset   = 0;
 
-
         vkCmdBindVertexBuffers(m_handle.asValue<VkCommandBuffer>(), 0, 1, &vertexBuffer, &offset);
     }
 
@@ -845,4 +844,4 @@ namespace worse
         return map::getImageLayout(image);
     }
 
-} // namespace worse
+} // namespace Worse

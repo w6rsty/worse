@@ -1,6 +1,6 @@
 #include "RHISyncPrimitive.hpp"
 
-namespace worse
+namespace Worse
 {
     u64 RHISyncPrimitive::getNextSignalValue()
     {
@@ -22,4 +22,4 @@ namespace worse
         return m_belongingCmdList;
     }
 
-} // namespace worse
+} // namespace Worse

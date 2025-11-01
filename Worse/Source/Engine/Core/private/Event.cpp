@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -25,4 +25,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

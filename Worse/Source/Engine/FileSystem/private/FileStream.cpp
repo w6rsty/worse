@@ -2,7 +2,7 @@
 #include "FileStream.hpp"
 #include "Definitions.hpp"
 
-namespace worse
+namespace Worse
 {
 
     FileStream::FileStream(std::filesystem::path const& path,
@@ -86,4 +86,4 @@ namespace worse
         UNIMPLEMENTED();
     }
 
-} // namespace worse
+} // namespace Worse

@@ -7,7 +7,7 @@
 #include <cassert>
 #include <iterator>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     namespace internal
@@ -328,4 +328,4 @@ namespace worse::ecs
         PackedContainerType m_packed;
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

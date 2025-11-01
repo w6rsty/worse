@@ -7,7 +7,7 @@
 #include <functional>
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
     /**
      * @brief 已加载纹理数据的内存引用视图
@@ -46,4 +46,4 @@ namespace worse
                                                       std::optional<TextureLoadView> a = std::nullopt);
     };
 
-} // namespace worse
+} // namespace Worse

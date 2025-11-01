@@ -1,7 +1,7 @@
 #include "DXCompiler.hpp"
 #include "Log.hpp"
 
-namespace worse
+namespace Worse
 {
 
     void DXCompiler::initialize()
@@ -89,8 +89,8 @@ namespace worse
             if (dxcResult)
             {
                 CComPtr<IDxcBlobEncoding> errorBlob = nullptr;
-                HRESULT res = dxcResult->GetErrorBuffer(&errorBlob);
-                bool suc = SUCCEEDED(res);
+                HRESULT res                         = dxcResult->GetErrorBuffer(&errorBlob);
+                bool suc                            = SUCCEEDED(res);
                 if (suc && errorBlob)
                 {
                     WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
@@ -108,4 +108,4 @@ namespace worse
         return codeBlob;
     }
 
-} // namespace worse
+} // namespace Worse

@@ -3,7 +3,7 @@
 #include "Matrix.hpp"
 #include "Vector.hpp"
 
-namespace worse::math
+namespace Worse::math
 {
     // clang-format off
 
@@ -168,9 +168,9 @@ namespace worse::math
         ret.v4 /= magnitudeSquared(ret);
         return ret;
     }
-    inline bool isZero(Quaternion const& q) { return ::worse::math::isZero(q.v4); }
-    inline bool isIdentity(Quaternion const& q) { return equal(q.s, 1.0f) && ::worse::math::isZero(q.v3); }
+    inline bool isZero(Quaternion const& q) { return ::Worse::math::isZero(q.v4); }
+    inline bool isIdentity(Quaternion const& q) { return equal(q.s, 1.0f) && ::Worse::math::isZero(q.v3); }
     inline bool isNormalized(Quaternion const& q) { return std::abs(magnitudeSquared(q) - 1.0f) < 1e-5f; }
 
     // clang-format on
-} // namespace worse::math
+} // namespace Worse::math

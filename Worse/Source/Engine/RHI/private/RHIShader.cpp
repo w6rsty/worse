@@ -8,7 +8,7 @@
 #include <sstream>
 #include <functional>
 
-namespace worse
+namespace Worse
 {
     std::string PreprocessIncludesParser::recursiveParse(std::filesystem::path const& path)
     {
@@ -151,4 +151,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

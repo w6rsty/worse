@@ -2,7 +2,7 @@
 #include "Math/Math.hpp"
 #include "RHIResource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     WS_DEFINE_FLAGS(RHIBufferUsage, u8);
@@ -77,4 +77,4 @@ namespace worse
         RHINativeHandle m_handle = {};
     };
 
-} // namespace worse
+} // namespace Worse

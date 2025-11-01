@@ -20,7 +20,7 @@
 #include <semaphore> // synchronize immediate command
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
     namespace validation
@@ -34,7 +34,7 @@ namespace worse
         {
             std::vector<char const*> extensionsInstance{};
 
-            if (worse::CurrentPlatform == worse::Platform::Apple)
+            if (Worse::CurrentPlatform == Worse::Platform::Apple)
             {
                 extensionsInstance.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
             }
@@ -64,7 +64,7 @@ namespace worse
                 VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
             };
 
-            if (worse::CurrentPlatform == worse::Platform::Apple)
+            if (Worse::CurrentPlatform == Worse::Platform::Apple)
             {
                 extensionsDevice.emplace_back("VK_KHR_portability_subset");
             }
@@ -425,7 +425,7 @@ namespace worse
             VkInstanceCreateInfo infoInst    = {};
             infoInst.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
             infoInst.pNext                   = &debugMessenger::info;
-            infoInst.flags                   =  (worse::CurrentPlatform == worse::Platform::Apple) ? VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR : 0;
+            infoInst.flags                   =  (Worse::CurrentPlatform == Worse::Platform::Apple) ? VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR : 0;
             infoInst.pApplicationInfo        = &infoApp;
             infoInst.enabledLayerCount       = RHIConfig::enableValidationLayers ? 1u : 0u;
             infoInst.ppEnabledLayerNames     = &validation::name;
@@ -964,4 +964,4 @@ namespace worse
         WS_ASSERT_VK(vkSetDebugUtilsObjectNameEXT(RHIContext::device, &info));
     }
 
-} // namespace worse
+} // namespace Worse

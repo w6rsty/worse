@@ -2,7 +2,7 @@
 #include "Math/Quaternion.hpp"
 #include "Math/Transform.hpp"
 
-namespace worse
+namespace Worse
 {
 
     Camera::Camera()
@@ -116,4 +116,4 @@ namespace worse
         return result.vector();
     }
 
-} // namespace worse
+} // namespace Worse

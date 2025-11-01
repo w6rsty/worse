@@ -9,7 +9,7 @@
 #include "RHIDescriptorSetLayout.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
-namespace worse
+namespace Worse
 {
 
     RHINativeHandle RHIDescriptorAllocator::createPool()
@@ -424,4 +424,4 @@ namespace worse
         m_descriptorSets.clear();
     }
 
-} // namespace worse
+} // namespace Worse

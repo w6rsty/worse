@@ -5,7 +5,7 @@
 
 #include <array>
 
-namespace worse
+namespace Worse
 {
     class Controller;
 
@@ -97,4 +97,4 @@ namespace worse
         static inline Input::KeyMap s_keymapLastFrame{};
     };
 
-} // namespace worse
+} // namespace Worse

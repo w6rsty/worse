@@ -6,7 +6,7 @@
 #include "Pipeline/RHIRasterizerState.hpp"
 #include "Pipeline/RHIDepthStencilState.hpp"
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -277,4 +277,4 @@ namespace worse
         return std::move(m_pso);
     }
 
-} // namespace worse
+} // namespace Worse

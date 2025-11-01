@@ -30,7 +30,7 @@
 
 #endif
 
-namespace worse
+namespace Worse
 {
 
     // fwd
@@ -765,4 +765,4 @@ namespace worse
         constexpr u32 HLSL_REGISTER_SHIFT_T = 300;
     } // namespace RHIConfig
 
-} // namespace worse
+} // namespace Worse

@@ -5,7 +5,7 @@
 #include <span>
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
 
     WS_DEFINE_FLAGS(RHITextureView, u32);
@@ -111,4 +111,4 @@ namespace worse
         RHINativeHandle m_image = {};
     };
 
-} // namespace worse
+} // namespace Worse

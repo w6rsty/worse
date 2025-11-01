@@ -6,7 +6,7 @@
 #include <cmath>
 #include <tuple>
 
-namespace worse::math
+namespace Worse::math
 {
     // clang-format off
 
@@ -124,7 +124,7 @@ namespace worse::math
         WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
 
         Vector3 scale{
-            length(mat.col0) * worse::math::signum(det),
+            length(mat.col0) * Worse::math::signum(det),
             length(mat.col1),
             length(mat.col2)
         };
@@ -161,7 +161,7 @@ namespace worse::math
         f32 det = determinant(mat);
         WS_ASSERT_MATH(det != 0.0f, "Matrix is singular");
 
-        Vector3 scale{length(mat.col0) * worse::math::signum(det), length(mat.col1), length(mat.col2)};
+        Vector3 scale{length(mat.col0) * Worse::math::signum(det), length(mat.col1), length(mat.col2)};
 
         WS_ASSERT_MATH(!isZero(scale), "Decomposed scale is zero, cause division by zero");
         Vector3 inv_scale = reciprocal(scale);
@@ -276,4 +276,4 @@ namespace worse::math
     }
 
     // clang-format on
-} // namespace worse::math
+} // namespace Worse::math

@@ -10,7 +10,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
     // clang-format off
 
@@ -233,4 +233,4 @@ namespace worse::ecs
     };
 
     // clang-format on
-} // namespace worse::ecs
+} // namespace Worse::ecs

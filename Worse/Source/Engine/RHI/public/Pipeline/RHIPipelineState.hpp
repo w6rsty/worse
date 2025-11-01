@@ -4,7 +4,7 @@
 #include "RHIDefinitions.hpp"
 #include "RHIViewport.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHIPipelineState
@@ -74,4 +74,4 @@ namespace worse
         RHIPipelineState m_pso;
     };
 
-} // namespace worse
+} // namespace Worse

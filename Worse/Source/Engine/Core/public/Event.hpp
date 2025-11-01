@@ -4,7 +4,7 @@
 #include <variant>
 #include <functional>
 
-namespace worse
+namespace Worse
 {
     enum class EventType
     {
@@ -25,4 +25,4 @@ namespace worse
         static void fire(EventType const type,
                          Event const& payload = std::monostate{});
     };
-} // namespace worse
+} // namespace Worse

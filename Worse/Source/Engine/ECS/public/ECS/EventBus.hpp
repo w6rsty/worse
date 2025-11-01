@@ -12,7 +12,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     // Event priority levels
@@ -25,7 +25,8 @@ namespace worse::ecs
     };
 
     // Event wrapper with metadata
-    template <typename T> struct Event
+    template <typename T>
+    struct Event
     {
         T data;
         EventPriority priority = EventPriority::Normal;
@@ -54,7 +55,8 @@ namespace worse::ecs
     using EventFilter = std::function<bool(Event<T> const&)>;
 
     // Enhanced EventReader with filtering and statistics
-    template <typename T> class EventReader
+    template <typename T>
+    class EventReader
     {
     public:
         EventReader(std::vector<Event<T>>* eventQueue)
@@ -160,7 +162,8 @@ namespace worse::ecs
             virtual void cleanupExpiredReaders()  = 0;
         };
 
-        template <typename T> struct EventChannel : public IEventChannel
+        template <typename T>
+        struct EventChannel : public IEventChannel
         {
             mutable std::mutex mutex;
             std::vector<Event<T>> queues[2];
@@ -241,7 +244,8 @@ namespace worse::ecs
             }
         };
 
-        template <typename T> EventChannel<T>& getChannel()
+        template <typename T>
+        EventChannel<T>& getChannel()
         {
             std::lock_guard<std::mutex> lock(m_mtxChannels);
             std::type_index typeId = std::type_index(typeid(T));
@@ -319,7 +323,8 @@ namespace worse::ecs
             channel.totalEventsSent.fetch_add(1);
         }
 
-        template <typename T> std::shared_ptr<EventReader<T>> getReader()
+        template <typename T>
+        std::shared_ptr<EventReader<T>> getReader()
         {
             EventChannel<T>& channel = getChannel<T>();
             std::lock_guard<std::mutex> lock(channel.mutex);
@@ -354,13 +359,15 @@ namespace worse::ecs
         // =========================================================================
         // Statistics
         // =========================================================================
-        template <typename T> usize getPendingEvents() const
+        template <typename T>
+        usize getPendingEvents() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getPendingCount();
         }
 
-        template <typename T> usize getTotalEventsSent() const
+        template <typename T>
+        usize getTotalEventsSent() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getTotalSent();
@@ -383,23 +390,23 @@ namespace worse::ecs
     // Filter Macros
     // =========================================================================
 
-#define WS_EVENT_FILTER_BY_PRIORITY(minPriority)                               \
-    [](auto const& event)                                                      \
-    {                                                                          \
-        return event.priority >= minPriority;                                  \
+#define WS_EVENT_FILTER_BY_PRIORITY(minPriority) \
+    [](auto const& event)                        \
+    {                                            \
+        return event.priority >= minPriority;    \
     }
 
-#define WS_EVENT_FILTER_BY_TIME(maxAge)                                        \
-    [](auto const& event)                                                      \
-    {                                                                          \
-        auto now = std::chrono::steady_clock::now();                           \
-        return (now - event.timestamp) <= maxAge;                              \
+#define WS_EVENT_FILTER_BY_TIME(maxAge)              \
+    [](auto const& event)                            \
+    {                                                \
+        auto now = std::chrono::steady_clock::now(); \
+        return (now - event.timestamp) <= maxAge;    \
     }
 
-#define WS_EVENT_FILTER_BY_THREAD(threadId)                                    \
-    [threadId](auto const& event)                                              \
-    {                                                                          \
-        return event.sourceThread == threadId;                                 \
+#define WS_EVENT_FILTER_BY_THREAD(threadId)    \
+    [threadId](auto const& event)              \
+    {                                          \
+        return event.sourceThread == threadId; \
     }
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

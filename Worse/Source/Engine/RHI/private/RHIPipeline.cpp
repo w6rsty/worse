@@ -2,7 +2,7 @@
 #include "Pipeline/RHIPipeline.hpp"
 #include "RHIDevice.hpp"
 
-namespace worse
+namespace Worse
 {
 
     RHIPipeline::RHIPipeline(RHIPipelineState const& pipelineState, RHIDescriptorSetLayout const& descriptorSetLayout)
@@ -56,4 +56,4 @@ namespace worse
         return pipeline.get();
     }
 
-} // namespace worse
+} // namespace Worse

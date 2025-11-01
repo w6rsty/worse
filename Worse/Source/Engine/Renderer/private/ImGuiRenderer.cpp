@@ -9,7 +9,7 @@
 #include "Renderer.hpp"
 #include "ImGuiRenderer.hpp"
 
-namespace worse
+namespace Worse
 {
 
     void defaultPage(int state)
@@ -42,7 +42,7 @@ namespace worse
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-        std::filesystem::path fontPath = std::filesystem::path{worse::EngineDirectory} / "Binary/Fonts/NotoSerifSC-Regular.ttf";
+        std::filesystem::path fontPath = std::filesystem::path{Worse::EngineDirectory} / "Binary/Fonts/NotoSerifSC-Regular.ttf";
         
         io.Fonts->AddFontFromFileTTF(
             fontPath.string().c_str(),
@@ -214,4 +214,4 @@ namespace worse
         ImGui::Render();
     }
 
-} // namespace worse
+} // namespace Worse

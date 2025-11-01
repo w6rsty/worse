@@ -4,7 +4,7 @@
 
 #include <bit>
 
-namespace worse
+namespace Worse
 {
 
     void RHIBuffer::nativeCreate(void const* data)
@@ -203,4 +203,4 @@ namespace worse
         cmdList->updateBuffer(this, m_offset, size != 0 ? size : m_stride, cpuData);
     }
 
-} // namespace worse
+} // namespace Worse

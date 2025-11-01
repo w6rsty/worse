@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace worse
+namespace Worse
 {
 
     namespace GlobalDescriptorSetLayout
@@ -104,4 +104,4 @@ namespace worse
         std::array<u32, 2> m_currentPoolIndex;
     };
 
-} // namespace worse
+} // namespace Worse

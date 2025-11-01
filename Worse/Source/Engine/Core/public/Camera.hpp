@@ -2,7 +2,7 @@
 #include "Math/Base.hpp"
 #include "Math/Math.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class Camera
@@ -79,4 +79,4 @@ namespace worse
         math::Matrix4 m_projection = math::Matrix4::IDENTITY();
     };
 
-} // namespace worse
+} // namespace Worse

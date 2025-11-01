@@ -1,6 +1,6 @@
 #include "Log.hpp"
 
-namespace worse
+namespace Worse
 {
 
     bool RingBuffer::push(Message const& msg) noexcept
@@ -98,7 +98,7 @@ namespace worse
         struct tm tm;
         localtime_r(&t, &tm);
 #endif
-        int n   = std::snprintf(line,
+        int n = std::snprintf(line,
                               size,
                               "%s%04d-%02d-%02dT%02d:%02d:%02d.%03lld%s ",
                               k_ansiDim,
@@ -165,4 +165,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

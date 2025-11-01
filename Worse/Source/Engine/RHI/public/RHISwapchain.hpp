@@ -3,7 +3,7 @@
 #include "RHICommandList.hpp"
 #include "RHISyncPrimitive.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHISwapchain : public RHIResource
@@ -56,4 +56,4 @@ namespace worse
         std::array<RHINativeHandle, s_bufferCount> m_rtvs;
     };
 
-} // namespace worse
+} // namespace Worse

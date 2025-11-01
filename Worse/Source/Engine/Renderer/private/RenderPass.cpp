@@ -5,7 +5,7 @@
 #include "RHIBuffer.hpp"
 #include "Renderer.hpp"
 #include "RendererBuffer.hpp"
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -491,4 +491,4 @@ namespace worse
         drawcalls->ctx.clear();
     }
 
-} // namespace worse
+} // namespace Worse

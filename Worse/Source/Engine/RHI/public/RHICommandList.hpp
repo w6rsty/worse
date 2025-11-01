@@ -9,7 +9,7 @@
 #include <span>
 #include <atomic>
 
-namespace worse
+namespace Worse
 {
 
     // track submission state
@@ -123,4 +123,4 @@ namespace worse
         bool m_isRenderPassActive = false;
     };
 
-} // namespace worse
+} // namespace Worse

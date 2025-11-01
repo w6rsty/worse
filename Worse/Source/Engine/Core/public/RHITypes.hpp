@@ -1,7 +1,7 @@
 #pragma once
 #include "Math/Vector.hpp"
 
-namespace worse
+namespace Worse
 {
 
     enum class RHIFormat
@@ -81,4 +81,4 @@ namespace worse
         math::Vector4 tangent  = {0.0, 0.0, 0.0, 0.0};
     };
 
-} // namespace worse
+} // namespace Worse

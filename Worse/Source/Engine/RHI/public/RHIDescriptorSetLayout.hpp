@@ -6,7 +6,7 @@
 #include <vector>
 #include <string_view>
 
-namespace worse
+namespace Worse
 {
 
     // pipeline specific set 1 layout and push constants
@@ -40,4 +40,4 @@ namespace worse
         RHINativeHandle m_layout = {};
     };
 
-} // namespace worse
+} // namespace Worse

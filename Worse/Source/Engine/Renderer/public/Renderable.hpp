@@ -8,7 +8,7 @@
 #include "ECS/QueryView.hpp"
 #include "ECS/Resource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     struct RenderObject
@@ -94,4 +94,4 @@ namespace worse
     }
     // clang-format on
 
-} // namespace worse
+} // namespace Worse

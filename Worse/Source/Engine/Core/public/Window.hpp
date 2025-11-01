@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace worse
+namespace Worse
 {
     enum class WindowMode
     {
@@ -48,4 +48,4 @@ namespace worse
         static inline bool s_shouldClose  = false;
     };
 
-} // namespace worse
+} // namespace Worse

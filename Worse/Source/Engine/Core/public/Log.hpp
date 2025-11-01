@@ -9,7 +9,7 @@
 #include <thread>
 #include <semaphore>
 
-namespace worse
+namespace Worse
 {
 
     enum class Level : u8
@@ -35,7 +35,7 @@ namespace worse
     constexpr char const* k_ansiReset = "\x1b[0m";
 
 #ifndef WS_LOG_ACTIVE_LEVEL
-#define WS_LOG_ACTIVE_LEVEL ::worse::Level::Trace // compile time filter
+#define WS_LOG_ACTIVE_LEVEL ::Worse::Level::Trace // compile time filter
 #endif
 
     struct Message
@@ -96,12 +96,12 @@ namespace worse
                 return;
             }
             Message msg;
-            msg.time  = std::chrono::system_clock::now();
-            msg.level = L;
+            msg.time         = std::chrono::system_clock::now();
+            msg.level        = L;
             usize target_len = std::min(strlen(target), sizeof(msg.target) - 1);
             memcpy(msg.target, target, target_len);
             msg.target[target_len] = '\0';
-            auto res                           = std::format_to_n(
+            auto res               = std::format_to_n(
                 msg.text,
                 sizeof(msg.text) - 4, // 保留4个字符以便在需要时添加省略号
                 fmt,
@@ -134,13 +134,13 @@ namespace worse
         std::atomic<bool> m_running{true};
     };
 
-} // namespace worse
+} // namespace Worse
 
 // clang-format off
-#define WS_LOG_TRACE(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Trace>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
-#define WS_LOG_DEBUG(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Debug>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
-#define WS_LOG_INFO(target,  fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Info >(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
-#define WS_LOG_WARN(target,  fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Warn >(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
-#define WS_LOG_ERROR(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Error>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
-#define WS_LOG_FATAL(target, fmt, ...) do { auto* _logger = ::worse::Logger::instance(); if (_logger) _logger->log<::worse::Level::Fatal>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_TRACE(target, fmt, ...) do { auto* _logger = ::Worse::Logger::instance(); if (_logger) _logger->log<::Worse::Level::Trace>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_DEBUG(target, fmt, ...) do { auto* _logger = ::Worse::Logger::instance(); if (_logger) _logger->log<::Worse::Level::Debug>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_INFO(target,  fmt, ...) do { auto* _logger = ::Worse::Logger::instance(); if (_logger) _logger->log<::Worse::Level::Info >(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_WARN(target,  fmt, ...) do { auto* _logger = ::Worse::Logger::instance(); if (_logger) _logger->log<::Worse::Level::Warn >(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_ERROR(target, fmt, ...) do { auto* _logger = ::Worse::Logger::instance(); if (_logger) _logger->log<::Worse::Level::Error>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
+#define WS_LOG_FATAL(target, fmt, ...) do { auto* _logger = ::Worse::Logger::instance(); if (_logger) _logger->log<::Worse::Level::Fatal>(target, fmt __VA_OPT__(,) __VA_ARGS__); } while(0)
 // clang-format on

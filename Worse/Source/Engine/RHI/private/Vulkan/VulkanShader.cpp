@@ -4,7 +4,7 @@
 
 #include "spirv_reflect.h"
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -189,4 +189,4 @@ namespace worse
         // storage buffer(RWStructuredBuffer)
         spvExtractDescriptor(reflection, RHIDescriptorType::StructuredBuffer, shaderStage, m_descriptors);
     }
-} // namespace worse
+} // namespace Worse

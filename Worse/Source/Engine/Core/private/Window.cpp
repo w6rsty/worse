@@ -7,7 +7,7 @@
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_video.h"
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -179,4 +179,4 @@ namespace worse
         return nullptr;
     }
 
-} // namespace worse
+} // namespace Worse

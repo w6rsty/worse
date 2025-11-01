@@ -6,7 +6,7 @@
 #include <functional>
 #include <type_traits>
 
-namespace worse
+namespace Worse
 {
 
     void defaultPage(int state);
@@ -120,4 +120,4 @@ namespace worse
         inline static std::vector<Page> alwaysRenderPages;
     };
 
-} // namespace worse
+} // namespace Worse

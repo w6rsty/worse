@@ -2,7 +2,7 @@
 #include "ECS/Resource.hpp"
 #include "Registry.hpp"
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     class Commands
@@ -97,4 +97,4 @@ namespace worse::ecs
         Registry& m_registry;
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

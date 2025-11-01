@@ -1,7 +1,7 @@
 #pragma once
 #include "Types.hpp"
 
-namespace worse
+namespace Worse
 {
 
     struct RHIViewport
@@ -27,4 +27,4 @@ namespace worse
         static const RHIViewport undefined;
     };
 
-} // namespace worse
+} // namespace Worse

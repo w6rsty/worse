@@ -5,7 +5,7 @@
 
 #include <span>
 
-namespace worse
+namespace Worse
 {
 
     class RHIDevice : public NonCopyable, public NonMovable
@@ -84,4 +84,4 @@ namespace worse
         static void setResourceName(RHINativeHandle const& resource,
                                     std::string_view name);
     };
-}; // namespace worse
+}; // namespace Worse

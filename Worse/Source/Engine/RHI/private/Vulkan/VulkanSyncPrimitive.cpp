@@ -1,7 +1,7 @@
 #include "RHISyncPrimitive.hpp"
 #include "RHIDevice.hpp"
 
-namespace worse
+namespace Worse
 {
 
     namespace fence
@@ -154,4 +154,4 @@ namespace worse
         fence::reset(m_handle);
     }
 
-} // namespace worse
+} // namespace Worse

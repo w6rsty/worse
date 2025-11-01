@@ -3,7 +3,7 @@
 #include "RHICommandList.hpp"
 #include "RHITexture.hpp"
 
-namespace worse
+namespace Worse
 {
 
     RHITexture::RHITexture(RHITextureType const type, u32 const width,
@@ -180,4 +180,4 @@ namespace worse
         return m_image && m_rtv;
     }
 
-} // namespace worse
+} // namespace Worse

@@ -4,12 +4,12 @@
 #include "Math/Hash.hpp"
 #include "AssetServer.hpp"
 
-namespace worse
+namespace Worse
 {
 
     AssetServer::AssetServer()
     {
-        std::filesystem::path const textureDir = std::filesystem::path{worse::EngineDirectory} / "Binary/Textures";
+        std::filesystem::path const textureDir = std::filesystem::path{Worse::EngineDirectory} / "Binary/Textures";
         m_errorTextureHandle                   = addTexture(textureDir / "no_texture.png");
     }
 
@@ -329,4 +329,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

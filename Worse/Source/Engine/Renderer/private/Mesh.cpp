@@ -2,7 +2,7 @@
 #include "RHIBuffer.hpp"
 #include "Log.hpp"
 
-namespace worse
+namespace Worse
 {
 
     Mesh::Mesh()
@@ -73,4 +73,4 @@ namespace worse
                 "MeshIndexBuffer");
         }
     }
-} // namespace worse
+} // namespace Worse

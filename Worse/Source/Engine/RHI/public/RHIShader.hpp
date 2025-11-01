@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <unordered_set>
 
-namespace worse
+namespace Worse
 {
     enum class RHIShaderCompilationState
     {
@@ -74,4 +74,4 @@ namespace worse
         RHINativeHandle m_shaderModule = {};
     };
 
-} // namespace worse
+} // namespace Worse

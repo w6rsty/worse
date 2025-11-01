@@ -7,12 +7,13 @@
 #include <vector>
 #include <type_traits>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     namespace internal
     {
-        template <typename Container, usize PageSize> struct StorageIterator
+        template <typename Container, usize PageSize>
+        struct StorageIterator
         {
             // clang-format off
             using ContainerType = std::remove_cv_t<Container>;
@@ -155,7 +156,8 @@ namespace worse::ecs
         }
     } // namespace internal
 
-    template <typename T> class Storage : public IndexSet
+    template <typename T>
+    class Storage : public IndexSet
     {
     public:
         // clang-format off
@@ -316,7 +318,8 @@ namespace worse::ecs
     };
 
     // specialization for managing entities
-    template <> class Storage<Entity> : public IndexSet
+    template <>
+    class Storage<Entity> : public IndexSet
     {
     public:
         using BaseType = IndexSet;
@@ -354,7 +357,8 @@ namespace worse::ecs
         virtual bool contains(Entity entity) const = 0;
     };
 
-    template <typename T> struct StorageWrapper : public StorageBase
+    template <typename T>
+    struct StorageWrapper : public StorageBase
     {
         Storage<T> storage;
 
@@ -374,4 +378,4 @@ namespace worse::ecs
         }
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

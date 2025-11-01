@@ -6,7 +6,7 @@
 
 #include <cstdlib>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -126,8 +126,8 @@ namespace worse
 
                 f32 const range_negative = 32768.0f;
                 f32 const range_positive = 32767.0f;
-                f32 const range = (value < 0) ? range_negative : range_positive;
-                normalized      = static_cast<f32>(value) /
+                f32 const range          = (value < 0) ? range_negative : range_positive;
+                normalized               = static_cast<f32>(value) /
                              (range - k_defaultThumbStickDeadZone);
                 break;
             }
@@ -280,4 +280,4 @@ namespace worse
         return s_controller.get();
     }
 
-} // namespace worse
+} // namespace Worse

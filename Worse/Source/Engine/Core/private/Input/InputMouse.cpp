@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -105,4 +105,4 @@ namespace worse
         return Input::getMousePositionRelativeToWindow();
     }
 
-} // namespace worse
+} // namespace Worse

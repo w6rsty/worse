@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace worse
+namespace Worse
 {
 
     struct Node : public IRenderable
@@ -28,4 +28,4 @@ namespace worse
         void refreshTransform(math::Matrix4 const& parentTransform);
     };
 
-} // namespace worse
+} // namespace Worse

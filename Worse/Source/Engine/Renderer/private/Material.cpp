@@ -6,7 +6,7 @@
 #include <optional>
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -128,7 +128,7 @@ namespace worse
                 StandardMaterialGPU& data = materialGPUs[index];
                 data.flags                = 0;
 
-                data.baseColor                     = material.baseColor;
+                data.baseColor = material.baseColor;
                 if (getTextureIndex(material.baseColorTexture, textureIndexMap).has_value())
                 {
                     data.baseColorTextureIndex = getTextureIndex(material.baseColorTexture, textureIndexMap).value();
@@ -139,20 +139,20 @@ namespace worse
                     data.normalTextureIndex = getTextureIndex(material.normalTexture, textureIndexMap).value();
                     data.flags |= 1 << 1;
                 }
-                data.metallic                      = material.metallic;
-                data.roughness                     = material.roughness;
+                data.metallic  = material.metallic;
+                data.roughness = material.roughness;
                 if (getTextureIndex(material.metallicRoughnessTexture, textureIndexMap).has_value())
                 {
                     data.metallicRoughnessTextureIndex = getTextureIndex(material.metallicRoughnessTexture, textureIndexMap).value();
                     data.flags |= 1 << 2;
                 }
-                data.ambientOcclusion              = material.ambientOcclusion;
+                data.ambientOcclusion = material.ambientOcclusion;
                 if (getTextureIndex(material.ambientOcclusionTexture, textureIndexMap).has_value())
                 {
                     data.ambientOcclusionTextureIndex = getTextureIndex(material.ambientOcclusionTexture, textureIndexMap).value();
                     data.flags |= 1 << 3;
                 }
-                data.emissive                      = material.emissive;
+                data.emissive = material.emissive;
                 if (getTextureIndex(material.emissiveTexture, textureIndexMap).has_value())
                 {
                     data.emissiveTextureIndex = getTextureIndex(material.emissiveTexture, textureIndexMap).value();
@@ -165,4 +165,4 @@ namespace worse
         Renderer::createMaterialBuffers(materialGPUs);
     }
 
-} // namespace worse
+} // namespace Worse

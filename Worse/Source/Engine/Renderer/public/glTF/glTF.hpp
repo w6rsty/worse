@@ -10,7 +10,7 @@
 #include <string>
 #include <memory>
 
-namespace worse
+namespace Worse
 {
 
     struct glTFSurface
@@ -80,4 +80,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

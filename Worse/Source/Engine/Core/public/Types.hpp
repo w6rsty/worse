@@ -21,7 +21,7 @@ using isize = std::ptrdiff_t;
 using f32 = float;
 using f64 = double;
 
-namespace worse
+namespace Worse
 {
 
     struct NonCopyable
@@ -81,13 +81,13 @@ namespace worse
         // clang-format on
     };
 
-#define WS_DEFINE_FLAGS(name, base)                                            \
-    struct name                                                                \
-    {                                                                          \
-        static_assert(std::is_integral_v<base>,                                \
-                      "Flags base type must be integral");                     \
-        using ValueType = base;                                                \
-    };                                                                         \
+#define WS_DEFINE_FLAGS(name, base)                        \
+    struct name                                            \
+    {                                                      \
+        static_assert(std::is_integral_v<base>,            \
+                      "Flags base type must be integral"); \
+        using ValueType = base;                            \
+    };                                                     \
     using name##Flags = Flags<name>;
 
     /// Helper function to iterate over each flag bit.
@@ -113,7 +113,8 @@ namespace worse
     template <typename E>
     concept EnumArrayConcept = std::is_enum_v<E> && requires { E::Max; };
 
-    template <EnumArrayConcept E, typename T> class EnumArray
+    template <EnumArrayConcept E, typename T>
+    class EnumArray
     {
     public:
         static constexpr std::size_t N = static_cast<std::size_t>(E::Max);
@@ -201,10 +202,10 @@ namespace worse
         class const_iterator_pair
         {
         public:
-            using difference_type = std::ptrdiff_t;
-            using value_type = std::pair<E, std::reference_wrapper<const T>>;
-            using pointer    = void;
-            using reference  = std::pair<E, std::reference_wrapper<const T>>;
+            using difference_type   = std::ptrdiff_t;
+            using value_type        = std::pair<E, std::reference_wrapper<const T>>;
+            using pointer           = void;
+            using reference         = std::pair<E, std::reference_wrapper<const T>>;
             using iterator_category = std::forward_iterator_tag;
 
             constexpr const_iterator_pair(
@@ -260,4 +261,4 @@ namespace worse
         std::array<T, N> m_data{};
     };
 
-} // namespace worse
+} // namespace Worse

@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
     // Template-based type erasure using CRTP pattern
     struct ResourceBase
@@ -13,7 +13,8 @@ namespace worse::ecs
     };
 
     // Template wrapper that stores the resource directly - much simpler
-    template <typename T> class ResourceWrapper : public ResourceBase
+    template <typename T>
+    class ResourceWrapper : public ResourceBase
     {
     public:
         template <typename... Args>
@@ -25,7 +26,8 @@ namespace worse::ecs
     };
 
     // Resource handle for type-safe access
-    template <typename T> class Resource
+    template <typename T>
+    class Resource
     {
     public:
         explicit Resource(T* ptr) : m_ptr(ptr)
@@ -62,12 +64,14 @@ namespace worse::ecs
     };
 
     // ResourceArrayWrapper that stores the actual data
-    template <typename T> class ResourceArrayWrapper : public ResourceArrayBase
+    template <typename T>
+    class ResourceArrayWrapper : public ResourceArrayBase
     {
     public:
         ResourceArrayWrapper() = default;
 
-        template <typename... Args> usize add(Args&&... args)
+        template <typename... Args>
+        usize add(Args&&... args)
         {
             resources.emplace_back(std::forward<Args>(args)...);
             return resources.size() - 1;
@@ -142,14 +146,16 @@ namespace worse::ecs
     };
 
     // ResourceArray handle for type-safe access (similar to Resource)
-    template <typename T> class ResourceArray
+    template <typename T>
+    class ResourceArray
     {
     public:
         explicit ResourceArray(ResourceArrayWrapper<T>* ptr) : m_ptr(ptr)
         {
         }
 
-        template <typename... Args> usize add(Args&&... args)
+        template <typename... Args>
+        usize add(Args&&... args)
         {
             return m_ptr ? m_ptr->add(std::forward<Args>(args)...) : 0;
         }
@@ -221,4 +227,4 @@ namespace worse::ecs
         ResourceArrayWrapper<T>* m_ptr;
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

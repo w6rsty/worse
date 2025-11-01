@@ -4,7 +4,7 @@
 #include <fstream>
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
 
     WS_DEFINE_FLAGS(FileStreamUsage, u32);
@@ -39,4 +39,4 @@ namespace worse
         FileStreamUsageFlags m_usage;
     };
 
-}; // namespace worse
+}; // namespace Worse

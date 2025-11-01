@@ -4,7 +4,7 @@
 #include "Math/Base.hpp"
 #include "SDL3/SDL_gamepad.h"
 
-namespace worse
+namespace Worse
 {
 
     Controller::Controller(ControllerDescriptor const& descriptor)
@@ -170,4 +170,4 @@ namespace worse
         return m_guid != other.guid;
     }
 
-} // namespace worse
+} // namespace Worse

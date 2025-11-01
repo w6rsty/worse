@@ -10,7 +10,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     class Stage
@@ -72,7 +72,8 @@ namespace worse::ecs
             // clang-format on
         }
 
-        template <typename StageLabel> Schedule& addStage()
+        template <typename StageLabel>
+        Schedule& addStage()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<StageLabel, CoreStage::CleanUp>)
@@ -93,7 +94,8 @@ namespace worse::ecs
             return *this;
         }
 
-        template <typename StageLabel, auto Func> Schedule& addSystem()
+        template <typename StageLabel, auto Func>
+        Schedule& addSystem()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp>)
             {
@@ -121,7 +123,8 @@ namespace worse::ecs
             }
         }
 
-        template <typename StageLabel> bool removeStage()
+        template <typename StageLabel>
+        bool removeStage()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<StageLabel, CoreStage::Update> ||
@@ -240,7 +243,8 @@ namespace worse::ecs
             return m_stages.count(label) > 0;
         }
 
-        template <typename StageLabel> bool hasStage() const
+        template <typename StageLabel>
+        bool hasStage() const
         {
             std::type_index const label(typeid(StageLabel));
             return hasStage(label);
@@ -281,4 +285,4 @@ namespace worse::ecs
         std::unique_ptr<Stage> m_cleanUpStage;
         std::vector<StageLabelType> m_stageOrder;
     };
-} // namespace worse::ecs
+} // namespace Worse::ecs

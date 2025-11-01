@@ -1,7 +1,7 @@
 #pragma once
 #include "Types.hpp"
 
-namespace worse
+namespace Worse
 {
     // Very simple 32-bit RGBA color
     struct Color
@@ -21,4 +21,4 @@ namespace worse
         }
     };
 
-} // namespace worse
+} // namespace Worse

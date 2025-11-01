@@ -1,6 +1,6 @@
 #include "Scene/Hierarchy.hpp"
 
-namespace worse
+namespace Worse
 {
 
     void Node::refreshTransform(math::Matrix4 const& parentTransform)
@@ -13,4 +13,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

@@ -2,7 +2,7 @@
 #include "RHICommandList.hpp"
 #include "RHITexture.hpp"
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -147,4 +147,4 @@ namespace worse
         return true;
     }
 
-} // namespace worse
+} // namespace Worse

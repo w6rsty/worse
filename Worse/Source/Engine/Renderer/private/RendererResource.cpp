@@ -13,7 +13,7 @@
 #include <filesystem>
 #include <memory>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -83,7 +83,7 @@ namespace worse
 
     void Renderer::createShaders()
     {
-        std::filesystem::path shaderDir = std::filesystem::path{worse::EngineDirectory} / "Shaders";
+        std::filesystem::path shaderDir = std::filesystem::path{Worse::EngineDirectory} / "Shaders";
         WS_LOG_INFO("Renderer", "Shader directory: {}", shaderDir.string());
 
 #define MAKE_SHADER_GRAPHICS(shaderName, vertexType)                                                                     \
@@ -291,26 +291,26 @@ namespace worse
 
     void Renderer::destroyResources()
     {
-        for (std::unique_ptr<worse::RHIRasterizerState>& rasterizerState : rasterizerStates)
+        for (std::unique_ptr<Worse::RHIRasterizerState>& rasterizerState : rasterizerStates)
         {
             rasterizerState.reset();
         }
-        for (std::unique_ptr<worse::RHIDepthStencilState>& depthStencilState : depthStencilStates)
+        for (std::unique_ptr<Worse::RHIDepthStencilState>& depthStencilState : depthStencilStates)
         {
             depthStencilState.reset();
         }
 
-        for (std::unique_ptr<worse::RHIBlendState>& blendState : blendStates)
+        for (std::unique_ptr<Worse::RHIBlendState>& blendState : blendStates)
         {
             blendState.reset();
         }
 
-        for (std::unique_ptr<worse::RHITexture>& renderTarget : renderTargets)
+        for (std::unique_ptr<Worse::RHITexture>& renderTarget : renderTargets)
         {
             renderTarget.reset();
         }
 
-        for (std::unique_ptr<worse::RHIShader>& shader : shaders)
+        for (std::unique_ptr<Worse::RHIShader>& shader : shaders)
         {
             shader.reset();
         }
@@ -380,4 +380,4 @@ namespace worse
         return materialBuffer.get();
     }
 
-} // namespace worse
+} // namespace Worse

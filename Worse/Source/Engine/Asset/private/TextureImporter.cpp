@@ -5,7 +5,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -228,4 +228,4 @@ namespace worse
         return out;
     }
 
-} // namespace worse
+} // namespace Worse

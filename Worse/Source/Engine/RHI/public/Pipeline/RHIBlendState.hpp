@@ -4,7 +4,7 @@
 
 #include <functional>
 
-namespace worse
+namespace Worse
 {
 
     class RHIBlendState
@@ -69,4 +69,4 @@ namespace worse
         u64 m_hash = 0;
     };
 
-} // namespace worse
+} // namespace Worse

@@ -4,7 +4,7 @@
 
 #include <span>
 
-namespace worse::math
+namespace Worse::math
 {
 
     class BoundingBox
@@ -31,4 +31,4 @@ namespace worse::math
         Vector3 m_max;
     };
 
-} // namespace worse::math
+} // namespace Worse::math

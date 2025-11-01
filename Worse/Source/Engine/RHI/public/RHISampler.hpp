@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIResource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHISampler : public RHIResource
@@ -46,4 +46,4 @@ namespace worse
         RHINativeHandle m_handle = {};
     };
 
-} // namespace worse
+} // namespace Worse

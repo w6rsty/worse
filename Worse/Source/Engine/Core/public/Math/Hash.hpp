@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <concepts>
 
-namespace worse::math
+namespace Worse::math
 {
 
     template <typename T>
@@ -49,4 +49,4 @@ namespace worse::math
         return seed ^ (x + 0x9e3779b9 + (seed << 6) + (seed >> 2));
     }
 
-} // namespace worse::math
+} // namespace Worse::math

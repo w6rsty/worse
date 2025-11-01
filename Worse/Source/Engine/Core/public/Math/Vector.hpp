@@ -7,7 +7,7 @@
 #include <cstring>
 #include <algorithm>
 
-namespace worse::math
+namespace Worse::math
 {
 
     // clang-format off
@@ -319,9 +319,9 @@ namespace worse::math
     inline constexpr Vector3 reciprocal(Vector3 const& v) { return Vector3(1.0f / v.x, 1.0f / v.y, 1.0f / v.z); }
     inline constexpr Vector4 reciprocal(Vector4 const& v) { return Vector4(1.0f / v.x, 1.0f / v.y, 1.0f / v.z, 1.0f / v.w); }
 
-    inline bool eq(Vector2 const& a, Vector2 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y); }
-    inline bool eq(Vector3 const& a, Vector3 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y) && worse::math::equal(a.z, b.z); }
-    inline bool eq(Vector4 const& a, Vector4 const& b) { return worse::math::equal(a.x, b.x) && worse::math::equal(a.y, b.y) && worse::math::equal(a.z, b.z) && worse::math::equal(a.w, b.w); }
+    inline bool eq(Vector2 const& a, Vector2 const& b) { return Worse::math::equal(a.x, b.x) && Worse::math::equal(a.y, b.y); }
+    inline bool eq(Vector3 const& a, Vector3 const& b) { return Worse::math::equal(a.x, b.x) && Worse::math::equal(a.y, b.y) && Worse::math::equal(a.z, b.z); }
+    inline bool eq(Vector4 const& a, Vector4 const& b) { return Worse::math::equal(a.x, b.x) && Worse::math::equal(a.y, b.y) && Worse::math::equal(a.z, b.z) && Worse::math::equal(a.w, b.w); }
     inline constexpr bool eq(Vector2i const& a, Vector2i const& b) { return a.x == b.x && a.y == b.y; }
     inline constexpr bool eq(Vector3i const& a, Vector3i const& b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
     inline constexpr bool eq(Vector4i const& a, Vector4i const& b) { return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w; }
@@ -346,20 +346,20 @@ namespace worse::math
     inline f32 distance(Vector2 const& a, Vector2 const& b) { return length(a - b); }
     inline f32 distance(Vector3 const& a, Vector3 const& b) { return length(a - b); }
 
-    inline bool isNormalized(Vector2 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
-    inline bool isNormalized(Vector3 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
-    inline bool isNormalized(Vector4 const& v) { return worse::math::equal(lengthSquared(v), 1.0f); }
+    inline bool isNormalized(Vector2 const& v) { return Worse::math::equal(lengthSquared(v), 1.0f); }
+    inline bool isNormalized(Vector3 const& v) { return Worse::math::equal(lengthSquared(v), 1.0f); }
+    inline bool isNormalized(Vector4 const& v) { return Worse::math::equal(lengthSquared(v), 1.0f); }
 
-    inline bool isIdentity(Vector2 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f); }
-    inline bool isIdentity(Vector3 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f) && worse::math::equal(v.z, 1.0f); }
-    inline bool isIdentity(Vector4 const& v) { return worse::math::equal(v.x, 1.0f) && worse::math::equal(v.y, 1.0f) && worse::math::equal(v.z, 1.0f) && worse::math::equal(v.w, 1.0f); }
+    inline bool isIdentity(Vector2 const& v) { return Worse::math::equal(v.x, 1.0f) && Worse::math::equal(v.y, 1.0f); }
+    inline bool isIdentity(Vector3 const& v) { return Worse::math::equal(v.x, 1.0f) && Worse::math::equal(v.y, 1.0f) && Worse::math::equal(v.z, 1.0f); }
+    inline bool isIdentity(Vector4 const& v) { return Worse::math::equal(v.x, 1.0f) && Worse::math::equal(v.y, 1.0f) && Worse::math::equal(v.z, 1.0f) && Worse::math::equal(v.w, 1.0f); }
     inline constexpr bool isIdentity(Vector2i const& v) { return v.x == 1 && v.y == 1; }
     inline constexpr bool isIdentity(Vector3i const& v) { return v.x == 1 && v.y == 1 && v.z == 1; }
     inline constexpr bool isIdentity(Vector4i const& v) { return v.x == 1 && v.y == 1 && v.z == 1 && v.w == 1; }
 
-    inline bool isZero(Vector2 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f); }
-    inline bool isZero(Vector3 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f) && worse::math::equal(v.z, 0.0f); }
-    inline bool isZero(Vector4 const& v) { return worse::math::equal(v.x, 0.0f) && worse::math::equal(v.y, 0.0f) && worse::math::equal(v.z, 0.0f) && worse::math::equal(v.w, 0.0f); }
+    inline bool isZero(Vector2 const& v) { return Worse::math::equal(v.x, 0.0f) && Worse::math::equal(v.y, 0.0f); }
+    inline bool isZero(Vector3 const& v) { return Worse::math::equal(v.x, 0.0f) && Worse::math::equal(v.y, 0.0f) && Worse::math::equal(v.z, 0.0f); }
+    inline bool isZero(Vector4 const& v) { return Worse::math::equal(v.x, 0.0f) && Worse::math::equal(v.y, 0.0f) && Worse::math::equal(v.z, 0.0f) && Worse::math::equal(v.w, 0.0f); }
     inline constexpr bool isZero(Vector2i const& v) { return v.x == 0 && v.y == 0; }
     inline constexpr bool isZero(Vector3i const& v) { return v.x == 0 && v.y == 0 && v.z == 0; }
     inline constexpr bool isZero(Vector4i const& v) { return v.x == 0 && v.y == 0 && v.z == 0 && v.w == 0; }
@@ -376,14 +376,14 @@ namespace worse::math
     inline constexpr Vector2i min(Vector2i const& a, Vector2i const& b) { return Vector2i(std::min(a.x, b.x), std::min(a.y, b.y)); }
     inline constexpr Vector3i min(Vector3i const& a, Vector3i const& b) { return Vector3i(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z)); }
 
-    inline constexpr Vector2 clamp(Vector2 const& value, Vector2 const& min, Vector2 const& max) { return Vector2(worse::math::clamp(value.x, min.x, max.x), worse::math::clamp(value.y, min.y, max.y)); }
-    inline constexpr Vector3 clamp(Vector3 const& value, Vector3 const& min, Vector3 const& max) { return Vector3(worse::math::clamp(value.x, min.x, max.x), worse::math::clamp(value.y, min.y, max.y), worse::math::clamp(value.z, min.z, max.z)); }
+    inline constexpr Vector2 clamp(Vector2 const& value, Vector2 const& min, Vector2 const& max) { return Vector2(Worse::math::clamp(value.x, min.x, max.x), Worse::math::clamp(value.y, min.y, max.y)); }
+    inline constexpr Vector3 clamp(Vector3 const& value, Vector3 const& min, Vector3 const& max) { return Vector3(Worse::math::clamp(value.x, min.x, max.x), Worse::math::clamp(value.y, min.y, max.y), Worse::math::clamp(value.z, min.z, max.z)); }
 
     inline constexpr Vector2 lerp(Vector2 const& a, Vector2 const& b, f32 const t) { return a + (b - a) * t; }
     inline constexpr Vector3 lerp(Vector3 const& a, Vector3 const& b, f32 const t) { return a + (b - a) * t; }
 
-    inline constexpr Vector2 saturate(Vector2 const& v) { return Vector2(worse::math::clamp(v.x, 0.0f, 1.0f), worse::math::clamp(v.y, 0.0f, 1.0f)); }
-    inline constexpr Vector3 saturate(Vector3 const& v) { return Vector3(worse::math::clamp(v.x, 0.0f, 1.0f), worse::math::clamp(v.y, 0.0f, 1.0f), worse::math::clamp(v.z, 0.0f, 1.0f)); }
+    inline constexpr Vector2 saturate(Vector2 const& v) { return Vector2(Worse::math::clamp(v.x, 0.0f, 1.0f), Worse::math::clamp(v.y, 0.0f, 1.0f)); }
+    inline constexpr Vector3 saturate(Vector3 const& v) { return Vector3(Worse::math::clamp(v.x, 0.0f, 1.0f), Worse::math::clamp(v.y, 0.0f, 1.0f), Worse::math::clamp(v.z, 0.0f, 1.0f)); }
 
     // clang-format on
-} // namespace worse::math
+} // namespace Worse::math

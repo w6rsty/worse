@@ -8,7 +8,7 @@
 
 #include "SDL3/SDL_vulkan.h"
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -370,4 +370,4 @@ namespace worse
         m_imageIndex = 0;
     }
 
-} // namespace worse
+} // namespace Worse

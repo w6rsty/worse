@@ -5,7 +5,7 @@
 
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
     class RHIPipeline : public RHIResource
@@ -50,4 +50,4 @@ namespace worse
         // clang-format on
     };
 
-} // namespace worse
+} // namespace Worse

@@ -6,7 +6,7 @@
 #include <atomic>
 #include <memory>
 
-namespace worse
+namespace Worse
 {
 
     class RHIQueue : public RHIResource
@@ -36,4 +36,4 @@ namespace worse
         RHINativeHandle m_handle; // command pool
     };
 
-} // namespace worse
+} // namespace Worse

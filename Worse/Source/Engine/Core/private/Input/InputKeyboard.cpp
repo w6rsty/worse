@@ -4,7 +4,7 @@
 #include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_scancode.h"
 
-namespace worse
+namespace Worse
 {
     void Input::pollKeyboard()
     {
@@ -85,4 +85,4 @@ namespace worse
         // clang-format on
     }
 
-} // namespace worse
+} // namespace Worse

@@ -4,7 +4,7 @@
 #include <string>
 #include <optional>
 
-namespace worse
+namespace Worse
 {
     enum class ControllerType
     {
@@ -58,4 +58,4 @@ namespace worse
         u16 m_firmwareVersion = 0;
     };
 
-} // namespace worse
+} // namespace Worse

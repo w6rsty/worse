@@ -2,20 +2,22 @@
 #include <cstddef>
 #include <utility>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     // =========================================================================
     // Type List
     // =========================================================================
 
-    template <typename... Type> struct TypeList
+    template <typename... Type>
+    struct TypeList
     {
         using type                  = TypeList;
         static constexpr usize size = sizeof...(Type);
     };
 
-    template <usize, typename> struct TypeListElementAt;
+    template <usize, typename>
+    struct TypeListElementAt;
 
     template <usize Index, typename First, typename... Other>
     struct TypeListElementAt<Index, TypeList<First, Other...>>
@@ -71,4 +73,4 @@ namespace worse::ecs
     using makeIndexRange =
         decltype(sequenceAdd<Min>(std::make_index_sequence<Max - Min>()));
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

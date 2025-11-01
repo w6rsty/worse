@@ -2,7 +2,7 @@
 #include "Math/Hash.hpp"
 #include "RHIDefinitions.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHIDepthStencilState
@@ -81,4 +81,4 @@ namespace worse
         u64 m_hash = 0;
     };
 
-} // namespace worse
+} // namespace Worse

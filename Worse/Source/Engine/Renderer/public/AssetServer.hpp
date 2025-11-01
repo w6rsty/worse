@@ -10,7 +10,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
     using AssetHandle = u64;
@@ -147,4 +147,4 @@ namespace worse
 
         AssetHandle m_errorTextureHandle;
     };
-} // namespace worse
+} // namespace Worse

@@ -10,7 +10,7 @@
 #include <optional>
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -346,7 +346,7 @@ namespace worse
                         {
                             RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
                             // glTF -> Vulkan
-                            vtx.normal                = -normal;
+                            vtx.normal = -normal;
                         });
                 }
                 else
@@ -491,4 +491,4 @@ namespace worse
         return nullptr;
     }
 
-} // namespace worse
+} // namespace Worse

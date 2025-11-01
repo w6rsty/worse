@@ -4,7 +4,7 @@
 #include "Input/Input.hpp"
 #include "RHIDefinitions.hpp"
 
-namespace worse
+namespace Worse
 {
     void Engine::initialize(ecs::Commands commands)
     {
@@ -32,4 +32,4 @@ namespace worse
         Window::shutdown();
     }
 
-} // namespace worse
+} // namespace Worse

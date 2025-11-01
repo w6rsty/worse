@@ -1,7 +1,7 @@
 #include "RHICommandList.hpp"
 #include "RHISyncPrimitive.hpp" // IWYU pragma: keep
 
-namespace worse
+namespace Worse
 {
 
     void RHICommandList::waitForExecution()
@@ -13,4 +13,4 @@ namespace worse
         m_state = RHICommandListState::Idle;
     }
 
-} // namespace worse
+} // namespace Worse

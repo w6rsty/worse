@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace worse
+namespace Worse
 {
 
     enum class RHIVertexType
@@ -85,4 +85,4 @@ namespace worse
         u32 m_stride = 0;
     };
 
-} // namespace worse
+} // namespace Worse

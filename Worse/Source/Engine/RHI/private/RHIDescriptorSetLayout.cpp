@@ -1,7 +1,7 @@
 #include "RHIDescriptor.hpp"
 #include "RHIDescriptorSetLayout.hpp"
 
-namespace worse
+namespace Worse
 {
 
     RHIDescriptorSetLayout::RHIDescriptorSetLayout(std::vector<RHIDescriptor> const& descriptors, u64 descriptorHash, std::string_view name)
@@ -28,4 +28,4 @@ namespace worse
         nativeDestroy();
     }
 
-} // namespace worse
+} // namespace Worse

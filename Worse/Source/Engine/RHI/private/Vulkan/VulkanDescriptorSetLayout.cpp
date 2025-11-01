@@ -2,7 +2,7 @@
 #include "RHIDescriptor.hpp"
 #include "RHIDescriptorSetLayout.hpp"
 
-namespace worse
+namespace Worse
 {
 
     void RHIDescriptorSetLayout::nativeCreate()
@@ -52,4 +52,4 @@ namespace worse
         m_layout = {};
     }
 
-} // namespace worse
+} // namespace Worse

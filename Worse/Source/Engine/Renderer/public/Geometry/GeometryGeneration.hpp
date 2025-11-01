@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace worse::geometry
+namespace Worse::geometry
 {
 
     enum class GeometryType
@@ -26,9 +26,9 @@ namespace worse::geometry
                                std::vector<u32>& indices, f32 width = 1.0f,
                                f32 height = 1.0f)
     {
-        using worse::math::Vector2;
-        using worse::math::Vector3;
-        using worse::math::Vector4;
+        using Worse::math::Vector2;
+        using Worse::math::Vector3;
+        using Worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -67,9 +67,9 @@ namespace worse::geometry
                              std::vector<u32>& indices, f32 width = 1.0f,
                              f32 height = 1.0f, f32 depth = 1.0f)
     {
-        using worse::math::Vector2;
-        using worse::math::Vector3;
-        using worse::math::Vector4;
+        using Worse::math::Vector2;
+        using Worse::math::Vector3;
+        using Worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -165,9 +165,9 @@ namespace worse::geometry
                                std::vector<u32>& indices, f32 radius = 0.5f,
                                u32 segments = 32, u32 rings = 16)
     {
-        using worse::math::Vector2;
-        using worse::math::Vector3;
-        using worse::math::Vector4;
+        using Worse::math::Vector2;
+        using Worse::math::Vector3;
+        using Worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -285,9 +285,9 @@ namespace worse::geometry
                                  u32 heightSegments = 1, bool topCap = true,
                                  bool bottomCap = true)
     {
-        using worse::math::Vector2;
-        using worse::math::Vector3;
-        using worse::math::Vector4;
+        using Worse::math::Vector2;
+        using Worse::math::Vector3;
+        using Worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -444,9 +444,9 @@ namespace worse::geometry
                                 f32 height = 2.0f, u32 segments = 32,
                                 u32 totalRings = 16)
     {
-        using worse::math::Vector2;
-        using worse::math::Vector3;
-        using worse::math::Vector4;
+        using Worse::math::Vector2;
+        using Worse::math::Vector3;
+        using Worse::math::Vector4;
 
         vertices.clear();
         indices.clear();
@@ -540,4 +540,4 @@ namespace worse::geometry
         }
     }
 
-} // namespace worse::geometry
+} // namespace Worse::geometry

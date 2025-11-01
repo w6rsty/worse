@@ -4,7 +4,7 @@
 
 #include <mutex>
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -155,4 +155,4 @@ namespace worse
         return cmdList.get();
     }
 
-} // namespace worse
+} // namespace Worse

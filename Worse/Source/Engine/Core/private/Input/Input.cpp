@@ -4,7 +4,7 @@
 
 #include "SDL3/SDL_events.h"
 
-namespace worse
+namespace Worse
 {
     void Input::initialize()
     {
@@ -54,4 +54,4 @@ namespace worse
         return !isKey(key) && s_keymapLastFrame[static_cast<usize>(key)];
     }
 
-} // namespace worse
+} // namespace Worse

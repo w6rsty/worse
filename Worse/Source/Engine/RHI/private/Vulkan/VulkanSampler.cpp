@@ -2,7 +2,7 @@
 
 #include <limits>
 
-namespace worse
+namespace Worse
 {
 
     void RHISampler::nativeCreate()
@@ -30,4 +30,4 @@ namespace worse
         m_handle = RHINativeHandle{sampler, RHINativeHandleType::Sampler};
     }
 
-} // namespace worse
+} // namespace Worse

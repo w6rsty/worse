@@ -9,7 +9,7 @@
 #include <concepts>
 #include <memory>
 
-namespace worse
+namespace Worse
 {
 
     class Mesh;
@@ -177,4 +177,4 @@ namespace worse
     );
     // clang-format on
 
-} // namespace worse
+} // namespace Worse
