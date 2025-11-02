@@ -12,9 +12,9 @@ namespace Worse
     {
         std::vector<StandardMaterialGPU> materialGPUs;
 
-        std::optional<usize> getTextureIndex(
+        std::optional<Size> getTextureIndex(
             std::optional<AssetHandle> const& handle,
-            std::unordered_map<AssetHandle, usize> const& textureIndexMap)
+            std::unordered_map<AssetHandle, Size> const& textureIndexMap)
         {
             if (handle.has_value())
             {
@@ -49,13 +49,13 @@ namespace Worse
         assetServer->loadTexture();
 
         // generate material indices map and descritpor write data
-        std::unordered_map<AssetHandle, usize> textureIndexMap;
+        std::unordered_map<AssetHandle, Size> textureIndexMap;
         {
             textureWrites->clear();
             textureWrites->data().reserve(assetServer->getLoadedTextureCount());
 
             // skip renderer builtin textures
-            usize index = static_cast<usize>(RendererTexture::Max);
+            Size index = static_cast<Size>(RendererTexture::Max);
             assetServer->eachTexture(
                 [&index, &textureWrites, &textureIndexMap](AssetHandle handle, RHITexture* texture)
                 {
@@ -73,7 +73,7 @@ namespace Worse
         materialGPUs.resize(materials->size() + assetServer->getMaterialCount());
 
         // Convert each CPU material to GPU format, maintaining index correspondence
-        for (usize i = 0; i < materials->size(); ++i)
+        for (Size i = 0; i < materials->size(); ++i)
         {
             StandardMaterial* materialECS = materials.get(i);
 
@@ -118,13 +118,13 @@ namespace Worse
             }
         }
 
-        u32 assetServerMaterialIndex = materials->size();
+        UInt assetServerMaterialIndex = materials->size();
         assetServer->eachMaterial(
             [&](AssetHandle handle, MaterialAssetSlot& slot)
             {
                 StandardMaterial const& material = slot.material;
 
-                usize index               = assetServerMaterialIndex++;
+                Size index               = assetServerMaterialIndex++;
                 StandardMaterialGPU& data = materialGPUs[index];
                 data.flags                = 0;
 

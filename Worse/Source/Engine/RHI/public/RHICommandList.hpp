@@ -1,5 +1,5 @@
 #pragma once
-#include "Math/Rectangle.hpp"
+#include "math/rectangle.hpp"
 #include "RHIDefinitions.hpp"
 #include "RHIResource.hpp"
 #include "RHIViewport.hpp"
@@ -23,13 +23,13 @@ namespace Worse
     struct ImageBarrierInfo
     {
         void* image              = nullptr;
-        u32 aspectMask           = 0;
-        u32 mipIndex             = 0;
-        u32 mipRange             = 0;
-        u32 arrayLength          = 0;
+        UInt aspectMask          = 0;
+        UInt mipIndex            = 0;
+        UInt mipRange            = 0;
+        UInt arrayLength         = 0;
         RHIImageLayout layoutOld = RHIImageLayout::Max;
         RHIImageLayout layoutNew = RHIImageLayout::Max;
-        bool isDepth             = false;
+        Bool isDepth             = false;
     };
 
     class RHICommandList : public RHIResource
@@ -50,19 +50,19 @@ namespace Worse
                             math::Rectangle const& scissor);
         void imguiPassEnd(void* drawData);
 
-        void draw(u32 const vertexCount, u32 const vertexOffset = 0);
-        void drawIndexed(u32 const indexCount, u32 const indexOffset = 0,
-                         u32 const vertexOffset  = 0,
-                         u32 const instanceIndex = 0,
-                         u32 const instanceCount = 1);
+        void draw(UInt const vertexCount, UInt const vertexOffset = 0);
+        void drawIndexed(UInt const indexCount, UInt const indexOffset = 0,
+                         UInt const vertexOffset  = 0,
+                         UInt const instanceIndex = 0,
+                         UInt const instanceCount = 1);
 
-        void dispatch(u32 const x, u32 const y, u32 const z = 1);
+        void dispatch(UInt const x, UInt const y, UInt const z = 1);
 
         // bind pipeline specific resources and begin render pass make sure pso
         // has been called `finalize()`
         void setPipelineState(RHIPipelineState const& pso);
         // must call this at the end of the render operation if only has one pso
-        // in reneder loop, otherwise the activation of next pass will fail
+        // in render loop, otherwise the activation of next pass will fail
         void clearPipelineState();
 
         // dynamic state
@@ -73,10 +73,10 @@ namespace Worse
             RHINativeHandle const image,
             RHIFormat const format,
             RHIImageLayout const layoutNew,
-            RHIPipelineStageFlags const srcStage = RHIPipelineStageFlagBits::AllCommands,
-            RHIAccessFlags const srcAccess       = RHIAccessFlagBits::MemoryRead,
-            RHIPipelineStageFlags const dstStage = RHIPipelineStageFlagBits::AllCommands,
-            RHIAccessFlags const dstAccess       = RHIAccessFlagBits::MemoryWrite | RHIAccessFlagBits::MemoryWrite);
+            RHIPipelineStage::Flags const srcStage = RHIPipelineStage::FlagBits::AllCommands,
+            RHIAccessUsage::Flags const srcAccess  = RHIAccessUsage::FlagBits::MemoryRead,
+            RHIPipelineStage::Flags const dstStage = RHIPipelineStage::FlagBits::AllCommands,
+            RHIAccessUsage::Flags const dstAccess  = RHIAccessUsage::FlagBits::MemoryWrite | RHIAccessUsage::FlagBits::MemoryWrite);
 
         void blit(RHITexture const* source, RHITexture const* destination);
         void blit(RHITexture const* source, RHISwapchain const* destination);
@@ -84,12 +84,12 @@ namespace Worse
         void copy(RHITexture const* source, RHITexture const* destination);
         void copy(RHITexture const* source, RHISwapchain const* destination);
 
-        void pushConstants(std::span<byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
+        void pushConstants(std::span<Byte, RHIConfig::MAX_PUSH_CONSTANT_SIZE> data);
 
         void setBufferVertex(RHIBuffer* buffer);
         void setBufferIndex(RHIBuffer* buffer);
 
-        void updateBuffer(RHIBuffer* buffer, u32 const offset, u32 const size, void const* data);
+        void updateBuffer(RHIBuffer* buffer, UInt const offset, UInt const size, void const* data);
 
         // get global set 0 and bind
         void bindGlobalSet();
@@ -112,7 +112,7 @@ namespace Worse
         std::shared_ptr<RHISyncPrimitive> m_renderingCompleteTimelineSemaphore;
 
         // for bind global descriptor set once
-        bool m_isFirstGraphicsPass = true;
+        Bool m_isFirstGraphicsPass = true;
         RHIPipelineState m_pso;
         RHIPipeline* m_pipeline = nullptr;
 
@@ -120,7 +120,7 @@ namespace Worse
         RHIQueue* m_submissionQueue              = nullptr;
         RHINativeHandle m_handle; // VkCommandBuffer
 
-        bool m_isRenderPassActive = false;
+        Bool m_isRenderPassActive = false;
     };
 
 } // namespace Worse

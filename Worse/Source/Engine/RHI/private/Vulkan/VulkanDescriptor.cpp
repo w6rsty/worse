@@ -1,4 +1,4 @@
-#include "Math/Hash.hpp"
+#include "math/hash.hpp"
 #include "Log.hpp"
 #include "RHIDevice.hpp"
 #include "RHIResource.hpp"
@@ -14,7 +14,7 @@ namespace Worse
 
     RHINativeHandle RHIDescriptorAllocator::createPool()
     {
-        u32 count = m_expandRatio * RHIConfig::MIN_DESCRIPTORS;
+        UInt count = m_expandRatio * RHIConfig::MIN_DESCRIPTORS;
         if (count < RHIConfig::MAX_DESCRIPTORS)
         {
             m_expandRatio *= 2;
@@ -33,7 +33,7 @@ namespace Worse
         infoPool.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         infoPool.flags         = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
         infoPool.maxSets       = count;
-        infoPool.poolSizeCount = static_cast<u32>(poolSizes.size());
+        infoPool.poolSizeCount = static_cast<UInt>(poolSizes.size());
         infoPool.pPoolSizes    = poolSizes.data();
         
         VkDescriptorPool vkPool = VK_NULL_HANDLE;
@@ -132,7 +132,7 @@ namespace Worse
         return allocateInternal(layout, nullptr);
     }
 
-    RHINativeHandle RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout, u32 count)
+    RHINativeHandle RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout, UInt count)
     {
         WS_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
         // clang-format off
@@ -276,7 +276,7 @@ namespace Worse
                 write.dstSet = m_set.asValue<VkDescriptorSet>();
             }
 
-            vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(m_staticWrites.size()), m_staticWrites.data(), 0, nullptr);
+            vkUpdateDescriptorSets(RHIContext::device, static_cast<UInt>(m_staticWrites.size()), m_staticWrites.data(), 0, nullptr);
         }
     }
 
@@ -293,7 +293,7 @@ namespace Worse
 
         // <startIndex, length>
         std::vector<std::pair<uint32_t, uint32_t>> ranges;
-        for (usize i = 0; i < updates.size(); ++i)
+        for (Size i = 0; i < updates.size(); ++i)
         {
             uint32_t rangeStart = updates[i].index;
             uint32_t rangeCount = 1;
@@ -313,7 +313,7 @@ namespace Worse
 
         uint32_t imageInfoIndex = 0;
         uint32_t updatesIndex   = 0; // Track position in the original updates array
-        for (usize i = 0; i < ranges.size(); ++i)
+        for (Size i = 0; i < ranges.size(); ++i)
         {
             // clang-format off
             auto const& range         = ranges[i];
@@ -350,7 +350,7 @@ namespace Worse
             // clang-format on
         }
 
-        vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(writes.size()), writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(RHIContext::device, static_cast<UInt>(writes.size()), writes.data(), 0, nullptr);
     }
 
     VulkanSpecificSet::VulkanSpecificSet(RHIDescriptorAllocator* allocator)
@@ -370,12 +370,12 @@ namespace Worse
         // collect ordered set 1 descriptors
         std::vector<RHIDescriptor> descriptors = pso.collectDescriptors();
 
-        u64 hash = 0;
+        ULong hash = 0;
         for (RHIDescriptor const& descriptor : descriptors)
         {
             // clang-format off
-            hash = math::hashCombine(hash, static_cast<u64>(descriptor.slot));
-            hash = math::hashCombine(hash, static_cast<u64>(descriptor.stageFlags));
+            hash = math::hashCombine(hash, static_cast<ULong>(descriptor.slot));
+            hash = math::hashCombine(hash, static_cast<ULong>(descriptor.stageFlags));
             // clang-format on
         }
 
@@ -390,7 +390,7 @@ namespace Worse
         return layout.get();
     }
 
-    RHIDescriptorSetLayout* VulkanSpecificSet::getDescriptorSetLayout(u64 hash)
+    RHIDescriptorSetLayout* VulkanSpecificSet::getDescriptorSetLayout(ULong hash)
     {
         auto it = m_descriptorSetLayouts.find(hash);
         if (it != m_descriptorSetLayouts.end())
@@ -401,7 +401,7 @@ namespace Worse
         return nullptr;
     }
 
-    RHINativeHandle VulkanSpecificSet::getDescriptorSet(u64 hash)
+    RHINativeHandle VulkanSpecificSet::getDescriptorSet(ULong hash)
     {
         auto it = m_descriptorSets.find(hash);
         if (it != m_descriptorSets.end())

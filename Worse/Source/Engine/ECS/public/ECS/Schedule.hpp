@@ -124,7 +124,7 @@ namespace Worse::ecs
         }
 
         template <typename StageLabel>
-        bool removeStage()
+        Bool removeStage()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<StageLabel, CoreStage::Update> ||
@@ -238,19 +238,19 @@ namespace Worse::ecs
             return *this;
         }
 
-        bool hasStage(std::type_index const& label) const
+        Bool hasStage(std::type_index const& label) const
         {
             return m_stages.count(label) > 0;
         }
 
         template <typename StageLabel>
-        bool hasStage() const
+        Bool hasStage() const
         {
             std::type_index const label(typeid(StageLabel));
             return hasStage(label);
         }
 
-        usize getStageCount() const
+        Size getStageCount() const
         {
             return m_stages.size();
         }

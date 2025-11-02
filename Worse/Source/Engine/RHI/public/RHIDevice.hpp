@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 #include "RHIResource.hpp"
 #include "RHIDescriptor.hpp"
 
@@ -8,7 +8,7 @@
 namespace Worse
 {
 
-    class RHIDevice : public NonCopyable, public NonMovable
+    class RHIDevice
     {
     public:
         static void initialize();
@@ -24,7 +24,7 @@ namespace Worse
 
         // wait graphics and compute queues
         static void queueWaitAll();
-        static u32 getQueueIndex(RHIQueueType const type);
+        static UInt getQueueIndex(RHIQueueType const type);
         static RHIQueue* getQueue(RHIQueueType const type);
         static RHINativeHandle getQueueHandle(RHIQueueType const type);
 
@@ -44,11 +44,11 @@ namespace Worse
         // used by RHIPipelinePool to create pipeline layout
         static RHIDescriptorSetLayout*
         getSpecificDescriptorSetLayout(RHIPipelineState const& pso);
-        static RHINativeHandle getSpecificDescriptorSet(u64 descriptorHash);
+        static RHINativeHandle getSpecificDescriptorSet(ULong descriptorHash);
         static void resetSpecificDescriptorSets();
 
-        static RHINativeHandle createImGuiPool(u32 descriptorCount = 512,
-                                               u32 maxSets         = 512);
+        static RHINativeHandle createImGuiPool(UInt descriptorCount = 512,
+                                               UInt maxSets         = 512);
 
         // get descriptor set layout from pool or create a new one
         static RHIPipeline* getPipeline(RHIPipelineState const& pso);
@@ -59,8 +59,8 @@ namespace Worse
 
         static void memoryTextureCreate(RHITexture* texture);
         static void memoryTextureDestroy(RHINativeHandle handle);
-        static RHINativeHandle memoryBufferCreate(u32 size, u32 bufferUsage,
-                                                  u32 memoryProperty,
+        static RHINativeHandle memoryBufferCreate(UInt size, UInt bufferUsage,
+                                                  UInt memoryProperty,
                                                   void const* data,
                                                   std::string_view name);
         static void memoryBufferDestroy(RHINativeHandle handle);
@@ -81,7 +81,6 @@ namespace Worse
         static RHICommandList* cmdImmediateBegin(RHIQueueType const type);
         static void cmdImmediateSubmit(RHICommandList* cmdList);
 
-        static void setResourceName(RHINativeHandle const& resource,
-                                    std::string_view name);
+        static void setResourceName(RHINativeHandle const& resource, std::string_view name);
     };
 }; // namespace Worse

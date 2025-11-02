@@ -54,13 +54,13 @@ namespace Worse::ecs
         template <typename>
         struct IsCommands
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <>
         struct IsCommands<Commands>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
         inline Commands constructCommands(Registry& registry)
@@ -75,13 +75,13 @@ namespace Worse::ecs
         template <typename>
         struct IsQueryView
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <typename... Components>
         struct IsQueryView<QueryView<Components...>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
         template <typename TypeList>
@@ -111,13 +111,13 @@ namespace Worse::ecs
         template <typename>
         struct IsEventReader
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <typename Event>
         struct IsEventReader<std::shared_ptr<EventReader<Event>>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
         template <typename T>
@@ -143,13 +143,13 @@ namespace Worse::ecs
         template <typename>
         struct IsResource
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <typename Type>
         struct IsResource<Resource<Type>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
         template <typename T>
@@ -175,13 +175,13 @@ namespace Worse::ecs
         template <typename>
         struct IsResourceArray
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <typename Type>
         struct IsResourceArray<ResourceArray<Type>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
         template <typename T>
@@ -244,7 +244,7 @@ namespace Worse::ecs
         /**
          * @brief Assign ECS data for given parameters
          */
-        template <auto Func, typename ParamList, usize... Idx>
+        template <auto Func, typename ParamList, Size... Idx>
         static constexpr void
         invokeWithResolvedParameters(Registry& registry,
                                      std::index_sequence<Idx...>) noexcept

@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
 #include <atomic>
 #include <array>
@@ -11,8 +11,7 @@
 
 namespace Worse
 {
-
-    enum class Level : u8
+    enum class Level : UByte
     {
         Trace,
         Debug,
@@ -42,8 +41,8 @@ namespace Worse
     {
         std::chrono::system_clock::time_point time;
         Level level;
-        char target[32]; // module / subsystem name
-        char text[2048]; // formatted message - 增加大小以适应长验证层消息
+        Char target[32]; // module / subsystem name
+        Char text[2048]; // formatted message
         std::thread::id tid;
     };
 
@@ -51,26 +50,26 @@ namespace Worse
     class RingBuffer
     {
     public:
-        static constexpr usize k_size = 1024;
-        static constexpr usize k_mask = k_size - 1;
+        static constexpr Size k_size = 1024;
+        static constexpr Size k_mask = k_size - 1;
 
-        bool push(Message const& msg) noexcept;
-        bool pop(Message& out) noexcept;
-        [[nodiscard]] usize size() const noexcept;
-        [[nodiscard]] bool empty() const noexcept;
+        Bool push(Message const& msg) noexcept;
+        Bool pop(Message& out) noexcept;
+        [[nodiscard]] Size size() const noexcept;
+        [[nodiscard]] Bool empty() const noexcept;
 
     private:
         alignas(64) std::array<Message, k_size> m_buffer{};
-        alignas(64) std::array<std::atomic<bool>, k_size> m_ready{};
-        std::atomic<uint64_t> m_head{0};
-        std::atomic<uint64_t> m_tail{0};
+        alignas(64) std::array<std::atomic<Bool>, k_size> m_ready{};
+        std::atomic<ULong> m_head{0};
+        std::atomic<ULong> m_tail{0};
     };
 
     class Logger
     {
         Logger();
         ~Logger();
-        static void formatOutput(Message const& msg, char* line, usize size);
+        static void formatOutput(Message const& msg, char* line, Size size);
 
     public:
         static void initialize();
@@ -98,12 +97,12 @@ namespace Worse
             Message msg;
             msg.time         = std::chrono::system_clock::now();
             msg.level        = L;
-            usize target_len = std::min(strlen(target), sizeof(msg.target) - 1);
+            Size target_len = std::min(strlen(target), sizeof(msg.target) - 1);
             memcpy(msg.target, target, target_len);
             msg.target[target_len] = '\0';
             auto res               = std::format_to_n(
                 msg.text,
-                sizeof(msg.text) - 4, // 保留4个字符以便在需要时添加省略号
+                sizeof(msg.text) - 4, // for ...\n
                 fmt,
                 std::forward<Args>(args)...);
 
@@ -131,7 +130,7 @@ namespace Worse
         std::counting_semaphore<RingBuffer::k_mask> m_messageAvailableSem{0};
         std::binary_semaphore m_workerExitSem{0};
         std::thread m_worker;
-        std::atomic<bool> m_running{true};
+        std::atomic<Bool> m_running{true};
     };
 
 } // namespace Worse

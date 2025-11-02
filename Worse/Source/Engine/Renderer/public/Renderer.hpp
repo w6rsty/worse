@@ -1,5 +1,6 @@
 #pragma once
-#include "Math/Math.hpp"
+#include "base_type.hpp"
+#include "math/math.hpp"
 #include "Prefab.hpp"
 #include "Geometry/GeometryGeneration.hpp"
 #include "RendererDefinitions.hpp"
@@ -35,7 +36,7 @@ namespace Worse
 
         static void writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites);
 
-        static void setViewport(f32 const width, f32 const height);
+        static void setViewport(Float const width, Float const height);
         static RHIViewport const& getViewport();
 
         static RHIFormat getSwapchainFormat();
@@ -50,10 +51,10 @@ namespace Worse
         static Mesh* getStandardMesh(geometry::GeometryType const type);
         static RHIBuffer* getMaterialBuffer();
 
-        static math::Vector2 getResolutionRender();
-        static math::Vector2 getResolutionOutput();
+        static Vector2 getResolutionRender();
+        static Vector2 getResolutionOutput();
 
-        static void setPushParameters(f32 a, f32 b);
+        static void setPushParameters(Float a, Float b);
 
     private:
         static void updateBuffers(RHICommandList* cmdList,

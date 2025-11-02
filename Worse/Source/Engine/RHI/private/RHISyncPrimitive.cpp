@@ -2,7 +2,7 @@
 
 namespace Worse
 {
-    u64 RHISyncPrimitive::getNextSignalValue()
+    ULong RHISyncPrimitive::getNextSignalValue()
     {
         return ++m_value;
     }

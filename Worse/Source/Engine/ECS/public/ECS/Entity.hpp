@@ -1,4 +1,5 @@
 #pragma once
+#include "base_type.hpp"
 #include <limits>
 #include <cstdint>
 
@@ -7,9 +8,9 @@ namespace Worse::ecs
 
     struct Entity
     {
-        using ValueType   = u64;
-        using EntityType  = u64;
-        using VersionType = u32;
+        using ValueType   = ULong;
+        using EntityType  = ULong;
+        using VersionType = UInt;
 
         ValueType value;
 
@@ -34,9 +35,9 @@ namespace Worse::ecs
         EntityType toEntity() const { return value & ENTITY_MASK; }
         VersionType toVersion() const { return static_cast<VersionType>(value >> VERSION_SHIFT); }
         
-        bool operator==(Entity const& other) const { return value == other.value; }
-        bool operator!=(Entity const& other) const { return !(*this == other); }
-        bool operator<(Entity const& other) const { return value < other.value; }
+        Bool operator==(Entity const& other) const { return value == other.value; }
+        Bool operator!=(Entity const& other) const { return !(*this == other); }
+        Bool operator<(Entity const& other) const { return value < other.value; }
 
         static Entity null() { return Entity(std::numeric_limits<ValueType>::max()); }
         // clang-format on

@@ -8,7 +8,7 @@ namespace Worse
     {
         WS_ASSERT(m_state == RHICommandListState::Submitted);
 
-        u64 const timeoutNs = 60'000'000'000; // 60s
+        ULong const timeoutNs = 60'000'000'000; // 60s
         m_renderingCompleteTimelineSemaphore->wait(timeoutNs);
         m_state = RHICommandListState::Idle;
     }

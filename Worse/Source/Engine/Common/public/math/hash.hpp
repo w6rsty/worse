@@ -1,6 +1,6 @@
 #pragma once
-#include "Types.hpp"
-#include <cstdint>
+#include "base_type.hpp"
+
 #include <concepts>
 
 namespace Worse::math
@@ -8,11 +8,11 @@ namespace Worse::math
 
     template <typename T>
     concept Hashable = requires(T a) {
-        { a.hash() } -> std::convertible_to<u64>;
+        { a.hash() } -> std::convertible_to<ULong>;
     } || requires(T a) {
-        { hash(a) } -> std::convertible_to<u64>;
+        { hash(a) } -> std::convertible_to<ULong>;
     } || requires(T a) {
-        { std::hash<T>{}(a) } -> std::convertible_to<u64>;
+        { std::hash<T>{}(a) } -> std::convertible_to<ULong>;
     };
 
     class Hash
@@ -21,30 +21,31 @@ namespace Worse::math
         Hash() = default;
 
         template <Hashable T>
-        constexpr explicit Hash(T const& value) : m_hash(value.hash())
+        constexpr explicit Hash(T const& value)
+            : m_hash(value.hash())
         {
         }
 
-        constexpr bool operator==(Hash const& other) const
+        constexpr Bool operator==(Hash const& other) const
         {
             return m_hash == other.m_hash;
         }
 
-        constexpr bool operator!=(Hash const& other) const
+        constexpr Bool operator!=(Hash const& other) const
         {
             return m_hash != other.m_hash;
         }
 
-        constexpr u64 getValue() const
+        constexpr ULong getValue() const
         {
             return m_hash;
         }
 
     private:
-        u64 m_hash = 0;
+        ULong m_hash = 0;
     };
 
-    static constexpr u64 hashCombine(u64 seed, u64 x)
+    static constexpr ULong hashCombine(ULong seed, ULong x)
     {
         return seed ^ (x + 0x9e3779b9 + (seed << 6) + (seed >> 2));
     }

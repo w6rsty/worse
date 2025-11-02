@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
 #include <utility>
 #include <vector>
@@ -49,7 +49,7 @@ namespace Worse::ecs
             return m_ptr;
         }
 
-        operator bool() const
+        operator Bool() const
         {
             return m_ptr != nullptr;
         }
@@ -71,25 +71,25 @@ namespace Worse::ecs
         ResourceArrayWrapper() = default;
 
         template <typename... Args>
-        usize add(Args&&... args)
+        Size add(Args&&... args)
         {
             resources.emplace_back(std::forward<Args>(args)...);
             return resources.size() - 1;
         }
 
-        usize add(T&& resource)
+        Size add(T&& resource)
         {
             resources.push_back(std::move(resource));
             return resources.size() - 1;
         }
 
-        usize add(T const& resource)
+        Size add(T const& resource)
         {
             resources.push_back(resource);
             return resources.size() - 1;
         }
 
-        bool remove(usize const index)
+        Bool remove(Size const index)
         {
             if (index >= resources.size())
             {
@@ -99,7 +99,7 @@ namespace Worse::ecs
             return true;
         }
 
-        T const* get(usize const index) const
+        T const* get(Size const index) const
         {
             if (index >= resources.size())
             {
@@ -108,7 +108,7 @@ namespace Worse::ecs
             return &resources[index];
         }
 
-        T* get(usize const index)
+        T* get(Size const index)
         {
             if (index >= resources.size())
             {
@@ -117,12 +117,12 @@ namespace Worse::ecs
             return &resources[index];
         }
 
-        usize size() const
+        Size size() const
         {
             return resources.size();
         }
 
-        bool empty() const
+        Bool empty() const
         {
             return resources.empty();
         }
@@ -155,42 +155,42 @@ namespace Worse::ecs
         }
 
         template <typename... Args>
-        usize add(Args&&... args)
+        Size add(Args&&... args)
         {
             return m_ptr ? m_ptr->add(std::forward<Args>(args)...) : 0;
         }
 
-        usize add(T&& resource)
+        Size add(T&& resource)
         {
             return m_ptr ? m_ptr->add(std::move(resource)) : 0;
         }
 
-        usize add(T const& resource)
+        Size add(T const& resource)
         {
             return m_ptr ? m_ptr->add(resource) : 0;
         }
 
-        bool remove(usize const index)
+        Bool remove(Size const index)
         {
             return m_ptr ? m_ptr->remove(index) : false;
         }
 
-        T const* get(usize const index) const
+        T const* get(Size const index) const
         {
             return m_ptr ? m_ptr->get(index) : nullptr;
         }
 
-        T* get(usize const index)
+        T* get(Size const index)
         {
             return m_ptr ? m_ptr->get(index) : nullptr;
         }
 
-        usize size() const
+        Size size() const
         {
             return m_ptr ? m_ptr->size() : 0;
         }
 
-        bool empty() const
+        Bool empty() const
         {
             return m_ptr ? m_ptr->empty() : true;
         }
@@ -218,7 +218,7 @@ namespace Worse::ecs
             return m_ptr;
         }
 
-        operator bool() const
+        operator Bool() const
         {
             return m_ptr != nullptr;
         }

@@ -39,7 +39,7 @@ namespace Worse
 
             // Now size matches the format (always 4 channels)
             textureData.size           = width * height * desiredChannels;
-            textureData.deferredCopyFn = [data, size = textureData.size](byte* dst)
+            textureData.deferredCopyFn = [data, size = textureData.size](Byte* dst)
             {
                 std::memcpy(dst, data, size);
                 stbi_image_free(data);
@@ -49,7 +49,7 @@ namespace Worse
         }
 
         std::optional<TextureLoadView>
-        loadFromMemoryCommon(std::span<byte> data)
+        loadFromMemoryCommon(std::span<Byte> data)
         {
             if (data.empty())
             {
@@ -85,7 +85,7 @@ namespace Worse
 
             // Now size matches the format (always 4 channels)
             textureData.size           = width * height * desiredChannels;
-            textureData.deferredCopyFn = [imgData, size = textureData.size](byte* dst)
+            textureData.deferredCopyFn = [imgData, size = textureData.size](Byte* dst)
             {
                 std::memcpy(dst, imgData, size);
                 stbi_image_free(imgData);
@@ -97,27 +97,23 @@ namespace Worse
 
     std::optional<TextureLoadView> TextureImporter::fromFile(std::filesystem::path const& path)
     {
-        // 传入空路径是有意提前退出
         if (path.empty())
         {
             return std::nullopt;
         }
 
-        // 检查文件是否存在
         if (!FileSystem::isFileExists(path))
         {
             WS_LOG_WARN("Asset", "Failed to load texture. File {} not found", path.string());
             return {};
         }
 
-        // 检查文件格式是否支持
         if (!FileSystem::isSupportedImage(path))
         {
             WS_LOG_ERROR("Asset", "Failed to load texture. Unsupported format");
             return {};
         }
 
-        // 尝试加载纹理数据
         if (std::optional<TextureLoadView> textureData = std::move(loadFromFileCommon(path)))
         {
             WS_LOG_INFO(
@@ -136,7 +132,7 @@ namespace Worse
         return std::nullopt;
     }
 
-    std::optional<TextureLoadView> TextureImporter::fromMemory(std::span<byte> data, std::string const& name)
+    std::optional<TextureLoadView> TextureImporter::fromMemory(std::span<Byte> data, std::string const& name)
     {
         if (std::optional<TextureLoadView> textureData = std::move(loadFromMemoryCommon(data)))
         {
@@ -161,7 +157,6 @@ namespace Worse
                                                             std::optional<TextureLoadView> b,
                                                             std::optional<TextureLoadView> a)
     {
-        // 至少一个通道必须存在
         if (!r && !g && !b && !a)
         {
             return std::nullopt;
@@ -171,7 +166,7 @@ namespace Worse
                                           : b   ? *b
                                                 : *a;
 
-        auto checkMatch = [&](const std::optional<TextureLoadView>& opt) -> bool
+        auto checkMatch = [&](const std::optional<TextureLoadView>& opt) -> Bool
         {
             if (!opt)
             {
@@ -193,14 +188,13 @@ namespace Worse
         out.mipLevels = 1;
         out.type      = ref.type;
         out.format    = RHIFormat::R8G8B8A8Unorm;
-        out.size      = static_cast<usize>(out.width) * out.height * 4;
+        out.size      = static_cast<Size>(out.width) * out.height * 4;
 
-        out.deferredCopyFn = [r, g, b, a, out](byte* dst)
+        out.deferredCopyFn = [r, g, b, a, out](Byte* dst)
         {
-            // 中间缓冲区
-            std::vector<byte> bufR, bufG, bufB, bufA;
+            std::vector<Byte> bufR, bufG, bufB, bufA;
 
-            auto loadIf = [&](std::optional<TextureLoadView> const& opt, std::vector<byte>& buf)
+            auto loadIf = [&](std::optional<TextureLoadView> const& opt, std::vector<Byte>& buf)
             {
                 if (!opt)
                 {
@@ -215,13 +209,13 @@ namespace Worse
             loadIf(b, bufB);
             loadIf(a, bufA);
 
-            usize pixelCount = static_cast<usize>(out.width) * out.height;
-            for (usize i = 0; i < pixelCount; ++i)
+            Size pixelCount = static_cast<Size>(out.width) * out.height;
+            for (Size i = 0; i < pixelCount; ++i)
             {
-                dst[i * 4 + 0] = r ? bufR[i * 4 + 0] : std::byte{0};
-                dst[i * 4 + 1] = g ? bufG[i * 4 + 0] : std::byte{0};
-                dst[i * 4 + 2] = b ? bufB[i * 4 + 0] : std::byte{0};
-                dst[i * 4 + 3] = a ? bufA[i * 4 + 0] : std::byte{0};
+                dst[i * 4 + 0] = r ? bufR[i * 4 + 0] : Byte{0};
+                dst[i * 4 + 1] = g ? bufG[i * 4 + 0] : Byte{0};
+                dst[i * 4 + 2] = b ? bufB[i * 4 + 0] : Byte{0};
+                dst[i * 4 + 3] = a ? bufA[i * 4 + 0] : Byte{0};
             }
         };
 

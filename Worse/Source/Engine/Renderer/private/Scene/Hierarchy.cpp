@@ -3,7 +3,7 @@
 namespace Worse
 {
 
-    void Node::refreshTransform(math::Matrix4 const& parentTransform)
+    void Node::refreshTransform(Matrix4 const& parentTransform)
     {
         worldTransform = parentTransform * localTransform;
 

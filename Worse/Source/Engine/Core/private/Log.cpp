@@ -3,7 +3,7 @@
 namespace Worse
 {
 
-    bool RingBuffer::push(Message const& msg) noexcept
+    Bool RingBuffer::push(Message const& msg) noexcept
     {
         auto const head = m_head.fetch_add(1, std::memory_order_acq_rel);
         if (head - m_tail.load(std::memory_order_acquire) >= k_size)
@@ -17,7 +17,7 @@ namespace Worse
         return true;
     }
 
-    bool RingBuffer::pop(Message& out) noexcept
+    Bool RingBuffer::pop(Message& out) noexcept
     {
         auto const tail = m_tail.load(std::memory_order_relaxed);
         if (!m_ready[tail & (k_mask)].load(std::memory_order_acquire))
@@ -30,13 +30,13 @@ namespace Worse
         return true;
     }
 
-    usize RingBuffer::size() const noexcept
+    Size RingBuffer::size() const noexcept
     {
         return m_head.load(std::memory_order_acquire) -
                m_tail.load(std::memory_order_acquire);
     }
 
-    bool RingBuffer::empty() const noexcept
+    Bool RingBuffer::empty() const noexcept
     {
         return size() == 0;
     }
@@ -84,7 +84,7 @@ namespace Worse
         waitShutdown();
     }
 
-    void Logger::formatOutput(Message const& msg, char* line, usize size)
+    void Logger::formatOutput(Message const& msg, char* line, Size size)
     {
         auto t  = std::chrono::system_clock::to_time_t(msg.time);
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(

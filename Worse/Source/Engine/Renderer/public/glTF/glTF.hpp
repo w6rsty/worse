@@ -15,8 +15,8 @@ namespace Worse
 
     struct glTFSurface
     {
-        u32 startIndex;
-        u32 indexCount;
+        UInt startIndex;
+        UInt indexCount;
         AssetHandle material;
     };
 
@@ -32,14 +32,14 @@ namespace Worse
     public:
         std::shared_ptr<glTFMesh> mesh;
 
-        void draw(math::Matrix4 const& topMat, DrawContext& ctx) override;
+        void draw(Matrix4 const& topMat, DrawContext& ctx) override;
     };
 
     struct glTFModel
     {
-        // 场景中顶级节点
+        // Top nodes
         std::vector<std::shared_ptr<Node>> topNodes;
-        // 场景中所有节点
+        // All nodes
         std::unordered_map<std::string, std::shared_ptr<glTFMeshNode>> nodes;
         std::unordered_map<std::string, std::shared_ptr<glTFMesh>> meshes;
         std::unordered_map<std::string, AssetHandle> textures;
@@ -67,7 +67,7 @@ namespace Worse
     // hack
     inline void drawModel(
         std::string const& modelName,
-        math::Matrix4 const& xform,
+        Matrix4 const& xform,
         glTFManager& gltfManager,
         DrawContext& ctx)
     {

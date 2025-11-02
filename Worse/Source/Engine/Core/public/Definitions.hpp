@@ -11,7 +11,7 @@ namespace Worse
     if (!(expression))                                 \
     {                                                  \
         WS_LOG_ERROR("Assertion failed", #expression); \
-        ::worse::Logger::instance()->waitShutdown();   \
+        ::Worse::Logger::instance()->waitShutdown();   \
         assert(expression);                            \
     }
 
@@ -20,7 +20,7 @@ namespace Worse
     {                                                  \
         WS_LOG_ERROR("Assertion failed", #expression); \
         WS_LOG_ERROR("Message", message);              \
-        ::worse::Logger::instance()->waitShutdown();   \
+        ::Worse::Logger::instance()->waitShutdown();   \
         assert(expression && message);                 \
     }
 

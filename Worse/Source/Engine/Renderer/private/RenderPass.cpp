@@ -13,7 +13,7 @@ namespace Worse
         PushConstantData pushConstantData = {};
     }
 
-    void Renderer::setPushParameters(f32 a, f32 b)
+    void Renderer::setPushParameters(Float a, Float b)
     {
         pushConstantData.setPadding(a, b);
     }
@@ -65,7 +65,14 @@ namespace Worse
 
         cmdList->renderPassEnd();
 
-        cmdList->insertBarrier(depthTexture->getImage(), depthTexture->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::AllGraphics, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::AllGraphics, RHIAccessFlagBits::MemoryRead);
+        cmdList->insertBarrier(
+            depthTexture->getImage(),
+            depthTexture->getFormat(),
+            RHIImageLayout::ShaderRead,
+            RHIPipelineStage::FlagBits::AllGraphics,
+            RHIAccessUsage::FlagBits::MemoryWrite,
+            RHIPipelineStage::FlagBits::AllGraphics,
+            RHIAccessUsage::FlagBits::MemoryRead);
     }
 
     void Renderer::passShadowMap(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls)
@@ -88,12 +95,12 @@ namespace Worse
                 .setClearDepth(0.0f) // clear with far value
                 .build());
 
-        static math::Matrix4 lightSpaceMatrix =
+        static Matrix4 lightSpaceMatrix =
             math::projectionOrtho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f) *
             math::lookAt(
-                math::Vector3(-0.3f, -1.0f, -0.5f),
-                math::Vector3(0.0f, 0.0f, 0.0f),
-                math::Vector3(0, 1, 0));
+                Vector3(-0.3f, -1.0f, -0.5f),
+                Vector3(0.0f, 0.0f, 0.0f),
+                Vector3(0, 1, 0));
         pushConstantData.setMatrix(lightSpaceMatrix);
 
         for (Drawcall const& drawcall : drawcalls->solid)
@@ -123,7 +130,14 @@ namespace Worse
 
         cmdList->renderPassEnd();
 
-        cmdList->insertBarrier(depthLight->getImage(), depthLight->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(
+            depthLight->getImage(),
+            depthLight->getFormat(),
+            RHIImageLayout::ShaderRead,
+            RHIPipelineStage::FlagBits::FragmentShader,
+            RHIAccessUsage::FlagBits::ShaderWrite,
+            RHIPipelineStage::FlagBits::ComputeShader,
+            RHIAccessUsage::FlagBits::ShaderSampledRead);
     }
 
     void Renderer::passGBuffer(RHICommandList* cmdList, ecs::Resource<DrawcallStorage> drawcalls, ecs::Resource<AssetServer> assetServer)
@@ -156,7 +170,6 @@ namespace Worse
                 .setClearDepth(2.0f)
                 .build());
 
-        // 材质缓冲
         std::array updates = {
             RHIDescriptorWrite{.reg      = 0, // t0
                                .resource = {Renderer::getMaterialBuffer()},
@@ -164,12 +177,12 @@ namespace Worse
         };
         cmdList->updateSpecificSet(updates);
 
-        static math::Matrix4 lightSpaceMatrix =
+        static Matrix4 lightSpaceMatrix =
             math::projectionOrtho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f) *
             math::lookAt(
-                math::Vector3(-0.3f, -1.0f, -0.5f),
-                math::Vector3(0.0f, 0.0f, 0.0f),
-                math::Vector3(0, 1, 0));
+                Vector3(-0.3f, -1.0f, -0.5f),
+                Vector3(0.0f, 0.0f, 0.0f),
+                Vector3(0, 1, 0));
         pushConstantData.setMatrix(lightSpaceMatrix);
 
         for (Drawcall const& drawcall : drawcalls->solid)
@@ -234,9 +247,30 @@ namespace Worse
 
         cmdList->renderPassEnd();
 
-        cmdList->insertBarrier(gbufferAlbedo->getImage(), gbufferAlbedo->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(gbufferNormal->getImage(), gbufferNormal->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(gbufferMaterial->getImage(), gbufferMaterial->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(
+            gbufferAlbedo->getImage(),
+            gbufferAlbedo->getFormat(),
+            RHIImageLayout::ShaderRead,
+            RHIPipelineStage::FlagBits::FragmentShader,
+            RHIAccessUsage::FlagBits::ShaderWrite,
+            RHIPipelineStage::FlagBits::ComputeShader,
+            RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(
+            gbufferNormal->getImage(),
+            gbufferNormal->getFormat(),
+            RHIImageLayout::ShaderRead,
+            RHIPipelineStage::FlagBits::FragmentShader,
+            RHIAccessUsage::FlagBits::ShaderWrite,
+            RHIPipelineStage::FlagBits::ComputeShader,
+            RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(
+            gbufferMaterial->getImage(),
+            gbufferMaterial->getFormat(),
+            RHIImageLayout::ShaderRead,
+            RHIPipelineStage::FlagBits::FragmentShader,
+            RHIAccessUsage::FlagBits::ShaderWrite,
+            RHIPipelineStage::FlagBits::ComputeShader,
+            RHIAccessUsage::FlagBits::ShaderSampledRead);
     }
 
     void Renderer::passLight(RHICommandList* cmdList)
@@ -248,7 +282,14 @@ namespace Worse
         RHITexture* depthLight      = Renderer::getRenderTarget(RendererTarget::DepthLight);
         RHITexture* scene           = Renderer::getRenderTarget(RendererTarget::SceneHDR);
 
-        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::None, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+        cmdList->insertBarrier(
+            scene->getImage(),
+            scene->getFormat(),
+            RHIImageLayout::General,
+            RHIPipelineStage::FlagBits::TopOfPipe,
+            RHIAccessUsage::FlagBits::Unknown,
+            RHIPipelineStage::FlagBits::ComputeShader,
+            RHIAccessUsage::FlagBits::ShaderStorageWrite);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -279,12 +320,12 @@ namespace Worse
         };
         cmdList->updateSpecificSet(updates);
 
-        // static math::Matrix4 lightSpaceMatrix =
+        // static Matrix4 lightSpaceMatrix =
         //     math::projectionOrtho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f) *
         //     math::lookAt(
-        //         math::Vector3(-0.3f, -1.0f, -0.5f),
-        //         math::Vector3(0.0f, 0.0f, 0.0f),
-        //         math::Vector3(0, 1, 0));
+        //         Vector3(-0.3f, -1.0f, -0.5f),
+        //         Vector3(0.0f, 0.0f, 0.0f),
+        //         Vector3(0, 1, 0));
         // pushConstantData.setMatrix(lightSpaceMatrix);
         // cmdList->pushConstants(pushConstantData.asSpan());
 
@@ -351,8 +392,22 @@ namespace Worse
 
         // Downsample
         // Scene -> Stage0 | x2
-        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(bloomInitial->getImage(), bloomInitial->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+        cmdList->insertBarrier(scene
+                                   ->getImage(),
+                               scene->getFormat(),
+                               RHIImageLayout::ShaderRead,
+                               RHIPipelineStage::FlagBits::FragmentShader,
+                               RHIAccessUsage::FlagBits::ShaderWrite,
+                               RHIPipelineStage::FlagBits::ComputeShader,
+                               RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(
+            bloomInitial->getImage(),
+            bloomInitial->getFormat(),
+            RHIImageLayout::General,
+            RHIPipelineStage::FlagBits::TopOfPipe,
+            RHIAccessUsage::FlagBits::MemoryRead,
+            RHIPipelineStage::FlagBits::ComputeShader,
+            RHIAccessUsage::FlagBits::ShaderStorageWrite);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -382,11 +437,11 @@ namespace Worse
         cmdList->blit(bloomStage2, bloomStage3);
 
         // Upsacle and Additive blend
-        cmdList->insertBarrier(bloomStage0->getImage(), bloomStage0->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::TransferRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(bloomStage1->getImage(), bloomStage1->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::TransferRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(bloomStage2->getImage(), bloomStage2->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::TransferRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(bloomStage3->getImage(), bloomStage3->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::Transfer, RHIAccessFlagBits::TransferWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(bloomFinal->getImage(), bloomFinal->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::None, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+        cmdList->insertBarrier(bloomStage0->getImage(), bloomStage0->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStage::FlagBits::Transfer, RHIAccessUsage::FlagBits::TransferRead, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage1->getImage(), bloomStage1->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStage::FlagBits::Transfer, RHIAccessUsage::FlagBits::TransferRead, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage2->getImage(), bloomStage2->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStage::FlagBits::Transfer, RHIAccessUsage::FlagBits::TransferRead, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomStage3->getImage(), bloomStage3->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStage::FlagBits::Transfer, RHIAccessUsage::FlagBits::TransferWrite, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloomFinal->getImage(), bloomFinal->getFormat(), RHIImageLayout::General, RHIPipelineStage::FlagBits::TopOfPipe, RHIAccessUsage::FlagBits::Unknown, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderStorageWrite);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -422,10 +477,9 @@ namespace Worse
         RHITexture* bloom  = Renderer::getRenderTarget(RendererTarget::BloomFinal);
         RHITexture* screen = Renderer::getRenderTarget(RendererTarget::ScreenHDR);
 
-        // 同步
-        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::FragmentShader, RHIAccessFlagBits::ShaderWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(bloom->getImage(), bloom->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderSampledRead);
-        cmdList->insertBarrier(screen->getImage(), screen->getFormat(), RHIImageLayout::General, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::ComputeShader, RHIAccessFlagBits::ShaderStorageWrite);
+        cmdList->insertBarrier(scene->getImage(), scene->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStage::FlagBits::FragmentShader, RHIAccessUsage::FlagBits::ShaderWrite, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(bloom->getImage(), bloom->getFormat(), RHIImageLayout::ShaderRead, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderStorageWrite, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderSampledRead);
+        cmdList->insertBarrier(screen->getImage(), screen->getFormat(), RHIImageLayout::General, RHIPipelineStage::FlagBits::TopOfPipe, RHIAccessUsage::FlagBits::MemoryRead, RHIPipelineStage::FlagBits::ComputeShader, RHIAccessUsage::FlagBits::ShaderStorageWrite);
 
         cmdList->setPipelineState(
             RHIPipelineStateBuilder()
@@ -457,8 +511,8 @@ namespace Worse
             math::Rectangle{
                 0,
                 0,
-                static_cast<u32>(Renderer::getResolutionOutput().x),
-                static_cast<u32>(Renderer::getResolutionOutput().y)});
+                static_cast<UInt>(Renderer::getResolutionOutput().x),
+                static_cast<UInt>(Renderer::getResolutionOutput().y)});
 
         cmdList->imguiPassEnd(ImGui::GetDrawData());
     }

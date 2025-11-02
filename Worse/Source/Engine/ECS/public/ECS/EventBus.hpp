@@ -52,7 +52,7 @@ namespace Worse::ecs
 
     // Event filter interface
     template <typename T>
-    using EventFilter = std::function<bool(Event<T> const&)>;
+    using EventFilter = std::function<Bool(Event<T> const&)>;
 
     // Enhanced EventReader with filtering and statistics
     template <typename T>
@@ -74,12 +74,12 @@ namespace Worse::ecs
             std::vector<Event<T>> newEvents;
             newEvents.reserve(m_eventQueue->size() - m_cursor);
 
-            for (usize i = m_cursor; i < m_eventQueue->size(); ++i)
+            for (Size i = m_cursor; i < m_eventQueue->size(); ++i)
             {
                 Event<T> const& event = (*m_eventQueue)[i];
 
                 // Apply filters
-                bool passedFilters = true;
+                Bool passedFilters = true;
                 for (EventFilter<T> const& filter : m_filters)
                 {
                     if (!filter(event))
@@ -134,19 +134,19 @@ namespace Worse::ecs
         }
 
         // Get statistics
-        usize getEventsRead() const
+        Size getEventsRead() const
         {
             return m_eventsRead;
         }
-        usize getPendingEvents() const
+        Size getPendingEvents() const
         {
             return m_eventQueue ? (m_eventQueue->size() - m_cursor) : 0;
         }
 
     private:
         std::vector<Event<T>>* m_eventQueue = nullptr;
-        usize m_cursor                      = 0;
-        usize m_eventsRead                  = 0;
+        Size m_cursor                      = 0;
+        Size m_eventsRead                  = 0;
         std::vector<EventFilter<T>> m_filters;
     };
 
@@ -157,8 +157,8 @@ namespace Worse::ecs
         {
             virtual ~IEventChannel()              = default;
             virtual void swapBuffer()             = 0;
-            virtual usize getPendingCount() const = 0;
-            virtual usize getTotalSent() const    = 0;
+            virtual Size getPendingCount() const = 0;
+            virtual Size getTotalSent() const    = 0;
             virtual void cleanupExpiredReaders()  = 0;
         };
 
@@ -169,14 +169,14 @@ namespace Worse::ecs
             std::vector<Event<T>> queues[2];
             std::atomic<int> activeQueueIndex{0};
             std::vector<std::weak_ptr<EventReader<T>>> readers;
-            std::atomic<usize> totalEventsSent{0};
+            std::atomic<Size> totalEventsSent{0};
 
             // Priority queue for immediate dispatch
             // clang-format off
         std::priority_queue<
             Event<T>,
             std::vector<Event<T>>,
-            std::function<bool(Event<T> const&, Event<T> const&)>
+            std::function<Bool(Event<T> const&, Event<T> const&)>
         > immediateQueue{[](Event<T> const& a, Event<T> const& b)
                            {
                                return a.priority < b.priority; // Higher priority first
@@ -219,13 +219,13 @@ namespace Worse::ecs
                 queues[newActive].clear();
             }
 
-            usize getPendingCount() const override
+            Size getPendingCount() const override
             {
                 std::lock_guard<std::mutex> lock(mutex);
                 return queues[activeQueueIndex.load()].size();
             }
 
-            usize getTotalSent() const override
+            Size getTotalSent() const override
             {
                 return totalEventsSent.load();
             }
@@ -360,21 +360,21 @@ namespace Worse::ecs
         // Statistics
         // =========================================================================
         template <typename T>
-        usize getPendingEvents() const
+        Size getPendingEvents() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getPendingCount();
         }
 
         template <typename T>
-        usize getTotalEventsSent() const
+        Size getTotalEventsSent() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getTotalSent();
         }
 
         // get amount of registered event type
-        usize getEventTypeCount() const
+        Size getEventTypeCount() const
         {
             std::lock_guard<std::mutex> lock(m_mtxChannels);
             return m_channels.size();

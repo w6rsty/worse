@@ -1,5 +1,5 @@
 #pragma once
-#include "Math/Math.hpp"
+#include "math/math_includes.hpp"
 #include "ECS/Entity.hpp"
 
 #include <string>
@@ -9,14 +9,14 @@ namespace Worse
 {
     struct GlobalContext
     {
-        f32 deltaTime        = 0.0f;
-        f32 time             = 0.0f;
-        bool isWireFrameMode = false;
+        Float deltaTime      = 0.0f;
+        Float time           = 0.0f;
+        Bool isWireFrameMode = false;
     };
 
     struct Object
     {
-        u64 id;
+        ULong id;
         std::string name;
     };
 
@@ -32,9 +32,9 @@ namespace Worse
 
     struct LocalTransform
     {
-        math::Vector3 position    = math::Vector3::ZERO();
+        Vector3 position          = Vector3::ZERO;
         math::Quaternion rotation = math::Quaternion::IDENTITY();
-        math::Vector3 scale       = math::Vector3::ONE();
+        Vector3 scale             = Vector3::ONE;
     };
 
 } // namespace Worse

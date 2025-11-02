@@ -7,7 +7,7 @@
 namespace Worse
 {
 
-    enum class RendererRasterizerState : usize
+    enum class RendererRasterizerState : Size
     {
         DepthPrepass,
         SolidCullBack,
@@ -16,7 +16,7 @@ namespace Worse
         Max
     };
 
-    enum class RendererDepthStencilState : usize
+    enum class RendererDepthStencilState : Size
     {
         Off,
         ReadWrite,
@@ -26,13 +26,13 @@ namespace Worse
         Max
     };
 
-    enum class RendererBlendState : usize
+    enum class RendererBlendState : Size
     {
         Off,
         Max
     };
 
-    enum class RendererShader : usize
+    enum class RendererShader : Size
     {
         PlaceholderV,
         PlaceholderP,
@@ -53,7 +53,7 @@ namespace Worse
         Max
     };
 
-    enum class RendererTarget : usize
+    enum class RendererTarget : Size
     {
         // 渲染目标
         SceneHDR,
@@ -77,7 +77,7 @@ namespace Worse
     };
 
     // builtin textures
-    enum class RendererTexture : usize
+    enum class RendererTexture : Size
     {
         Placeholder,
         DefaultAlbedo,
@@ -106,7 +106,7 @@ namespace Worse
     struct TextureWrite
     {
         RHITexture* texture;
-        usize index;
+        Size index;
     };
 
 } // namespace Worse

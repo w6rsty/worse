@@ -1,7 +1,7 @@
+#include "math/hash.hpp"
 #include "Log.hpp"
 #include "Platform.hpp"
 #include "Definitions.hpp"
-#include "Math/Hash.hpp"
 #include "AssetServer.hpp"
 
 namespace Worse
@@ -95,7 +95,7 @@ namespace Worse
         return handle;
     }
 
-    AssetHandle AssetServer::addTexture(std::span<byte> data, std::string const& name)
+    AssetHandle AssetServer::addTexture(std::span<Byte> data, std::string const& name)
     {
         if (data.empty())
         {
@@ -133,10 +133,10 @@ namespace Worse
         std::lock_guard<std::mutex> lock(m_mtxMaterial);
 
         AssetHandle handle{};
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.x));
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.y));
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.z));
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.w));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.x));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.y));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.z));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.w));
         handle = math::hashCombine(handle, material.baseColorTexture.value_or(AssetHandle{}));
         handle = math::hashCombine(handle, material.normalTexture.value_or(AssetHandle{}));
         handle = math::hashCombine(handle, material.metallicRoughnessTexture.value_or(AssetHandle{}));
@@ -189,7 +189,7 @@ namespace Worse
         }
     }
 
-    bool AssetServer::isLoaded(AssetHandle const handle) const
+    Bool AssetServer::isLoaded(AssetHandle const handle) const
     {
         std::lock_guard<std::mutex> lock(m_mtxTexture);
         auto it = m_textures.find(handle);
@@ -223,7 +223,7 @@ namespace Worse
         return nullptr;
     }
 
-    u32 AssetServer::getMaterialIndex(AssetHandle handle) const
+    UInt AssetServer::getMaterialIndex(AssetHandle handle) const
     {
         std::lock_guard<std::mutex> lock(m_mtxMaterial);
         auto it = m_materials.find(handle);
@@ -289,7 +289,7 @@ namespace Worse
         }
     }
 
-    usize AssetServer::getLoadedTextureCount() const
+    Size AssetServer::getLoadedTextureCount() const
     {
         std::lock_guard<std::mutex> lock(m_mtxTexture);
         return std::count_if(
@@ -301,7 +301,7 @@ namespace Worse
             });
     }
 
-    usize AssetServer::getMaterialCount() const
+    Size AssetServer::getMaterialCount() const
     {
         std::lock_guard<std::mutex> lock(m_mtxMaterial);
         return m_materials.size();

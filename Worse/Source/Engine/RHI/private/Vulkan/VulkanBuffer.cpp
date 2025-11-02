@@ -12,18 +12,18 @@ namespace Worse
         // prevent duplicate creation
         nativeDestroy();
 
-        bool isVIIOnly     = false;
-        bool isStorageOnly = false;
-        bool isVIIStorage  = false;
-        bool isUniform     = false;
+        Bool isVIIOnly     = false;
+        Bool isStorageOnly = false;
+        Bool isVIIStorage  = false;
+        Bool isUniform     = false;
 
         // validation
         {
-            WS_ASSERT(m_usage != RHIBufferUsageFlagBits::None);
+            WS_ASSERT(m_usageFlags != RHIBufferUsage::FlagBits::Unknown);
 
-            if (m_usage & RHIBufferUsageFlagBits::Uniform)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Uniform)
             {
-                WS_ASSERT((m_usage & RHIBufferUsageFlagBits::Uniform) == RHIBufferUsageFlagBits::Uniform);
+                WS_ASSERT((m_usageFlags & RHIBufferUsage::FlagBits::Uniform) == RHIBufferUsage::FlagBits::Uniform);
 
                 isUniform = true;
 
@@ -35,13 +35,13 @@ namespace Worse
             }
 
             // contain vertex/index/instance
-            if (m_usage & VII_BIT)
+            if (m_usageFlags & VII_BIT)
             {
-                WS_ASSERT_MSG(std::popcount(static_cast<u8>(m_usage & VII_MASK)) == 1,
+                WS_ASSERT_MSG(std::popcount(static_cast<UByte>(m_usageFlags & VII_MASK)) == 1,
                               "RHIBuffer usage must specify exactly one of: Vertex, Index, or Instance");
 
                 // vertex/index/instance only (check if no storage flag)
-                if ((m_usage & RHIBufferUsageFlagBits::Storage) == 0)
+                if ((m_usageFlags & RHIBufferUsage::FlagBits::Storage) == 0)
                 {
                     WS_ASSERT_MSG(data != nullptr,
                                   "Vertex/Index/Instance buffer must have data");
@@ -54,17 +54,17 @@ namespace Worse
             }
 
             // storage only data is optional
-            isStorageOnly = (m_usage & RHIBufferUsageFlagBits::Storage) == RHIBufferUsageFlagBits::Storage;
+            isStorageOnly = (m_usageFlags & RHIBufferUsage::FlagBits::Storage) == RHIBufferUsage::FlagBits::Storage;
         }
 
         if (isStorageOnly || isUniform)
         {
             // correct alignment
             // TODO: query this from device
-            static constexpr usize MIN_ALIGNMENT = 0x10;
+            static constexpr Size MIN_ALIGNMENT = 0x10;
             if (m_stride != MIN_ALIGNMENT)
             {
-                m_stride = static_cast<u32>((m_stride + MIN_ALIGNMENT - 1) & ~(MIN_ALIGNMENT - 1));
+                m_stride = static_cast<UInt>((m_stride + MIN_ALIGNMENT - 1) & ~(MIN_ALIGNMENT - 1));
                 m_size   = m_stride * m_elementCount;
             }
         }
@@ -75,19 +75,19 @@ namespace Worse
         // buffer usage and memory properties
         {
 
-            if ((m_usage & RHIBufferUsageFlagBits::Vertex) || m_usage & RHIBufferUsageFlagBits::Instance)
+            if ((m_usageFlags & RHIBufferUsage::FlagBits::Vertex) || m_usageFlags & RHIBufferUsage::FlagBits::Instance)
             {
                 bufferUsage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             }
-            if (m_usage & RHIBufferUsageFlagBits::Index)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Index)
             {
                 bufferUsage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
             }
-            if (m_usage & RHIBufferUsageFlagBits::Storage)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Storage)
             {
                 bufferUsage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
             }
-            if (m_usage & RHIBufferUsageFlagBits::Uniform)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Uniform)
             {
                 bufferUsage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
             }
@@ -108,8 +108,8 @@ namespace Worse
             }
         }
 
-        bool isStaggingCreation = isVIIOnly || (isStorageOnly && data);
-        bool isDirectlyCreation = isVIIStorage || (isStorageOnly && !data);
+        Bool isStaggingCreation = isVIIOnly || (isStorageOnly && data);
+        Bool isDirectlyCreation = isVIIStorage || (isStorageOnly && !data);
 
         if (isStaggingCreation)
         {
@@ -179,7 +179,7 @@ namespace Worse
         }
     }
 
-    void RHIBuffer::update(RHICommandList* cmdList, void const* cpuData, u32 const size)
+    void RHIBuffer::update(RHICommandList* cmdList, void const* cpuData, UInt const size)
     {
         if (!cmdList)
         {

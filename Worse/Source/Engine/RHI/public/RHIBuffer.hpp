@@ -1,25 +1,26 @@
 #pragma once
-#include "Math/Math.hpp"
+#include "base_type.hpp"
+#include "bit_flag.hpp"
+#include "math/math.hpp"
 #include "RHIResource.hpp"
 
 namespace Worse
 {
 
-    WS_DEFINE_FLAGS(RHIBufferUsage, u8);
-    struct RHIBufferUsageFlagBits
-    {
-        // clang-format off
-        static constexpr RHIBufferUsageFlags None    {0b0000'0000};
-        static constexpr RHIBufferUsageFlags Vertex  {0b0001'0001};
-        static constexpr RHIBufferUsageFlags Instance{0b0001'0010};
-        static constexpr RHIBufferUsageFlags Index   {0b0001'0100};
-        static constexpr RHIBufferUsageFlags Storage {0b0010'0000};
-        static constexpr RHIBufferUsageFlags Uniform {0b1000'0000};
-        // clang-format on
-    };
-    static constexpr u8 VII_BIT       = 0b0001'0000;
-    static constexpr u8 VII_MASK      = 0b0000'1111;
-    static constexpr u8 VII_ONLT_MASK = 0b0011'1111;
+    WORSE_BEGIN_DECLARE_BIT_FLAG(RHIBufferUsage, UInt)
+    // clang-format off
+    WORSE_DECLARE_FLAG_BIT(Unknown,  0)
+    WORSE_DECLARE_FLAG_BIT(Vertex,   0b0001'0001)
+    WORSE_DECLARE_FLAG_BIT(Instance, 0b0001'0010)
+    WORSE_DECLARE_FLAG_BIT(Index,    0b0001'0100)
+    WORSE_DECLARE_FLAG_BIT(Storage,  0b0010'0000)
+    WORSE_DECLARE_FLAG_BIT(Uniform,  0b1000'0000)
+    // clang-format on
+    WORSE_END_DECLARE_BIT_FLAG(RHIBufferUsage)
+
+    static constexpr UByte VII_BIT       = 0b0001'0000;
+    static constexpr UByte VII_MASK      = 0b0000'1111;
+    static constexpr UByte VII_ONLT_MASK = 0b0011'1111;
 
     class RHIBuffer : public RHIResource
     {
@@ -28,11 +29,11 @@ namespace Worse
 
     public:
         RHIBuffer() = default;
-        RHIBuffer(RHIBufferUsageFlags const usage, u32 const stride,
-                  u32 const elementCount, void const* data,
-                  bool const mappable = false, std::string_view name = "Buffer")
+        RHIBuffer(RHIBufferUsage::Flags const usageFlags, UInt const stride,
+                  UInt const elementCount, void const* data,
+                  Bool const mappable = false, std::string_view name = "Buffer")
         {
-            m_usage        = usage;
+            m_usageFlags   = usageFlags;
             m_stride       = stride;
             m_elementCount = elementCount;
             m_size         = m_stride * m_elementCount;
@@ -47,7 +48,7 @@ namespace Worse
         }
 
         // update mapped buffer data
-        void update(RHICommandList* cmdList, void const* cpuData, u32 const size);
+        void update(RHICommandList* cmdList, void const* cpuData, UInt const size);
 
         void resetOffset()
         {
@@ -56,23 +57,23 @@ namespace Worse
         }
 
         // clang-format off
-        RHIBufferUsageFlags getUsage() const        { return m_usage; }
-        u32                 getStride() const       { return m_stride; }
-        u32                 getOffset() const       { return m_offset; }
-        u32                 getElementCount() const { return m_elementCount; }
-        u32                 getSize() const         { return m_size; }
-        void*               getMappedData() const   { return m_gpuData; }
-        RHINativeHandle     getHandle() const       { return m_handle; }
+        RHIBufferUsage::Flags getUsageFlags() const  { return m_usageFlags; }
+        UInt                getStride() const        { return m_stride; }
+        UInt                getOffset() const        { return m_offset; }
+        UInt                getElementCount() const  { return m_elementCount; }
+        UInt                getSize() const          { return m_size; }
+        void*               getMappedData() const    { return m_gpuData; }
+        RHINativeHandle     getHandle() const        { return m_handle; }
         // clang-format on
     private:
-        RHIBufferUsageFlags m_usage = RHIBufferUsageFlagBits::None;
-        u32 m_stride                = 0;
-        u32 m_offset                = 0;
-        u32 m_elementCount          = 0;
-        u32 m_size                  = 0;
-        void* m_gpuData             = nullptr;
-        bool m_mappable             = false;
-        bool m_firstUpdate          = true;
+        RHIBufferUsage::Flags m_usageFlags = RHIBufferUsage::FlagBits::Unknown;
+        UInt m_stride                      = 0;
+        UInt m_offset                      = 0;
+        UInt m_elementCount                = 0;
+        UInt m_size                        = 0;
+        void* m_gpuData                    = nullptr;
+        Bool m_mappable                    = false;
+        Bool m_firstUpdate                 = true;
 
         RHINativeHandle m_handle = {};
     };

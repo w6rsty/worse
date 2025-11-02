@@ -1,5 +1,6 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
+#include "bit_flag.hpp"
 #include "RHIResource.hpp"
 
 #include <span>
@@ -8,23 +9,20 @@
 namespace Worse
 {
 
-    WS_DEFINE_FLAGS(RHITextureView, u32);
-    struct RHITextureViewFlagBits
-    {
-        // shader resource view, for shader read only
-        static constexpr RHITextureViewFlags ShaderReadView{1u << 0};
-        // unordered access view, for shader read/write
-        static constexpr RHITextureViewFlags UnorderedAccessView{1u << 1};
-        // render target view
-        static constexpr RHITextureViewFlags RenderTargetView{1u << 2};
-        // depth stencil view
-        static constexpr RHITextureViewFlags DepthStencilView{1u << 3};
-        static constexpr RHITextureViewFlags ClearOrBlit{1u << 4};
-    };
+    WORSE_BEGIN_DECLARE_BIT_FLAG(RHITextureViewUsage, UInt)
+    // clang-format off
+    WORSE_DECLARE_FLAG_BIT(Unknown,             0)
+    WORSE_DECLARE_FLAG_BIT(ShaderReadView,      1u << 0)
+    WORSE_DECLARE_FLAG_BIT(UnorderedAccessView, 1u << 1)
+    WORSE_DECLARE_FLAG_BIT(RenderTargetView,    1u << 2)
+    WORSE_DECLARE_FLAG_BIT(DepthStencilView,    1u << 3)
+    WORSE_DECLARE_FLAG_BIT(ClearOrBlit,         1u << 4)
+    // clang-format off
+    WORSE_END_DECLARE_BIT_FLAG(RHITextureViewUsage)
 
     struct RHITextureMip
     {
-        std::vector<byte> bytes;
+        std::vector<Byte> bytes;
     };
 
     struct RHITextureSlice
@@ -37,29 +35,29 @@ namespace Worse
     {
         friend class RHIDevice;
 
-        bool nativeCreate();
+        Bool nativeCreate();
 
     public:
         RHITexture() = default;
         /**
-         * @brief 创建纹理
+         * @brief Create texture
          *
          * @note only accept mip 0 texture or texture array
          */
-        RHITexture(RHITextureType const type, u32 const width, u32 const height,
-                   u32 const depth, u32 const mipCount, RHIFormat const format,
-                   RHITextureViewFlags const usage,
+        RHITexture(RHITextureType const type, UInt const width, UInt const height,
+                   UInt const depth, UInt const mipCount, RHIFormat const format,
+                   RHITextureViewUsage::Flags const usageFlags,
                    std::vector<RHITextureSlice> data, std::string const& name);
         /**
-         * @brief 从文件加载纹理
+         * @brief Load from file
          */
         RHITexture(std::filesystem::path const& path);
         /**
-         * @brief 从内存数据创建纹理
+         * @brief Load from memory
          */
-        RHITexture(std::span<byte> data, std::string const& name);
+        RHITexture(std::span<Byte> data, std::string const& name);
         /**
-         * @brief 从多个通道的纹理文件创建纹理
+         * @brief Assemble from multiple file
          */
         RHITexture(std::filesystem::path const& rPath,
                    std::filesystem::path const& gPath,
@@ -69,40 +67,38 @@ namespace Worse
         ~RHITexture();
 
         RHIImageLayout getImageLayout() const;
-        /**
-         * @brief 使用图像屏障转换图像布局
-         */
+
         void convertImageLayout(RHICommandList* cmdList, RHIImageLayout const layout) const;
 
-        bool isFormatDepth() const;
-        bool isFormatStencil() const;
+        Bool isFormatDepth() const;
+        Bool isFormatStencil() const;
 
-        bool hasShaderReadData() const;
-        RHITextureSlice const& getSlice(usize const arrayIndex) const;
-        RHITextureMip const& getMip(usize const arrayIndex, usize const mipIndex) const;
+        Bool hasShaderReadData() const;
+        RHITextureSlice const& getSlice(Size const arrayIndex) const;
+        RHITextureMip const& getMip(Size const arrayIndex, Size const mipIndex) const;
 
-        bool isValid() const;
+        Bool isValid() const;
 
         // clang-format off
-        RHITextureType      getType() const     { return m_type; }
-        u32                 getWidth() const    { return m_width; }
-        u32                 getHeight() const   { return m_height; }
-        u32                 getDepth() const    { return m_depth; }
-        u32                 getMipCount() const { return m_mipCount; }
-        RHIFormat           getFormat() const   { return m_format; }
-        RHITextureViewFlags getUsage() const    { return m_usage; }
-        RHINativeHandle     getView() const     { return m_rtv; }
-        RHINativeHandle     getImage() const    { return m_image; }
+        RHITextureType             getType() const       { return m_type; }
+        UInt                       getWidth() const      { return m_width; }
+        UInt                       getHeight() const     { return m_height; }
+        UInt                       getDepth() const      { return m_depth; }
+        UInt                       getMipCount() const   { return m_mipCount; }
+        RHIFormat                  getFormat() const     { return m_format; }
+        RHITextureViewUsage::Flags getUsageFlags() const { return m_usageFlags; }
+        RHINativeHandle            getView() const       { return m_rtv; }
+        RHINativeHandle            getImage() const      { return m_image; }
         // clang-format on
 
     private:
         RHITextureType m_type = RHITextureType::Max;
-        u32 m_width           = 0;
-        u32 m_height          = 0;
-        u32 m_depth           = 1;
-        u32 m_mipCount        = 1;
+        UInt m_width          = 0;
+        UInt m_height         = 0;
+        UInt m_depth          = 1;
+        UInt m_mipCount       = 1;
         RHIFormat m_format    = RHIFormat::Max;
-        RHITextureViewFlags m_usage;
+        RHITextureViewUsage::Flags m_usageFlags = RHITextureViewUsage::FlagBits::Unknown;
 
         // For texture array and cube map, we have multiple slices
         std::vector<RHITextureSlice> m_slices;

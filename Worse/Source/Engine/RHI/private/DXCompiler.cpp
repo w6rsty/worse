@@ -58,7 +58,7 @@ namespace Worse
     CComPtr<IDxcBlob> DXCompiler::compile(std::string const& source, std::vector<std::wstring> const& wArguments)
     {
         CComPtr<IDxcBlobEncoding> sourceBlob;
-        if (FAILED(m_utils->CreateBlobFromPinned(source.data(), static_cast<u32>(source.size()), CP_UTF8, &sourceBlob)))
+        if (FAILED(m_utils->CreateBlobFromPinned(source.data(), static_cast<UInt>(source.size()), CP_UTF8, &sourceBlob)))
         {
             WS_LOG_ERROR("dxc", "Failed to load shader file");
         }
@@ -77,7 +77,7 @@ namespace Worse
 
         CComPtr<IDxcResult> dxcResult = nullptr;
 
-        HRESULT result = m_compiler->Compile(&buffer, wArgumentCPtrs.data(), static_cast<u32>(wArgumentCPtrs.size()), nullptr, IID_PPV_ARGS(&dxcResult));
+        HRESULT result = m_compiler->Compile(&buffer, wArgumentCPtrs.data(), static_cast<UInt>(wArgumentCPtrs.size()), nullptr, IID_PPV_ARGS(&dxcResult));
 
         if (SUCCEEDED(result))
         {
@@ -90,7 +90,7 @@ namespace Worse
             {
                 CComPtr<IDxcBlobEncoding> errorBlob = nullptr;
                 HRESULT res                         = dxcResult->GetErrorBuffer(&errorBlob);
-                bool suc                            = SUCCEEDED(res);
+                Bool suc                            = SUCCEEDED(res);
                 if (suc && errorBlob)
                 {
                     WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));

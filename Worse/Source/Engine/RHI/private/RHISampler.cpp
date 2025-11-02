@@ -6,8 +6,8 @@ namespace Worse
     RHISampler::RHISampler(RHIFilter filterMin, RHIFilter filterMag,
                            RHIFilter filterMipmap,
                            RHISamplerAddressMode addressMode,
-                           RHICompareOperation compareOp, bool enableCompare,
-                           f32 anisotroy, f32 mipLodBias)
+                           RHICompareOperation compareOp, Bool enableCompare,
+                           Float anisotroy, Float mipLodBias)
     {
         m_filterMin     = filterMin;
         m_filterMag     = filterMag;

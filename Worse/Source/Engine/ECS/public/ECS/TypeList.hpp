@@ -13,13 +13,13 @@ namespace Worse::ecs
     struct TypeList
     {
         using type                  = TypeList;
-        static constexpr usize size = sizeof...(Type);
+        static constexpr Size size = sizeof...(Type);
     };
 
-    template <usize, typename>
+    template <Size, typename>
     struct TypeListElementAt;
 
-    template <usize Index, typename First, typename... Other>
+    template <Size Index, typename First, typename... Other>
     struct TypeListElementAt<Index, TypeList<First, Other...>>
         : TypeListElementAt<Index - 1u, TypeList<Other...>>
     {
@@ -31,15 +31,15 @@ namespace Worse::ecs
         using type = First;
     };
 
-    template <usize Index, typename List>
+    template <Size Index, typename List>
     using TypeListElementAt_t = typename TypeListElementAt<Index, List>::type;
 
-    template <usize Index, typename List>
+    template <Size Index, typename List>
         requires(Index < List::size)
     struct TypeListRemoveAt
     {
     private:
-        template <usize... I1, usize... I2>
+        template <Size... I1, Size... I2>
         static auto helper(std::index_sequence<I1...>,
                            std::index_sequence<I2...>)
         {
@@ -53,13 +53,13 @@ namespace Worse::ecs
             std::make_index_sequence<List::size - Index - 1>{}));
     };
 
-    template <usize Index, typename List>
+    template <Size Index, typename List>
     using TypeListRemoveAt_t = TypeListElementAt<Index, List>;
 
     /**
      * @brief Add N for every element in Seq
      */
-    template <usize N, usize... Seq>
+    template <Size N, Size... Seq>
     constexpr std::index_sequence<N + Seq...>
     sequenceAdd(std::index_sequence<Seq...>)
     {
@@ -69,7 +69,7 @@ namespace Worse::ecs
     /**
      * @brief Index range type from Min to Max
      */
-    template <usize Min, usize Max>
+    template <Size Min, Size Max>
     using makeIndexRange =
         decltype(sequenceAdd<Min>(std::make_index_sequence<Max - Min>()));
 

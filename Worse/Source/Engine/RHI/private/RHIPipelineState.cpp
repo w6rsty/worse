@@ -1,4 +1,4 @@
-#include "Math/Hash.hpp"
+#include "math/hash.hpp"
 #include "RHIShader.hpp"
 #include "RHITexture.hpp"
 #include "Pipeline/RHIBlendState.hpp"
@@ -13,8 +13,8 @@ namespace Worse
     {
         void validate(RHIPipelineState const& pso)
         {
-            u32 width  = 0;
-            u32 height = 0;
+            UInt width  = 0;
+            UInt height = 0;
 
             if (pso.renderTargetColorTextures[0])
             {
@@ -27,7 +27,7 @@ namespace Worse
                 height = pso.renderTargetDepthTexture->getHeight();
             }
 
-            RHIShaderStageFlags flags = {};
+            RHIShaderStage::Flags flags = {};
             for (RHIShader const* shader : pso.shaders)
             {
                 if ((shader != nullptr) && (shader->getState() == RHIShaderCompilationState::CompiledSuccess))
@@ -36,8 +36,8 @@ namespace Worse
                 }
             }
 
-            bool isCompute  = (flags & RHIComputePipelineShaderCombination) == RHIComputePipelineShaderCombination;
-            bool isGraphics = (flags & RHIGraphicsPipelineShaderCombination) == RHIGraphicsPipelineShaderCombination;
+            Bool isCompute  = (flags & RHIComputePipelineShaderCombination) == RHIComputePipelineShaderCombination;
+            Bool isGraphics = (flags & RHIGraphicsPipelineShaderCombination) == RHIGraphicsPipelineShaderCombination;
             WS_ASSERT_MSG(isCompute || isGraphics, "Invalid shader set");
 
             if (isCompute)
@@ -49,11 +49,11 @@ namespace Worse
             {
                 WS_ASSERT_MSG(pso.type == RHIPipelineType::Graphics, "Incompatible pipeline type");
 
-                bool hasRenderTarget = (pso.renderTargetColorTextures[0] != nullptr) || pso.renderTargetDepthTexture;
+                Bool hasRenderTarget = (pso.renderTargetColorTextures[0] != nullptr) || pso.renderTargetDepthTexture;
 
                 WS_ASSERT_MSG(hasRenderTarget, "Pipeline has no render target");
 
-                bool hasMandatoryState = (pso.rasterizerState != nullptr) && (pso.depthStencilState != nullptr) && (pso.blendState != nullptr);
+                Bool hasMandatoryState = (pso.rasterizerState != nullptr) && (pso.depthStencilState != nullptr) && (pso.blendState != nullptr);
                 WS_ASSERT_MSG(hasMandatoryState, "Graphics Pipeline miss mandatory states");
             }
 
@@ -62,11 +62,11 @@ namespace Worse
             WS_ASSERT_MSG(!pso.name.empty(), "Pipeline state must have a name");
         }
 
-        u64 computeHash(RHIPipelineState const& pso)
+        ULong computeHash(RHIPipelineState const& pso)
         {
-            u64 hash = 0;
+            ULong hash = 0;
 
-            hash = math::hashCombine(hash, static_cast<u64>(pso.primitiveTopology));
+            hash = math::hashCombine(hash, static_cast<ULong>(pso.primitiveTopology));
 
             if (pso.rasterizerState)
             {
@@ -230,11 +230,11 @@ namespace Worse
 
     RHIPipelineStateBuilder& RHIPipelineStateBuilder::addShader(RHIShader* shader)
     {
-        m_pso.shaders[static_cast<usize>(shader->getShaderType())] = shader;
+        m_pso.shaders[static_cast<Size>(shader->getShaderType())] = shader;
         return *this;
     }
 
-    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setRenderTargetColorTexture(usize index, RHITexture* texture)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setRenderTargetColorTexture(Size index, RHITexture* texture)
     {
         m_pso.renderTargetColorTextures[index] = texture;
         return *this;
@@ -258,7 +258,7 @@ namespace Worse
         return *this;
     }
 
-    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setClearDepth(f32 depth)
+    RHIPipelineStateBuilder& RHIPipelineStateBuilder::setClearDepth(Float depth)
     {
         m_pso.clearDepth = depth;
         return *this;

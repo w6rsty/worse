@@ -1,7 +1,7 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
+#include "math/vector.hpp"
 #include "Event.hpp"
-#include "Math/Vector.hpp"
 
 #include <array>
 
@@ -42,9 +42,9 @@ namespace Worse
         Max
         // clang-format on
     };
-    static constexpr usize k_keyCodeCount = static_cast<usize>(KeyCode::Max);
+    static constexpr Size k_keyCodeCount = static_cast<Size>(KeyCode::Max);
 
-    class Input : public NonCopyable, public NonMovable
+    class Input
     {
         static void pollKeyboard();
         static void pollMouse();
@@ -54,7 +54,7 @@ namespace Worse
         static void onEventMouse(void* event);
         static void onEventGamepad(void* event);
 
-        using KeyMap = std::array<bool, k_keyCodeCount>;
+        using KeyMap = std::array<Bool, k_keyCodeCount>;
         static KeyMap& GetKeyMap();
 
     public:
@@ -63,33 +63,33 @@ namespace Worse
 
         // Keyboard
         // up, down, pressed
-        static bool isKey(KeyCode const key);
+        static Bool isKey(KeyCode const key);
         // down edge
-        static bool isKeyDown(KeyCode const key);
+        static Bool isKeyDown(KeyCode const key);
         // up edge
-        static bool isKeyUp(KeyCode const key);
+        static Bool isKeyUp(KeyCode const key);
 
         // Mouse
-        static void setMouseVisible(bool const visible);
-        static bool getMouseVisible();
-        static math::Vector2 const& getMouseDelta();
-        static math::Vector2 const& getMouseWheelDelta();
+        static void setMouseVisible(Bool const visible);
+        static Bool getMouseVisible();
+        static Vector2 const& getMouseDelta();
+        static Vector2 const& getMouseWheelDelta();
         // System position
-        static void setMousePositionGlobal(math::Vector2 const& position);
-        static math::Vector2 const& getMousePositionGlobal();
-        static math::Vector2 getMousePositionRelativeToWindow();
-        static math::Vector2 getMousePositionRelativeToViewport();
+        static void setMousePositionGlobal(Vector2 const& position);
+        static Vector2 const& getMousePositionGlobal();
+        static Vector2 getMousePositionRelativeToWindow();
+        static Vector2 getMousePositionRelativeToViewport();
 
         // Gamepad
-        static bool isGamepadConnected();
+        static Bool isGamepadConnected();
         // safe to call even if no controller is connected
-        static math::Vector2 const& getThumbStickLeft();
-        static math::Vector2 const& getThumbStickRight();
-        static f32 getThumbStickLeftDistance();
-        static f32 getThumbStickRightDistance();
-        static f32 getTriggerLeft();
-        static f32 getTriggerRight();
-        // must validate that a controller is connected before deferencing
+        static Vector2 const& getThumbStickLeft();
+        static Vector2 const& getThumbStickRight();
+        static Float getThumbStickLeftDistance();
+        static Float getThumbStickRightDistance();
+        static Float getTriggerLeft();
+        static Float getTriggerRight();
+        // must validate that a controller is connected before dereferencing
         static Controller* getConnectedController();
 
     private:

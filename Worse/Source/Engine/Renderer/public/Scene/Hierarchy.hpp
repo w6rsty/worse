@@ -1,5 +1,5 @@
 #pragma once
-#include "Math/Math.hpp"
+#include "math/math.hpp"
 #include "../Renderable.hpp"
 
 #include <vector>
@@ -11,10 +11,10 @@ namespace Worse
     {
         std::weak_ptr<Node> parent;
         std::vector<std::shared_ptr<Node>> children;
-        math::Matrix4 localTransform;
-        math::Matrix4 worldTransform;
+        Matrix4 localTransform;
+        Matrix4 worldTransform;
 
-        void draw(math::Matrix4 const& topMat, DrawContext& ctx) override
+        void draw(Matrix4 const& topMat, DrawContext& ctx) override
         {
             for (std::shared_ptr<Node> const& child : children)
             {
@@ -25,7 +25,7 @@ namespace Worse
         /**
          * @brief 更新自身和子节点的变换矩阵
          */
-        void refreshTransform(math::Matrix4 const& parentTransform);
+        void refreshTransform(Matrix4 const& parentTransform);
     };
 
 } // namespace Worse

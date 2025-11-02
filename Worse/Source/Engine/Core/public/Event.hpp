@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
 #include <variant>
 #include <functional>
@@ -12,8 +12,7 @@ namespace Worse
         WindowResized,
         Max
     };
-    static constexpr usize k_eventTypeCount =
-        static_cast<usize>(EventType::Max);
+    static constexpr Size k_eventTypeCount = static_cast<Size>(EventType::Max);
 
     using Event            = std::variant<std::monostate, int, void*>;
     using EventSubscribeFn = std::function<void(Event const&)>;
@@ -22,7 +21,6 @@ namespace Worse
     {
     public:
         static void subscribe(EventType const type, EventSubscribeFn&& fn);
-        static void fire(EventType const type,
-                         Event const& payload = std::monostate{});
+        static void fire(EventType const type, Event const& payload = std::monostate{});
     };
 } // namespace Worse

@@ -26,7 +26,7 @@ namespace Worse::ecs
         }
 
         template <typename Component>
-        bool hasComponent(Entity entity)
+        Bool hasComponent(Entity entity)
         {
             return m_registry.hasComponent<Component>(entity);
         }
@@ -64,7 +64,7 @@ namespace Worse::ecs
         }
 
         template <typename Resource>
-        bool hasResource() const
+        Bool hasResource() const
         {
             return m_registry.hasResource<Resource>();
         }
@@ -88,7 +88,7 @@ namespace Worse::ecs
         }
 
         template <typename Resource>
-        bool hasResourceArray() const
+        Bool hasResourceArray() const
         {
             return m_registry.hasResourceArray<Resource>();
         }

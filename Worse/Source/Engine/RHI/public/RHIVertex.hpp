@@ -1,5 +1,5 @@
 #pragma once
-#include "Math/Math.hpp"
+#include "math/math.hpp"
 #include "RHIResource.hpp"
 
 #include <vector>
@@ -19,10 +19,10 @@ namespace Worse
     struct RHIVertexAttribute
     {
         std::string name;
-        u32 location;
-        u32 binding;
+        UInt location;
+        UInt binding;
         RHIFormat format;
-        u32 offset;
+        UInt offset;
     };
 
     class RHIInputLayout : public RHIResource
@@ -73,16 +73,16 @@ namespace Worse
         // clang-format off
         RHIVertexType                          getType() const       { return m_type; }
         std::vector<RHIVertexAttribute> const& getAttributes() const { return m_attributes; }
-        u32                          getStride() const     { return m_stride; }
+        UInt                          getStride() const              { return m_stride; }
         
-        bool operator==(RHIInputLayout const& other) const { return m_type == other.m_type; }
-        bool operator!=(RHIInputLayout const& other) const { return !(*this == other); }
+        Bool operator==(RHIInputLayout const& other) const { return m_type == other.m_type; }
+        Bool operator!=(RHIInputLayout const& other) const { return !(*this == other); }
         // clang-format on
 
     private:
         RHIVertexType m_type = RHIVertexType::None;
         std::vector<RHIVertexAttribute> m_attributes;
-        u32 m_stride = 0;
+        UInt m_stride = 0;
     };
 
 } // namespace Worse

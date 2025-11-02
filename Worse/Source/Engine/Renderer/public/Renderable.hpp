@@ -1,6 +1,6 @@
 #pragma once
+#include "math/transform.hpp"
 #include "Material.hpp"
-#include "Math/Transform.hpp"
 #include "Mesh.hpp"
 #include "Prefab.hpp"
 
@@ -13,13 +13,13 @@ namespace Worse
 
     struct RenderObject
     {
-        u32 indexCount;
-        u32 startIndex;
+        UInt indexCount;
+        UInt startIndex;
 
         Mesh* mesh;
         AssetHandle material;
 
-        math::Matrix4 transform;
+        Matrix4 transform;
     };
 
     struct DrawContext
@@ -34,14 +34,14 @@ namespace Worse
 
     struct IRenderable
     {
-        virtual void draw(math::Matrix4 const& topMat, DrawContext& ctx) = 0;
+        virtual void draw(Matrix4 const& topMat, DrawContext& ctx) = 0;
     };
 
     struct Drawcall
     {
         Mesh* mesh;
-        u32 materialIndex = 0;
-        math::Matrix4 transform;
+        UInt materialIndex = 0;
+        Matrix4 transform;
     };
 
     struct DrawcallStorage
@@ -78,7 +78,7 @@ namespace Worse
             {
                 drawcalls->point.emplace_back(
                     mesh.mesh,
-                    static_cast<u32>(material.index),
+                    static_cast<UInt>(material.index),
                     math::makeSRT(transform.scale, transform.rotation, transform.position)
                 );
             }
@@ -86,7 +86,7 @@ namespace Worse
             {
                 drawcalls->solid.emplace_back(
                     mesh.mesh,
-                    static_cast<u32>(material.index),
+                    static_cast<UInt>(material.index),
                     math::makeSRT(transform.scale, transform.rotation, transform.position)
                 );
             }

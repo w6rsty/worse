@@ -39,9 +39,9 @@ namespace Worse
                 extensionsInstance.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
             }
 
-            u32 sdlExtensionCount{0};
+            UInt sdlExtensionCount{0};
             auto sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
-            for (u32 i = 0; i < sdlExtensionCount; ++i)
+            for (UInt i = 0; i < sdlExtensionCount; ++i)
             {
                 extensionsInstance.emplace_back(sdlExtensions[i]);
             }
@@ -133,7 +133,7 @@ namespace Worse
     {
         void select()
         {
-            u32 gpuCount{0};
+            UInt gpuCount{0};
             WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance, &gpuCount, nullptr));
             std::vector<VkPhysicalDevice> gpus(gpuCount);
             WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance, &gpuCount, gpus.data()));
@@ -195,14 +195,14 @@ namespace Worse
         RHINativeHandle compute  = {};
         RHINativeHandle transfer = {};
 
-        u32 indexGraphics = std::numeric_limits<u32>::max();
-        u32 indexCompute  = std::numeric_limits<u32>::max();
-        u32 indexTransfer = std::numeric_limits<u32>::max();
+        UInt indexGraphics = std::numeric_limits<UInt>::max();
+        UInt indexCompute  = std::numeric_limits<UInt>::max();
+        UInt indexTransfer = std::numeric_limits<UInt>::max();
 
         EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> regular;
 
         std::mutex mtxImmediateCmd;
-        bool isImmediateCmdActive = false;
+        Bool isImmediateCmdActive = false;
         std::binary_semaphore semImmediateCmd{1};
         RHIQueue* activeQueue = nullptr;
         EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
@@ -214,12 +214,12 @@ namespace Worse
          * @param dedicated 是否需要独立的队列族
          * @return 符合条件的队列族索引
          */
-        u32 getQueueFamilyIndex(std::vector<VkQueueFamilyProperties> const& queueFamilies, VkQueueFlags flags, bool dedicated = true)
+        UInt getQueueFamilyIndex(std::vector<VkQueueFamilyProperties> const& queueFamilies, VkQueueFlags flags, Bool dedicated = true)
         {
             // compute only
             if ((flags & VK_QUEUE_COMPUTE_BIT) == VK_QUEUE_COMPUTE_BIT)
             {
-                for (u32 i = 0; i < static_cast<u32>(queueFamilies.size()); ++i)
+                for (UInt i = 0; i < static_cast<UInt>(queueFamilies.size()); ++i)
                 {
                     if (i == indexGraphics)
                     {
@@ -237,7 +237,7 @@ namespace Worse
             // transfer only
             if ((flags & VK_QUEUE_TRANSFER_BIT) == VK_QUEUE_TRANSFER_BIT)
             {
-                for (u32 i = 0; i < static_cast<u32>(queueFamilies.size()); ++i)
+                for (UInt i = 0; i < static_cast<UInt>(queueFamilies.size()); ++i)
                 {
                     if (i == indexGraphics || i == indexCompute)
                     {
@@ -252,7 +252,7 @@ namespace Worse
                 }
             }
 
-            for (u32 i = 0; i < static_cast<u32>(queueFamilies.size()); ++i)
+            for (UInt i = 0; i < static_cast<UInt>(queueFamilies.size()); ++i)
             {
                 if ((queueFamilies[i].queueFlags & flags) == flags)
                 {
@@ -272,7 +272,7 @@ namespace Worse
 
         void detectQueueFamilyIndex(VkPhysicalDevice physicalDevice)
         {
-            u32 queueFamilyCount{0};
+            UInt queueFamilyCount{0};
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
             std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
@@ -326,7 +326,7 @@ namespace Worse
         };
 
         std::mutex mtxAllocation;
-        std::unordered_map<u64, AllocationData> allocations;
+        std::unordered_map<ULong, AllocationData> allocations;
 
         void create()
         {
@@ -431,7 +431,7 @@ namespace Worse
             infoInst.ppEnabledLayerNames     = &validation::name;
 
             std::vector<char const*> extensionsInst = extensions::getExtensionsInstance();
-            infoInst.enabledExtensionCount   = static_cast<u32>(extensionsInst.size());
+            infoInst.enabledExtensionCount   = static_cast<UInt>(extensionsInst.size());
             infoInst.ppEnabledExtensionNames = extensionsInst.data();
             // clang-format on
 
@@ -451,7 +451,7 @@ namespace Worse
 
             // queues
             std::vector<VkDeviceQueueCreateInfo> queueInfos;
-            f32 queuePriority{1.0f};
+            Float queuePriority{1.0f};
             {
                 queues::detectQueueFamilyIndex(RHIContext::physicalDevice);
                 std::vector queueFamilyIndices{
@@ -487,12 +487,12 @@ namespace Worse
             VkDeviceCreateInfo infoDevice      = {};
             infoDevice.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
             infoDevice.pNext                   = deviceFeatures::featureChain;
-            infoDevice.queueCreateInfoCount    = static_cast<u32>(queueInfos.size());
+            infoDevice.queueCreateInfoCount    = static_cast<UInt>(queueInfos.size());
             infoDevice.pQueueCreateInfos       = queueInfos.data();
             infoDevice.pEnabledFeatures        = &deviceFeatures::featureCore;
 
             std::vector<char const*> extensionsDevice = extensions::getExtensionsDevice();
-            infoDevice.enabledExtensionCount   = static_cast<u32>(extensionsDevice.size());
+            infoDevice.enabledExtensionCount   = static_cast<UInt>(extensionsDevice.size());
             infoDevice.ppEnabledExtensionNames = extensionsDevice.data();
             // clang-format on
 
@@ -589,7 +589,7 @@ namespace Worse
         queues::regular[RHIQueueType::Compute]->wait();
     }
 
-    u32 RHIDevice::getQueueIndex(RHIQueueType const type)
+    UInt RHIDevice::getQueueIndex(RHIQueueType const type)
     {
         if (type == RHIQueueType::Graphics)
         {
@@ -680,7 +680,7 @@ namespace Worse
         return descriptor::specificSet->getDescriptorSetLayout(pso);
     }
 
-    RHINativeHandle RHIDevice::getSpecificDescriptorSet(u64 descriptorHash)
+    RHINativeHandle RHIDevice::getSpecificDescriptorSet(ULong descriptorHash)
     {
         WS_ASSERT(descriptor::specificSet);
         return descriptor::specificSet->getDescriptorSet(descriptorHash);
@@ -692,7 +692,7 @@ namespace Worse
         descriptor::specificSet->resetSets();
     }
 
-    RHINativeHandle RHIDevice::createImGuiPool(u32 descriptorCount, u32 maxSets)
+    RHINativeHandle RHIDevice::createImGuiPool(UInt descriptorCount, UInt maxSets)
     {
         // Create a new descriptor pool for ImGui
         VkDescriptorPoolSize poolSizes[] = {
@@ -712,7 +712,7 @@ namespace Worse
         infoPool.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         infoPool.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         infoPool.maxSets                    = maxSets;
-        infoPool.poolSizeCount              = static_cast<u32>(std::size(poolSizes));
+        infoPool.poolSizeCount              = static_cast<UInt>(std::size(poolSizes));
         infoPool.pPoolSizes                 = poolSizes;
 
         VkDescriptorPool pool = VK_NULL_HANDLE;
@@ -729,14 +729,14 @@ namespace Worse
 
     void RHIDevice::memoryTextureCreate(RHITexture* texture)
     {
-        VkImageUsageFlags vkUsage = 0;
-        RHITextureViewFlags usage = texture->getUsage();
+        VkImageUsageFlags vkUsage        = 0;
+        RHITextureViewUsage::Flags usage = texture->getUsageFlags();
         // clang-format off
-        if (usage & RHITextureViewFlagBits::ShaderReadView)      { vkUsage |= VK_IMAGE_USAGE_SAMPLED_BIT; }
-        if (usage & RHITextureViewFlagBits::UnorderedAccessView) { vkUsage |= VK_IMAGE_USAGE_STORAGE_BIT; }
-        if (usage & RHITextureViewFlagBits::RenderTargetView)    { vkUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; }
-        if (usage & RHITextureViewFlagBits::DepthStencilView)    { vkUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; }
-        if (usage & RHITextureViewFlagBits::ClearOrBlit)         { vkUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; }
+        if (usage & RHITextureViewUsage::FlagBits::ShaderReadView)      { vkUsage |= VK_IMAGE_USAGE_SAMPLED_BIT; }
+        if (usage & RHITextureViewUsage::FlagBits::UnorderedAccessView) { vkUsage |= VK_IMAGE_USAGE_STORAGE_BIT; }
+        if (usage & RHITextureViewUsage::FlagBits::RenderTargetView)    { vkUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; }
+        if (usage & RHITextureViewUsage::FlagBits::DepthStencilView)    { vkUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT; }
+        if (usage & RHITextureViewUsage::FlagBits::ClearOrBlit)         { vkUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; }
 
         VkImageCreateInfo infoImage = {};
         infoImage.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -795,7 +795,7 @@ namespace Worse
         }
     }
 
-    RHINativeHandle RHIDevice::memoryBufferCreate(u32 size, u32 bufferUsage, u32 memoryProperty, void const* data, std::string_view name)
+    RHINativeHandle RHIDevice::memoryBufferCreate(UInt size, UInt bufferUsage, UInt memoryProperty, void const* data, std::string_view name)
     {
         // clang-format off
         VkBufferCreateInfo infoBuffer = {};
@@ -808,7 +808,7 @@ namespace Worse
         infoAllocCreate.usage         = VMA_MEMORY_USAGE_AUTO;
         infoAllocCreate.requiredFlags = memoryProperty;
 
-        bool mappable = memoryProperty & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        Bool mappable = memoryProperty & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
         if (mappable)
         {
             infoAllocCreate.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -957,7 +957,7 @@ namespace Worse
         VkDebugUtilsObjectNameInfoEXT info{};
         info.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         info.objectType   = vulkanObjectType(resource.getType());
-        info.objectHandle = resource.asValue<u64>();
+        info.objectHandle = resource.asValue<ULong>();
         info.pObjectName  = name.data();
         // clang-format on
 

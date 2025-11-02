@@ -39,19 +39,19 @@ namespace Worse
         onEventGamepad(event);
     }
 
-    bool Input::isKey(KeyCode const key)
+    Bool Input::isKey(KeyCode const key)
     {
-        return s_keymap[static_cast<usize>(key)];
+        return s_keymap[static_cast<Size>(key)];
     }
 
-    bool Input::isKeyDown(KeyCode const key)
+    Bool Input::isKeyDown(KeyCode const key)
     {
-        return isKey(key) && !s_keymapLastFrame[static_cast<usize>(key)];
+        return isKey(key) && !s_keymapLastFrame[static_cast<Size>(key)];
     }
 
-    bool Input::isKeyUp(KeyCode const key)
+    Bool Input::isKeyUp(KeyCode const key)
     {
-        return !isKey(key) && s_keymapLastFrame[static_cast<usize>(key)];
+        return !isKey(key) && s_keymapLastFrame[static_cast<Size>(key)];
     }
 
 } // namespace Worse

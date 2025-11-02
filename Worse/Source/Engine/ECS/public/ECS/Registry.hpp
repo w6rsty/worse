@@ -120,7 +120,7 @@ namespace Worse::ecs
             return getOrCreateStorage<Component>().get(entity);
         }
 
-        template <typename Component> bool hasComponent(Entity entity)
+        template <typename Component> Bool hasComponent(Entity entity)
         {
             return getOrCreateStorage<Component>().contains(entity);
         }
@@ -183,7 +183,7 @@ namespace Worse::ecs
         }
 
         template <typename Type>
-        bool hasResource()
+        Bool hasResource()
         {
             return getResourceWrapper<Type>() != nullptr;
         }
@@ -218,7 +218,7 @@ namespace Worse::ecs
         }   
 
         template <typename Type>
-        bool hasResourceArray()
+        Bool hasResourceArray()
         {
             std::type_index typeIndex(typeid(Type));
             return m_resourceArrays.find(typeIndex) != m_resourceArrays.end();

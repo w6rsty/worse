@@ -1,4 +1,4 @@
-#include "Math/Hash.hpp"
+#include "math/hash.hpp"
 #include "Pipeline/RHIPipeline.hpp"
 #include "RHIDevice.hpp"
 
@@ -10,11 +10,11 @@ namespace Worse
         // collect ordered set 1 descriptors
         std::vector<RHIDescriptor> descriptors = pipelineState.collectDescriptors();
 
-        u64 hash = 0;
+        ULong hash = 0;
         for (RHIDescriptor const& descriptor : descriptors)
         {
-            hash = math::hashCombine(hash, static_cast<u64>(descriptor.slot));
-            hash = math::hashCombine(hash, static_cast<u64>(descriptor.stageFlags));
+            hash = math::hashCombine(hash, static_cast<ULong>(descriptor.slot));
+            hash = math::hashCombine(hash, static_cast<ULong>(descriptor.stageFlags));
         }
         m_descriptorHash = hash;
 
@@ -41,7 +41,7 @@ namespace Worse
 
     RHIPipeline* RHIPipelinePool::getPipeline(RHIPipelineState const& pso)
     {
-        u64 hash = pso.getHash();
+        ULong hash = pso.getHash();
         auto it  = m_pipelines.find(hash);
         if (it != m_pipelines.end())
         {

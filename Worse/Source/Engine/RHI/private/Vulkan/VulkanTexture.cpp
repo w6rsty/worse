@@ -9,10 +9,10 @@ namespace Worse
         void uploadTexture(RHITexture& texture)
         {
             // clang-format off
-            usize size = texture.getMip(0, 0).bytes.size();
+            Size size = texture.getMip(0, 0).bytes.size();
 
             RHINativeHandle stagingBuffer = RHIDevice::memoryBufferCreate(
-                static_cast<u32>(size),
+                static_cast<UInt>(size),
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 texture.getMip(0, 0).bytes.data(),
@@ -105,7 +105,7 @@ namespace Worse
         }
     } // namespace
 
-    bool RHITexture::nativeCreate()
+    Bool RHITexture::nativeCreate()
     {
         // allocate memory
         RHIDevice::memoryTextureCreate(this);
@@ -118,15 +118,15 @@ namespace Worse
         // transition layout
         {
             RHIImageLayout layout = RHIImageLayout::Max;
-            if (m_usage & RHITextureViewFlagBits::RenderTargetView)
+            if (m_usageFlags & RHITextureViewUsage::FlagBits::RenderTargetView)
             {
                 layout = RHIImageLayout::Attachment;
             }
-            if (m_usage & RHITextureViewFlagBits::UnorderedAccessView)
+            if (m_usageFlags & RHITextureViewUsage::FlagBits::UnorderedAccessView)
             {
                 layout = RHIImageLayout::General;
             }
-            if (m_usage & RHITextureViewFlagBits::ShaderReadView)
+            if (m_usageFlags & RHITextureViewUsage::FlagBits::ShaderReadView)
             {
                 layout = RHIImageLayout::ShaderRead;
             }
@@ -135,7 +135,7 @@ namespace Worse
                     RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
             {
 
-                cmdList->insertBarrier(m_image, m_format, layout, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryWrite);
+                cmdList->insertBarrier(m_image, m_format, layout, RHIPipelineStage::FlagBits::TopOfPipe, RHIAccessUsage::FlagBits::MemoryRead, RHIPipelineStage::FlagBits::AllCommands, RHIAccessUsage::FlagBits::MemoryWrite);
 
                 RHIDevice::cmdImmediateSubmit(cmdList);
             }
