@@ -10,8 +10,8 @@ namespace Worse
     WORSE_BEGIN_DECLARE_BIT_FLAG(FileStreamUsage, UInt)
     // clang-format off
     WORSE_DECLARE_FLAG_BIT(Unknown, 0);
-    WORSE_DECLARE_FLAG_BIT(Read,    1 << 1);
-    WORSE_DECLARE_FLAG_BIT(Write,   1 << 2);
+    WORSE_DECLARE_FLAG_BIT(Read,    1 << 0);
+    WORSE_DECLARE_FLAG_BIT(Write,   1 << 1);
     // clang-format on
     WORSE_END_DECLARE_BIT_FLAG(FileStreamUsage)
 
