@@ -1,4 +1,3 @@
-#include "Definitions.hpp"
 #include "Input/Input.hpp"
 #include "Input/Controller.hpp"
 
@@ -148,7 +147,7 @@ namespace Worse
                 break;
             }
             default:
-                WS_ASSERT_MSG(false, "Invalid axis");
+                WORSE_ASSERT_MSG(false, "Invalid axis");
                 break;
             }
 

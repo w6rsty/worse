@@ -83,7 +83,7 @@ namespace Worse
     void Renderer::createShaders()
     {
         std::filesystem::path shaderDir = std::filesystem::path{Worse::EngineDirectory} / "Shaders";
-        WS_LOG_INFO("Renderer", "Shader directory: {}", shaderDir.string());
+        WORSE_LOG_INFO("Renderer", "Shader directory: {}", shaderDir.string());
 
 #define MAKE_SHADER_GRAPHICS(shaderName, vertexType)                                                                     \
     shaders[RendererShader::shaderName##V] = std::make_unique<RHIShader>(#shaderName "V");                               \
@@ -206,7 +206,7 @@ namespace Worse
         {
             if (auto& texture = textures[i]; !texture || !texture->isValid())
             {
-                WS_LOG_WARN(
+                WORSE_LOG_WARN(
                     "Renderer",
                     "Texture {} load failed",
                     renderTextureToString(static_cast<RendererTexture>(i)));

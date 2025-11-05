@@ -19,7 +19,7 @@ namespace Worse
         }
         catch (std::filesystem::filesystem_error const& e)
         {
-            WS_LOG_ERROR("Shader", "Failed to canonicalize path: {}", e.what());
+            WORSE_LOG_ERROR("Shader", "Failed to canonicalize path: {}", e.what());
             return {};
         }
 
@@ -34,7 +34,7 @@ namespace Worse
         std::ifstream fileStream(canonicalPath);
         if (!fileStream.is_open())
         {
-            WS_LOG_ERROR("Shader",
+            WORSE_LOG_ERROR("Shader",
                          "Failed to open file: {}",
                          canonicalPath.string());
             return {};
@@ -58,7 +58,7 @@ namespace Worse
 
                 if (!FileSystem::isFileExists(includePath))
                 {
-                    WS_LOG_ERROR("Shader", "{} (line {}) does not exist", includePath.string(), lineNumber);
+                    WORSE_LOG_ERROR("Shader", "{} (line {}) does not exist", includePath.string(), lineNumber);
                     continue;
                 }
                 else
@@ -82,7 +82,7 @@ namespace Worse
 
         if (!FileSystem::isFileExists(path))
         {
-            WS_LOG_ERROR("Shader", "Failed to read file: {}", path.string());
+            WORSE_LOG_ERROR("Shader", "Failed to read file: {}", path.string());
             return {};
         }
 
@@ -133,7 +133,7 @@ namespace Worse
 
             if (m_state == RHIShaderCompilationState::CompiledSuccess)
             {
-                WS_LOG_INFO("Shader", "Compiled: {} took: {:.1f}ms", m_path.string(), sw.elapsedMs());
+                WORSE_LOG_INFO("Shader", "Compiled: {} took: {:.1f}ms", m_path.string(), sw.elapsedMs());
             }
         }
     }

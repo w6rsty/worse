@@ -1,7 +1,7 @@
 #pragma once
 #include "base_type.hpp"
 #include "bit_flag.hpp"
-#include "Definitions.hpp"
+#include "common_macro.hpp"
 #include "RHITypes.hpp"
 
 #define WS_RHI_BACKEND_VULKAN
@@ -16,8 +16,8 @@
         VkResult vkResult = (result);                                                 \
         if (vkResult != VK_SUCCESS)                                                   \
         {                                                                             \
-            WS_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
-            WS_ASSERT(vkResult);                                                      \
+            WORSE_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
+            WORSE_ASSERT(vkResult);                                                      \
         }                                                                             \
     } while (false)
 #else

@@ -253,7 +253,7 @@ namespace Worse
 
     void Renderer::setViewport(Float const width, Float const height)
     {
-        WS_ASSERT((width != 0.0f) && (height != 0.0f));
+        WORSE_ASSERT((width != 0.0f) && (height != 0.0f));
 
         if ((viewport.width != width) || (viewport.height != height))
         {

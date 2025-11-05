@@ -3,6 +3,8 @@
 #include "common_macro.hpp" // IWYU pragma: keep
 #include "bit_flag.hpp"     // IWYU pragma: keep
 
+#include "logger/logger.hpp" // IWYU pragma: keep
+
 #include "container/enum_array.hpp" // IWYU pragma: keep
 
 #include "math/math_includes.hpp" // IWYU pragma: keep

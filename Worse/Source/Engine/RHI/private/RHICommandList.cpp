@@ -6,7 +6,7 @@ namespace Worse
 
     void RHICommandList::waitForExecution()
     {
-        WS_ASSERT(m_state == RHICommandListState::Submitted);
+        WORSE_ASSERT(m_state == RHICommandListState::Submitted);
 
         ULong const timeoutNs = 60'000'000'000; // 60s
         m_renderingCompleteTimelineSemaphore->wait(timeoutNs);

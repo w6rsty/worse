@@ -150,7 +150,7 @@ namespace Worse
             cmdList->waitForExecution();
         }
 
-        WS_ASSERT(cmdList->getState() == RHICommandListState::Idle);
+        WORSE_ASSERT(cmdList->getState() == RHICommandListState::Idle);
 
         return cmdList.get();
     }

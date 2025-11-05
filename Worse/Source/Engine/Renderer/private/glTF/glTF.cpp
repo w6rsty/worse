@@ -2,7 +2,7 @@
 #include "math/transform.hpp"
 #include "glTF/glTF.hpp"
 #include "AssetServer.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "RHITypes.hpp"
 
 #include "MathElementTraits.hpp" // IWYU pragma: keep
@@ -47,13 +47,13 @@ namespace Worse
                         },
                         [&](auto arg)
                         {
-                            WS_LOG_ERROR("glTF", "Unsupported buffer view type");
+                            WORSE_LOG_ERROR("glTF", "Unsupported buffer view type");
                         }}, buffer.data);
                 },
                 [&](fastgltf::sources::URI path)
                 {
-                    WS_ASSERT(path.fileByteOffset == 0);
-                    WS_ASSERT(path.uri.isLocalPath());
+                    WORSE_ASSERT(path.fileByteOffset == 0);
+                    WORSE_ASSERT(path.uri.isLocalPath());
 
                     handle = assetServer.addTexture(parentDir / path.uri.fspath(), AssetServer::LoadStrategy::Immediate);
                 },
@@ -64,7 +64,7 @@ namespace Worse
                 },
                 [&](auto arg)
                 {
-                    WS_LOG_ERROR("glTF", "Unsupported image source type");
+                    WORSE_LOG_ERROR("glTF", "Unsupported image source type");
                 },
             }, image.data);
             // clang-format on
@@ -183,7 +183,7 @@ namespace Worse
         auto gltfFile = fastgltf::GltfDataBuffer::FromPath(filepath);
         if (gltfFile.error() != fastgltf::Error::None)
         {
-            WS_LOG_ERROR("glTF", "Failed to load file {}", filepath);
+            WORSE_LOG_ERROR("glTF", "Failed to load file {}", filepath);
             return nullptr;
         }
 
@@ -193,7 +193,7 @@ namespace Worse
 
         if (auto error = asset.error(); error != fastgltf::Error::None)
         {
-            WS_LOG_ERROR("glTF", "Failed to parse glTF {}", filepath);
+            WORSE_LOG_ERROR("glTF", "Failed to parse glTF {}", filepath);
             return nullptr;
         }
 
@@ -230,7 +230,7 @@ namespace Worse
             else
             {
                 textures.push_back(m_assetServer.getErrorTexture());
-                WS_LOG_WARN("gltf", "Faile to load {}", textureName);
+                WORSE_LOG_WARN("gltf", "Faile to load {}", textureName);
             }
         }
 
@@ -349,7 +349,7 @@ namespace Worse
                 }
                 else
                 {
-                    WS_LOG_WARN("gltf", "{} does not have attribute NORMAL", modelName);
+                    WORSE_LOG_WARN("gltf", "{} does not have attribute NORMAL", modelName);
                 }
 
                 // load UVs
@@ -368,7 +368,7 @@ namespace Worse
                 }
                 else
                 {
-                    WS_LOG_WARN("gltf", "{} does not have attribute TEXCOORD_0", modelName);
+                    WORSE_LOG_WARN("gltf", "{} does not have attribute TEXCOORD_0", modelName);
                 }
 
                 // load tangents
@@ -385,7 +385,7 @@ namespace Worse
                         });
                 }
                 {
-                    WS_LOG_WARN("gltf", "{} does not have attribute TANGENT", modelName);
+                    WORSE_LOG_WARN("gltf", "{} does not have attribute TANGENT", modelName);
 
                     // TODO: Compute tangent
                     calculateTangent(vertices, indices);

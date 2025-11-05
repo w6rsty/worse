@@ -1,7 +1,6 @@
 #include "Window.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Event.hpp"
-#include "Definitions.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_init.h"
@@ -19,9 +18,9 @@ namespace Worse
     {
         if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
         {
-            WS_LOG_FATAL("Window",
-                         "Failed to initialize SDL: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Window",
+                            "Failed to initialize SDL: {}",
+                            SDL_GetError());
         }
 
         SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
@@ -32,15 +31,15 @@ namespace Worse
 
         if (!s_window)
         {
-            WS_LOG_FATAL("Window",
-                         "Failed to create window: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Window",
+                            "Failed to create window: {}",
+                            SDL_GetError());
         }
     }
 
     void Window::shutdown()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         SDL_DestroyWindow(s_window);
         s_window = nullptr;
@@ -77,14 +76,14 @@ namespace Worse
 
     void Window::show()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         SDL_ShowWindow(s_window);
     }
 
     void Window::hide()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         SDL_HideWindow(s_window);
     }
@@ -106,7 +105,7 @@ namespace Worse
 
     void Window::setWindowMode(WindowMode mode)
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         switch (mode)
         {
@@ -136,7 +135,7 @@ namespace Worse
 
     void Window::setSize(UInt const w, UInt const h)
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
         SDL_SetWindowSize(s_window, static_cast<int>(w), static_cast<int>(h));
         s_width  = w;
         s_height = h;
@@ -151,7 +150,7 @@ namespace Worse
 
     std::pair<Int, Int> Window::getPosition()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
         Int x = 0;
         Int y = 0;
         SDL_GetWindowPosition(s_window, &x, &y);

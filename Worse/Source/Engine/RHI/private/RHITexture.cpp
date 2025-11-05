@@ -26,7 +26,7 @@ namespace Worse
 
         if (!nativeCreate())
         {
-            WS_LOG_ERROR("RHITexture", "Failed to create texture: {}", name);
+            WORSE_LOG_ERROR("RHITexture", "Failed to create texture: {}", name);
         }
     }
 
@@ -51,7 +51,7 @@ namespace Worse
 
             if (!nativeCreate())
             {
-                WS_LOG_ERROR("RHITexture", "Failed to create texture from file: {}", path.string());
+                WORSE_LOG_ERROR("RHITexture", "Failed to create texture from file: {}", path.string());
             }
         }
     }
@@ -60,7 +60,7 @@ namespace Worse
     {
         if (data.empty())
         {
-            WS_LOG_ERROR("RHITexture", "Empty texture data");
+            WORSE_LOG_ERROR("RHITexture", "Empty texture data");
             return;
         }
 
@@ -83,7 +83,7 @@ namespace Worse
 
             if (!nativeCreate())
             {
-                WS_LOG_ERROR("RHITexture", "Failed to create texture from memory");
+                WORSE_LOG_ERROR("RHITexture", "Failed to create texture from memory");
             }
         }
     }
@@ -117,7 +117,7 @@ namespace Worse
 
             if (!nativeCreate())
             {
-                WS_LOG_ERROR("RHITexture", "Failed to create combined texture: {}", name);
+                WORSE_LOG_ERROR("RHITexture", "Failed to create combined texture: {}", name);
             }
         }
     }
@@ -162,15 +162,15 @@ namespace Worse
 
     RHITextureSlice const& RHITexture::getSlice(Size const arrayIndex) const
     {
-        WS_ASSERT(arrayIndex < m_slices.size());
+        WORSE_ASSERT(arrayIndex < m_slices.size());
 
         return m_slices[arrayIndex];
     }
 
     RHITextureMip const& RHITexture::getMip(Size const arrayIndex, Size const mipIndex) const
     {
-        WS_ASSERT(arrayIndex < m_slices.size());
-        WS_ASSERT(mipIndex < m_mipCount);
+        WORSE_ASSERT(arrayIndex < m_slices.size());
+        WORSE_ASSERT(mipIndex < m_mipCount);
 
         return m_slices[arrayIndex].mips[mipIndex];
     }

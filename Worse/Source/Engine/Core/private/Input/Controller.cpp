@@ -1,6 +1,6 @@
 #include "math/math_includes.hpp"
 #include "Input/Controller.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 
 #include "SDL3/SDL_gamepad.h"
 
@@ -17,20 +17,20 @@ namespace Worse
         m_handle = SDL_OpenGamepad(descriptor.joystickID);
         if (!m_handle)
         {
-            WS_LOG_ERROR("Controller",
-                         "Failed to open gamepad: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Controller",
+                            "Failed to open gamepad: {}",
+                            SDL_GetError());
             m_handle = nullptr;
         }
         m_firmwareVersion =
             SDL_GetGamepadFirmwareVersion(static_cast<SDL_Gamepad*>(m_handle));
 
-        WS_LOG_DEBUG("Controller",
-                     "Connected: {} (JoystickID: {}, GUID: {}, Version: {})",
-                     m_name,
-                     m_joystickID,
-                     m_guid,
-                     m_firmwareVersion);
+        WORSE_LOG_DEBUG("Controller",
+                        "Connected: {} (JoystickID: {}, GUID: {}, Version: {})",
+                        m_name,
+                        m_joystickID,
+                        m_guid,
+                        m_firmwareVersion);
     }
 
     Controller::~Controller()
@@ -40,7 +40,7 @@ namespace Worse
             SDL_CloseGamepad(static_cast<SDL_Gamepad*>(m_handle));
             m_handle = nullptr;
 
-            WS_LOG_DEBUG(
+            WORSE_LOG_DEBUG(
                 "Controller",
                 "Disconnected: {} (JoystickID: {}, GUID: {}, Version: {})",
                 m_name,
@@ -87,9 +87,9 @@ namespace Worse
                                green,
                                blue))
         {
-            WS_LOG_ERROR("Controller",
-                         "Failed to set LED color: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Controller",
+                            "Failed to set LED color: {}",
+                            SDL_GetError());
         }
     }
 
@@ -108,9 +108,9 @@ namespace Worse
                                static_cast<UShort>(high * 65535.0f),
                                durationMs))
         {
-            WS_LOG_ERROR("Controller",
-                         "Failed to vibrate controller: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Controller",
+                            "Failed to vibrate controller: {}",
+                            SDL_GetError());
         }
     }
 

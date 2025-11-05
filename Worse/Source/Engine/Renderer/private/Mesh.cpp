@@ -1,6 +1,6 @@
 #include "Mesh.hpp"
 #include "RHIBuffer.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 
 namespace Worse
 {
@@ -49,7 +49,7 @@ namespace Worse
     {
         if (m_vertices.empty())
         {
-            WS_LOG_WARN("Mesh", "No vertices");
+            WORSE_LOG_WARN("Mesh", "No vertices");
             return;
         }
 

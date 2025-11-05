@@ -1,5 +1,5 @@
 #include "DXCompiler.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 
 namespace Worse
 {
@@ -33,13 +33,13 @@ namespace Worse
         hres = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_compiler));
         if (FAILED(hres))
         {
-            WS_LOG_ERROR("dxc", "Failed to initialize DXC compiler");
+            WORSE_LOG_ERROR("dxc", "Failed to initialize DXC compiler");
         }
 
         hres = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
         if (FAILED(hres))
         {
-            WS_LOG_ERROR("dxc", "Failed to initialize DXC utils");
+            WORSE_LOG_ERROR("dxc", "Failed to initialize DXC utils");
         }
     }
 
@@ -60,7 +60,7 @@ namespace Worse
         CComPtr<IDxcBlobEncoding> sourceBlob;
         if (FAILED(m_utils->CreateBlobFromPinned(source.data(), static_cast<UInt>(source.size()), CP_UTF8, &sourceBlob)))
         {
-            WS_LOG_ERROR("dxc", "Failed to load shader file");
+            WORSE_LOG_ERROR("dxc", "Failed to load shader file");
         }
 
         DxcBuffer buffer = {};
@@ -93,7 +93,7 @@ namespace Worse
                 Bool suc                            = SUCCEEDED(res);
                 if (suc && errorBlob)
                 {
-                    WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
+                    WORSE_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
                 }
             }
             return nullptr;

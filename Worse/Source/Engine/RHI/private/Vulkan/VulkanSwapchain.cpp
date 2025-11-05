@@ -1,6 +1,6 @@
 #include "math/math_includes.hpp"
 #include "Window.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Event.hpp"
 #include "RHISwapchain.hpp"
 #include "RHIResource.hpp"
@@ -8,6 +8,9 @@
 #include "RHIQueue.hpp"
 
 #include "SDL3/SDL_vulkan.h"
+
+#include <thread>
+#include <chrono>
 
 namespace Worse
 {
@@ -110,7 +113,7 @@ namespace Worse
                 }
             }
 
-            WS_LOG_WARN("Swapchain", "Requested present mode not supported, falling back to FIFO");
+            WORSE_LOG_WARN("Swapchain", "Requested present mode not supported, falling back to FIFO");
             return VK_PRESENT_MODE_FIFO_KHR;
         }
 
@@ -135,12 +138,12 @@ namespace Worse
 
             if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window*>(m_sdlWindow), RHIContext::instance, nullptr, &surface))
             {
-                WS_LOG_ERROR("Swapchain", "Failed to create surface: {}", SDL_GetError());
+                WORSE_LOG_ERROR("Swapchain", "Failed to create surface: {}", SDL_GetError());
             }
 
             VkBool32 presentSupport{VK_FALSE};
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceSupportKHR(RHIContext::physicalDevice, RHIDevice::getQueueIndex(RHIQueueType::Graphics), surface, &presentSupport));
-            WS_ASSERT_MSG(presentSupport, "Surface does not support present");
+            WORSE_ASSERT_MSG(presentSupport, "Surface does not support present");
 
             m_surface = RHINativeHandle{surface, RHINativeHandleType::Surface};
         }
@@ -187,7 +190,7 @@ namespace Worse
         // recreate swapchain
         create();
 
-        WS_LOG_INFO("Swapchain", "Resized to {}x{}", m_width, m_height);
+        WORSE_LOG_INFO("Swapchain", "Resized to {}x{}", m_width, m_height);
     }
 
     void RHISwapchain::resizeFitWindow()
@@ -212,7 +215,7 @@ namespace Worse
             {
                 cmdList->waitForExecution();
             }
-            WS_ASSERT(cmdList->getState() == RHICommandListState::Idle);
+            WORSE_ASSERT(cmdList->getState() == RHICommandListState::Idle);
         }
 
         UInt retryCount          = 0;
@@ -265,14 +268,14 @@ namespace Worse
 
     void RHISwapchain::create()
     {
-        WS_ASSERT(m_sdlWindow != nullptr);
-        WS_ASSERT(m_surface.isValid());
+        WORSE_ASSERT(m_sdlWindow != nullptr);
+        WORSE_ASSERT(m_surface.isValid());
 
         VkSurfaceCapabilitiesKHR cap = getSurfaceCapabilities(m_surface.asValue<VkSurfaceKHR>());
 
         if ((cap.currentExtent.width == 0) || (cap.currentExtent.height == 0))
         {
-            WS_LOG_WARN("Swapchain", "Window is minimized, skipping creation");
+            WORSE_LOG_WARN("Swapchain", "Window is minimized, skipping creation");
             return;
         }
 
@@ -357,12 +360,12 @@ namespace Worse
             m_imageAcquireSemaphores[i] = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::BinarySemaphore, std::format("image_acquire_{}", i).c_str());
         }
 
-        WS_LOG_INFO("Swapchain",
-                    "Created (Size: {}x{}, Format: {}, VSync: {})",
-                    m_width,
-                    m_height,
-                    rhiFormatToString(m_format),
-                    m_presentMode == RHIPresentMode::Immediate ? "off" : "on");
+        WORSE_LOG_INFO("Swapchain",
+                       "Created (Size: {}x{}, Format: {}, VSync: {})",
+                       m_width,
+                       m_height,
+                       rhiFormatToString(m_format),
+                       m_presentMode == RHIPresentMode::Immediate ? "off" : "on");
 
         // reset state
         m_imageIndex = 0;

@@ -1,4 +1,3 @@
-#include "Definitions.hpp"
 #include "Input/Input.hpp"
 
 #include "SDL3/SDL_keyboard.h"
@@ -11,7 +10,7 @@ namespace Worse
         int numKeys{0};
         Bool const* keyStates = SDL_GetKeyboardState(&numKeys);
 
-        WS_ASSERT_MSG(keyStates != nullptr, "Failed to get keyboard state");
+        WORSE_ASSERT_MSG(keyStates != nullptr, "Failed to get keyboard state");
 
         KeyMap& keyMap = GetKeyMap();
         // clang-format off

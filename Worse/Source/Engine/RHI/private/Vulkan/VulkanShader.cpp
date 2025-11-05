@@ -110,7 +110,7 @@ namespace Worse
             wArguments = {L"-T", L"cs_6_8", L"-E", L"main_cs"};
             break;
         default:
-            WS_ASSERT(false);
+            WORSE_ASSERT(false);
             break;
         }
 
@@ -146,7 +146,7 @@ namespace Worse
 
         if (!codeBlob)
         {
-            WS_LOG_ERROR("Shader", "Compilation failed: {}", m_name);
+            WORSE_LOG_ERROR("Shader", "Compilation failed: {}", m_name);
             return shader;
         }
 
@@ -169,8 +169,8 @@ namespace Worse
 
     void RHIShader::reflect(RHIShaderType const shaderType, UInt* spirvData, Size const spirvSize)
     {
-        WS_ASSERT(spirvData != nullptr);
-        WS_ASSERT(spirvSize > 0);
+        WORSE_ASSERT(spirvData != nullptr);
+        WORSE_ASSERT(spirvSize > 0);
 
         SpvReflectShaderModule reflection{};
         spvReflectCreateShaderModule(spirvSize * sizeof(UInt), spirvData, &reflection);

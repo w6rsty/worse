@@ -1,14 +1,14 @@
-#include "Log.hpp"
+#include "common_macro.hpp"
+#include "logger/logger.hpp"
 #include "FileStream.hpp"
-#include "Definitions.hpp"
 
 namespace Worse
 {
 
     FileStream::FileStream(std::filesystem::path const& path, FileStreamUsage::Flags usageFlags)
     {
-        m_isOpen = false;
-        m_usageFlags  = usageFlags;
+        m_isOpen     = false;
+        m_usageFlags = usageFlags;
 
         std::ios_base::openmode mode = std::ios_base::binary;
         // clang-format off
@@ -21,9 +21,9 @@ namespace Worse
             m_stream.open(path, mode);
             if (m_stream.fail())
             {
-                WS_LOG_ERROR("FileStream",
-                             "Failed to open {} for reading",
-                             path.string());
+                WORSE_LOG_ERROR("FileStream",
+                                "Failed to open {} for reading",
+                                path.string());
                 return;
             }
         }
@@ -33,9 +33,9 @@ namespace Worse
             m_stream.open(path, mode);
             if (m_stream.fail())
             {
-                WS_LOG_ERROR("FileStream",
-                             "Failed to open {} for writing",
-                             path.string());
+                WORSE_LOG_ERROR("FileStream",
+                                "Failed to open {} for writing",
+                                path.string());
                 return;
             }
         }
@@ -72,8 +72,8 @@ namespace Worse
 
     std::string FileStream::read()
     {
-        WS_ASSERT(m_isOpen);
-        WS_ASSERT(m_usageFlags & FileStreamUsage::FlagBits::Read);
+        WORSE_ASSERT(m_isOpen);
+        WORSE_ASSERT(m_usageFlags & FileStreamUsage::FlagBits::Read);
 
         std::string content((std::istreambuf_iterator<char>(m_stream)), std::istreambuf_iterator<char>());
         return content;
@@ -81,7 +81,7 @@ namespace Worse
 
     void FileStream::write()
     {
-        UNIMPLEMENTED();
+        WORSE_UNIMPLEMENTED();
     }
 
 } // namespace Worse

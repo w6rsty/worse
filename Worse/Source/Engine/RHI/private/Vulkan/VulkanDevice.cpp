@@ -1,5 +1,5 @@
 #include "DXCompiler.hpp" // Do not move
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Platform.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"
@@ -93,11 +93,11 @@ namespace Worse
                 // WS_LOG_INFO("Vulkan", "{}", pCallbackData->pMessage);
                 return VK_FALSE;
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-                WS_LOG_WARN("Vulkan", "{}", pCallbackData->pMessage);
+                WORSE_LOG_WARN("Vulkan", "{}", pCallbackData->pMessage);
                 return VK_FALSE;
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                WS_LOG_ERROR("Vulkan", "{}", pCallbackData->pMessage);
-                WS_ASSERT(false);
+                WORSE_LOG_ERROR("Vulkan", "{}", pCallbackData->pMessage);
+                WORSE_ASSERT(false);
                 return VK_FALSE;
             default:
                 return VK_FALSE;
@@ -137,7 +137,7 @@ namespace Worse
             WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance, &gpuCount, nullptr));
             std::vector<VkPhysicalDevice> gpus(gpuCount);
             WS_ASSERT_VK(vkEnumeratePhysicalDevices(RHIContext::instance, &gpuCount, gpus.data()));
-            WS_ASSERT_MSG(!gpus.empty(), "No physical devices found for Vulkan");
+            WORSE_ASSERT_MSG(!gpus.empty(), "No physical devices found for Vulkan");
 
             RHIContext::physicalDevice = gpus[0]; // APPLE M3
         }
@@ -266,7 +266,7 @@ namespace Worse
                 }
             }
 
-            WS_ASSERT_MSG(false, "Failed to find a queue family with the requested flags");
+            WORSE_ASSERT_MSG(false, "Failed to find a queue family with the requested flags");
             return 0;
         }
 
@@ -347,10 +347,10 @@ namespace Worse
         {
             if (!allocations.empty())
             {
-                WS_LOG_WARN("VMA", "There are still {} allocations in VMA", allocations.size());
+                WORSE_LOG_WARN("VMA", "There are still {} allocations in VMA", allocations.size());
                 for (auto const& [handle, allocation] : allocations)
                 {
-                    WS_LOG_WARN("VMA", "Allocation: {}", handle);
+                    WORSE_LOG_WARN("VMA", "Allocation: {}", handle);
                 }
             }
 
@@ -360,7 +360,7 @@ namespace Worse
 
         void saveAllocation(VmaAllocation const& allocation, RHINativeHandle handle)
         {
-            WS_ASSERT(handle);
+            WORSE_ASSERT(handle);
 
             std::lock_guard lock{mtxAllocation};
             allocations.emplace(handle.asValue(), AllocationData{allocation, handle});
@@ -369,7 +369,7 @@ namespace Worse
         // thread safe
         AllocationData* getAllocation(RHINativeHandle handle)
         {
-            WS_ASSERT(handle);
+            WORSE_ASSERT(handle);
             std::lock_guard lock{mtxAllocation};
             if (auto it = allocations.find(handle.asValue()); it != allocations.end())
             {
@@ -384,7 +384,7 @@ namespace Worse
         // thread safe
         void removeAllocation(RHINativeHandle handle)
         {
-            WS_ASSERT(handle);
+            WORSE_ASSERT(handle);
             std::lock_guard lock{mtxAllocation};
             allocations.erase(handle.asValue());
         }
@@ -506,7 +506,7 @@ namespace Worse
                 VkPhysicalDeviceProperties physicalDeviceProperties;
                 vkGetPhysicalDeviceProperties(RHIContext::physicalDevice, &physicalDeviceProperties);
                 // clang-format off
-                WS_LOG_INFO("RHI Backend", "Vulkan {}.{}.{}", 
+                WORSE_LOG_INFO("RHI Backend", "Vulkan {}.{}.{}", 
                     std::to_string(VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion)),
                     std::to_string(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion)),
                     std::to_string(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion)));
@@ -573,8 +573,8 @@ namespace Worse
 
     void RHIDevice::setResourceProvider(RHIResourceProvider* provider)
     {
-        WS_ASSERT(provider);
-        WS_ASSERT(provider->validate());
+        WORSE_ASSERT(provider);
+        WORSE_ASSERT(provider->validate());
         resourceProvider = provider;
     }
 
@@ -646,19 +646,19 @@ namespace Worse
 
     RHINativeHandle RHIDevice::getGlobalDescriptorSetLayout()
     {
-        WS_ASSERT(descriptor::globalSet);
+        WORSE_ASSERT(descriptor::globalSet);
         return descriptor::globalSet->getLayout();
     }
 
     RHINativeHandle RHIDevice::getGlobalDescriptorSet()
     {
-        WS_ASSERT(descriptor::globalSet);
+        WORSE_ASSERT(descriptor::globalSet);
         return descriptor::globalSet->getSet();
     }
 
     void RHIDevice::writeGlobalDescriptorSet()
     {
-        WS_ASSERT(descriptor::globalSet);
+        WORSE_ASSERT(descriptor::globalSet);
         descriptor::globalSet->writeStatic();
     }
 
@@ -669,26 +669,26 @@ namespace Worse
         {
             return;
         }
-        WS_ASSERT(descriptor::globalSet);
+        WORSE_ASSERT(descriptor::globalSet);
         descriptor::globalSet->writeBindlessTextures(updates);
     }
 
     RHIDescriptorSetLayout*
     RHIDevice::getSpecificDescriptorSetLayout(RHIPipelineState const& pso)
     {
-        WS_ASSERT(descriptor::specificSet);
+        WORSE_ASSERT(descriptor::specificSet);
         return descriptor::specificSet->getDescriptorSetLayout(pso);
     }
 
     RHINativeHandle RHIDevice::getSpecificDescriptorSet(ULong descriptorHash)
     {
-        WS_ASSERT(descriptor::specificSet);
+        WORSE_ASSERT(descriptor::specificSet);
         return descriptor::specificSet->getDescriptorSet(descriptorHash);
     }
 
     void RHIDevice::resetSpecificDescriptorSets()
     {
-        WS_ASSERT(descriptor::specificSet);
+        WORSE_ASSERT(descriptor::specificSet);
         descriptor::specificSet->resetSets();
     }
 
@@ -723,7 +723,7 @@ namespace Worse
 
     RHIPipeline* RHIDevice::getPipeline(RHIPipelineState const& pso)
     {
-        WS_ASSERT(pipeline::pipelinePool);
+        WORSE_ASSERT(pipeline::pipelinePool);
         return pipeline::pipelinePool->getPipeline(pso);
     }
 
@@ -771,7 +771,7 @@ namespace Worse
         if ((result == VK_ERROR_OUT_OF_DEVICE_MEMORY) ||
             (result == VK_ERROR_OUT_OF_HOST_MEMORY))
         {
-            WS_LOG_ERROR("VMA", "Allocation out of memory");
+            WORSE_LOG_ERROR("VMA", "Allocation out of memory");
         }
         WS_ASSERT_VK(result);
 
@@ -823,7 +823,7 @@ namespace Worse
         if ((result == VK_ERROR_OUT_OF_DEVICE_MEMORY) ||
             (result == VK_ERROR_OUT_OF_HOST_MEMORY))
         {
-            WS_LOG_ERROR("VMA", "Allocation out of memory");
+            WORSE_LOG_ERROR("VMA", "Allocation out of memory");
         }
         WS_ASSERT_VK(result);
 
@@ -908,8 +908,8 @@ namespace Worse
                 case RHINativeHandleType::DescriptorPool:      vkDestroyDescriptorPool(RHIContext::device, handle.asValue<VkDescriptorPool>(), nullptr);           break;
                 case RHINativeHandleType::DescriptorSetLayout: vkDestroyDescriptorSetLayout(RHIContext::device, handle.asValue<VkDescriptorSetLayout>(), nullptr); break;
                 default:
-                    WS_LOG_ERROR("RHI", "Unhandled handle type");
-                    WS_ASSERT(false);
+                    WORSE_LOG_ERROR("RHI", "Unhandled handle type");
+                    WORSE_ASSERT(false);
                 }
                 // clang-format on
 

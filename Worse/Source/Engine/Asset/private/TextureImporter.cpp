@@ -1,4 +1,4 @@
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "FileSystem.hpp"
 #include "TextureImporter.hpp"
 
@@ -24,7 +24,7 @@ namespace Worse
                                       desiredChannels);
             if (!data)
             {
-                WS_LOG_ERROR("Asset", "Failed to load texture: {}", path.string());
+                WORSE_LOG_ERROR("Asset", "Failed to load texture: {}", path.string());
                 return std::nullopt;
             }
 
@@ -53,7 +53,7 @@ namespace Worse
         {
             if (data.empty())
             {
-                WS_LOG_ERROR("Asset", "Empty texture data");
+                WORSE_LOG_ERROR("Asset", "Empty texture data");
                 return std::nullopt;
             }
 
@@ -70,7 +70,7 @@ namespace Worse
                 desiredChannels);
             if (!imgData)
             {
-                WS_LOG_ERROR("Asset", "Failed to load texture from memory");
+                WORSE_LOG_ERROR("Asset", "Failed to load texture from memory");
                 return std::nullopt;
             }
 
@@ -104,19 +104,19 @@ namespace Worse
 
         if (!FileSystem::isFileExists(path))
         {
-            WS_LOG_WARN("Asset", "Failed to load texture. File {} not found", path.string());
+            WORSE_LOG_WARN("Asset", "Failed to load texture. File {} not found", path.string());
             return {};
         }
 
         if (!FileSystem::isSupportedImage(path))
         {
-            WS_LOG_ERROR("Asset", "Failed to load texture. Unsupported format");
+            WORSE_LOG_ERROR("Asset", "Failed to load texture. Unsupported format");
             return {};
         }
 
         if (std::optional<TextureLoadView> textureData = std::move(loadFromFileCommon(path)))
         {
-            WS_LOG_INFO(
+            WORSE_LOG_INFO(
                 "Asset",
                 "Loaded texture: {} ({:>4}x{:>4}x{:>2}, layers: {:>2}, mip: {:>2})",
                 path.string(),
@@ -136,7 +136,7 @@ namespace Worse
     {
         if (std::optional<TextureLoadView> textureData = std::move(loadFromMemoryCommon(data)))
         {
-            WS_LOG_INFO(
+            WORSE_LOG_INFO(
                 "Asset",
                 "Loaded texture: {} ({:>4}x{:>4}x{:>2}, layers: {:>2}, mip: {:>2})",
                 name,

@@ -1,5 +1,4 @@
 #pragma once
-#include "Definitions.hpp"
 #include "Storage.hpp"
 #include "EventBus.hpp"
 #include "Resource.hpp"
@@ -178,7 +177,7 @@ namespace Worse::ecs
         Resource<Type> getResource()
         {
             auto* wrapper = getResourceWrapper<Type>();
-            WS_ASSERT(wrapper);
+            WORSE_ASSERT(wrapper);
             return wrapper ? Resource<Type>(&wrapper->resource) : Resource<Type>(nullptr);
         }
 

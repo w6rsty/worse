@@ -7,6 +7,7 @@
 
 #include <concepts>
 #include <memory>
+#include <optional>
 
 namespace Worse
 {

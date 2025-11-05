@@ -1,4 +1,4 @@
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Engine.hpp"
 #include "Window.hpp"
 #include "Input/Input.hpp"
@@ -11,12 +11,12 @@ namespace Worse
 #ifdef WS_RHI_BACKEND_VULKAN
         if (volkInitialize() != VK_SUCCESS)
         {
-            WS_LOG_ERROR("Engine", "Failed to initialize Vulkan loader.");
+            WORSE_LOG_ERROR("Engine", "Failed to initialize Vulkan loader.");
             return;
         }
 #endif
 
-        WS_LOG_INFO("Engine", "Initializing...");
+        WORSE_LOG_INFO("Engine", "Initializing...");
         Window::initialize();
         Input::initialize();
     }

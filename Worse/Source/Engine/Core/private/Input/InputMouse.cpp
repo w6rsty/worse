@@ -1,5 +1,5 @@
 #include "Input/Input.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Window.hpp"
 
 #include "SDL3/SDL_mouse.h"
@@ -71,7 +71,7 @@ namespace Worse
     {
         if (!SDL_WarpMouseGlobal(position.x, position.y))
         {
-            WS_LOG_ERROR("Input", "Failed to set mouse position");
+            WORSE_LOG_ERROR("Input", "Failed to set mouse position");
             return;
         }
         s_mousePosition = position;

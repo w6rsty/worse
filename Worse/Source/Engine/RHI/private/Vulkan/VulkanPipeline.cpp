@@ -31,9 +31,9 @@ namespace Worse
             }
             // clang-format on
 
-            WS_ASSERT(infoShaderStage.module != VK_NULL_HANDLE);
-            WS_ASSERT(infoShaderStage.pName != nullptr);
-            WS_ASSERT(infoShaderStage.stage != 0);
+            WORSE_ASSERT(infoShaderStage.module != VK_NULL_HANDLE);
+            WORSE_ASSERT(infoShaderStage.pName != nullptr);
+            WORSE_ASSERT(infoShaderStage.stage != 0);
 
             return infoShaderStage;
         }
@@ -293,7 +293,7 @@ namespace Worse
             RHIDevice::setResourceName(m_pipeline, pipelineState.name);
         }
 
-        WS_ASSERT_MSG(m_pipeline, "Failed to create pipeline");
+        WORSE_ASSERT_MSG(m_pipeline, "Failed to create pipeline");
 
         // log creation detail
         std::string shaderNames;
@@ -308,7 +308,7 @@ namespace Worse
                 shaderNames += m_state.shaders[i]->getName();
             }
         }
-        WS_LOG_INFO("Pipeline",
+        WORSE_LOG_INFO("Pipeline",
                     "Created `{}` (Type: {}, Topology {}, Shaders: [{}])",
                     m_state.name,
                     m_state.type == RHIPipelineType::Graphics ? "graphics"

@@ -1,5 +1,5 @@
 #include "math/hash.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "RHIDevice.hpp"
 #include "RHIResource.hpp"
 #include "RHIBuffer.hpp"
@@ -105,7 +105,7 @@ namespace Worse
 
     RHIDescriptorAllocator::~RHIDescriptorAllocator()
     {
-        WS_LOG_DEBUG("Descriptor", "Destroying {} descriptor pools", m_pools[0].size() + m_pools[1].size());
+        WORSE_LOG_DEBUG("Descriptor", "Destroying {} descriptor pools", m_pools[0].size() + m_pools[1].size());
         for (RHINativeHandle pool : m_pools[0])
         {
             RHIDevice::deletionQueueAdd(pool);
@@ -134,7 +134,7 @@ namespace Worse
 
     RHINativeHandle RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout, UInt count)
     {
-        WS_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
+        WORSE_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
         // clang-format off
         VkDescriptorSetVariableDescriptorCountAllocateInfo variableCountInfo = {};
         variableCountInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
@@ -259,7 +259,7 @@ namespace Worse
 
     void VulkanGlobalSet::writeStatic()
     {
-        WS_ASSERT(m_allocator);
+        WORSE_ASSERT(m_allocator);
 
         if (m_firstUpdate)
         {
@@ -282,7 +282,7 @@ namespace Worse
 
     void VulkanGlobalSet::writeBindlessTextures(std::span<RHIDescriptorWrite> updates)
     {
-        WS_ASSERT(m_set);
+        WORSE_ASSERT(m_set);
 
         std::sort(updates.begin(),
                   updates.end(),
@@ -330,7 +330,7 @@ namespace Worse
                 // Bounds check to prevent heap buffer overflow
                 if (updatesIndex + j >= updates.size())
                 {
-                    WS_LOG_ERROR("VulkanDescriptor",
+                    WORSE_LOG_ERROR("VulkanDescriptor",
                                  "Access out of bounds: updatesIndex({}) + j({}) >= updates.size({})", 
                                  updatesIndex, j, updates.size());
                     return;
@@ -411,7 +411,7 @@ namespace Worse
 
         RHIDescriptorSetLayout* layout = getDescriptorSetLayout(hash);
         // layout was created along with pipeline, so it must exist
-        WS_ASSERT_MSG(layout, "Unmatched descriptor hash");
+        WORSE_ASSERT_MSG(layout, "Unmatched descriptor hash");
 
         RHINativeHandle set = m_allocator->allocateSet(layout->getLayout());
         m_descriptorSets.emplace(hash, set);

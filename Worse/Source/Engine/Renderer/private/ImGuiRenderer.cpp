@@ -134,7 +134,7 @@ namespace Worse
         colors[ImGuiCol_ResizeGripHovered]    = ImVec4(0.8f, 0.8f, 0.8f, 0.7f);
         colors[ImGuiCol_ResizeGripActive]     = ImVec4(0.8f, 0.8f, 0.8f, 0.9f);
 
-        WS_ASSERT(ImGui_ImplSDL3_InitForVulkan(static_cast<SDL_Window*>(Window::getHandleSDL())));
+        WORSE_ASSERT(ImGui_ImplSDL3_InitForVulkan(static_cast<SDL_Window*>(Window::getHandleSDL())));
     
         ImGui_ImplVulkan_LoadFunctions(
             RHIContext::version,
@@ -173,7 +173,7 @@ namespace Worse
 
         infoInit.PipelineRenderingCreateInfo = infoRendering;
 
-        WS_ASSERT(ImGui_ImplVulkan_Init(&infoInit));
+        WORSE_ASSERT(ImGui_ImplVulkan_Init(&infoInit));
 
         // 订阅 SDL 事件
         EventBus::subscribe(EventType::SDL, [](Event const& playload) {

@@ -19,17 +19,17 @@ namespace Worse
 
         // validation
         {
-            WS_ASSERT(m_usageFlags != RHIBufferUsage::FlagBits::Unknown);
+            WORSE_ASSERT(m_usageFlags != RHIBufferUsage::FlagBits::Unknown);
 
             if (m_usageFlags & RHIBufferUsage::FlagBits::Uniform)
             {
-                WS_ASSERT((m_usageFlags & RHIBufferUsage::FlagBits::Uniform) == RHIBufferUsage::FlagBits::Uniform);
+                WORSE_ASSERT((m_usageFlags & RHIBufferUsage::FlagBits::Uniform) == RHIBufferUsage::FlagBits::Uniform);
 
                 isUniform = true;
 
                 if (m_mappable)
                 {
-                    WS_ASSERT_MSG(data != nullptr,
+                    WORSE_ASSERT_MSG(data != nullptr,
                                   "Uniform buffer must have data if mappable");
                 }
             }
@@ -37,13 +37,13 @@ namespace Worse
             // contain vertex/index/instance
             if (m_usageFlags & VII_BIT)
             {
-                WS_ASSERT_MSG(std::popcount(static_cast<UByte>(m_usageFlags & VII_MASK)) == 1,
+                WORSE_ASSERT_MSG(std::popcount(static_cast<UByte>(m_usageFlags & VII_MASK)) == 1,
                               "RHIBuffer usage must specify exactly one of: Vertex, Index, or Instance");
 
                 // vertex/index/instance only (check if no storage flag)
                 if ((m_usageFlags & RHIBufferUsage::FlagBits::Storage) == 0)
                 {
-                    WS_ASSERT_MSG(data != nullptr,
+                    WORSE_ASSERT_MSG(data != nullptr,
                                   "Vertex/Index/Instance buffer must have data");
                     isVIIOnly = true;
                 }
@@ -150,7 +150,7 @@ namespace Worse
             }
             else // error handling
             {
-                WS_LOG_ERROR("RHIBuffer", "Failed to transfer buffer data");
+                WORSE_LOG_ERROR("RHIBuffer", "Failed to transfer buffer data");
                 RHIDevice::memoryBufferDestroy(stagingBuffer);
                 RHIDevice::memoryBufferDestroy(m_handle);
             }
@@ -165,7 +165,7 @@ namespace Worse
                 m_name);
         }
 
-        WS_ASSERT_MSG(m_handle, "Failed to create buffer");
+        WORSE_ASSERT_MSG(m_handle, "Failed to create buffer");
 
         m_gpuData = (isUniform && m_mappable) ? RHIDevice::memoryGetMappedBufferData(m_handle) : nullptr;
     }
@@ -183,13 +183,13 @@ namespace Worse
     {
         if (!cmdList)
         {
-            WS_LOG_ERROR("RHIBuffer",
+            WORSE_LOG_ERROR("RHIBuffer",
                          "Failed to update buffer, cmdList is null");
             return;
         }
-        WS_ASSERT_MSG(m_mappable, "Cannot update unmappable buffer");
-        WS_ASSERT_MSG(m_gpuData, "Cannot update buffer, invalid GPU data");
-        WS_ASSERT_MSG(m_offset + size <= m_size, "Update buffer out of range");
+        WORSE_ASSERT_MSG(m_mappable, "Cannot update unmappable buffer");
+        WORSE_ASSERT_MSG(m_gpuData, "Cannot update buffer, invalid GPU data");
+        WORSE_ASSERT_MSG(m_offset + size <= m_size, "Update buffer out of range");
 
         if (m_firstUpdate)
         {

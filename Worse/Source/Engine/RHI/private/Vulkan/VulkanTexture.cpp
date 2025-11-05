@@ -17,7 +17,7 @@ namespace Worse
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 texture.getMip(0, 0).bytes.data(),
                 "texture_staging_buffer");
-            WS_ASSERT(stagingBuffer);
+            WORSE_ASSERT(stagingBuffer);
 
             if (RHICommandList* cmdList =
                     RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
@@ -61,7 +61,7 @@ namespace Worse
                              RHITexture* texture)
         {
             VkImageViewType viewType = vulkanImageViewType(texture->getType());
-            WS_ASSERT(viewType != VK_IMAGE_VIEW_TYPE_MAX_ENUM);
+            WORSE_ASSERT(viewType != VK_IMAGE_VIEW_TYPE_MAX_ENUM);
 
             VkImageViewCreateInfo infoImageView = {};
             infoImageView.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

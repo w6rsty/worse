@@ -1,5 +1,4 @@
 #include "Input/Input.hpp"
-#include "Definitions.hpp"
 #include "Window.hpp"
 
 #include "SDL3/SDL_events.h"
@@ -8,7 +7,7 @@ namespace Worse
 {
     void Input::initialize()
     {
-        WS_ASSERT_MSG(Window::getHandleSDL() != nullptr,
+        WORSE_ASSERT_MSG(Window::getHandleSDL() != nullptr,
                       "Input system requires SDL to be initialized.");
 
         s_keymap.fill(false);

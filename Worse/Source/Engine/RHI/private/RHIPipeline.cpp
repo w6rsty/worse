@@ -49,7 +49,7 @@ namespace Worse
         }
 
         RHIDescriptorSetLayout* descriptorSetLayout = RHIDevice::getSpecificDescriptorSetLayout(pso);
-        WS_ASSERT(descriptorSetLayout != nullptr);
+        WORSE_ASSERT(descriptorSetLayout != nullptr);
         std::shared_ptr<RHIPipeline> pipeline = std::make_shared<RHIPipeline>(pso, *descriptorSetLayout);
         m_pipelines.emplace(hash, pipeline);
 

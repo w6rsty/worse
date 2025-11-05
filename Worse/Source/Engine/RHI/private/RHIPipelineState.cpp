@@ -38,28 +38,28 @@ namespace Worse
 
             Bool isCompute  = (flags & RHIComputePipelineShaderCombination) == RHIComputePipelineShaderCombination;
             Bool isGraphics = (flags & RHIGraphicsPipelineShaderCombination) == RHIGraphicsPipelineShaderCombination;
-            WS_ASSERT_MSG(isCompute || isGraphics, "Invalid shader set");
+            WORSE_ASSERT_MSG(isCompute || isGraphics, "Invalid shader set");
 
             if (isCompute)
             {
-                WS_ASSERT_MSG(pso.type == RHIPipelineType::Compute, "Incompatible pipeline type");
+                WORSE_ASSERT_MSG(pso.type == RHIPipelineType::Compute, "Incompatible pipeline type");
             }
 
             if (isGraphics)
             {
-                WS_ASSERT_MSG(pso.type == RHIPipelineType::Graphics, "Incompatible pipeline type");
+                WORSE_ASSERT_MSG(pso.type == RHIPipelineType::Graphics, "Incompatible pipeline type");
 
                 Bool hasRenderTarget = (pso.renderTargetColorTextures[0] != nullptr) || pso.renderTargetDepthTexture;
 
-                WS_ASSERT_MSG(hasRenderTarget, "Pipeline has no render target");
+                WORSE_ASSERT_MSG(hasRenderTarget, "Pipeline has no render target");
 
                 Bool hasMandatoryState = (pso.rasterizerState != nullptr) && (pso.depthStencilState != nullptr) && (pso.blendState != nullptr);
-                WS_ASSERT_MSG(hasMandatoryState, "Graphics Pipeline miss mandatory states");
+                WORSE_ASSERT_MSG(hasMandatoryState, "Graphics Pipeline miss mandatory states");
             }
 
-            WS_ASSERT_MSG(((width != 0) && (height != 0)) || isCompute, "Invalid render target size");
+            WORSE_ASSERT_MSG(((width != 0) && (height != 0)) || isCompute, "Invalid render target size");
 
-            WS_ASSERT_MSG(!pso.name.empty(), "Pipeline state must have a name");
+            WORSE_ASSERT_MSG(!pso.name.empty(), "Pipeline state must have a name");
         }
 
         ULong computeHash(RHIPipelineState const& pso)

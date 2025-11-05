@@ -84,6 +84,8 @@
 #endif
 // clang-format on
 
+#define WORSE_UNIMPLEMENTED() WORSE_ASSERT_MSG(false, "Unimplemented code")
+
 //////////
 // cast //
 //////////

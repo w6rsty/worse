@@ -114,7 +114,7 @@ namespace Worse
 
     void RHISyncPrimitive::wait(ULong const timeoutNs)
     {
-        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
+        WORSE_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
 
         if (m_type == RHISyncPrimitiveType::Fence)
         {
@@ -128,14 +128,14 @@ namespace Worse
 
     void RHISyncPrimitive::signal(ULong const value)
     {
-        WS_ASSERT(m_type == RHISyncPrimitiveType::TimelineSemaphore);
+        WORSE_ASSERT(m_type == RHISyncPrimitiveType::TimelineSemaphore);
 
         semaphore::signal(m_handle, value);
     }
 
     Bool RHISyncPrimitive::isSignaled()
     {
-        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
+        WORSE_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
 
         if (m_type == RHISyncPrimitiveType::Fence)
         {
@@ -149,7 +149,7 @@ namespace Worse
 
     void RHISyncPrimitive::reset()
     {
-        WS_ASSERT(m_type == RHISyncPrimitiveType::Fence);
+        WORSE_ASSERT(m_type == RHISyncPrimitiveType::Fence);
 
         fence::reset(m_handle);
     }

@@ -1,4 +1,4 @@
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Material.hpp"
 #include "Renderer.hpp"
 
@@ -24,7 +24,7 @@ namespace Worse
                     return it->second;
                 }
                 // Log warning when texture not found in map
-                WS_LOG_WARN(
+                WORSE_LOG_WARN(
                     "Material",
                     "Texture handle {} not found in texture map, using default",
                     handle.value());
@@ -124,7 +124,7 @@ namespace Worse
             {
                 StandardMaterial const& material = slot.material;
 
-                Size index               = assetServerMaterialIndex++;
+                Size index                = assetServerMaterialIndex++;
                 StandardMaterialGPU& data = materialGPUs[index];
                 data.flags                = 0;
 
