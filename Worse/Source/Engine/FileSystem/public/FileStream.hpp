@@ -1,24 +1,31 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
+#include "bit_flag.hpp"
 
 #include <fstream>
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
+    WORSE_BEGIN_DECLARE_BIT_FLAG(FileStreamUsage, UInt)
+    // clang-format off
+    WORSE_DECLARE_FLAG_BIT(Unknown, 0);
+    WORSE_DECLARE_FLAG_BIT(Read,    1 << 0);
+    WORSE_DECLARE_FLAG_BIT(Write,   1 << 1);
+    // clang-format on
+    WORSE_END_DECLARE_BIT_FLAG(FileStreamUsage)
 
-    WS_DEFINE_FLAGS(FileStreamUsage, u32);
-    struct FileStreamUsageFlagBits
-    {
-        static constexpr FileStreamUsageFlags Read{1 << 0};
-        static constexpr FileStreamUsageFlags Write{1 << 1};
-    };
+    //WS_DEFINE_FLAGS(FileStreamUsage, UInt);
+    //struct FileStreamUsageFlagBits
+    //{
+    //    static constexpr FileStreamUsageFlags Read{1 << 0};
+    //    static constexpr FileStreamUsageFlags Write{1 << 1};
+    //};
 
     class FileStream
     {
     public:
-        FileStream(std::filesystem::path const& path,
-                   FileStreamUsageFlags usage);
+        FileStream(std::filesystem::path const& path, FileStreamUsage::Flags usageFlags);
         ~FileStream();
 
         void close();
@@ -29,14 +36,14 @@ namespace worse
         void write();
 
         // clang-format off
-        bool isOpen() const { return m_isOpen; }
+        Bool isOpen() const { return m_isOpen; }
         // clang-format on
 
     private:
         std::fstream m_stream;
 
-        bool m_isOpen;
-        FileStreamUsageFlags m_usage;
+        Bool m_isOpen;
+        FileStreamUsage::Flags m_usageFlags;
     };
 
-}; // namespace worse
+}; // namespace Worse

@@ -1,7 +1,7 @@
 #pragma once
 #include "ECS/Commands.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class Engine
@@ -12,4 +12,4 @@ namespace worse
         static void shutdown();
     };
 
-} // namespace worse
+} // namespace Worse

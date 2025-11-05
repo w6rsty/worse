@@ -1,7 +1,7 @@
 #pragma once
-#include "Math/Vector.hpp"
+#include "math/vector.hpp"
 
-namespace worse
+namespace Worse
 {
 
     enum class RHIFormat
@@ -58,27 +58,27 @@ namespace worse
 
     struct RHIVertexPos
     {
-        math::Vector3 position = {0.0, 0.0, 0.0};
+        Vector3 position = Vector3{0.0, 0.0, 0.0};
     };
 
     struct RHIVertexPosCol
     {
-        math::Vector3 position = {0.0, 0.0, 0.0};
-        math::Vector4 color    = {0.0, 0.0, 0.0, 0.0};
+        Vector3 position = Vector3{0.0, 0.0, 0.0};
+        Vector4 color    = Vector4{0.0, 0.0, 0.0, 0.0};
     };
 
     struct RHIVertexPosUv
     {
-        math::Vector3 position = {0.0, 0.0, 0.0};
-        math::Vector2 uv       = {0.0, 0.0};
+        Vector3 position = Vector3{0.0, 0.0, 0.0};
+        Vector2 uv       = Vector2{0.0, 0.0};
     };
 
     struct RHIVertexPosUvNrmTan
     {
-        math::Vector3 position = {0.0, 0.0, 0.0};
-        math::Vector2 uv       = {0.0, 0.0};
-        math::Vector3 normal   = {0.0, 0.0, 0.0};
-        math::Vector4 tangent  = {0.0, 0.0, 0.0, 0.0};
+        Vector3 position = Vector3{0.0, 0.0, 0.0};
+        Vector2 uv       = Vector2{0.0, 0.0};
+        Vector3 normal   = Vector3{0.0, 0.0, 0.0};
+        Vector4 tangent  = Vector4{0.0, 0.0, 0.0, 0.0};
     };
 
-} // namespace worse
+} // namespace Worse

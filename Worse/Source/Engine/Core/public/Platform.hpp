@@ -1,6 +1,6 @@
 #pragma once
 
-namespace worse
+namespace Worse
 {
     enum class Platform
     {
@@ -23,4 +23,4 @@ namespace worse
     constexpr char const* EngineDirectory = "./";
 #endif
 
-}
+} // namespace Worse

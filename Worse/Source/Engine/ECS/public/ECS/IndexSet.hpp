@@ -7,7 +7,7 @@
 #include <cassert>
 #include <iterator>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     namespace internal
@@ -28,7 +28,7 @@ namespace worse::ecs
             {
             }
             IndexSetIterator(PackedContainerType const& packed,
-                             usize const offset)
+                             Size const offset)
                 : packed(&packed), offset(offset)
             {
             }
@@ -72,7 +72,7 @@ namespace worse::ecs
 
             reference operator[](difference_type const value) const
             {
-                return (*packed)[static_cast<usize>(index() - value)];
+                return (*packed)[static_cast<Size>(index() - value)];
             }
             pointer operator->() const
             {
@@ -102,32 +102,32 @@ namespace worse::ecs
             return rhs.offset - lhs.offset;
         }
 
-        inline bool operator==(IndexSetIterator const& lhs,
+        inline Bool operator==(IndexSetIterator const& lhs,
                                IndexSetIterator const& rhs)
         {
             return lhs.offset == rhs.offset;
         }
-        inline bool operator!=(IndexSetIterator const& lhs,
+        inline Bool operator!=(IndexSetIterator const& lhs,
                                IndexSetIterator const& rhs)
         {
             return !(lhs == rhs);
         }
-        inline bool operator<(IndexSetIterator const& lhs,
+        inline Bool operator<(IndexSetIterator const& lhs,
                               IndexSetIterator const& rhs)
         {
             return lhs.offset > rhs.offset;
         }
-        inline bool operator>(IndexSetIterator const& lhs,
+        inline Bool operator>(IndexSetIterator const& lhs,
                               IndexSetIterator const& rhs)
         {
             return lhs.offset < rhs.offset;
         }
-        inline bool operator<=(IndexSetIterator const& lhs,
+        inline Bool operator<=(IndexSetIterator const& lhs,
                                IndexSetIterator const& rhs)
         {
             return !(lhs > rhs);
         }
-        inline bool operator>=(IndexSetIterator const& lhs,
+        inline Bool operator>=(IndexSetIterator const& lhs,
                                IndexSetIterator const& rhs)
         {
             return !(lhs < rhs);
@@ -138,7 +138,7 @@ namespace worse::ecs
     class IndexSet
     {
         // clang-format off
-        static constexpr usize PAGE_SIZE = SPARSE_PAGE_SIZE;
+        static constexpr Size PAGE_SIZE = SPARSE_PAGE_SIZE;
         using ValueType                        = Entity;
         using SparseContainerType              = std::vector<ValueType*>;
         using PackedContainerType              = std::vector<ValueType>;
@@ -150,7 +150,7 @@ namespace worse::ecs
         using ConstIterator  = Iterator;
         using DifferenceType = typename Iterator::difference_type;
 
-        usize positionToPage(usize const position) const
+        Size positionToPage(Size const position) const
         {
             return position / PAGE_SIZE;
         }
@@ -164,8 +164,8 @@ namespace worse::ecs
         // return nullptr when page does not exist
         ValueType* sparePtr(Entity const entity) const
         {
-            usize const position = static_cast<usize>(entity.toEntity());
-            usize const page     = positionToPage(position);
+            Size const position = static_cast<Size>(entity.toEntity());
+            Size const page     = positionToPage(position);
             return (page < m_sparse.size() && m_sparse[page])
                        ? &m_sparse[page][fast_mod(position, PAGE_SIZE)]
                        : nullptr;
@@ -175,15 +175,15 @@ namespace worse::ecs
         ValueType& spareRef(Entity const entity) const
         {
             assert(sparePtr(entity) && "Sparse page fault");
-            usize const position = static_cast<usize>(entity.toEntity());
+            Size const position = static_cast<Size>(entity.toEntity());
             return m_sparse[positionToPage(position)]
                            [fast_mod(position, PAGE_SIZE)];
         }
 
         ValueType& assureMemory(Entity const entity)
         {
-            usize const position = static_cast<usize>(entity.toEntity());
-            usize const page     = positionToPage(position);
+            Size const position = static_cast<Size>(entity.toEntity());
+            Size const page     = positionToPage(position);
 
             // adujst page
             if (page >= m_sparse.size())
@@ -224,7 +224,7 @@ namespace worse::ecs
                 return entityToIterator(entity);
             }
 
-            usize const position = m_packed.size();
+            Size const position = m_packed.size();
             // Ensure the sparse page exists and is initialized
             ValueType& ref = assureMemory(entity);
 
@@ -248,7 +248,7 @@ namespace worse::ecs
             releasePage();
         }
 
-        bool contains(Entity const entity) const
+        Bool contains(Entity const entity) const
         {
             ValueType* ptr = sparePtr(entity);
             return ptr && (ptr->toVersion() == entity.toVersion());
@@ -268,7 +268,7 @@ namespace worse::ecs
             }
 
             ValueType& removed         = spareRef(entity);
-            usize const removedIndex   = removed.toEntity();
+            Size const removedIndex   = removed.toEntity();
             ValueType const lastEntity = m_packed.back();
 
             m_packed[removedIndex] = lastEntity; // swap with last element
@@ -290,7 +290,7 @@ namespace worse::ecs
             }
         }
 
-        usize packedIndex(Entity const entity) const
+        Size packedIndex(Entity const entity) const
         {
             assert(contains(entity));
             // take out packed index stored in sparse container
@@ -307,7 +307,7 @@ namespace worse::ecs
             m_packed.clear();
         }
 
-        usize size() const
+        Size size() const
         {
             return m_packed.size();
         }
@@ -328,4 +328,4 @@ namespace worse::ecs
         PackedContainerType m_packed;
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

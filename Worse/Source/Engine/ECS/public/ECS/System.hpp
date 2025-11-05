@@ -8,14 +8,15 @@
 
 #include <functional>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     // =========================================================================
     // Funciton traits
     // =========================================================================
 
-    template <typename> struct FunctionPointerTraits;
+    template <typename>
+    struct FunctionPointerTraits;
 
     /**
      * @brief Free function specialization
@@ -35,9 +36,11 @@ namespace worse::ecs
         using type = Ret(Args...);
     };
 
-    template <typename> struct SystemTraits;
+    template <typename>
+    struct SystemTraits;
 
-    template <typename... Args> struct SystemTraits<void(Args...)>
+    template <typename... Args>
+    struct SystemTraits<void(Args...)>
     {
         using arg_list = TypeList<Args...>;
     };
@@ -48,14 +51,16 @@ namespace worse::ecs
         // Commands traits
         // =====================================================================
 
-        template <typename> struct IsCommands
+        template <typename>
+        struct IsCommands
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
-        template <> struct IsCommands<Commands>
+        template <>
+        struct IsCommands<Commands>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
         inline Commands constructCommands(Registry& registry)
@@ -67,18 +72,20 @@ namespace worse::ecs
         // QuerView traits
         // =====================================================================
 
-        template <typename> struct IsQueryView
+        template <typename>
+        struct IsQueryView
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <typename... Components>
         struct IsQueryView<QueryView<Components...>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
-        template <typename TypeList> struct ExpandTypeList;
+        template <typename TypeList>
+        struct ExpandTypeList;
 
         template <typename... Components>
         struct ExpandTypeList<TypeList<Components...>>
@@ -89,7 +96,8 @@ namespace worse::ecs
             }
         };
 
-        template <typename Type> auto constructQueryView(Registry& registry)
+        template <typename Type>
+        auto constructQueryView(Registry& registry)
         {
             using ComponentTypes =
                 typename QueryViewTraits<Type>::ComponentTypes;
@@ -100,18 +108,20 @@ namespace worse::ecs
         // EventReader traits
         // =====================================================================
 
-        template <typename> struct IsEventReader
+        template <typename>
+        struct IsEventReader
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
         template <typename Event>
         struct IsEventReader<std::shared_ptr<EventReader<Event>>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
-        template <typename T> struct EventReaderTraits;
+        template <typename T>
+        struct EventReaderTraits;
 
         template <typename Event>
         struct EventReaderTraits<std::shared_ptr<EventReader<Event>>>
@@ -130,19 +140,23 @@ namespace worse::ecs
         // Resource traits
         // =====================================================================
 
-        template <typename> struct IsResource
+        template <typename>
+        struct IsResource
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
-        template <typename Type> struct IsResource<Resource<Type>>
+        template <typename Type>
+        struct IsResource<Resource<Type>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
-        template <typename T> struct ResourceTraits;
+        template <typename T>
+        struct ResourceTraits;
 
-        template <typename Type> struct ResourceTraits<Resource<Type>>
+        template <typename Type>
+        struct ResourceTraits<Resource<Type>>
         {
             using ResourceType = Type;
         };
@@ -158,19 +172,23 @@ namespace worse::ecs
         // ResourceArray traits
         // =====================================================================
 
-        template <typename> struct IsResourceArray
+        template <typename>
+        struct IsResourceArray
         {
-            static constexpr bool value = false;
+            static constexpr Bool value = false;
         };
 
-        template <typename Type> struct IsResourceArray<ResourceArray<Type>>
+        template <typename Type>
+        struct IsResourceArray<ResourceArray<Type>>
         {
-            static constexpr bool value = true;
+            static constexpr Bool value = true;
         };
 
-        template <typename T> struct ResourceArrayTraits;
+        template <typename T>
+        struct ResourceArrayTraits;
 
-        template <typename Type> struct ResourceArrayTraits<ResourceArray<Type>>
+        template <typename Type>
+        struct ResourceArrayTraits<ResourceArray<Type>>
         {
             using ResourceType = Type;
         };
@@ -226,7 +244,7 @@ namespace worse::ecs
         /**
          * @brief Assign ECS data for given parameters
          */
-        template <auto Func, typename ParamList, usize... Idx>
+        template <auto Func, typename ParamList, Size... Idx>
         static constexpr void
         invokeWithResolvedParameters(Registry& registry,
                                      std::index_sequence<Idx...>) noexcept
@@ -255,4 +273,4 @@ namespace worse::ecs
         }
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

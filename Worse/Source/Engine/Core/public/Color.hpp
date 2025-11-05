@@ -1,15 +1,15 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
-namespace worse
+namespace Worse
 {
     // Very simple 32-bit RGBA color
     struct Color
     {
-        f32 r = 0.0f;
-        f32 g = 0.0f;
-        f32 b = 0.0f;
-        f32 a = 1.0f;
+        Float r = 0.0f;
+        Float g = 0.0f;
+        Float b = 0.0f;
+        Float a = 1.0f;
 
         static constexpr Color White()
         {
@@ -21,4 +21,4 @@ namespace worse
         }
     };
 
-} // namespace worse
+} // namespace Worse

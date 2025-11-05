@@ -1,5 +1,5 @@
-#include "Math/Hash.hpp"
-#include "Log.hpp"
+#include "math/hash.hpp"
+#include "logger/logger.hpp"
 #include "RHIDevice.hpp"
 #include "RHIResource.hpp"
 #include "RHIBuffer.hpp"
@@ -9,12 +9,12 @@
 #include "RHIDescriptorSetLayout.hpp"
 #include "Pipeline/RHIPipelineState.hpp"
 
-namespace worse
+namespace Worse
 {
 
     RHINativeHandle RHIDescriptorAllocator::createPool()
     {
-        u32 count = m_expandRatio * RHIConfig::MIN_DESCRIPTORS;
+        UInt count = m_expandRatio * RHIConfig::MIN_DESCRIPTORS;
         if (count < RHIConfig::MAX_DESCRIPTORS)
         {
             m_expandRatio *= 2;
@@ -33,7 +33,7 @@ namespace worse
         infoPool.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         infoPool.flags         = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
         infoPool.maxSets       = count;
-        infoPool.poolSizeCount = static_cast<u32>(poolSizes.size());
+        infoPool.poolSizeCount = static_cast<UInt>(poolSizes.size());
         infoPool.pPoolSizes    = poolSizes.data();
         
         VkDescriptorPool vkPool = VK_NULL_HANDLE;
@@ -105,7 +105,7 @@ namespace worse
 
     RHIDescriptorAllocator::~RHIDescriptorAllocator()
     {
-        WS_LOG_DEBUG("Descriptor", "Destroying {} descriptor pools", m_pools[0].size() + m_pools[1].size());
+        WORSE_LOG_DEBUG("Descriptor", "Destroying {} descriptor pools", m_pools[0].size() + m_pools[1].size());
         for (RHINativeHandle pool : m_pools[0])
         {
             RHIDevice::deletionQueueAdd(pool);
@@ -132,9 +132,9 @@ namespace worse
         return allocateInternal(layout, nullptr);
     }
 
-    RHINativeHandle RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout, u32 count)
+    RHINativeHandle RHIDescriptorAllocator::allocateVariableSet(RHINativeHandle layout, UInt count)
     {
-        WS_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
+        WORSE_ASSERT(count <= RHIConfig::MAX_DESCRIPTORS);
         // clang-format off
         VkDescriptorSetVariableDescriptorCountAllocateInfo variableCountInfo = {};
         variableCountInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
@@ -259,7 +259,7 @@ namespace worse
 
     void VulkanGlobalSet::writeStatic()
     {
-        WS_ASSERT(m_allocator);
+        WORSE_ASSERT(m_allocator);
 
         if (m_firstUpdate)
         {
@@ -276,13 +276,13 @@ namespace worse
                 write.dstSet = m_set.asValue<VkDescriptorSet>();
             }
 
-            vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(m_staticWrites.size()), m_staticWrites.data(), 0, nullptr);
+            vkUpdateDescriptorSets(RHIContext::device, static_cast<UInt>(m_staticWrites.size()), m_staticWrites.data(), 0, nullptr);
         }
     }
 
     void VulkanGlobalSet::writeBindlessTextures(std::span<RHIDescriptorWrite> updates)
     {
-        WS_ASSERT(m_set);
+        WORSE_ASSERT(m_set);
 
         std::sort(updates.begin(),
                   updates.end(),
@@ -293,7 +293,7 @@ namespace worse
 
         // <startIndex, length>
         std::vector<std::pair<uint32_t, uint32_t>> ranges;
-        for (usize i = 0; i < updates.size(); ++i)
+        for (Size i = 0; i < updates.size(); ++i)
         {
             uint32_t rangeStart = updates[i].index;
             uint32_t rangeCount = 1;
@@ -313,7 +313,7 @@ namespace worse
 
         uint32_t imageInfoIndex = 0;
         uint32_t updatesIndex   = 0; // Track position in the original updates array
-        for (usize i = 0; i < ranges.size(); ++i)
+        for (Size i = 0; i < ranges.size(); ++i)
         {
             // clang-format off
             auto const& range         = ranges[i];
@@ -330,7 +330,7 @@ namespace worse
                 // Bounds check to prevent heap buffer overflow
                 if (updatesIndex + j >= updates.size())
                 {
-                    WS_LOG_ERROR("VulkanDescriptor",
+                    WORSE_LOG_ERROR("VulkanDescriptor",
                                  "Access out of bounds: updatesIndex({}) + j({}) >= updates.size({})", 
                                  updatesIndex, j, updates.size());
                     return;
@@ -350,7 +350,7 @@ namespace worse
             // clang-format on
         }
 
-        vkUpdateDescriptorSets(RHIContext::device, static_cast<u32>(writes.size()), writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(RHIContext::device, static_cast<UInt>(writes.size()), writes.data(), 0, nullptr);
     }
 
     VulkanSpecificSet::VulkanSpecificSet(RHIDescriptorAllocator* allocator)
@@ -370,12 +370,12 @@ namespace worse
         // collect ordered set 1 descriptors
         std::vector<RHIDescriptor> descriptors = pso.collectDescriptors();
 
-        u64 hash = 0;
+        ULong hash = 0;
         for (RHIDescriptor const& descriptor : descriptors)
         {
             // clang-format off
-            hash = math::hashCombine(hash, static_cast<u64>(descriptor.slot));
-            hash = math::hashCombine(hash, static_cast<u64>(descriptor.stageFlags));
+            hash = math::hashCombine(hash, static_cast<ULong>(descriptor.slot));
+            hash = math::hashCombine(hash, static_cast<ULong>(descriptor.stageFlags));
             // clang-format on
         }
 
@@ -390,7 +390,7 @@ namespace worse
         return layout.get();
     }
 
-    RHIDescriptorSetLayout* VulkanSpecificSet::getDescriptorSetLayout(u64 hash)
+    RHIDescriptorSetLayout* VulkanSpecificSet::getDescriptorSetLayout(ULong hash)
     {
         auto it = m_descriptorSetLayouts.find(hash);
         if (it != m_descriptorSetLayouts.end())
@@ -401,7 +401,7 @@ namespace worse
         return nullptr;
     }
 
-    RHINativeHandle VulkanSpecificSet::getDescriptorSet(u64 hash)
+    RHINativeHandle VulkanSpecificSet::getDescriptorSet(ULong hash)
     {
         auto it = m_descriptorSets.find(hash);
         if (it != m_descriptorSets.end())
@@ -411,7 +411,7 @@ namespace worse
 
         RHIDescriptorSetLayout* layout = getDescriptorSetLayout(hash);
         // layout was created along with pipeline, so it must exist
-        WS_ASSERT_MSG(layout, "Unmatched descriptor hash");
+        WORSE_ASSERT_MSG(layout, "Unmatched descriptor hash");
 
         RHINativeHandle set = m_allocator->allocateSet(layout->getLayout());
         m_descriptorSets.emplace(hash, set);
@@ -424,4 +424,4 @@ namespace worse
         m_descriptorSets.clear();
     }
 
-} // namespace worse
+} // namespace Worse

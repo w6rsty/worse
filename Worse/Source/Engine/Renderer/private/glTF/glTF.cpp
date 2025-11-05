@@ -1,7 +1,8 @@
+#include "base_type.hpp"
+#include "math/transform.hpp"
 #include "glTF/glTF.hpp"
 #include "AssetServer.hpp"
-#include "Log.hpp"
-#include "Math/Transform.hpp"
+#include "logger/logger.hpp"
 #include "RHITypes.hpp"
 
 #include "MathElementTraits.hpp" // IWYU pragma: keep
@@ -10,12 +11,12 @@
 #include <optional>
 #include <filesystem>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
         /**
-         * @brief 使用 AssetServer 加载 glTF 纹理
+         * @brief Load glTF using AssetServer
          */
         std::optional<AssetHandle> loadTexture(
             fastgltf::Image const& image,
@@ -36,34 +37,34 @@ namespace worse
                     std::visit(fastgltf::visitor{
                         [&](fastgltf::sources::Vector vector)
                         {
-                            std::span<byte> data{vector.bytes.data() + bufferView.byteOffset, bufferView.byteLength};
+                            std::span<Byte> data{r_cast<Byte*>(vector.bytes.data() + bufferView.byteOffset), bufferView.byteLength};
                             handle = assetServer.addTexture(data, imageName);
                         },
                         [&](fastgltf::sources::Array array)
                         {
-                            std::span<byte> data{array.bytes.data() + bufferView.byteOffset, bufferView.byteLength};
+                            std::span<Byte> data{r_cast<Byte*>(array.bytes.data() + bufferView.byteOffset), bufferView.byteLength};
                             handle = assetServer.addTexture(data, imageName);
                         },
                         [&](auto arg)
                         {
-                            WS_LOG_ERROR("glTF", "Unsupported buffer view type");
+                            WORSE_LOG_ERROR("glTF", "Unsupported buffer view type");
                         }}, buffer.data);
                 },
                 [&](fastgltf::sources::URI path)
                 {
-                    WS_ASSERT(path.fileByteOffset == 0);
-                    WS_ASSERT(path.uri.isLocalPath());
+                    WORSE_ASSERT(path.fileByteOffset == 0);
+                    WORSE_ASSERT(path.uri.isLocalPath());
 
                     handle = assetServer.addTexture(parentDir / path.uri.fspath(), AssetServer::LoadStrategy::Immediate);
                 },
                 [&](fastgltf::sources::Vector vector)
                 {
-                    std::span<byte> data{vector.bytes.data(), vector.bytes.size()};
+                    std::span<Byte> data{r_cast<Byte*>(vector.bytes.data()), vector.bytes.size()};
                     handle = assetServer.addTexture(data, imageName);
                 },
                 [&](auto arg)
                 {
-                    WS_LOG_ERROR("glTF", "Unsupported image source type");
+                    WORSE_LOG_ERROR("glTF", "Unsupported image source type");
                 },
             }, image.data);
             // clang-format on
@@ -72,45 +73,45 @@ namespace worse
         }
 
         /**
-         * @brief 计算切线和副切线
-         * @details 使用 Mikkelsen 算法计算
+         * @brief Compute tangent and bitanget
+         * @details Mikkelsen's algorithm
          */
-        void calculateTangent(std::span<RHIVertexPosUvNrmTan> vertices, std::span<u32> indices)
+        void calculateTangent(std::span<RHIVertexPosUvNrmTan> vertices, std::span<UInt> indices)
         {
             // Store per-face data before averaging
-            std::vector<math::Vector3> tan1(vertices.size(), math::Vector3::ZERO());
-            std::vector<math::Vector3> tan2(vertices.size(), math::Vector3::ZERO());
+            std::vector<Vector3> tan1(vertices.size(), Vector3::ZERO);
+            std::vector<Vector3> tan2(vertices.size(), Vector3::ZERO);
 
             // Iterate over all triangles in the primitive
-            for (usize i = 0; i < indices.size(); i += 3)
+            for (Size i = 0; i < indices.size(); i += 3)
             {
-                u32 i0 = indices[i];
-                u32 i1 = indices[i + 1];
-                u32 i2 = indices[i + 2];
+                UInt i0 = indices[i];
+                UInt i1 = indices[i + 1];
+                UInt i2 = indices[i + 2];
 
                 RHIVertexPosUvNrmTan const& v0 = vertices[i0];
                 RHIVertexPosUvNrmTan const& v1 = vertices[i1];
                 RHIVertexPosUvNrmTan const& v2 = vertices[i2];
 
                 // Calculate edge vectors
-                math::Vector3 edge1 = v1.position - v0.position;
-                math::Vector3 edge2 = v2.position - v0.position;
+                Vector3 edge1 = v1.position - v0.position;
+                Vector3 edge2 = v2.position - v0.position;
 
                 // Calculate UV deltas
-                math::Vector2 uv1Delta = v1.uv - v0.uv;
-                math::Vector2 uv2Delta = v2.uv - v0.uv;
+                Vector2 uv1Delta = v1.uv - v0.uv;
+                Vector2 uv2Delta = v2.uv - v0.uv;
 
-                float f = 1.0f / (uv1Delta.x * uv2Delta.y - uv2Delta.x * uv1Delta.y);
+                Float f = 1.0f / (uv1Delta.x * uv2Delta.y - uv2Delta.x * uv1Delta.y);
 
-                math::Vector3 tangent;
-                math::Vector3 bitangent;
+                Vector3 tangent;
+                Vector3 bitangent;
 
                 // Check for division by zero (e.g., degenerate UVs)
                 if (std::isinf(f) || std::isnan(f))
                 {
                     // Default to something safe or just skip
-                    tangent   = math::Vector3(1.0f, 0.0f, 0.0f);
-                    bitangent = math::Vector3(0.0f, 1.0f, 0.0f);
+                    tangent   = Vector3(1.0f, 0.0f, 0.0f);
+                    bitangent = Vector3(0.0f, 1.0f, 0.0f);
                 }
                 else
                 {
@@ -119,39 +120,38 @@ namespace worse
                 }
 
                 // Accumulate tangent and bitangent for each vertex
-                // Use verticesOffset to correctly index into the current primitive's vertices
+                // Use verticesOffset to correctly index into the current primitives vertices
                 tan1[i0] += tangent;
                 tan1[i1] += tangent;
                 tan1[i2] += tangent;
             }
 
-            // Now, average and orthogonalize the tangents
-            for (usize i = 0; i < vertices.size(); ++i)
+            // Now, average and orthogonalized the tangents
+            for (Size i = 0; i < vertices.size(); ++i)
             {
-                math::Vector3 const& n = vertices[i].normal;
-                math::Vector3 const& t = tan1[i];
+                Vector3 const& n = vertices[i].normal;
+                Vector3 const& t = tan1[i];
 
                 // Gram-Schmidt orthogonalization: T' = T - (N · T)N
                 // Ensure the tangent is orthogonal to the normal
-                math::Vector3 tangent = math::normalize(t - n * math::dot(n, t));
+                Vector3 tangent = Normalize(t - n * DotProduct(n, t));
 
                 // Calculate bitangent to find handedness
-                math::Vector3 bitangent = math::normalize(math::cross(n, t));
+                Vector3 bitangent = Normalize(CrossProduct(n, t));
 
                 // Determine the handedness (the w component of the tangent)
                 // This is necessary for some normal mapping implementations
-                f32 handedness = (math::dot(math::cross(n, t), bitangent) < 0.0f) ? -1.0f : 1.0f;
+                Float handedness = (DotProduct(CrossProduct(n, t), bitangent) < 0.0f) ? -1.0f : 1.0f;
 
-                // 组合切线和手性
-                vertices[i].tangent = math::Vector4(tangent, handedness);
+                vertices[i].tangent = Vector4(tangent, handedness);
             }
         }
 
     } // namespace
 
-    void glTFMeshNode::draw(math::Matrix4 const& topMat, DrawContext& ctx)
+    void glTFMeshNode::draw(Matrix4 const& topMat, DrawContext& ctx)
     {
-        math::Matrix4 const nodeTransform = topMat * localTransform;
+        Matrix4 const nodeTransform = topMat * localTransform;
 
         for (glTFSurface const& surface : mesh->surfaces)
         {
@@ -183,7 +183,7 @@ namespace worse
         auto gltfFile = fastgltf::GltfDataBuffer::FromPath(filepath);
         if (gltfFile.error() != fastgltf::Error::None)
         {
-            WS_LOG_ERROR("glTF", "Failed to load file {}", filepath);
+            WORSE_LOG_ERROR("glTF", "Failed to load file {}", filepath);
             return nullptr;
         }
 
@@ -193,27 +193,26 @@ namespace worse
 
         if (auto error = asset.error(); error != fastgltf::Error::None)
         {
-            WS_LOG_ERROR("glTF", "Failed to parse glTF {}", filepath);
+            WORSE_LOG_ERROR("glTF", "Failed to parse glTF {}", filepath);
             return nullptr;
         }
 
         std::unique_ptr<glTFModel> model = std::make_unique<glTFModel>();
 
-        // TODO: 读取 Samplers
+        // TODO: Read Samplers
 
         // =====================================================================
-        // 读取纹理文件
+        // Read textures
         // =====================================================================
 
-        // 暂存载入纹理，并保存纹理句柄，为加载失败的纹理分配默认纹理
+        // Stage loaded texture handles, assign default for failure
         std::vector<AssetHandle> textures;
         textures.reserve(asset->images.size());
 
-        u32 anonymousTextureIndex = 0;
+        UInt anonymousTextureIndex = 0;
         for (fastgltf::Image const& image : asset->images)
         {
-            // 纹理可能没有名称，而 AssetServer 需要唯一的名称来生成句柄。
-            // 所以需要为匿名纹理生成唯一的名称
+            // Generate unique name, because AssetServer needs one
             std::string textureName = modelName;
             if (image.name.empty())
             {
@@ -231,29 +230,28 @@ namespace worse
             else
             {
                 textures.push_back(m_assetServer.getErrorTexture());
-                WS_LOG_WARN("gltf", "Faile to load {}", textureName);
+                WORSE_LOG_WARN("gltf", "Faile to load {}", textureName);
             }
         }
 
         // =====================================================================
-        // 读取材质
+        // Read textures
         // =====================================================================
 
-        // 保存材质索引
         std::vector<AssetHandle> materials;
         materials.reserve(asset->materials.size());
 
         for (fastgltf::Material const& material : asset->materials)
         {
             AssetHandle materialHandle = m_assetServer.addMaterial(StandardMaterial{
-                .baseColor                = math::Vector4(material.pbrData.baseColorFactor.x(), material.pbrData.baseColorFactor.y(), material.pbrData.baseColorFactor.z(), material.pbrData.baseColorFactor.w()),
+                .baseColor                = Vector4(material.pbrData.baseColorFactor.x(), material.pbrData.baseColorFactor.y(), material.pbrData.baseColorFactor.z(), material.pbrData.baseColorFactor.w()),
                 .baseColorTexture         = material.pbrData.baseColorTexture.has_value() ? std::make_optional(textures[material.pbrData.baseColorTexture->textureIndex]) : std::nullopt,
                 .normalTexture            = material.normalTexture.has_value() ? std::make_optional(textures[material.normalTexture->textureIndex]) : std::nullopt,
                 .metallic                 = material.pbrData.metallicFactor,
                 .metallicRoughnessTexture = material.pbrData.metallicRoughnessTexture.has_value() ? std::make_optional(textures[material.pbrData.metallicRoughnessTexture->textureIndex]) : std::nullopt,
                 .roughness                = material.pbrData.roughnessFactor,
                 .ambientOcclusionTexture  = material.occlusionTexture.has_value() ? std::make_optional(textures[material.occlusionTexture->textureIndex]) : std::nullopt,
-                .emissive                 = math::Vector4(material.emissiveFactor.x(), material.emissiveFactor.y(), material.emissiveFactor.z(), 1.0f),
+                .emissive                 = Vector4(material.emissiveFactor.x(), material.emissiveFactor.y(), material.emissiveFactor.z(), 1.0f),
                 .emissiveTexture          = material.emissiveTexture.has_value() ? std::make_optional(textures[material.emissiveTexture->textureIndex]) : std::nullopt,
             });
 
@@ -262,12 +260,12 @@ namespace worse
         }
 
         // =====================================================================
-        // 读取顶点和索引
+        // Read vertices and indices
         // =====================================================================
 
         std::vector<std::shared_ptr<glTFMesh>> meshes;
         std::vector<RHIVertexPosUvNrmTan> vertices;
-        std::vector<u32> indices;
+        std::vector<UInt> indices;
 
         for (fastgltf::Mesh const& mesh : asset->meshes)
         {
@@ -277,7 +275,7 @@ namespace worse
             vertices.clear();
             indices.clear();
 
-            u32 verticesOffset = 0;
+            UInt verticesOffset = 0;
 
             for (fastgltf::Primitive const& primitive : mesh.primitives)
             {
@@ -287,19 +285,19 @@ namespace worse
 
                 // load indexes
                 fastgltf::Accessor& indexAccessor = asset->accessors[primitive.indicesAccessor.value()];
-                newSurface.indexCount             = static_cast<u32>(indexAccessor.count);
+                newSurface.indexCount             = static_cast<UInt>(indexAccessor.count);
 
                 if (indexAccessor.componentType == fastgltf::ComponentType::UnsignedShort)
                 {
                     newSurface.startIndex = indices.size();
 
                     indices.reserve(indices.size() + indexAccessor.count);
-                    fastgltf::iterateAccessor<u16>(
+                    fastgltf::iterateAccessor<UShort>(
                         asset.get(),
                         indexAccessor,
-                        [&](u16 index)
+                        [&](UShort index)
                         {
-                            indices.push_back(static_cast<u32>(index) + verticesOffset);
+                            indices.push_back(static_cast<UInt>(index) + verticesOffset);
                         });
                 }
                 else
@@ -307,10 +305,10 @@ namespace worse
                     newSurface.startIndex = indices.size();
 
                     indices.reserve(indices.size() + indexAccessor.count);
-                    fastgltf::iterateAccessor<u32>(
+                    fastgltf::iterateAccessor<UInt>(
                         asset.get(),
                         indexAccessor,
-                        [&](u32 index)
+                        [&](UInt index)
                         {
                             indices.push_back(index + verticesOffset);
                         });
@@ -322,36 +320,36 @@ namespace worse
                 // Fit current size
                 vertices.resize(vertices.size() + positionAccessor.count);
 
-                fastgltf::iterateAccessorWithIndex<math::Vector3>(
+                fastgltf::iterateAccessorWithIndex<Vector3>(
                     asset.get(),
                     positionAccessor,
-                    [&](math::Vector3 const& position, usize index)
+                    [&](Vector3 const& position, Size index)
                     {
                         RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
                         vtx.position              = position;
                         // default
-                        vtx.normal  = math::Vector3::ZERO();
-                        vtx.uv      = math::Vector2::ZERO();
-                        vtx.tangent = math::Vector4::ZERO();
+                        vtx.normal  = Vector3::ZERO;
+                        vtx.uv      = Vector2::ZERO;
+                        vtx.tangent = Vector4::ZERO;
                     });
 
                 // load vertex normals
                 fastgltf::Attribute const* normals = primitive.findAttribute("NORMAL");
                 if (normals != primitive.attributes.end())
                 {
-                    fastgltf::iterateAccessorWithIndex<math::Vector3>(
+                    fastgltf::iterateAccessorWithIndex<Vector3>(
                         asset.get(),
                         asset->accessors[normals->accessorIndex],
-                        [&](math::Vector3 const& normal, usize index)
+                        [&](Vector3 const& normal, Size index)
                         {
                             RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
                             // glTF -> Vulkan
-                            vtx.normal                = -normal;
+                            vtx.normal = -normal;
                         });
                 }
                 else
                 {
-                    WS_LOG_WARN("gltf", "{} does not have attribute NORMAL", modelName);
+                    WORSE_LOG_WARN("gltf", "{} does not have attribute NORMAL", modelName);
                 }
 
                 // load UVs
@@ -359,10 +357,10 @@ namespace worse
                 if (uvs != primitive.attributes.end())
                 {
 
-                    fastgltf::iterateAccessorWithIndex<math::Vector2>(
+                    fastgltf::iterateAccessorWithIndex<Vector2>(
                         asset.get(),
                         asset->accessors[uvs->accessorIndex],
-                        [&](math::Vector2 const& uv, usize index)
+                        [&](Vector2 const& uv, Size index)
                         {
                             RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
                             vtx.uv                    = uv;
@@ -370,26 +368,26 @@ namespace worse
                 }
                 else
                 {
-                    WS_LOG_WARN("gltf", "{} does not have attribute TEXCOORD_0", modelName);
+                    WORSE_LOG_WARN("gltf", "{} does not have attribute TEXCOORD_0", modelName);
                 }
 
                 // load tangents
                 fastgltf::Attribute const* tangents = primitive.findAttribute("TANGENT");
                 if (tangents != primitive.attributes.end())
                 {
-                    fastgltf::iterateAccessorWithIndex<math::Vector4>(
+                    fastgltf::iterateAccessorWithIndex<Vector4>(
                         asset.get(),
                         asset->accessors[tangents->accessorIndex],
-                        [&](math::Vector4 const& tangent, usize index)
+                        [&](Vector4 const& tangent, Size index)
                         {
                             RHIVertexPosUvNrmTan& vtx = vertices[verticesOffset + index];
                             vtx.tangent               = tangent;
                         });
                 }
                 {
-                    WS_LOG_WARN("gltf", "{} does not have attribute TANGENT", modelName);
+                    WORSE_LOG_WARN("gltf", "{} does not have attribute TANGENT", modelName);
 
-                    // TODO: 计算切线
+                    // TODO: Compute tangent
                     calculateTangent(vertices, indices);
                 }
 
@@ -406,7 +404,7 @@ namespace worse
         }
 
         // =====================================================================
-        // 读取节点
+        // Read nodes
         // =====================================================================
 
         std::vector<std::shared_ptr<Node>> nodes;
@@ -414,7 +412,7 @@ namespace worse
         {
             std::shared_ptr<Node> newNode;
 
-            // 为具有 mesh 的节点创建 glTFMeshNode； 否则创建 Node
+            // glTFMeshNode for node has mesh, otherwise normal Node
             if (node.meshIndex.has_value())
             {
                 std::shared_ptr<glTFMeshNode> meshNode = std::make_shared<glTFMeshNode>();
@@ -434,17 +432,17 @@ namespace worse
                 fastgltf::visitor{
                     [&](fastgltf::math::fmat4x4 matrix)
                     {
-                        std::memcpy(newNode->localTransform.data, matrix.data(), sizeof(math::Matrix4));
+                        std::memcpy(newNode->localTransform.data, matrix.data(), sizeof(Matrix4));
                     },
                     [&](fastgltf::TRS tranform)
                     {
-                        math::Vector3 translation{tranform.translation[0], tranform.translation[1], tranform.translation[2]};
+                        Vector3 translation{tranform.translation[0], tranform.translation[1], tranform.translation[2]};
                         math::Quaternion rotation{tranform.rotation[3], tranform.rotation[0], tranform.rotation[1], tranform.rotation[2]};
-                        math::Vector3 scale{tranform.scale[0], tranform.scale[1], tranform.scale[2]};
+                        Vector3 scale{tranform.scale[0], tranform.scale[1], tranform.scale[2]};
 
-                        math::Matrix4 tm = math::makeTranslation(translation);
-                        math::Matrix4 rm = rotation.toMat4();
-                        math::Matrix4 sm = math::makeScale(scale);
+                        Matrix4 tm = math::makeTranslation(translation);
+                        Matrix4 rm = rotation.toMat4();
+                        Matrix4 sm = math::makeScale(scale);
 
                         newNode->localTransform = tm * rm * sm;
                     }},
@@ -452,10 +450,10 @@ namespace worse
         }
 
         // =====================================================================
-        // 构建层次结构
+        // Hierarchy
         // =====================================================================
 
-        for (usize i = 0; i < asset->nodes.size(); ++i)
+        for (Size i = 0; i < asset->nodes.size(); ++i)
         {
             fastgltf::Node& node             = asset->nodes[i];
             std::shared_ptr<Node>& sceneNode = nodes[i];
@@ -472,7 +470,7 @@ namespace worse
             if (!node->parent.lock())
             {
                 model->topNodes.push_back(node);
-                node->refreshTransform(math::Matrix4::IDENTITY());
+                node->refreshTransform(Matrix4::IDENTITY);
             }
         }
 
@@ -491,4 +489,4 @@ namespace worse
         return nullptr;
     }
 
-} // namespace worse
+} // namespace Worse

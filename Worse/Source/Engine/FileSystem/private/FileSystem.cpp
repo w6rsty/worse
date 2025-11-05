@@ -3,7 +3,7 @@
 #include <array>
 #include <string>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -15,7 +15,7 @@ namespace worse
         // clang-format on
     } // namespace
 
-    bool FileSystem::isSupportedImage(std::filesystem::path const& path)
+    Bool FileSystem::isSupportedImage(std::filesystem::path const& path)
     {
         if (!path.has_extension())
         {
@@ -28,19 +28,19 @@ namespace worse
                supporteImagedExtensions.end();
     }
 
-    bool FileSystem::isPathExists(std::filesystem::path const& path)
+    Bool FileSystem::isPathExists(std::filesystem::path const& path)
     {
         return std::filesystem::exists(path);
     }
 
-    bool FileSystem::isFileExists(std::filesystem::path const& path)
+    Bool FileSystem::isFileExists(std::filesystem::path const& path)
     {
         return std::filesystem::is_regular_file(path);
     }
 
-    bool FileSystem::isDirectoryExists(std::filesystem::path const& path)
+    Bool FileSystem::isDirectoryExists(std::filesystem::path const& path)
     {
         return std::filesystem::is_directory(path);
     }
 
-} // namespace worse
+} // namespace Worse

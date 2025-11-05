@@ -1,4 +1,4 @@
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Material.hpp"
 #include "Renderer.hpp"
 
@@ -6,15 +6,15 @@
 #include <optional>
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
     namespace
     {
         std::vector<StandardMaterialGPU> materialGPUs;
 
-        std::optional<usize> getTextureIndex(
+        std::optional<Size> getTextureIndex(
             std::optional<AssetHandle> const& handle,
-            std::unordered_map<AssetHandle, usize> const& textureIndexMap)
+            std::unordered_map<AssetHandle, Size> const& textureIndexMap)
         {
             if (handle.has_value())
             {
@@ -24,7 +24,7 @@ namespace worse
                     return it->second;
                 }
                 // Log warning when texture not found in map
-                WS_LOG_WARN(
+                WORSE_LOG_WARN(
                     "Material",
                     "Texture handle {} not found in texture map, using default",
                     handle.value());
@@ -49,13 +49,13 @@ namespace worse
         assetServer->loadTexture();
 
         // generate material indices map and descritpor write data
-        std::unordered_map<AssetHandle, usize> textureIndexMap;
+        std::unordered_map<AssetHandle, Size> textureIndexMap;
         {
             textureWrites->clear();
             textureWrites->data().reserve(assetServer->getLoadedTextureCount());
 
             // skip renderer builtin textures
-            usize index = static_cast<usize>(RendererTexture::Max);
+            Size index = static_cast<Size>(RendererTexture::Max);
             assetServer->eachTexture(
                 [&index, &textureWrites, &textureIndexMap](AssetHandle handle, RHITexture* texture)
                 {
@@ -73,7 +73,7 @@ namespace worse
         materialGPUs.resize(materials->size() + assetServer->getMaterialCount());
 
         // Convert each CPU material to GPU format, maintaining index correspondence
-        for (usize i = 0; i < materials->size(); ++i)
+        for (Size i = 0; i < materials->size(); ++i)
         {
             StandardMaterial* materialECS = materials.get(i);
 
@@ -118,17 +118,17 @@ namespace worse
             }
         }
 
-        u32 assetServerMaterialIndex = materials->size();
+        UInt assetServerMaterialIndex = materials->size();
         assetServer->eachMaterial(
             [&](AssetHandle handle, MaterialAssetSlot& slot)
             {
                 StandardMaterial const& material = slot.material;
 
-                usize index               = assetServerMaterialIndex++;
+                Size index                = assetServerMaterialIndex++;
                 StandardMaterialGPU& data = materialGPUs[index];
                 data.flags                = 0;
 
-                data.baseColor                     = material.baseColor;
+                data.baseColor = material.baseColor;
                 if (getTextureIndex(material.baseColorTexture, textureIndexMap).has_value())
                 {
                     data.baseColorTextureIndex = getTextureIndex(material.baseColorTexture, textureIndexMap).value();
@@ -139,20 +139,20 @@ namespace worse
                     data.normalTextureIndex = getTextureIndex(material.normalTexture, textureIndexMap).value();
                     data.flags |= 1 << 1;
                 }
-                data.metallic                      = material.metallic;
-                data.roughness                     = material.roughness;
+                data.metallic  = material.metallic;
+                data.roughness = material.roughness;
                 if (getTextureIndex(material.metallicRoughnessTexture, textureIndexMap).has_value())
                 {
                     data.metallicRoughnessTextureIndex = getTextureIndex(material.metallicRoughnessTexture, textureIndexMap).value();
                     data.flags |= 1 << 2;
                 }
-                data.ambientOcclusion              = material.ambientOcclusion;
+                data.ambientOcclusion = material.ambientOcclusion;
                 if (getTextureIndex(material.ambientOcclusionTexture, textureIndexMap).has_value())
                 {
                     data.ambientOcclusionTextureIndex = getTextureIndex(material.ambientOcclusionTexture, textureIndexMap).value();
                     data.flags |= 1 << 3;
                 }
-                data.emissive                      = material.emissive;
+                data.emissive = material.emissive;
                 if (getTextureIndex(material.emissiveTexture, textureIndexMap).has_value())
                 {
                     data.emissiveTextureIndex = getTextureIndex(material.emissiveTexture, textureIndexMap).value();
@@ -165,4 +165,4 @@ namespace worse
         Renderer::createMaterialBuffers(materialGPUs);
     }
 
-} // namespace worse
+} // namespace Worse

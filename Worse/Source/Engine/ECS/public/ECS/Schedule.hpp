@@ -1,5 +1,5 @@
 #pragma once
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Registry.hpp"
 #include "System.hpp"
 
@@ -10,7 +10,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     class Stage
@@ -72,19 +72,20 @@ namespace worse::ecs
             // clang-format on
         }
 
-        template <typename StageLabel> Schedule& addStage()
+        template <typename StageLabel>
+        Schedule& addStage()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<StageLabel, CoreStage::CleanUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot add CoreStage");
+                WORSE_LOG_WARN("ECS", "Cannot add CoreStage");
                 return *this;
             }
 
             std::type_index const label(typeid(StageLabel));
             if (m_stages.count(label))
             {
-                WS_LOG_WARN("ECS", "Stage {} already exists.", label.name());
+                WORSE_LOG_WARN("ECS", "Stage {} already exists.", label.name());
                 return *this;
             }
 
@@ -93,7 +94,8 @@ namespace worse::ecs
             return *this;
         }
 
-        template <typename StageLabel, auto Func> Schedule& addSystem()
+        template <typename StageLabel, auto Func>
+        Schedule& addSystem()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp>)
             {
@@ -110,9 +112,9 @@ namespace worse::ecs
                 std::type_index const label(typeid(StageLabel));
                 if (!m_stages.count(label))
                 {
-                    WS_LOG_WARN("ECS",
-                                "Stage {} does not exist.",
-                                label.name());
+                    WORSE_LOG_WARN("ECS",
+                                   "Stage {} does not exist.",
+                                   label.name());
                     return *this;
                 }
 
@@ -121,14 +123,15 @@ namespace worse::ecs
             }
         }
 
-        template <typename StageLabel> bool removeStage()
+        template <typename StageLabel>
+        Bool removeStage()
         {
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<StageLabel, CoreStage::Update> ||
                           std::is_same_v<StageLabel, CoreStage::PostUpdate> ||
                           std::is_same_v<StageLabel, CoreStage::CleanUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot remove CoreStage");
+                WORSE_LOG_WARN("ECS", "Cannot remove CoreStage");
             }
 
             std::type_index const label(typeid(StageLabel));
@@ -156,14 +159,14 @@ namespace worse::ecs
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<BeforeStageLabel, CoreStage::StartUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot insert with CoreStage::StartUp.");
+                WORSE_LOG_WARN("ECS", "Cannot insert with CoreStage::StartUp.");
                 return *this;
             }
             else if constexpr (std::is_same_v<StageLabel, CoreStage::CleanUp> ||
                                std::is_same_v<BeforeStageLabel,
                                               CoreStage::CleanUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot insert with CoreStage::CleanUp.");
+                WORSE_LOG_WARN("ECS", "Cannot insert with CoreStage::CleanUp.");
                 return *this;
             }
 
@@ -173,7 +176,7 @@ namespace worse::ecs
             // Check if new stage already exists
             if (m_stages.count(newLabel))
             {
-                WS_LOG_WARN("ECS", "Stage {} already exists.", newLabel.name());
+                WORSE_LOG_WARN("ECS", "Stage {} already exists.", newLabel.name());
                 return *this;
             }
 
@@ -183,7 +186,7 @@ namespace worse::ecs
                                 beforeLabel);
             if (it == m_stageOrder.end())
             {
-                WS_LOG_WARN("ECS", "Stage {} not found.", beforeLabel.name());
+                WORSE_LOG_WARN("ECS", "Stage {} not found.", beforeLabel.name());
                 return *this;
             }
 
@@ -199,14 +202,14 @@ namespace worse::ecs
             if constexpr (std::is_same_v<StageLabel, CoreStage::StartUp> ||
                           std::is_same_v<AfterStageLabel, CoreStage::StartUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot insert with CoreStage::StartUp.");
+                WORSE_LOG_WARN("ECS", "Cannot insert with CoreStage::StartUp.");
                 return *this;
             }
             else if constexpr (std::is_same_v<StageLabel, CoreStage::CleanUp> ||
                                std::is_same_v<AfterStageLabel,
                                               CoreStage::CleanUp>)
             {
-                WS_LOG_WARN("ECS", "Cannot insert with CoreStage::CleanUp.");
+                WORSE_LOG_WARN("ECS", "Cannot insert with CoreStage::CleanUp.");
                 return *this;
             }
 
@@ -216,7 +219,7 @@ namespace worse::ecs
             // Check if new stage already exists
             if (m_stages.count(newLabel))
             {
-                WS_LOG_WARN("ECS", "Stage {} already exists.", newLabel.name());
+                WORSE_LOG_WARN("ECS", "Stage {} already exists.", newLabel.name());
                 return *this;
             }
 
@@ -225,7 +228,7 @@ namespace worse::ecs
                 std::find(m_stageOrder.begin(), m_stageOrder.end(), afterLabel);
             if (it == m_stageOrder.end())
             {
-                WS_LOG_WARN("ECS", "Stage {} not found.", afterLabel.name());
+                WORSE_LOG_WARN("ECS", "Stage {} not found.", afterLabel.name());
                 return *this;
             }
 
@@ -235,18 +238,19 @@ namespace worse::ecs
             return *this;
         }
 
-        bool hasStage(std::type_index const& label) const
+        Bool hasStage(std::type_index const& label) const
         {
             return m_stages.count(label) > 0;
         }
 
-        template <typename StageLabel> bool hasStage() const
+        template <typename StageLabel>
+        Bool hasStage() const
         {
             std::type_index const label(typeid(StageLabel));
             return hasStage(label);
         }
 
-        usize getStageCount() const
+        Size getStageCount() const
         {
             return m_stages.size();
         }
@@ -281,4 +285,4 @@ namespace worse::ecs
         std::unique_ptr<Stage> m_cleanUpStage;
         std::vector<StageLabelType> m_stageOrder;
     };
-} // namespace worse::ecs
+} // namespace Worse::ecs

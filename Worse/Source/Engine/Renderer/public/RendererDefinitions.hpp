@@ -4,10 +4,10 @@
 #include <cstddef>
 #include <string>
 
-namespace worse
+namespace Worse
 {
 
-    enum class RendererRasterizerState : usize
+    enum class RendererRasterizerState : Size
     {
         DepthPrepass,
         SolidCullBack,
@@ -16,7 +16,7 @@ namespace worse
         Max
     };
 
-    enum class RendererDepthStencilState : usize
+    enum class RendererDepthStencilState : Size
     {
         Off,
         ReadWrite,
@@ -26,13 +26,13 @@ namespace worse
         Max
     };
 
-    enum class RendererBlendState : usize
+    enum class RendererBlendState : Size
     {
         Off,
         Max
     };
 
-    enum class RendererShader : usize
+    enum class RendererShader : Size
     {
         PlaceholderV,
         PlaceholderP,
@@ -53,7 +53,7 @@ namespace worse
         Max
     };
 
-    enum class RendererTarget : usize
+    enum class RendererTarget : Size
     {
         // 渲染目标
         SceneHDR,
@@ -77,7 +77,7 @@ namespace worse
     };
 
     // builtin textures
-    enum class RendererTexture : usize
+    enum class RendererTexture : Size
     {
         Placeholder,
         DefaultAlbedo,
@@ -106,7 +106,7 @@ namespace worse
     struct TextureWrite
     {
         RHITexture* texture;
-        usize index;
+        Size index;
     };
 
-} // namespace worse
+} // namespace Worse

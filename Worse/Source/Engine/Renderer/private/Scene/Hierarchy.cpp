@@ -1,9 +1,9 @@
 #include "Scene/Hierarchy.hpp"
 
-namespace worse
+namespace Worse
 {
 
-    void Node::refreshTransform(math::Matrix4 const& parentTransform)
+    void Node::refreshTransform(Matrix4 const& parentTransform)
     {
         worldTransform = parentTransform * localTransform;
 
@@ -13,4 +13,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

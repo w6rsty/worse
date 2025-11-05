@@ -4,7 +4,7 @@
 
 #include <bit>
 
-namespace worse
+namespace Worse
 {
 
     void RHIBuffer::nativeCreate(void const* data)
@@ -12,38 +12,38 @@ namespace worse
         // prevent duplicate creation
         nativeDestroy();
 
-        bool isVIIOnly     = false;
-        bool isStorageOnly = false;
-        bool isVIIStorage  = false;
-        bool isUniform     = false;
+        Bool isVIIOnly     = false;
+        Bool isStorageOnly = false;
+        Bool isVIIStorage  = false;
+        Bool isUniform     = false;
 
         // validation
         {
-            WS_ASSERT(m_usage != RHIBufferUsageFlagBits::None);
+            WORSE_ASSERT(m_usageFlags != RHIBufferUsage::FlagBits::Unknown);
 
-            if (m_usage & RHIBufferUsageFlagBits::Uniform)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Uniform)
             {
-                WS_ASSERT((m_usage & RHIBufferUsageFlagBits::Uniform) == RHIBufferUsageFlagBits::Uniform);
+                WORSE_ASSERT((m_usageFlags & RHIBufferUsage::FlagBits::Uniform) == RHIBufferUsage::FlagBits::Uniform);
 
                 isUniform = true;
 
                 if (m_mappable)
                 {
-                    WS_ASSERT_MSG(data != nullptr,
+                    WORSE_ASSERT_MSG(data != nullptr,
                                   "Uniform buffer must have data if mappable");
                 }
             }
 
             // contain vertex/index/instance
-            if (m_usage & VII_BIT)
+            if (m_usageFlags & VII_BIT)
             {
-                WS_ASSERT_MSG(std::popcount(static_cast<u8>(m_usage & VII_MASK)) == 1,
+                WORSE_ASSERT_MSG(std::popcount(static_cast<UByte>(m_usageFlags & VII_MASK)) == 1,
                               "RHIBuffer usage must specify exactly one of: Vertex, Index, or Instance");
 
                 // vertex/index/instance only (check if no storage flag)
-                if ((m_usage & RHIBufferUsageFlagBits::Storage) == 0)
+                if ((m_usageFlags & RHIBufferUsage::FlagBits::Storage) == 0)
                 {
-                    WS_ASSERT_MSG(data != nullptr,
+                    WORSE_ASSERT_MSG(data != nullptr,
                                   "Vertex/Index/Instance buffer must have data");
                     isVIIOnly = true;
                 }
@@ -54,17 +54,17 @@ namespace worse
             }
 
             // storage only data is optional
-            isStorageOnly = (m_usage & RHIBufferUsageFlagBits::Storage) == RHIBufferUsageFlagBits::Storage;
+            isStorageOnly = (m_usageFlags & RHIBufferUsage::FlagBits::Storage) == RHIBufferUsage::FlagBits::Storage;
         }
 
         if (isStorageOnly || isUniform)
         {
             // correct alignment
             // TODO: query this from device
-            static constexpr usize MIN_ALIGNMENT = 0x10;
+            static constexpr Size MIN_ALIGNMENT = 0x10;
             if (m_stride != MIN_ALIGNMENT)
             {
-                m_stride = static_cast<u32>((m_stride + MIN_ALIGNMENT - 1) & ~(MIN_ALIGNMENT - 1));
+                m_stride = static_cast<UInt>((m_stride + MIN_ALIGNMENT - 1) & ~(MIN_ALIGNMENT - 1));
                 m_size   = m_stride * m_elementCount;
             }
         }
@@ -75,19 +75,19 @@ namespace worse
         // buffer usage and memory properties
         {
 
-            if ((m_usage & RHIBufferUsageFlagBits::Vertex) || m_usage & RHIBufferUsageFlagBits::Instance)
+            if ((m_usageFlags & RHIBufferUsage::FlagBits::Vertex) || m_usageFlags & RHIBufferUsage::FlagBits::Instance)
             {
                 bufferUsage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
             }
-            if (m_usage & RHIBufferUsageFlagBits::Index)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Index)
             {
                 bufferUsage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
             }
-            if (m_usage & RHIBufferUsageFlagBits::Storage)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Storage)
             {
                 bufferUsage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
             }
-            if (m_usage & RHIBufferUsageFlagBits::Uniform)
+            if (m_usageFlags & RHIBufferUsage::FlagBits::Uniform)
             {
                 bufferUsage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
             }
@@ -108,8 +108,8 @@ namespace worse
             }
         }
 
-        bool isStaggingCreation = isVIIOnly || (isStorageOnly && data);
-        bool isDirectlyCreation = isVIIStorage || (isStorageOnly && !data);
+        Bool isStaggingCreation = isVIIOnly || (isStorageOnly && data);
+        Bool isDirectlyCreation = isVIIStorage || (isStorageOnly && !data);
 
         if (isStaggingCreation)
         {
@@ -150,7 +150,7 @@ namespace worse
             }
             else // error handling
             {
-                WS_LOG_ERROR("RHIBuffer", "Failed to transfer buffer data");
+                WORSE_LOG_ERROR("RHIBuffer", "Failed to transfer buffer data");
                 RHIDevice::memoryBufferDestroy(stagingBuffer);
                 RHIDevice::memoryBufferDestroy(m_handle);
             }
@@ -165,7 +165,7 @@ namespace worse
                 m_name);
         }
 
-        WS_ASSERT_MSG(m_handle, "Failed to create buffer");
+        WORSE_ASSERT_MSG(m_handle, "Failed to create buffer");
 
         m_gpuData = (isUniform && m_mappable) ? RHIDevice::memoryGetMappedBufferData(m_handle) : nullptr;
     }
@@ -179,17 +179,17 @@ namespace worse
         }
     }
 
-    void RHIBuffer::update(RHICommandList* cmdList, void const* cpuData, u32 const size)
+    void RHIBuffer::update(RHICommandList* cmdList, void const* cpuData, UInt const size)
     {
         if (!cmdList)
         {
-            WS_LOG_ERROR("RHIBuffer",
+            WORSE_LOG_ERROR("RHIBuffer",
                          "Failed to update buffer, cmdList is null");
             return;
         }
-        WS_ASSERT_MSG(m_mappable, "Cannot update unmappable buffer");
-        WS_ASSERT_MSG(m_gpuData, "Cannot update buffer, invalid GPU data");
-        WS_ASSERT_MSG(m_offset + size <= m_size, "Update buffer out of range");
+        WORSE_ASSERT_MSG(m_mappable, "Cannot update unmappable buffer");
+        WORSE_ASSERT_MSG(m_gpuData, "Cannot update buffer, invalid GPU data");
+        WORSE_ASSERT_MSG(m_offset + size <= m_size, "Update buffer out of range");
 
         if (m_firstUpdate)
         {
@@ -203,4 +203,4 @@ namespace worse
         cmdList->updateBuffer(this, m_offset, size != 0 ? size : m_stride, cpuData);
     }
 
-} // namespace worse
+} // namespace Worse

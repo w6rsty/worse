@@ -6,7 +6,7 @@
 #include <vector>
 #include <string_view>
 
-namespace worse
+namespace Worse
 {
 
     // pipeline specific set 1 layout and push constants
@@ -18,7 +18,7 @@ namespace worse
     public:
         RHIDescriptorSetLayout() = default;
         RHIDescriptorSetLayout(std::vector<RHIDescriptor> const& descriptors,
-                               u64 descriptorHash, std::string_view name);
+                               ULong descriptorHash, std::string_view name);
         ~RHIDescriptorSetLayout();
 
         void updateSet(std::span<RHIDescriptorWrite> constantBuffers,
@@ -28,7 +28,7 @@ namespace worse
         // clang-format off
         std::vector<RHIDescriptor> const& getDescriptors() const   { return m_descriptors; }
         std::vector<RHIDescriptor> const& getPushConstants() const { return m_pushConstants; }
-        u64                     getHash() const          { return m_hash; }
+        ULong                     getHash() const          { return m_hash; }
         RHINativeHandle                   getLayout() const        { return m_layout; }
         // clang-format on
 
@@ -36,8 +36,8 @@ namespace worse
         std::vector<RHIDescriptor> m_descriptors;
         std::vector<RHIDescriptor> m_pushConstants;
 
-        u64 m_hash               = 0;
+        ULong m_hash               = 0;
         RHINativeHandle m_layout = {};
     };
 
-} // namespace worse
+} // namespace Worse

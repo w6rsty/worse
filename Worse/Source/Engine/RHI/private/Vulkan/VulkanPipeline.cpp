@@ -9,7 +9,7 @@
 
 #include <vector>
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -31,9 +31,9 @@ namespace worse
             }
             // clang-format on
 
-            WS_ASSERT(infoShaderStage.module != VK_NULL_HANDLE);
-            WS_ASSERT(infoShaderStage.pName != nullptr);
-            WS_ASSERT(infoShaderStage.stage != 0);
+            WORSE_ASSERT(infoShaderStage.module != VK_NULL_HANDLE);
+            WORSE_ASSERT(infoShaderStage.pName != nullptr);
+            WORSE_ASSERT(infoShaderStage.stage != 0);
 
             return infoShaderStage;
         }
@@ -46,7 +46,7 @@ namespace worse
 
         // shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-        for (usize i = 0; i < static_cast<usize>(RHIShaderType::Max); ++i)
+        for (Size i = 0; i < static_cast<Size>(RHIShaderType::Max); ++i)
         {
             if (m_state.shaders[i])
             {
@@ -82,9 +82,9 @@ namespace worse
         {
             VkPipelineLayoutCreateInfo infoPipelineLayout = {};
             infoPipelineLayout.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            infoPipelineLayout.setLayoutCount         = static_cast<u32>(layouts.size());
+            infoPipelineLayout.setLayoutCount         = static_cast<UInt>(layouts.size());
             infoPipelineLayout.pSetLayouts            = layouts.data();
-            infoPipelineLayout.pushConstantRangeCount = static_cast<u32>(pushConstantRanges.size());
+            infoPipelineLayout.pushConstantRangeCount = static_cast<UInt>(pushConstantRanges.size());
             infoPipelineLayout.pPushConstantRanges    = pushConstantRanges.data();
 
             VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
@@ -131,7 +131,7 @@ namespace worse
 
             VkPipelineRenderingCreateInfo infoRendering = {};
             infoRendering.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-            infoRendering.colorAttachmentCount    = static_cast<u32>(attachmentColorFormats.size());
+            infoRendering.colorAttachmentCount    = static_cast<UInt>(attachmentColorFormats.size());
             infoRendering.pColorAttachmentFormats = attachmentColorFormats.data();
             infoRendering.depthAttachmentFormat   = depthFormat;
             infoRendering.stencilAttachmentFormat = stencilFormat;
@@ -139,7 +139,7 @@ namespace worse
             std::vector<VkVertexInputBindingDescription> vertexInputBindings;
             std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
             // get vertex info from verte shader
-            if (RHIShader* vertexShader = m_state.shaders[static_cast<usize>(RHIShaderType::Vertex)])
+            if (RHIShader* vertexShader = m_state.shaders[static_cast<Size>(RHIShaderType::Vertex)])
             {
                 RHIInputLayout const& inputLayout = vertexShader->getInputLayout();
                 auto attributes = inputLayout.getAttributes();
@@ -166,9 +166,9 @@ namespace worse
 
             VkPipelineVertexInputStateCreateInfo vertexInputState = {};
             vertexInputState.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-            vertexInputState.vertexBindingDescriptionCount   = static_cast<u32>(vertexInputBindings.size());
+            vertexInputState.vertexBindingDescriptionCount   = static_cast<UInt>(vertexInputBindings.size());
             vertexInputState.pVertexBindingDescriptions      = vertexInputBindings.data();
-            vertexInputState.vertexAttributeDescriptionCount = static_cast<u32>(vertexInputAttributes.size());
+            vertexInputState.vertexAttributeDescriptionCount = static_cast<UInt>(vertexInputAttributes.size());
             vertexInputState.pVertexAttributeDescriptions    = vertexInputAttributes.data();
 
             VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = {};
@@ -252,9 +252,9 @@ namespace worse
             colorBlendState.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
             colorBlendState.logicOpEnable     = VK_FALSE;
             colorBlendState.logicOp           = VK_LOGIC_OP_COPY;
-            colorBlendState.attachmentCount   = static_cast<u32>(colorBlendAttachments.size());
+            colorBlendState.attachmentCount   = static_cast<UInt>(colorBlendAttachments.size());
             colorBlendState.pAttachments      = colorBlendAttachments.data();
-            f32 blendFactor                 = m_state.blendState->getBlendFactor();
+            Float blendFactor                 = m_state.blendState->getBlendFactor();
             colorBlendState.blendConstants[0] = blendFactor;
             colorBlendState.blendConstants[1] = blendFactor;
             colorBlendState.blendConstants[2] = blendFactor;
@@ -266,14 +266,14 @@ namespace worse
             };
             VkPipelineDynamicStateCreateInfo dynamicState = {};
             dynamicState.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-            dynamicState.dynamicStateCount = static_cast<u32>(dynamicStates.size());
+            dynamicState.dynamicStateCount = static_cast<UInt>(dynamicStates.size());
             dynamicState.pDynamicStates    = dynamicStates.data();
 
 
             VkGraphicsPipelineCreateInfo infoGraphicsPipeline = {};
             infoGraphicsPipeline.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             infoGraphicsPipeline.pNext               = &infoRendering;
-            infoGraphicsPipeline.stageCount          = static_cast<u32>(shaderStages.size());
+            infoGraphicsPipeline.stageCount          = static_cast<UInt>(shaderStages.size());
             infoGraphicsPipeline.pStages             = shaderStages.data();
             infoGraphicsPipeline.pVertexInputState   = &vertexInputState;
             infoGraphicsPipeline.pInputAssemblyState = &inputAssemblyState;
@@ -293,11 +293,11 @@ namespace worse
             RHIDevice::setResourceName(m_pipeline, pipelineState.name);
         }
 
-        WS_ASSERT_MSG(m_pipeline, "Failed to create pipeline");
+        WORSE_ASSERT_MSG(m_pipeline, "Failed to create pipeline");
 
         // log creation detail
         std::string shaderNames;
-        for (usize i = 0; i < static_cast<usize>(RHIShaderType::Max); ++i)
+        for (Size i = 0; i < static_cast<Size>(RHIShaderType::Max); ++i)
         {
             if (m_state.shaders[i])
             {
@@ -308,7 +308,7 @@ namespace worse
                 shaderNames += m_state.shaders[i]->getName();
             }
         }
-        WS_LOG_INFO("Pipeline",
+        WORSE_LOG_INFO("Pipeline",
                     "Created `{}` (Type: {}, Topology {}, Shaders: [{}])",
                     m_state.name,
                     m_state.type == RHIPipelineType::Graphics ? "graphics"
@@ -317,4 +317,4 @@ namespace worse
                     shaderNames);
     }
 
-} // namespace worse
+} // namespace Worse

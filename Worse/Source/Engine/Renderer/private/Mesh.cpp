@@ -1,8 +1,8 @@
 #include "Mesh.hpp"
 #include "RHIBuffer.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 
-namespace worse
+namespace Worse
 {
 
     Mesh::Mesh()
@@ -27,16 +27,15 @@ namespace worse
         m_indexBuffer.reset();
     }
 
-    void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices, std::vector<u32> const& indices)
+    void Mesh::addGeometry(std::vector<RHIVertexPosUvNrmTan> const& vertices, std::vector<UInt> const& indices)
     {
         SubMesh subMesh;
 
         MeshLod lod0;
-        lod0.vertexCount  = static_cast<u32>(vertices.size());
-        lod0.vertexOffset = static_cast<u32>(m_vertices.size());
-        lod0.indexCount   = static_cast<u32>(indices.size());
-        lod0.indexOffset  = static_cast<u32>(m_indices.size());
-        lod0.boundingBox  = math::BoundingBox(vertices);
+        lod0.vertexCount  = static_cast<UInt>(vertices.size());
+        lod0.vertexOffset = static_cast<UInt>(m_vertices.size());
+        lod0.indexCount   = static_cast<UInt>(indices.size());
+        lod0.indexOffset  = static_cast<UInt>(m_indices.size());
 
         subMesh.lods.push_back(lod0);
 
@@ -50,12 +49,12 @@ namespace worse
     {
         if (m_vertices.empty())
         {
-            WS_LOG_WARN("Mesh", "No vertices");
+            WORSE_LOG_WARN("Mesh", "No vertices");
             return;
         }
 
         m_vertexBuffer = std::make_shared<RHIBuffer>(
-            RHIBufferUsageFlagBits::Vertex,
+            RHIBufferUsage::FlagBits::Vertex,
             sizeof(RHIVertexPosUvNrmTan),
             m_vertices.size(),
             m_vertices.data(),
@@ -65,12 +64,12 @@ namespace worse
         if (m_indices.size() != 0)
         {
             m_indexBuffer = std::make_shared<RHIBuffer>(
-                RHIBufferUsageFlagBits::Index,
-                sizeof(u32),
+                RHIBufferUsage::FlagBits::Index,
+                sizeof(UInt),
                 m_indices.size(),
                 m_indices.data(),
                 false,
                 "MeshIndexBuffer");
         }
     }
-} // namespace worse
+} // namespace Worse

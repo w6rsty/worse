@@ -4,7 +4,7 @@
 
 #include "spirv_reflect.h"
 
-namespace worse
+namespace Worse
 {
     namespace
     {
@@ -25,15 +25,14 @@ namespace worse
             }
         }
 
-        // 提取指定类型的描述符
         void spvExtractDescriptor(SpvReflectShaderModule const& reflection,
                                   RHIDescriptorType const descriptorType,
-                                  RHIShaderStageFlags const shaderStage,
+                                  RHIShaderStage::Flags const shaderStage,
                                   std::vector<RHIDescriptor>& descriptors)
         {
             if (descriptorType == RHIDescriptorType::PushConstant)
             {
-                u32 pushConstantCount = 0;
+                UInt pushConstantCount = 0;
                 spvReflectEnumeratePushConstantBlocks(&reflection, &pushConstantCount, nullptr);
                 std::vector<SpvReflectBlockVariable*> pushConstants(pushConstantCount);
                 spvReflectEnumeratePushConstantBlocks(&reflection, &pushConstantCount, pushConstants.data());
@@ -44,14 +43,14 @@ namespace worse
                     descriptor.name          = block->name;
                     descriptor.stageFlags    = shaderStage;
                     descriptor.type          = RHIDescriptorType::PushConstant;
-                    descriptor.size          = static_cast<u32>(block->size);
+                    descriptor.size          = static_cast<UInt>(block->size);
 
                     descriptors.push_back(descriptor);
                 }
             }
             else
             {
-                u32 descriptorSetCount = 0;
+                UInt descriptorSetCount = 0;
                 spvReflectEnumerateDescriptorSets(&reflection, &descriptorSetCount, nullptr);
                 std::vector<SpvReflectDescriptorSet*> descriptorSets(descriptorSetCount);
                 spvReflectEnumerateDescriptorSets(&reflection, &descriptorSetCount, descriptorSets.data());
@@ -66,7 +65,7 @@ namespace worse
 
                 for (SpvReflectDescriptorSet const* set : descriptorSets)
                 {
-                    for (u32 i = 0; i < set->binding_count; ++i)
+                    for (UInt i = 0; i < set->binding_count; ++i)
                     {
                         SpvReflectDescriptorBinding const* binding = set->bindings[i];
 
@@ -85,7 +84,7 @@ namespace worse
 
                         if (descriptorType == RHIDescriptorType::UniformBuffer)
                         {
-                            descriptor.size = static_cast<u32>(binding->block.size);
+                            descriptor.size = static_cast<UInt>(binding->block.size);
                         }
                         descriptor.isArray     = binding->array.dims_count > 0;
                         descriptor.arrayLength = binding->array.dims_count > 0 ? binding->array.dims[0] : 0;
@@ -111,7 +110,7 @@ namespace worse
             wArguments = {L"-T", L"cs_6_8", L"-E", L"main_cs"};
             break;
         default:
-            WS_ASSERT(false);
+            WORSE_ASSERT(false);
             break;
         }
 
@@ -147,13 +146,13 @@ namespace worse
 
         if (!codeBlob)
         {
-            WS_LOG_ERROR("Shader", "Compilation failed: {}", m_name);
+            WORSE_LOG_ERROR("Shader", "Compilation failed: {}", m_name);
             return shader;
         }
 
         VkShaderModuleCreateInfo infoShader = {};
         infoShader.sType                    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        infoShader.pCode                    = static_cast<u32*>(codeBlob->GetBufferPointer());
+        infoShader.pCode                    = static_cast<UInt*>(codeBlob->GetBufferPointer());
         infoShader.codeSize                 = codeBlob->GetBufferSize();
 
         VkShaderModule vkShader = VK_NULL_HANDLE;
@@ -161,22 +160,22 @@ namespace worse
         shader = RHINativeHandle{vkShader, RHINativeHandleType::Shader};
         RHIDevice::setResourceName(shader, m_name);
 
-        reflect(m_shaderType, static_cast<u32*>(codeBlob->GetBufferPointer()), codeBlob->GetBufferSize() / sizeof(u32));
+        reflect(m_shaderType, static_cast<UInt*>(codeBlob->GetBufferPointer()), codeBlob->GetBufferSize() / sizeof(UInt));
 
         codeBlob.Release();
 
         return shader;
     }
 
-    void RHIShader::reflect(RHIShaderType const shaderType, u32* spirvData, usize const spirvSize)
+    void RHIShader::reflect(RHIShaderType const shaderType, UInt* spirvData, Size const spirvSize)
     {
-        WS_ASSERT(spirvData != nullptr);
-        WS_ASSERT(spirvSize > 0);
+        WORSE_ASSERT(spirvData != nullptr);
+        WORSE_ASSERT(spirvSize > 0);
 
         SpvReflectShaderModule reflection{};
-        spvReflectCreateShaderModule(spirvSize * sizeof(u32), spirvData, &reflection);
+        spvReflectCreateShaderModule(spirvSize * sizeof(UInt), spirvData, &reflection);
 
-        RHIShaderStageFlags shaderStage = rhiShaderStageFlags(shaderType);
+        RHIShaderStage::Flags shaderStage = rhiShaderStageFlags(shaderType);
 
         // Texture
         spvExtractDescriptor(reflection, RHIDescriptorType::Texture, shaderStage, m_descriptors);
@@ -189,4 +188,4 @@ namespace worse
         // storage buffer(RWStructuredBuffer)
         spvExtractDescriptor(reflection, RHIDescriptorType::StructuredBuffer, shaderStage, m_descriptors);
     }
-} // namespace worse
+} // namespace Worse

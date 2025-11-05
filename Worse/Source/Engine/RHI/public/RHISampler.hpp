@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIResource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHISampler : public RHIResource
@@ -15,8 +15,8 @@ namespace worse
             RHIFilter filterMipmap,
             RHISamplerAddressMode addressMode,
             RHICompareOperation compareOp = RHICompareOperation::Never,
-            bool enableCompare = false, f32 anisotroy = 0.0f,
-            f32 mipLodBias = 0.0f);
+            Bool enableCompare = false, Float anisotroy = 0.0f,
+            Float mipLodBias = 0.0f);
         ~RHISampler();
 
         // clang-format off
@@ -25,8 +25,8 @@ namespace worse
         RHIFilter             getFilterMipmap() const  { return m_filterMipmap; }
         RHISamplerAddressMode getAddressMode() const   { return m_addressMode; }
         RHICompareOperation   getCompareOp() const     { return m_compareOp; }
-        bool                  isCompareEnabled() const { return m_enableCompare; }
-        f32                   getAnisotroy() const     { return m_anisotroy; }
+        Bool                  isCompareEnabled() const { return m_enableCompare; }
+        Float                   getAnisotroy() const     { return m_anisotroy; }
         RHINativeHandle       getHandle() const        { return m_handle; }
         // clang-format on
 
@@ -38,12 +38,12 @@ namespace worse
 
         // for SamplerComprisonState
         RHICompareOperation m_compareOp;
-        bool m_enableCompare;
+        Bool m_enableCompare;
 
-        f32 m_anisotroy;
-        f32 m_mipLodBias;
+        Float m_anisotroy;
+        Float m_mipLodBias;
 
         RHINativeHandle m_handle = {};
     };
 
-} // namespace worse
+} // namespace Worse

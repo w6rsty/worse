@@ -1,6 +1,6 @@
-namespace worse
+namespace Worse
 {
     void ecsPlaceholder()
     {
     }
-} // namespace worse
+} // namespace Worse

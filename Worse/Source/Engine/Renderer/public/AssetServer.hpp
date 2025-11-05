@@ -1,4 +1,5 @@
 #pragma once
+#include "math/math_includes.hpp"
 #include "RHITexture.hpp"
 
 #include <span>
@@ -10,27 +11,27 @@
 #include <functional>
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
-    using AssetHandle = u64;
+    using AssetHandle = ULong;
 
     struct StandardMaterial
     {
-        math::Vector4 baseColor                     = math::Vector4::ONE();
+        Vector4 baseColor                           = Vector4::ONE;
         std::optional<AssetHandle> baseColorTexture = std::nullopt;
 
         std::optional<AssetHandle> normalTexture = std::nullopt;
 
-        f32 metallic                                        = 0.0f;
+        Float metallic                                      = 0.0f;
         std::optional<AssetHandle> metallicRoughnessTexture = std::nullopt;
 
-        f32 roughness = 1.0f;
+        Float roughness = 1.0f;
 
         std::optional<AssetHandle> ambientOcclusionTexture = std::nullopt;
-        f32 ambientOcclusion                               = 1.0f;
+        Float ambientOcclusion                             = 1.0f;
 
-        math::Vector4 emissive                     = math::Vector4::ZERO();
+        Vector4 emissive                           = Vector4::ZERO;
         std::optional<AssetHandle> emissiveTexture = std::nullopt;
     };
 
@@ -51,8 +52,7 @@ namespace worse
     struct MaterialAssetSlot
     {
         StandardMaterial material;
-        // 索引在构建材质时才会设置
-        std::optional<u32> index;
+        std::optional<UInt> index;
     };
 
     class AssetServer
@@ -90,7 +90,7 @@ namespace worse
          *
          * @note 立即加载
          */
-        AssetHandle addTexture(std::span<byte> data, std::string const& name);
+        AssetHandle addTexture(std::span<Byte> data, std::string const& name);
 
         /**
          * @brief 立即添加纹理资源到服务器
@@ -118,13 +118,13 @@ namespace worse
          */
         void cleanSlots();
 
-        bool isLoaded(AssetHandle const handle) const;
+        Bool isLoaded(AssetHandle const handle) const;
         AssetState getState(AssetHandle const handle) const;
         RHITexture* getTexture(AssetHandle handle) const;
         StandardMaterial const* getMaterial(AssetHandle handle) const;
-        u32 getMaterialIndex(AssetHandle handle) const;
-        usize getLoadedTextureCount() const;
-        usize getMaterialCount() const;
+        UInt getMaterialIndex(AssetHandle handle) const;
+        Size getLoadedTextureCount() const;
+        Size getMaterialCount() const;
 
         /**
          * @brief 批量处理加载的纹理
@@ -147,4 +147,4 @@ namespace worse
 
         AssetHandle m_errorTextureHandle;
     };
-} // namespace worse
+} // namespace Worse

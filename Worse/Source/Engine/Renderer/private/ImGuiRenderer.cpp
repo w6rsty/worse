@@ -9,7 +9,7 @@
 #include "Renderer.hpp"
 #include "ImGuiRenderer.hpp"
 
-namespace worse
+namespace Worse
 {
 
     void defaultPage(int state)
@@ -42,7 +42,7 @@ namespace worse
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-        std::filesystem::path fontPath = std::filesystem::path{worse::EngineDirectory} / "Binary/Fonts/NotoSerifSC-Regular.ttf";
+        std::filesystem::path fontPath = std::filesystem::path{Worse::EngineDirectory} / "Binary/Fonts/NotoSerifSC-Regular.ttf";
         
         io.Fonts->AddFontFromFileTTF(
             fontPath.string().c_str(),
@@ -134,7 +134,7 @@ namespace worse
         colors[ImGuiCol_ResizeGripHovered]    = ImVec4(0.8f, 0.8f, 0.8f, 0.7f);
         colors[ImGuiCol_ResizeGripActive]     = ImVec4(0.8f, 0.8f, 0.8f, 0.9f);
 
-        WS_ASSERT(ImGui_ImplSDL3_InitForVulkan(static_cast<SDL_Window*>(Window::getHandleSDL())));
+        WORSE_ASSERT(ImGui_ImplSDL3_InitForVulkan(static_cast<SDL_Window*>(Window::getHandleSDL())));
     
         ImGui_ImplVulkan_LoadFunctions(
             RHIContext::version,
@@ -173,7 +173,7 @@ namespace worse
 
         infoInit.PipelineRenderingCreateInfo = infoRendering;
 
-        WS_ASSERT(ImGui_ImplVulkan_Init(&infoInit));
+        WORSE_ASSERT(ImGui_ImplVulkan_Init(&infoInit));
 
         // 订阅 SDL 事件
         EventBus::subscribe(EventType::SDL, [](Event const& playload) {
@@ -214,4 +214,4 @@ namespace worse
         ImGui::Render();
     }
 
-} // namespace worse
+} // namespace Worse

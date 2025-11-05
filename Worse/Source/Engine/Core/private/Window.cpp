@@ -1,13 +1,12 @@
 #include "Window.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Event.hpp"
-#include "Definitions.hpp"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_video.h"
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -19,9 +18,9 @@ namespace worse
     {
         if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
         {
-            WS_LOG_FATAL("Window",
-                         "Failed to initialize SDL: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Window",
+                            "Failed to initialize SDL: {}",
+                            SDL_GetError());
         }
 
         SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
@@ -32,15 +31,15 @@ namespace worse
 
         if (!s_window)
         {
-            WS_LOG_FATAL("Window",
-                         "Failed to create window: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Window",
+                            "Failed to create window: {}",
+                            SDL_GetError());
         }
     }
 
     void Window::shutdown()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         SDL_DestroyWindow(s_window);
         s_window = nullptr;
@@ -60,8 +59,8 @@ namespace worse
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
             {
-                s_width  = static_cast<u32>(event.window.data1);
-                s_height = static_cast<u32>(event.window.data2);
+                s_width  = static_cast<UInt>(event.window.data1);
+                s_height = static_cast<UInt>(event.window.data2);
 
                 EventBus::fire(EventType::WindowResized);
                 break;
@@ -77,14 +76,14 @@ namespace worse
 
     void Window::show()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         SDL_ShowWindow(s_window);
     }
 
     void Window::hide()
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         SDL_HideWindow(s_window);
     }
@@ -94,19 +93,19 @@ namespace worse
         s_shouldClose = true;
     }
 
-    bool Window::shouldClose()
+    Bool Window::shouldClose()
     {
         return s_shouldClose;
     }
 
-    bool Window::isMinimized()
+    Bool Window::isMinimized()
     {
         return SDL_GetWindowFlags(s_window) & SDL_WINDOW_MINIMIZED;
     }
 
     void Window::setWindowMode(WindowMode mode)
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
 
         switch (mode)
         {
@@ -134,26 +133,26 @@ namespace worse
         return s_mode;
     }
 
-    void Window::setSize(u32 const w, u32 const h)
+    void Window::setSize(UInt const w, UInt const h)
     {
-        WS_ASSERT(s_window);
+        WORSE_ASSERT(s_window);
         SDL_SetWindowSize(s_window, static_cast<int>(w), static_cast<int>(h));
         s_width  = w;
         s_height = h;
     }
 
-    void Window::setPosition(i32 const x, i32 const y)
+    void Window::setPosition(Int const x, Int const y)
     {
         SDL_SetWindowPosition(s_window,
-                              static_cast<int>(x),
-                              static_cast<int>(y));
+                              static_cast<Int>(x),
+                              static_cast<Int>(y));
     }
 
-    std::pair<int, int> Window::getPosition()
+    std::pair<Int, Int> Window::getPosition()
     {
-        WS_ASSERT(s_window);
-        int x = 0;
-        int y = 0;
+        WORSE_ASSERT(s_window);
+        Int x = 0;
+        Int y = 0;
         SDL_GetWindowPosition(s_window, &x, &y);
         return {x, y};
     }
@@ -179,4 +178,4 @@ namespace worse
         return nullptr;
     }
 
-} // namespace worse
+} // namespace Worse

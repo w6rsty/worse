@@ -7,12 +7,13 @@
 #include <vector>
 #include <type_traits>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     namespace internal
     {
-        template <typename Container, usize PageSize> struct StorageIterator
+        template <typename Container, Size PageSize>
+        struct StorageIterator
         {
             // clang-format off
             using ContainerType = std::remove_cv_t<Container>;
@@ -37,7 +38,7 @@ namespace worse::ecs
             StorageIterator() : payload(nullptr), offset(0)
             {
             }
-            StorageIterator(Container& payload, usize const offset)
+            StorageIterator(Container& payload, Size const offset)
                 : payload(&payload), offset(offset)
             {
             }
@@ -84,8 +85,8 @@ namespace worse::ecs
                 difference_type const position =
                     static_cast<difference_type>(index() - value);
                 return (
-                    *payload)[static_cast<usize>(position) / PageSize]
-                             [fast_mod(static_cast<usize>(position), PageSize)];
+                    *payload)[static_cast<Size>(position) / PageSize]
+                             [fast_mod(static_cast<Size>(position), PageSize)];
             }
             pointer operator->()
             {
@@ -95,7 +96,7 @@ namespace worse::ecs
             {
                 return operator[](0);
             }
-            usize index() const
+            Size index() const
             {
                 return offset - 1UL;
             }
@@ -104,7 +105,7 @@ namespace worse::ecs
             difference_type offset;
         };
 
-        template <typename Container, usize PageSize>
+        template <typename Container, Size PageSize>
         inline typename StorageIterator<Container, PageSize>::difference_type
         operator-(StorageIterator<Container, PageSize> const& lhs,
                   StorageIterator<Container, PageSize> const& rhs)
@@ -112,54 +113,55 @@ namespace worse::ecs
             return rhs.offset - lhs.offset;
         }
 
-        template <typename Container, usize PageSize>
-        inline bool operator==(StorageIterator<Container, PageSize> const& lhs,
+        template <typename Container, Size PageSize>
+        inline Bool operator==(StorageIterator<Container, PageSize> const& lhs,
                                StorageIterator<Container, PageSize> const& rhs)
         {
             return lhs.offset == rhs.offset;
         }
 
-        template <typename Container, usize PageSize>
-        inline bool operator!=(StorageIterator<Container, PageSize> const& lhs,
+        template <typename Container, Size PageSize>
+        inline Bool operator!=(StorageIterator<Container, PageSize> const& lhs,
                                StorageIterator<Container, PageSize> const& rhs)
         {
             return !(lhs == rhs);
         }
 
-        template <typename Container, usize PageSize>
-        inline bool operator<(StorageIterator<Container, PageSize> const& lhs,
+        template <typename Container, Size PageSize>
+        inline Bool operator<(StorageIterator<Container, PageSize> const& lhs,
                               StorageIterator<Container, PageSize> const& rhs)
         {
             return lhs.offset > rhs.offset;
         }
 
-        template <typename Container, usize PageSize>
-        inline bool operator>(StorageIterator<Container, PageSize> const& lhs,
+        template <typename Container, Size PageSize>
+        inline Bool operator>(StorageIterator<Container, PageSize> const& lhs,
                               StorageIterator<Container, PageSize> const& rhs)
         {
             return lhs.offset < rhs.offset;
         }
 
-        template <typename Container, usize PageSize>
-        inline bool operator<=(StorageIterator<Container, PageSize> const& lhs,
+        template <typename Container, Size PageSize>
+        inline Bool operator<=(StorageIterator<Container, PageSize> const& lhs,
                                StorageIterator<Container, PageSize> const& rhs)
         {
             return !(lhs > rhs);
         }
 
-        template <typename Container, usize PageSize>
-        inline bool operator>=(StorageIterator<Container, PageSize> const& lhs,
+        template <typename Container, Size PageSize>
+        inline Bool operator>=(StorageIterator<Container, PageSize> const& lhs,
                                StorageIterator<Container, PageSize> const& rhs)
         {
             return !(lhs < rhs);
         }
     } // namespace internal
 
-    template <typename T> class Storage : public IndexSet
+    template <typename T>
+    class Storage : public IndexSet
     {
     public:
         // clang-format off
-        static constexpr usize PAGE_SIZE = PACKED_PAGE_SIZE;
+        static constexpr Size PAGE_SIZE = PACKED_PAGE_SIZE;
         using ValueType                        = T;
         using ContainerType                    = std::vector<T*>;
         using BaseType                         = IndexSet;
@@ -168,25 +170,25 @@ namespace worse::ecs
         // clang-format on
 
     private:
-        ValueType& payloadRef(usize const position)
+        ValueType& payloadRef(Size const position)
         {
             return m_payload[position / PAGE_SIZE]
                             [fast_mod(position, PAGE_SIZE)];
         }
 
-        ValueType& assureMemory(usize const position)
+        ValueType& assureMemory(Size const position)
         {
-            usize const page = position / PAGE_SIZE;
+            Size const page = position / PAGE_SIZE;
 
             // adujst page
             if (page >= m_payload.size())
             {
-                usize const currSize = m_payload.size();
+                Size const currSize = m_payload.size();
                 m_payload.resize(page + 1UL, nullptr);
 
                 Allocator allocator = m_payload.get_allocator();
                 // allocate page memory
-                for (usize i = currSize; i < m_payload.size(); ++i)
+                for (Size i = currSize; i < m_payload.size(); ++i)
                 {
                     // sizeof(T) * PAGE_SIZE
                     m_payload[i] = AllocTraits::allocate(allocator, PAGE_SIZE);
@@ -197,17 +199,17 @@ namespace worse::ecs
             return m_payload[page][fast_mod(position, PAGE_SIZE)];
         }
 
-        void shrinkToSize(usize const size)
+        void shrinkToSize(Size const size)
         {
-            usize const from    = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+            Size const from    = (size + PAGE_SIZE - 1) / PAGE_SIZE;
             Allocator allocator = m_payload.get_allocator();
 
-            for (usize i = size; i < BaseType::size(); ++i)
+            for (Size i = size; i < BaseType::size(); ++i)
             {
                 AllocTraits::destroy(allocator, std::addressof(payloadRef(i)));
             }
 
-            for (usize i = from; i < m_payload.size(); ++i)
+            for (Size i = from; i < m_payload.size(); ++i)
             {
                 AllocTraits::deallocate(allocator, m_payload[i], PAGE_SIZE);
             }
@@ -238,7 +240,7 @@ namespace worse::ecs
 
         Iterator find(Entity const entity)
         {
-            usize const index = BaseType::packedIndex(entity);
+            Size const index = BaseType::packedIndex(entity);
             return Iterator(m_payload, index + 1);
         }
 
@@ -247,7 +249,7 @@ namespace worse::ecs
         ValueType& emplace(Entity const entity, Args&&... args)
         {
             auto indexIt         = BaseType::insert(entity);
-            usize const position = static_cast<usize>(indexIt.index());
+            Size const position = static_cast<Size>(indexIt.index());
 
             // reference of uninitialized memory
             ValueType& ref = assureMemory(position);
@@ -263,13 +265,13 @@ namespace worse::ecs
         // Get component reference by entity
         ValueType& get(Entity const entity)
         {
-            usize const index = BaseType::packedIndex(entity);
+            Size const index = BaseType::packedIndex(entity);
             return payloadRef(index);
         }
 
         ValueType const& get(Entity const entity) const
         {
-            usize const index = BaseType::packedIndex(entity);
+            Size const index = BaseType::packedIndex(entity);
             return const_cast<Storage*>(this)->payloadRef(index);
         }
 
@@ -316,7 +318,8 @@ namespace worse::ecs
     };
 
     // specialization for managing entities
-    template <> class Storage<Entity> : public IndexSet
+    template <>
+    class Storage<Entity> : public IndexSet
     {
     public:
         using BaseType = IndexSet;
@@ -350,11 +353,12 @@ namespace worse::ecs
     public:
         virtual ~StorageBase()                     = default;
         virtual void remove(Entity entity)         = 0;
-        virtual usize size() const                 = 0;
-        virtual bool contains(Entity entity) const = 0;
+        virtual Size size() const                 = 0;
+        virtual Bool contains(Entity entity) const = 0;
     };
 
-    template <typename T> struct StorageWrapper : public StorageBase
+    template <typename T>
+    struct StorageWrapper : public StorageBase
     {
         Storage<T> storage;
 
@@ -363,15 +367,15 @@ namespace worse::ecs
             storage.remove(entity);
         }
 
-        usize size() const override
+        Size size() const override
         {
             return storage.size();
         }
 
-        bool contains(Entity entity) const override
+        Bool contains(Entity entity) const override
         {
             return storage.contains(entity);
         }
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

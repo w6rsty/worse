@@ -1,30 +1,30 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
-namespace worse
+namespace Worse
 {
 
     struct RHIViewport
     {
-        RHIViewport(f32 const x = 0.0f, f32 const y = 0.0f,
-                    f32 const width = 0.0f, f32 const height = 0.0f,
-                    f32 const depthMin = 0.0f, f32 const depthMax = 1.0f);
+        RHIViewport(Float const x = 0.0f, Float const y = 0.0f,
+                    Float const width = 0.0f, Float const height = 0.0f,
+                    Float const depthMin = 0.0f, Float const depthMax = 1.0f);
         RHIViewport(RHIViewport const&) = default;
         ~RHIViewport()                  = default;
 
-        bool operator==(RHIViewport const& rhs) const;
-        bool operator!=(RHIViewport const& rhs) const;
-        bool isValid() const;
-        f32 getAspectRatio() const;
+        Bool operator==(RHIViewport const& rhs) const;
+        Bool operator!=(RHIViewport const& rhs) const;
+        Bool isValid() const;
+        Float getAspectRatio() const;
 
-        f32 x        = 0.0f;
-        f32 y        = 0.0f;
-        f32 width    = 0.0f;
-        f32 height   = 0.0f;
-        f32 depthMin = 0.0f;
-        f32 depthMax = 0.0f;
+        Float x        = 0.0f;
+        Float y        = 0.0f;
+        Float width    = 0.0f;
+        Float height   = 0.0f;
+        Float depthMin = 0.0f;
+        Float depthMax = 0.0f;
 
         static const RHIViewport undefined;
     };
 
-} // namespace worse
+} // namespace Worse

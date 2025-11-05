@@ -13,16 +13,16 @@
 
 #include <memory>
 
-namespace worse
+namespace Worse
 {
 
     namespace
     {
-        u64 frameCount = 0;
+        ULong frameCount = 0;
 
-        math::Vector2 resolutionRender = math::Vector2{0, 0};
-        math::Vector2 resolutionOutput = math::Vector2{0, 0};
-        RHIViewport viewport           = RHIViewport(0, 0, 0, 0);
+        Vector2 resolutionRender = Vector2::ZERO;
+        Vector2 resolutionOutput = Vector2::ZERO;
+        RHIViewport viewport     = RHIViewport(0, 0, 0, 0);
 
         std::shared_ptr<RHISwapchain> swapchain = nullptr;
         RHICommandList* m_currentCmdList        = nullptr;
@@ -76,9 +76,9 @@ namespace worse
         // resolution
         {
             // render resolution
-            resolutionRender = {1200, 720};
+            resolutionRender = Vector2{1200, 720};
             // output resolution
-            resolutionOutput = {static_cast<f32>(Window::getWidth()), static_cast<f32>(Window::getHeight())};
+            resolutionOutput = Vector2{static_cast<Float>(Window::getWidth()), static_cast<Float>(Window::getHeight())};
 
             Renderer::setViewport(resolutionRender.x, resolutionRender.y);
         }
@@ -97,7 +97,7 @@ namespace worse
         {
             FrameConstantData frameConstantData = {};
             frameConstantBuffer                 = std::make_shared<RHIBuffer>(
-                RHIBufferUsageFlagBits::Uniform,
+                RHIBufferUsage::FlagBits::Uniform,
                 sizeof(FrameConstantData),
                 1,
                 &frameConstantData,
@@ -120,7 +120,7 @@ namespace worse
         commands.emplaceResource<DrawcallStorage>();
         commands.emplaceResourceArray<StandardMaterial>();
         commands.emplaceResourceArray<TextureWrite>();
-        worse::AssetServer& assetServer = commands.emplaceResource<AssetServer>();
+        Worse::AssetServer& assetServer = commands.emplaceResource<AssetServer>();
         commands.emplaceResource<glTFManager>(assetServer);
     }
 
@@ -188,7 +188,7 @@ namespace worse
     {
         if (m_currentCmdList->getState() == RHICommandListState::Recording)
         {
-            m_currentCmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryWrite, RHIPipelineStageFlagBits::BottomOfPipe, RHIAccessFlagBits::MemoryRead);
+            m_currentCmdList->insertBarrier(swapchain->getCurrentRt(), RHIFormat::B8R8G8A8Unorm, RHIImageLayout::PresentSource, RHIPipelineStage::FlagBits::AllCommands, RHIAccessUsage::FlagBits::MemoryWrite, RHIPipelineStage::FlagBits::BottomOfPipe, RHIAccessUsage::FlagBits::MemoryRead);
             m_currentCmdList->submit(swapchain->getImageAcquireSemaphore());
             swapchain->present(m_currentCmdList);
         }
@@ -197,16 +197,16 @@ namespace worse
     void Renderer::writeBindlessTextures(ecs::ResourceArray<TextureWrite> textureWrites)
     {
         std::vector<RHIDescriptorWrite> updates;
-        updates.reserve(static_cast<usize>(RendererTexture::Max) + textureWrites->data().size());
+        updates.reserve(static_cast<Size>(RendererTexture::Max) + textureWrites->data().size());
 
         // builtin textures (0-5)
         // clang-format off
-        updates.emplace_back(0, 0, RHIDescriptorResource{Renderer::getTexture(RendererTexture::Placeholder)},             RHIDescriptorType::Texture);
-        updates.emplace_back(0, 1, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAlbedo)},           RHIDescriptorType::Texture);
-        updates.emplace_back(0, 2, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultNormal)},           RHIDescriptorType::Texture);
-        updates.emplace_back(0, 3, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultMetallicRoughness)},         RHIDescriptorType::Texture);
-        updates.emplace_back(0, 4, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAmbientOcclusion)}, RHIDescriptorType::Texture);
-        updates.emplace_back(0, 5, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultEmissive)},         RHIDescriptorType::Texture);
+        updates.emplace_back(0, 0, RHIDescriptorResource{Renderer::getTexture(RendererTexture::Placeholder)},              RHIDescriptorType::Texture);
+        updates.emplace_back(0, 1, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAlbedo)},            RHIDescriptorType::Texture);
+        updates.emplace_back(0, 2, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultNormal)},            RHIDescriptorType::Texture);
+        updates.emplace_back(0, 3, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultMetallicRoughness)}, RHIDescriptorType::Texture);
+        updates.emplace_back(0, 4, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultAmbientOcclusion)},  RHIDescriptorType::Texture);
+        updates.emplace_back(0, 5, RHIDescriptorResource{Renderer::getTexture(RendererTexture::DefaultEmissive)},          RHIDescriptorType::Texture);
         
         // dynamic textures
         for (auto const& textureWrite : textureWrites->data())
@@ -234,7 +234,7 @@ namespace worse
         frameConstantData.projection            = camera->getProjectionMatrix();
         frameConstantData.view                  = camera->getViewMatrix();
         frameConstantData.viewProjection        = frameConstantData.projection * frameConstantData.view;
-        frameConstantData.viewProjectionInverse = math::inverse(frameConstantData.viewProjection);
+        frameConstantData.viewProjectionInverse = Inverse(frameConstantData.viewProjection);
 
         auto mat = frameConstantData.viewProjection * frameConstantData.viewProjectionInverse;
 
@@ -242,21 +242,18 @@ namespace worse
 
         // prepare descriptor
 
-        // 重置描述符池
+        // Reset descriptor pool
         RHIDevice::resetDescriptorAllocator();
 
-        // 重新写入全局描述符集 FrameConstantData
         RHIDevice::writeGlobalDescriptorSet();
-        // 重新写入纹理数组
         Renderer::writeBindlessTextures(textureWrites);
 
-        // 重置管线特定描述符集
         RHIDevice::resetSpecificDescriptorSets();
     }
 
-    void Renderer::setViewport(f32 const width, f32 const height)
+    void Renderer::setViewport(Float const width, Float const height)
     {
-        WS_ASSERT((width != 0.0f) && (height != 0.0f));
+        WORSE_ASSERT((width != 0.0f) && (height != 0.0f));
 
         if ((viewport.width != width) || (viewport.height != height))
         {
@@ -275,14 +272,14 @@ namespace worse
         return swapchain->getFormat();
     }
 
-    math::Vector2 Renderer::getResolutionRender()
+    Vector2 Renderer::getResolutionRender()
     {
         return resolutionRender;
     }
 
-    math::Vector2 Renderer::getResolutionOutput()
+    Vector2 Renderer::getResolutionOutput()
     {
         return resolutionOutput;
     }
 
-} // namespace worse
+} // namespace Worse

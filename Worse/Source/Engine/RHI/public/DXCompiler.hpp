@@ -6,7 +6,7 @@
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#define NOMINMAX  // Prevent Windows from defining min/max macros
+#define NOMINMAX // Prevent Windows from defining min/max macros
 // Prevent Windows from defining byte typedef that conflicts with std::byte
 #define byte windows_byte_override
 #include <windows.h>
@@ -20,7 +20,7 @@
 
 #include "dxc/dxcapi.h"
 
-namespace worse
+namespace Worse
 {
 
     class DXCompiler
@@ -42,4 +42,4 @@ namespace worse
         CComPtr<IDxcUtils> m_utils;
     };
 
-} // namespace worse
+} // namespace Worse

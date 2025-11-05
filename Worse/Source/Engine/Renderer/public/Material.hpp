@@ -4,33 +4,33 @@
 
 #include "ECS/Resource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     // ECS index
     struct MeshMaterial
     {
-        usize index;
+        Size index;
     };
 
     struct StandardMaterialGPU
     {
-        u32 baseColorTextureIndex;
-        u32 normalTextureIndex;
-        u32 metallicRoughnessTextureIndex;
-        u32 ambientOcclusionTextureIndex;
+        UInt baseColorTextureIndex;
+        UInt normalTextureIndex;
+        UInt metallicRoughnessTextureIndex;
+        UInt ambientOcclusionTextureIndex;
 
-        u32 emissiveTextureIndex;
-        f32 metallic;
-        f32 roughness;
-        f32 ambientOcclusion;
+        UInt emissiveTextureIndex;
+        Float metallic;
+        Float roughness;
+        Float ambientOcclusion;
 
-        math::Vector4 baseColor;
+        Vector4 baseColor;
 
-        math::Vector4 emissive;
+        Vector4 emissive;
 
-        u32 flags;
-        u32 padding[3];
+        UInt flags;
+        UInt padding[3];
     };
 
     /**
@@ -45,4 +45,4 @@ namespace worse
         ecs::ResourceArray<StandardMaterial> materials,
         ecs::ResourceArray<TextureWrite> textureWrites);
 
-} // namespace worse
+} // namespace Worse

@@ -1,7 +1,7 @@
 #include "DXCompiler.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 
-namespace worse
+namespace Worse
 {
 
     void DXCompiler::initialize()
@@ -33,13 +33,13 @@ namespace worse
         hres = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_compiler));
         if (FAILED(hres))
         {
-            WS_LOG_ERROR("dxc", "Failed to initialize DXC compiler");
+            WORSE_LOG_ERROR("dxc", "Failed to initialize DXC compiler");
         }
 
         hres = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
         if (FAILED(hres))
         {
-            WS_LOG_ERROR("dxc", "Failed to initialize DXC utils");
+            WORSE_LOG_ERROR("dxc", "Failed to initialize DXC utils");
         }
     }
 
@@ -58,9 +58,9 @@ namespace worse
     CComPtr<IDxcBlob> DXCompiler::compile(std::string const& source, std::vector<std::wstring> const& wArguments)
     {
         CComPtr<IDxcBlobEncoding> sourceBlob;
-        if (FAILED(m_utils->CreateBlobFromPinned(source.data(), static_cast<u32>(source.size()), CP_UTF8, &sourceBlob)))
+        if (FAILED(m_utils->CreateBlobFromPinned(source.data(), static_cast<UInt>(source.size()), CP_UTF8, &sourceBlob)))
         {
-            WS_LOG_ERROR("dxc", "Failed to load shader file");
+            WORSE_LOG_ERROR("dxc", "Failed to load shader file");
         }
 
         DxcBuffer buffer = {};
@@ -77,7 +77,7 @@ namespace worse
 
         CComPtr<IDxcResult> dxcResult = nullptr;
 
-        HRESULT result = m_compiler->Compile(&buffer, wArgumentCPtrs.data(), static_cast<u32>(wArgumentCPtrs.size()), nullptr, IID_PPV_ARGS(&dxcResult));
+        HRESULT result = m_compiler->Compile(&buffer, wArgumentCPtrs.data(), static_cast<UInt>(wArgumentCPtrs.size()), nullptr, IID_PPV_ARGS(&dxcResult));
 
         if (SUCCEEDED(result))
         {
@@ -89,11 +89,11 @@ namespace worse
             if (dxcResult)
             {
                 CComPtr<IDxcBlobEncoding> errorBlob = nullptr;
-                HRESULT res = dxcResult->GetErrorBuffer(&errorBlob);
-                bool suc = SUCCEEDED(res);
+                HRESULT res                         = dxcResult->GetErrorBuffer(&errorBlob);
+                Bool suc                            = SUCCEEDED(res);
                 if (suc && errorBlob)
                 {
-                    WS_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
+                    WORSE_LOG_ERROR("dxc", "{}", static_cast<char const*>(errorBlob->GetBufferPointer()));
                 }
             }
             return nullptr;
@@ -108,4 +108,4 @@ namespace worse
         return codeBlob;
     }
 
-} // namespace worse
+} // namespace Worse

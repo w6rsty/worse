@@ -1,5 +1,5 @@
 #include "Input/Input.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Window.hpp"
 
 #include "SDL3/SDL_mouse.h"
@@ -7,37 +7,37 @@
 
 #include <cstddef>
 
-namespace worse
+namespace Worse
 {
 
     namespace
     {
-        math::Vector2 s_mousePosition{0.0f, 0.0f};
-        math::Vector2 s_mouseDelta{0.0f, 0.0f};
-        math::Vector2 s_mouseWheelDelta{0.0f, 0.0f};
+        Vector2 s_mousePosition{0.0f, 0.0f};
+        Vector2 s_mouseDelta{0.0f, 0.0f};
+        Vector2 s_mouseWheelDelta{0.0f, 0.0f};
     } // namespace
 
     void Input::pollMouse()
     {
-        f32 x{0.0f}, y{0.0f};
+        Float x{0.0f}, y{0.0f};
         SDL_MouseButtonFlags mouseStates = SDL_GetGlobalMouseState(&x, &y);
-        math::Vector2 position{x, y};
+        Vector2 position{x, y};
 
         s_mouseDelta    = position - s_mousePosition;
         s_mousePosition = position;
 
         KeyMap& keymap = Input::GetKeyMap();
         // clang-format off
-        keymap[static_cast<usize>(KeyCode::ClickLeft)]   = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0;
-        keymap[static_cast<usize>(KeyCode::ClickMiddle)] = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE)) != 0;
-        keymap[static_cast<usize>(KeyCode::ClickRight)]  = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0;
+        keymap[static_cast<Size>(KeyCode::ClickLeft)]   = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_LEFT)) != 0;
+        keymap[static_cast<Size>(KeyCode::ClickMiddle)] = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_MIDDLE)) != 0;
+        keymap[static_cast<Size>(KeyCode::ClickRight)]  = (mouseStates & SDL_BUTTON_MASK(SDL_BUTTON_RIGHT)) != 0;
         // clang-format on
     }
 
     void Input::onEventMouse(void* event)
     {
         SDL_Event* sdlEvent = static_cast<SDL_Event*>(event);
-        u32 eventType       = sdlEvent->type;
+        UInt eventType      = sdlEvent->type;
 
         if (eventType == SDL_EVENT_MOUSE_WHEEL)
         {
@@ -50,7 +50,7 @@ namespace worse
         }
     }
 
-    void Input::setMouseVisible(bool const visible)
+    void Input::setMouseVisible(Bool const visible)
     {
         if (visible)
         {
@@ -62,47 +62,47 @@ namespace worse
         }
     }
 
-    bool Input::getMouseVisible()
+    Bool Input::getMouseVisible()
     {
         return SDL_CursorVisible();
     }
 
-    void Input::setMousePositionGlobal(math::Vector2 const& position)
+    void Input::setMousePositionGlobal(Vector2 const& position)
     {
         if (!SDL_WarpMouseGlobal(position.x, position.y))
         {
-            WS_LOG_ERROR("Input", "Failed to set mouse position");
+            WORSE_LOG_ERROR("Input", "Failed to set mouse position");
             return;
         }
         s_mousePosition = position;
     }
 
-    math::Vector2 const& Input::getMouseDelta()
+    Vector2 const& Input::getMouseDelta()
     {
         return s_mouseDelta;
     }
 
-    math::Vector2 const& Input::getMouseWheelDelta()
+    Vector2 const& Input::getMouseWheelDelta()
     {
         return s_mouseWheelDelta;
     }
 
-    math::Vector2 const& Input::getMousePositionGlobal()
+    Vector2 const& Input::getMousePositionGlobal()
     {
         return s_mousePosition;
     }
 
-    math::Vector2 Input::getMousePositionRelativeToWindow()
+    Vector2 Input::getMousePositionRelativeToWindow()
     {
         auto [windowX, windowY] = Window::getPosition();
-        return math::Vector2{static_cast<f32>(s_mousePosition.x - windowX),
-                             static_cast<f32>(s_mousePosition.y - windowY)};
+        return Vector2{static_cast<Float>(s_mousePosition.x - windowX),
+                       static_cast<Float>(s_mousePosition.y - windowY)};
     }
 
-    math::Vector2 Input::getMousePositionRelativeToViewport()
+    Vector2 Input::getMousePositionRelativeToViewport()
     {
         // TODO: Calculate position relative to the viewport
         return Input::getMousePositionRelativeToWindow();
     }
 
-} // namespace worse
+} // namespace Worse

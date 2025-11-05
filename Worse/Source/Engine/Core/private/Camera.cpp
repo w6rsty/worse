@@ -1,8 +1,7 @@
 #include "Camera.hpp"
-#include "Math/Quaternion.hpp"
-#include "Math/Transform.hpp"
+#include "math/math_includes.hpp"
 
-namespace worse
+namespace Worse
 {
 
     Camera::Camera()
@@ -17,12 +16,10 @@ namespace worse
         return *this;
     }
 
-    Camera& Camera::setPerspectiveParams(f32 fovY, f32 aspect, f32 nearZ,
-                                         f32 farZ)
+    Camera& Camera::setPerspectiveParams(Float fovY, Float aspect, Float nearZ, Float farZ)
     {
         // Validate parameters
-        if (fovY <= 0.0f || fovY >= math::PI || aspect <= 0.0f ||
-            nearZ <= 0.0f || farZ <= nearZ)
+        if (fovY <= 0.0f || fovY >= kPi || aspect <= 0.0f || nearZ <= 0.0f || farZ <= nearZ)
         {
             return *this;
         }
@@ -38,8 +35,7 @@ namespace worse
         return *this;
     }
 
-    Camera& Camera::setOrthoParams(f32 left, f32 right, f32 bottom, f32 top,
-                                   f32 nearZ, f32 farZ)
+    Camera& Camera::setOrthoParams(Float left, Float right, Float bottom, Float top, Float nearZ, Float farZ)
     {
         // Validate parameters
         if (right <= left || top <= bottom || farZ <= nearZ)
@@ -80,40 +76,40 @@ namespace worse
         }
     }
 
-    math::Matrix4 Camera::getViewMatrix() const
+    Matrix4 Camera::getViewMatrix() const
     {
-        math::Vector3 const forward = getForward();
-        math::Vector3 const up      = getUp();
-        math::Vector3 const target  = m_position + forward;
+        Vector3 const forward = getForward();
+        Vector3 const up      = getUp();
+        Vector3 const target  = m_position + forward;
         return math::lookAt(m_position, target, up);
     }
 
-    math::Vector3 Camera::getForward() const
+    Vector3 Camera::getForward() const
     {
         // Forward is -Z in camera space, transform by orientation
         // Use quaternion rotation: q * v * q*
-        math::Quaternion vecQuat(0.0f, math::Vector3(0.0f, 0.0f, -1.0f));
+        math::Quaternion vecQuat(0.0f, Vector3(0.0f, 0.0f, -1.0f));
         math::Quaternion result =
             m_orientation * vecQuat * math::conjugate(m_orientation);
         return result.vector();
     }
 
-    math::Vector3 Camera::getRight() const
+    Vector3 Camera::getRight() const
     {
         // Right is +X in camera space, transform by orientation
-        math::Quaternion vecQuat(0.0f, math::Vector3(1.0f, 0.0f, 0.0f));
+        math::Quaternion vecQuat(0.0f, Vector3(1.0f, 0.0f, 0.0f));
         math::Quaternion result =
             m_orientation * vecQuat * math::conjugate(m_orientation);
         return result.vector();
     }
 
-    math::Vector3 Camera::getUp() const
+    Vector3 Camera::getUp() const
     {
         // Up is +Y in camera space, transform by orientation
-        math::Quaternion vecQuat(0.0f, math::Vector3(0.0f, 1.0f, 0.0f));
+        math::Quaternion vecQuat(0.0f, Vector3(0.0f, 1.0f, 0.0f));
         math::Quaternion result =
             m_orientation * vecQuat * math::conjugate(m_orientation);
         return result.vector();
     }
 
-} // namespace worse
+} // namespace Worse

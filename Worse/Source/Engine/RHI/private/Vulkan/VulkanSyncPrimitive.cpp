@@ -1,7 +1,7 @@
 #include "RHISyncPrimitive.hpp"
 #include "RHIDevice.hpp"
 
-namespace worse
+namespace Worse
 {
 
     namespace fence
@@ -16,13 +16,13 @@ namespace worse
             resource = RHINativeHandle{fence, RHINativeHandleType::Fence};
         }
 
-        void wait(RHINativeHandle& resource, u64 const timeoutNs)
+        void wait(RHINativeHandle& resource, ULong const timeoutNs)
         {
             VkFence fence = resource.asValue<VkFence>();
             WS_ASSERT_VK(vkWaitForFences(RHIContext::device, 1, &fence, VK_TRUE, timeoutNs));
         }
 
-        bool isSignaled(RHINativeHandle& resource)
+        Bool isSignaled(RHINativeHandle& resource)
         {
             return vkGetFenceStatus(RHIContext::device, resource.asValue<VkFence>()) == VK_SUCCESS;
         }
@@ -58,7 +58,7 @@ namespace worse
             resource = RHINativeHandle{semaphore, RHINativeHandleType::Semaphore};
         }
 
-        void wait(RHINativeHandle& resource, u64 const value, u64 const timeoutNs)
+        void wait(RHINativeHandle& resource, ULong const value, ULong const timeoutNs)
         {
             VkSemaphore semaphore = resource.asValue<VkSemaphore>();
 
@@ -71,7 +71,7 @@ namespace worse
             WS_ASSERT_VK(vkWaitSemaphores(RHIContext::device, &infoWait, timeoutNs));
         }
 
-        void signal(RHINativeHandle& resource, u64 const value)
+        void signal(RHINativeHandle& resource, ULong const value)
         {
             VkSemaphoreSignalInfo infoSignal = {};
             infoSignal.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
@@ -81,9 +81,9 @@ namespace worse
             WS_ASSERT_VK(vkSignalSemaphore(RHIContext::device, &infoSignal));
         }
 
-        u64 getValue(RHINativeHandle& resource)
+        ULong getValue(RHINativeHandle& resource)
         {
-            u64 value = 0;
+            ULong value = 0;
             WS_ASSERT_VK(vkGetSemaphoreCounterValue(RHIContext::device, resource.asValue<VkSemaphore>(), &value));
             return value;
         }
@@ -112,9 +112,9 @@ namespace worse
         m_handle = {};
     }
 
-    void RHISyncPrimitive::wait(u64 const timeoutNs)
+    void RHISyncPrimitive::wait(ULong const timeoutNs)
     {
-        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
+        WORSE_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
 
         if (m_type == RHISyncPrimitiveType::Fence)
         {
@@ -126,16 +126,16 @@ namespace worse
         }
     }
 
-    void RHISyncPrimitive::signal(u64 const value)
+    void RHISyncPrimitive::signal(ULong const value)
     {
-        WS_ASSERT(m_type == RHISyncPrimitiveType::TimelineSemaphore);
+        WORSE_ASSERT(m_type == RHISyncPrimitiveType::TimelineSemaphore);
 
         semaphore::signal(m_handle, value);
     }
 
-    bool RHISyncPrimitive::isSignaled()
+    Bool RHISyncPrimitive::isSignaled()
     {
-        WS_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
+        WORSE_ASSERT((m_type == RHISyncPrimitiveType::Fence) || (m_type == RHISyncPrimitiveType::TimelineSemaphore));
 
         if (m_type == RHISyncPrimitiveType::Fence)
         {
@@ -149,9 +149,9 @@ namespace worse
 
     void RHISyncPrimitive::reset()
     {
-        WS_ASSERT(m_type == RHISyncPrimitiveType::Fence);
+        WORSE_ASSERT(m_type == RHISyncPrimitiveType::Fence);
 
         fence::reset(m_handle);
     }
 
-} // namespace worse
+} // namespace Worse

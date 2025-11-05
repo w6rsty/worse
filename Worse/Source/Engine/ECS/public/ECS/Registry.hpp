@@ -1,5 +1,4 @@
 #pragma once
-#include "Definitions.hpp"
 #include "Storage.hpp"
 #include "EventBus.hpp"
 #include "Resource.hpp"
@@ -10,7 +9,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
     // clang-format off
 
@@ -120,7 +119,7 @@ namespace worse::ecs
             return getOrCreateStorage<Component>().get(entity);
         }
 
-        template <typename Component> bool hasComponent(Entity entity)
+        template <typename Component> Bool hasComponent(Entity entity)
         {
             return getOrCreateStorage<Component>().contains(entity);
         }
@@ -178,12 +177,12 @@ namespace worse::ecs
         Resource<Type> getResource()
         {
             auto* wrapper = getResourceWrapper<Type>();
-            WS_ASSERT(wrapper);
+            WORSE_ASSERT(wrapper);
             return wrapper ? Resource<Type>(&wrapper->resource) : Resource<Type>(nullptr);
         }
 
         template <typename Type>
-        bool hasResource()
+        Bool hasResource()
         {
             return getResourceWrapper<Type>() != nullptr;
         }
@@ -218,7 +217,7 @@ namespace worse::ecs
         }   
 
         template <typename Type>
-        bool hasResourceArray()
+        Bool hasResourceArray()
         {
             std::type_index typeIndex(typeid(Type));
             return m_resourceArrays.find(typeIndex) != m_resourceArrays.end();
@@ -233,4 +232,4 @@ namespace worse::ecs
     };
 
     // clang-format on
-} // namespace worse::ecs
+} // namespace Worse::ecs

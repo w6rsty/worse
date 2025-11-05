@@ -4,7 +4,7 @@
 
 #include <mutex>
 
-namespace worse
+namespace Worse
 {
 
     namespace
@@ -39,7 +39,7 @@ namespace worse
 
         // command lists
         {
-            for (u32 i = 0; i < static_cast<u32>(m_cmdLists.size()); ++i)
+            for (UInt i = 0; i < static_cast<UInt>(m_cmdLists.size()); ++i)
             {
                 m_cmdLists[i] = std::make_shared<RHICommandList>(this, m_handle, std::format("cmd_list_{}", i).c_str());
             }
@@ -67,7 +67,7 @@ namespace worse
         WS_ASSERT_VK(vkQueueWaitIdle(RHIDevice::getQueueHandle(m_type).asValue<VkQueue>()));
     }
 
-    void RHIQueue::submit(void* cmdBuffer, u32 const waitFlags,
+    void RHIQueue::submit(void* cmdBuffer, UInt const waitFlags,
                           RHISyncPrimitive* semaphoreWait,
                           RHISyncPrimitive* semaphoreSignal,
                           RHISyncPrimitive* semaphoreTimeline)
@@ -115,7 +115,7 @@ namespace worse
         WS_ASSERT_VK(vkQueueSubmit2KHR(RHIDevice::getQueueHandle(m_type).asValue<VkQueue>(), 1, &infoSubmit, nullptr));
     }
 
-    void RHIQueue::present(RHINativeHandle swapchain, u32 const imageIndex, RHISyncPrimitive* semaphoreWait)
+    void RHIQueue::present(RHINativeHandle swapchain, UInt const imageIndex, RHISyncPrimitive* semaphoreWait)
     {
         // TODO: lock
 
@@ -150,9 +150,9 @@ namespace worse
             cmdList->waitForExecution();
         }
 
-        WS_ASSERT(cmdList->getState() == RHICommandListState::Idle);
+        WORSE_ASSERT(cmdList->getState() == RHICommandListState::Idle);
 
         return cmdList.get();
     }
 
-} // namespace worse
+} // namespace Worse

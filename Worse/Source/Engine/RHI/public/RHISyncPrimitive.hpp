@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIResource.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHISyncPrimitive : public RHIResource
@@ -11,23 +11,23 @@ namespace worse
                          std::string_view name);
         ~RHISyncPrimitive();
 
-        void wait(u64 const timeoutNs);
-        void signal(u64 const value);
-        bool isSignaled();
+        void wait(ULong const timeoutNs);
+        void signal(ULong const value);
+        Bool isSignaled();
         void reset();
 
-        u64 getNextSignalValue();
+        ULong getNextSignalValue();
         RHINativeHandle getHandle() const;
         void setBelongingCmdList(RHICommandList* cmdList);
         RHICommandList* getBelongingCmdList() const;
 
-        bool hasBeenWaitedFor = false;
+        Bool hasBeenWaitedFor = false;
 
     private:
         RHISyncPrimitiveType m_type        = RHISyncPrimitiveType::Max;
-        u64 m_value                        = 0; // timeline counter
+        ULong m_value                        = 0; // timeline counter
         RHICommandList* m_belongingCmdList = nullptr;
         RHINativeHandle m_handle;
     };
 
-} // namespace worse
+} // namespace Worse

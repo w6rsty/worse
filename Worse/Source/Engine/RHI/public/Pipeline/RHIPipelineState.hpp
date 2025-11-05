@@ -1,10 +1,11 @@
 #pragma once
-#include "Math/Rectangle.hpp"
+#include "container/enum_array.hpp"
+#include "math/rectangle.hpp"
 #include "Color.hpp"
 #include "RHIDefinitions.hpp"
 #include "RHIViewport.hpp"
 
-namespace worse
+namespace Worse
 {
 
     class RHIPipelineState
@@ -20,8 +21,8 @@ namespace worse
         std::vector<RHIDescriptor> collectDescriptors() const;
 
         // clang-format off
-        bool isValidated() const      { return m_validated; }
-        u64 getHash() const { return m_hash; }
+        Bool isValidated() const      { return m_validated; }
+        ULong getHash() const { return m_hash; }
         // clang-format on
 
         std::string name = "pso";
@@ -39,12 +40,12 @@ namespace worse
 
         math::Rectangle scissor = {};
         RHIViewport viewport    = {};
-        f32 clearDepth          = std::numeric_limits<f32>::max();
+        Float clearDepth        = std::numeric_limits<Float>::max();
         Color clearColor        = Color::Black();
 
     private:
-        bool m_validated = false;
-        u64 m_hash       = 0;
+        Bool m_validated = false;
+        ULong m_hash     = 0;
     };
 
     class RHIPipelineStateBuilder
@@ -60,11 +61,11 @@ namespace worse
         RHIPipelineStateBuilder& setDepthStencilState(RHIDepthStencilState* state);
         RHIPipelineStateBuilder& setBlendState(RHIBlendState* state);
         RHIPipelineStateBuilder& addShader(RHIShader* shader);
-        RHIPipelineStateBuilder& setRenderTargetColorTexture(usize index, RHITexture* texture);
+        RHIPipelineStateBuilder& setRenderTargetColorTexture(Size index, RHITexture* texture);
         RHIPipelineStateBuilder& setRenderTargetDepthTexture(RHITexture* texture);
         RHIPipelineStateBuilder& setScissor(math::Rectangle const& scissor);
         RHIPipelineStateBuilder& setViewport(RHIViewport const& viewport);
-        RHIPipelineStateBuilder& setClearDepth(f32 depth);
+        RHIPipelineStateBuilder& setClearDepth(Float depth);
         RHIPipelineStateBuilder& setClearColor(Color const& color);
         // clang-format on
 
@@ -74,4 +75,4 @@ namespace worse
         RHIPipelineState m_pso;
     };
 
-} // namespace worse
+} // namespace Worse

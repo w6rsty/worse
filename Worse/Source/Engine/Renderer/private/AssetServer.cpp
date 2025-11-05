@@ -1,15 +1,14 @@
-#include "Log.hpp"
+#include "math/hash.hpp"
+#include "logger/logger.hpp"
 #include "Platform.hpp"
-#include "Definitions.hpp"
-#include "Math/Hash.hpp"
 #include "AssetServer.hpp"
 
-namespace worse
+namespace Worse
 {
 
     AssetServer::AssetServer()
     {
-        std::filesystem::path const textureDir = std::filesystem::path{worse::EngineDirectory} / "Binary/Textures";
+        std::filesystem::path const textureDir = std::filesystem::path{Worse::EngineDirectory} / "Binary/Textures";
         m_errorTextureHandle                   = addTexture(textureDir / "no_texture.png");
     }
 
@@ -47,7 +46,7 @@ namespace worse
             else
             {
                 m_textures.emplace(handle, TextureAssetSlot{.texture = nullptr, .state = AssetState::Failed});
-                WS_LOG_ERROR("AssetServer", "Failed to load texture {}", path.string());
+                WORSE_LOG_ERROR("AssetServer", "Failed to load texture {}", path.string());
             }
         }
         else
@@ -89,17 +88,17 @@ namespace worse
         else
         {
             m_textures.emplace(handle, TextureAssetSlot{.texture = nullptr, .state = AssetState::Failed});
-            WS_LOG_ERROR("AssetServer", "Failed to load metallic/roughness texture: {} and {}", pathMetallic.string(), pathRoughness.string());
+            WORSE_LOG_ERROR("AssetServer", "Failed to load metallic/roughness texture: {} and {}", pathMetallic.string(), pathRoughness.string());
         }
 
         return handle;
     }
 
-    AssetHandle AssetServer::addTexture(std::span<byte> data, std::string const& name)
+    AssetHandle AssetServer::addTexture(std::span<Byte> data, std::string const& name)
     {
         if (data.empty())
         {
-            WS_LOG_WARN("AssetServer", "Empty texture data");
+            WORSE_LOG_WARN("AssetServer", "Empty texture data");
             return AssetHandle{};
         }
 
@@ -122,7 +121,7 @@ namespace worse
         else
         {
             m_textures.emplace(handle, TextureAssetSlot{.texture = nullptr, .state = AssetState::Failed});
-            WS_LOG_ERROR("AssetServer", "Failed to load texture");
+            WORSE_LOG_ERROR("AssetServer", "Failed to load texture");
         }
 
         return handle;
@@ -133,10 +132,10 @@ namespace worse
         std::lock_guard<std::mutex> lock(m_mtxMaterial);
 
         AssetHandle handle{};
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.x));
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.y));
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.z));
-        handle = math::hashCombine(handle, reinterpret_cast<u64 const&>(material.baseColor.w));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.x));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.y));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.z));
+        handle = math::hashCombine(handle, reinterpret_cast<ULong const&>(material.baseColor.w));
         handle = math::hashCombine(handle, material.baseColorTexture.value_or(AssetHandle{}));
         handle = math::hashCombine(handle, material.normalTexture.value_or(AssetHandle{}));
         handle = math::hashCombine(handle, material.metallicRoughnessTexture.value_or(AssetHandle{}));
@@ -152,7 +151,7 @@ namespace worse
         auto it = m_materials.find(handle);
         if (it != m_materials.end())
         {
-            WS_LOG_WARN("AssetServer", "Material already exists with handle {}", handle);
+            WORSE_LOG_WARN("AssetServer", "Material already exists with handle {}", handle);
             return handle;
         }
 
@@ -172,7 +171,7 @@ namespace worse
             std::hash<std::filesystem::path> hasher;
             AssetHandle handle     = hasher(path);
             TextureAssetSlot& slot = m_textures[handle];
-            WS_ASSERT_MSG(slot.state != AssetState::Loaded, "Asset already loaded");
+            WORSE_ASSERT_MSG(slot.state != AssetState::Loaded, "Asset already loaded");
 
             // Load the texture from the file system
             slot.texture = std::make_shared<RHITexture>(path);
@@ -184,12 +183,12 @@ namespace worse
             {
                 slot.state   = AssetState::Failed;
                 slot.texture = nullptr;
-                WS_LOG_ERROR("AssetServer", "Failed to load texture {}", path.string());
+                WORSE_LOG_ERROR("AssetServer", "Failed to load texture {}", path.string());
             }
         }
     }
 
-    bool AssetServer::isLoaded(AssetHandle const handle) const
+    Bool AssetServer::isLoaded(AssetHandle const handle) const
     {
         std::lock_guard<std::mutex> lock(m_mtxTexture);
         auto it = m_textures.find(handle);
@@ -223,7 +222,7 @@ namespace worse
         return nullptr;
     }
 
-    u32 AssetServer::getMaterialIndex(AssetHandle handle) const
+    UInt AssetServer::getMaterialIndex(AssetHandle handle) const
     {
         std::lock_guard<std::mutex> lock(m_mtxMaterial);
         auto it = m_materials.find(handle);
@@ -289,7 +288,7 @@ namespace worse
         }
     }
 
-    usize AssetServer::getLoadedTextureCount() const
+    Size AssetServer::getLoadedTextureCount() const
     {
         std::lock_guard<std::mutex> lock(m_mtxTexture);
         return std::count_if(
@@ -301,7 +300,7 @@ namespace worse
             });
     }
 
-    usize AssetServer::getMaterialCount() const
+    Size AssetServer::getMaterialCount() const
     {
         std::lock_guard<std::mutex> lock(m_mtxMaterial);
         return m_materials.size();
@@ -329,4 +328,4 @@ namespace worse
         }
     }
 
-} // namespace worse
+} // namespace Worse

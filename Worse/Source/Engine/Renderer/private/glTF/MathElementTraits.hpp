@@ -1,11 +1,12 @@
 /**
  * @file MathElementTraits.hpp
- * @brief 提供数学库为 fastgltf 提供的 ElementTraits 特化
+ * @brief Specialize for fastgltf ElementTraits
  */
 
 #pragma once
-#include "Math/Vector.hpp"
-#include "Math/Matrix.hpp"
+#include "base_type.hpp"
+#include "math/vector.hpp"
+#include "math/matrix.hpp"
 
 #include "fastgltf/tools.hpp"
 
@@ -13,47 +14,32 @@ namespace fastgltf
 {
 
     template <>
-    struct ElementTraits<worse::math::Vector2> : ElementTraitsBase<worse::math::Vector2, AccessorType::Vec2, f32>
+    struct ElementTraits<Worse::Vector2> : ElementTraitsBase<Worse::Vector2, AccessorType::Vec2, ::Worse::Float>
     {
     };
 
     template <>
-    struct ElementTraits<worse::math::Vector3> : ElementTraitsBase<worse::math::Vector3, AccessorType::Vec3, f32>
+    struct ElementTraits<Worse::Vector3> : ElementTraitsBase<Worse::Vector3, AccessorType::Vec3, ::Worse::Float>
     {
     };
 
     template <>
-    struct ElementTraits<worse::math::Vector4> : ElementTraitsBase<worse::math::Vector4, AccessorType::Vec4, f32>
+    struct ElementTraits<Worse::Vector4> : ElementTraitsBase<Worse::Vector4, AccessorType::Vec4, ::Worse::Float>
     {
     };
 
     template <>
-    struct ElementTraits<worse::math::Vector2i> : ElementTraitsBase<worse::math::Vector2i, AccessorType::Vec2, i32>
+    struct ElementTraits<Worse::Matrix2> : ElementTraitsBase<Worse::Matrix2, AccessorType::Mat2, ::Worse::Float>
     {
     };
 
     template <>
-    struct ElementTraits<worse::math::Vector3i> : ElementTraitsBase<worse::math::Vector3i, AccessorType::Vec3, i32>
+    struct ElementTraits<Worse::Matrix3> : ElementTraitsBase<Worse::Matrix3, AccessorType::Mat3, ::Worse::Float>
     {
     };
 
     template <>
-    struct ElementTraits<worse::math::Vector4i> : ElementTraitsBase<worse::math::Vector4i, AccessorType::Vec4, i32>
-    {
-    };
-
-    template <>
-    struct ElementTraits<worse::math::Matrix2> : ElementTraitsBase<worse::math::Matrix2, AccessorType::Mat2, f32>
-    {
-    };
-
-    template <>
-    struct ElementTraits<worse::math::Matrix3> : ElementTraitsBase<worse::math::Matrix3, AccessorType::Mat3, f32>
-    {
-    };
-
-    template <>
-    struct ElementTraits<worse::math::Matrix4> : ElementTraitsBase<worse::math::Matrix4, AccessorType::Mat4, f32>
+    struct ElementTraits<Worse::Matrix4> : ElementTraitsBase<Worse::Matrix4, AccessorType::Mat4, ::Worse::Float>
     {
     };
 

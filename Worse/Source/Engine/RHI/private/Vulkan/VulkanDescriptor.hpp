@@ -6,7 +6,7 @@
 #include <array>
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
     class VulkanGlobalSet
@@ -33,7 +33,7 @@ namespace worse
         // clang-format on
 
     private:
-        bool m_firstUpdate                  = true;
+        Bool m_firstUpdate                  = true;
         RHIDescriptorAllocator* m_allocator = nullptr;
         RHINativeHandle m_layout            = {};
         RHINativeHandle m_set               = {};
@@ -56,9 +56,9 @@ namespace worse
         getDescriptorSetLayout(RHIPipelineState const& pso);
         // get descriptor set layout for specific hash, return nullptr if not
         // found
-        RHIDescriptorSetLayout* getDescriptorSetLayout(u64 hash);
+        RHIDescriptorSetLayout* getDescriptorSetLayout(ULong hash);
         // get descriptor set, or allocate a new one
-        RHINativeHandle getDescriptorSet(u64 hash);
+        RHINativeHandle getDescriptorSet(ULong hash);
 
         // sets will be reset every frame, must invalidate cache
         void resetSets();
@@ -66,9 +66,9 @@ namespace worse
     private:
         RHIDescriptorAllocator* m_allocator = nullptr;
         // clang-format off
-        std::unordered_map<u64, std::shared_ptr<RHIDescriptorSetLayout>> m_descriptorSetLayouts;
-        std::unordered_map<u64, RHINativeHandle> m_descriptorSets;
+        std::unordered_map<ULong, std::shared_ptr<RHIDescriptorSetLayout>> m_descriptorSetLayouts;
+        std::unordered_map<ULong, RHINativeHandle> m_descriptorSets;
         // clang-format on
     };
 
-} // namespace worse
+} // namespace Worse

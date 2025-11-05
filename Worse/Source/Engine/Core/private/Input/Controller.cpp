@@ -1,10 +1,10 @@
+#include "math/math_includes.hpp"
 #include "Input/Controller.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 
-#include "Math/Base.hpp"
 #include "SDL3/SDL_gamepad.h"
 
-namespace worse
+namespace Worse
 {
 
     Controller::Controller(ControllerDescriptor const& descriptor)
@@ -17,20 +17,20 @@ namespace worse
         m_handle = SDL_OpenGamepad(descriptor.joystickID);
         if (!m_handle)
         {
-            WS_LOG_ERROR("Controller",
-                         "Failed to open gamepad: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Controller",
+                            "Failed to open gamepad: {}",
+                            SDL_GetError());
             m_handle = nullptr;
         }
         m_firmwareVersion =
             SDL_GetGamepadFirmwareVersion(static_cast<SDL_Gamepad*>(m_handle));
 
-        WS_LOG_DEBUG("Controller",
-                     "Connected: {} (JoystickID: {}, GUID: {}, Version: {})",
-                     m_name,
-                     m_joystickID,
-                     m_guid,
-                     m_firmwareVersion);
+        WORSE_LOG_DEBUG("Controller",
+                        "Connected: {} (JoystickID: {}, GUID: {}, Version: {})",
+                        m_name,
+                        m_joystickID,
+                        m_guid,
+                        m_firmwareVersion);
     }
 
     Controller::~Controller()
@@ -40,7 +40,7 @@ namespace worse
             SDL_CloseGamepad(static_cast<SDL_Gamepad*>(m_handle));
             m_handle = nullptr;
 
-            WS_LOG_DEBUG(
+            WORSE_LOG_DEBUG(
                 "Controller",
                 "Disconnected: {} (JoystickID: {}, GUID: {}, Version: {})",
                 m_name,
@@ -50,7 +50,7 @@ namespace worse
         }
     }
 
-    std::optional<u32> Controller::getPowerPercentage() const
+    std::optional<UInt> Controller::getPowerPercentage() const
     {
         if (!isConnected())
         {
@@ -74,8 +74,8 @@ namespace worse
         }
     }
 
-    void Controller::setLEDColor(u8 const red, u8 const green,
-                                 u8 const blue) const
+    void Controller::setLEDColor(UByte const red, UByte const green,
+                                 UByte const blue) const
     {
         if (!isConnected())
         {
@@ -87,35 +87,34 @@ namespace worse
                                green,
                                blue))
         {
-            WS_LOG_ERROR("Controller",
-                         "Failed to set LED color: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Controller",
+                            "Failed to set LED color: {}",
+                            SDL_GetError());
         }
     }
 
-    void Controller::vibrate(f32 const lowFrequency, f32 const highFrequency,
-                             u32 const durationMs) const
+    void Controller::vibrate(Float const lowFrequency, Float const highFrequency, UInt const durationMs) const
     {
         if (!isConnected())
         {
             return;
         }
 
-        f32 low  = math::clamp(lowFrequency, 0.0f, 1.0f);
-        f32 high = math::clamp(highFrequency, 0.0f, 1.0f);
+        Float low  = Math::Saturate(lowFrequency);
+        Float high = Math::Saturate(highFrequency);
 
         if (!SDL_RumbleGamepad(static_cast<SDL_Gamepad*>(m_handle),
-                               static_cast<u16>(low * 65535.0f),
-                               static_cast<u16>(high * 65535.0f),
+                               static_cast<UShort>(low * 65535.0f),
+                               static_cast<UShort>(high * 65535.0f),
                                durationMs))
         {
-            WS_LOG_ERROR("Controller",
-                         "Failed to vibrate controller: {}",
-                         SDL_GetError());
+            WORSE_LOG_ERROR("Controller",
+                            "Failed to vibrate controller: {}",
+                            SDL_GetError());
         }
     }
 
-    bool Controller::isConnected() const
+    Bool Controller::isConnected() const
     {
         if (!m_handle)
         {
@@ -130,7 +129,7 @@ namespace worse
         return m_handle;
     }
 
-    u32 Controller::getJoystickID() const
+    UInt Controller::getJoystickID() const
     {
         return m_joystickID;
     }
@@ -150,24 +149,24 @@ namespace worse
         return m_type;
     }
 
-    bool Controller::operator==(Controller const& other) const
+    Bool Controller::operator==(Controller const& other) const
     {
         return m_guid == other.m_guid;
     }
 
-    bool Controller::operator!=(Controller const& other) const
+    Bool Controller::operator!=(Controller const& other) const
     {
         return !(*this == other);
     }
 
-    bool Controller::operator==(ControllerDescriptor const& other) const
+    Bool Controller::operator==(ControllerDescriptor const& other) const
     {
         return m_guid == other.guid;
     }
 
-    bool Controller::operator!=(ControllerDescriptor const& other) const
+    Bool Controller::operator!=(ControllerDescriptor const& other) const
     {
         return m_guid != other.guid;
     }
 
-} // namespace worse
+} // namespace Worse

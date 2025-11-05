@@ -5,7 +5,7 @@
 
 #include <unordered_map>
 
-namespace worse
+namespace Worse
 {
 
     class RHIPipeline : public RHIResource
@@ -19,7 +19,7 @@ namespace worse
         ~RHIPipeline();
 
         // clang-format off
-        u64     getDescriptorHash() const { return m_descriptorHash; }
+        ULong     getDescriptorHash() const { return m_descriptorHash; }
         RHIPipelineState* getState()                { return &m_state; }
         RHINativeHandle   getHandle() const         { return m_pipeline; }
         RHINativeHandle   getLayout() const         { return m_pipelineLayout; }
@@ -27,18 +27,21 @@ namespace worse
 
     private:
         // use this hash to retrieve descriptor set layout
-        u64 m_descriptorHash = 0;
+        ULong m_descriptorHash = 0;
 
         RHIPipelineState m_state;
         RHINativeHandle m_pipeline;
         RHINativeHandle m_pipelineLayout;
     };
 
-    class RHIPipelinePool : public NonCopyable
+    class RHIPipelinePool
     {
     public:
         RHIPipelinePool();
         ~RHIPipelinePool();
+
+        RHIPipelinePool(RHIPipelinePool const&)            = delete;
+        RHIPipelinePool& operator=(RHIPipelinePool const&) = delete;
 
         // get pipeline from pool or create a new one
         RHIPipeline* getPipeline(RHIPipelineState const& pso);
@@ -46,8 +49,8 @@ namespace worse
     private:
         // clang-format off
         // hash by pso
-        std::unordered_map<u64, std::shared_ptr<RHIPipeline>> m_pipelines;
+        std::unordered_map<ULong, std::shared_ptr<RHIPipeline>> m_pipelines;
         // clang-format on
     };
 
-} // namespace worse
+} // namespace Worse

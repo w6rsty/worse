@@ -1,11 +1,12 @@
 #pragma once
+#include "container/enum_array.hpp"
 #include "RHIDefinitions.hpp"
 
 #include <string>
 #include <string_view>
 #include <type_traits>
 
-namespace worse
+namespace Worse
 {
 
     class RHINativeHandle
@@ -22,13 +23,13 @@ namespace worse
         RHINativeHandle(RHINativeHandle const&)            = default;
         RHINativeHandle& operator=(RHINativeHandle const&) = default;
 
-        RHINativeHandle(RHINativeHandle&& other)
+        RHINativeHandle(RHINativeHandle&& other) noexcept
             : m_handle(other.m_handle), m_type(other.m_type)
         {
             other.reset();
         }
 
-        RHINativeHandle& operator=(RHINativeHandle&& other)
+        RHINativeHandle& operator=(RHINativeHandle&& other) noexcept
         {
             if (&other == this)
             {
@@ -42,16 +43,17 @@ namespace worse
             return *this;
         }
 
-        template <typename T> T asValue() const
+        template <typename T>
+        T asValue() const
         {
             using Type = std::remove_cvref_t<T>;
             static_assert(sizeof(Type) == sizeof(void*), "Invalid cast");
             return reinterpret_cast<Type>(m_handle);
         }
 
-        u64 asValue() const
+        ULong asValue() const
         {
-            return asValue<u64>();
+            return asValue<ULong>();
         }
 
         RHINativeHandleType getType() const
@@ -65,12 +67,12 @@ namespace worse
             m_type   = RHINativeHandleType::Max;
         }
 
-        bool isValid() const
+        Bool isValid() const
         {
             return m_handle != nullptr;
         }
 
-        explicit operator bool() const
+        explicit operator Bool() const
         {
             return isValid();
         }
@@ -111,9 +113,9 @@ namespace worse
         // clang-format on
 
         // make sure all resources are ready
-        bool validate()
+        Bool validate()
         {
-            bool validated = true;
+            Bool validated = true;
             validated &= ((getPlaceholderShader().first != nullptr) &&
                           (getPlaceholderShader().second != nullptr));
             validated &= (getPlaceholderTexture() != nullptr);
@@ -123,4 +125,4 @@ namespace worse
         }
     };
 
-} // namespace worse
+} // namespace Worse

@@ -6,7 +6,7 @@
 #include <functional>
 #include <type_traits>
 
-namespace worse
+namespace Worse
 {
 
     void defaultPage(int state);
@@ -29,7 +29,7 @@ namespace worse
         {
             m_prevState = m_currState;
             m_nextState = newState;
-            WS_LOG_INFO("Page",
+            WORSE_LOG_INFO("Page",
                         "Transfer to state: {}",
                         static_cast<int>(m_nextState));
         }
@@ -39,13 +39,13 @@ namespace worse
             if (m_prevState != State::Undefined)
             {
                 m_nextState = m_prevState;
-                WS_LOG_INFO("Page",
+                WORSE_LOG_INFO("Page",
                             "Back to state: {}",
                             static_cast<int>(m_nextState));
             }
             else
             {
-                WS_LOG_WARN("Page", "No previous state to go back to.");
+                WORSE_LOG_WARN("Page", "No previous state to go back to.");
             }
         }
 
@@ -120,4 +120,4 @@ namespace worse
         inline static std::vector<Page> alwaysRenderPages;
     };
 
-} // namespace worse
+} // namespace Worse

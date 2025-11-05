@@ -1,6 +1,7 @@
 #pragma once
-#include "Definitions.hpp"
-#include "Types.hpp"
+#include "base_type.hpp"
+#include "bit_flag.hpp"
+#include "common_macro.hpp"
 #include "RHITypes.hpp"
 
 #define WS_RHI_BACKEND_VULKAN
@@ -15,8 +16,8 @@
         VkResult vkResult = (result);                                                 \
         if (vkResult != VK_SUCCESS)                                                   \
         {                                                                             \
-            WS_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
-            WS_ASSERT(vkResult);                                                      \
+            WORSE_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
+            WORSE_ASSERT(vkResult);                                                      \
         }                                                                             \
     } while (false)
 #else
@@ -30,7 +31,7 @@
 
 #endif
 
-namespace worse
+namespace Worse
 {
 
     // fwd
@@ -210,35 +211,34 @@ namespace worse
         Compute,
     };
 
-    WS_DEFINE_FLAGS(RHIShaderStage, u32);
+    WORSE_BEGIN_DECLARE_BIT_FLAG(RHIShaderStage, UInt)
     // clang-format off
-    struct RHIShaderStageFlagBits
-    {
-        static constexpr RHIShaderStageFlags None   {0x00000000};
-        static constexpr RHIShaderStageFlags Vertex {0x00000001};
-        static constexpr RHIShaderStageFlags Pixel  {0x00000010};
-        static constexpr RHIShaderStageFlags Compute{0x00000020};
-        static constexpr RHIShaderStageFlags All    {0x7FFFFFFF};
-    };
-    constexpr RHIShaderStageFlags RHIComputePipelineShaderCombination  = RHIShaderStageFlagBits::Compute;
-    constexpr RHIShaderStageFlags RHIGraphicsPipelineShaderCombination = RHIShaderStageFlagBits::Vertex | RHIShaderStageFlagBits::Pixel;
+    WORSE_DECLARE_FLAG_BIT(Unknown, 0)
+    WORSE_DECLARE_FLAG_BIT(Vertex,  0x00000001)
+    WORSE_DECLARE_FLAG_BIT(Pixel,   0x00000010)
+    WORSE_DECLARE_FLAG_BIT(Compute, 0x00000020)
+    WORSE_DECLARE_FLAG_BIT(All,     0x7FFFFFFF)
     // clang-format on
+    WORSE_END_DECLARE_BIT_FLAG(RHIShaderStage)
 
-    // conver RHI shader type to RHI shader stage flags
-    constexpr RHIShaderStageFlags rhiShaderStageFlags(RHIShaderType const type)
+    constexpr RHIShaderStage::Flags RHIComputePipelineShaderCombination  = RHIShaderStage::FlagBits::Compute;
+    constexpr RHIShaderStage::Flags RHIGraphicsPipelineShaderCombination = RHIShaderStage::FlagBits::Vertex | RHIShaderStage::FlagBits::Pixel;
+
+    // convert RHI shader type to RHI shader stage flags
+    constexpr RHIShaderStage::Flags rhiShaderStageFlags(RHIShaderType const type)
     {
         switch (type)
         {
             // clang-format off
-        case RHIShaderType::Vertex:   return RHIShaderStageFlagBits::Vertex;
-        case RHIShaderType::Pixel:    return RHIShaderStageFlagBits::Pixel;
-        case RHIShaderType::Compute:  return RHIShaderStageFlagBits::Compute;
-        default:                      return RHIShaderStageFlagBits::All;
+        case RHIShaderType::Vertex:   return RHIShaderStage::FlagBits::Vertex;
+        case RHIShaderType::Pixel:    return RHIShaderStage::FlagBits::Pixel;
+        case RHIShaderType::Compute:  return RHIShaderStage::FlagBits::Compute;
+        default:                      return RHIShaderStage::FlagBits::All;
             // clang-format on
         }
     }
 
-    // convert RHI shader type to singoe vulkan shader stage flags
+    // convert RHI shader type to single vulkan flag
     constexpr VkShaderStageFlags vulkanShaderStageFlags(RHIShaderType const type)
     {
         switch (type)
@@ -252,19 +252,19 @@ namespace worse
         }
     }
 
-    // convert RHI shader stage flags to vulkan shader stage flags
-    inline VkShaderStageFlags vulkanShaderStageFlags(RHIShaderStageFlags const stageFlags)
+    // convert RHI shader stage flags to vulkan flags
+    inline VkShaderStageFlags vulkanShaderStageFlags(RHIShaderStage::Flags const stageFlags)
     {
         VkShaderStageFlags flags = 0;
-        if (stageFlags & RHIShaderStageFlagBits::Vertex)
+        if (stageFlags & RHIShaderStage::FlagBits::Vertex)
         {
             flags |= VK_SHADER_STAGE_VERTEX_BIT;
         }
-        if (stageFlags & RHIShaderStageFlagBits::Pixel)
+        if (stageFlags & RHIShaderStage::FlagBits::Pixel)
         {
             flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
         }
-        if (stageFlags & RHIShaderStageFlagBits::Compute)
+        if (stageFlags & RHIShaderStage::FlagBits::Compute)
         {
             flags |= VK_SHADER_STAGE_COMPUTE_BIT;
         }
@@ -373,64 +373,60 @@ namespace worse
         Max
     };
 
-    WS_DEFINE_FLAGS(RHIAccess, u64);
+    WORSE_BEGIN_DECLARE_BIT_FLAG(RHIAccessUsage, ULong)
     // clang-format off
-    struct RHIAccessFlagBits
-    {
-        static constexpr RHIAccessFlags None              {0x00000000ULL};
-        static constexpr RHIAccessFlags ShaderRead        {0x00000020ULL};
-        static constexpr RHIAccessFlags ShaderWrite       {0x00000040ULL};
-        static constexpr RHIAccessFlags TransferRead      {0x00000800ULL};
-        static constexpr RHIAccessFlags TransferWrite     {0x00001000ULL};
-        static constexpr RHIAccessFlags MemoryRead        {0x00008000ULL};
-        static constexpr RHIAccessFlags MemoryWrite       {0x00010000ULL};
-        static constexpr RHIAccessFlags ShaderSampledRead {0x100000000ULL};
-        static constexpr RHIAccessFlags ShaderStorageRead {0x200000000ULL};
-        static constexpr RHIAccessFlags ShaderStorageWrite{0x400000000ULL};
-    };
+    WORSE_DECLARE_FLAG_BIT(Unknown,            0ULL)
+    WORSE_DECLARE_FLAG_BIT(ShaderRead,         0x00000020ULL)
+    WORSE_DECLARE_FLAG_BIT(ShaderWrite,        0x00000040ULL)
+    WORSE_DECLARE_FLAG_BIT(TransferRead,       0x00000800ULL)
+    WORSE_DECLARE_FLAG_BIT(TransferWrite,      0x00001000ULL)
+    WORSE_DECLARE_FLAG_BIT(MemoryRead,         0x00008000ULL)
+    WORSE_DECLARE_FLAG_BIT(MemoryWrite,        0x00010000ULL)
+    WORSE_DECLARE_FLAG_BIT(ShaderSampledRead,  0x100000000ULL)
+    WORSE_DECLARE_FLAG_BIT(ShaderStorageRead,  0x200000000ULL)
+    WORSE_DECLARE_FLAG_BIT(ShaderStorageWrite, 0x400000000ULL)
     // clang-format on
+    WORSE_END_DECLARE_BIT_FLAG(RHIAccessUsage)
 
-    WS_DEFINE_FLAGS(RHIPipelineStage, u64);
+    WORSE_BEGIN_DECLARE_BIT_FLAG(RHIPipelineStage, ULong)
     // clang-format off
-    struct RHIPipelineStageFlagBits
-    {
-        static constexpr RHIPipelineStageFlags None          {0x00000000ULL};
-        static constexpr RHIPipelineStageFlags TopOfPipe     {0x00000001ULL};
-        static constexpr RHIPipelineStageFlags DrawIndirect  {0x00000002ULL};
-        static constexpr RHIPipelineStageFlags VertexInput   {0x00000004ULL};
-        static constexpr RHIPipelineStageFlags VertexShader  {0x00000008ULL};
-        static constexpr RHIPipelineStageFlags FragmentShader{0x00000080ULL};
-        static constexpr RHIPipelineStageFlags ComputeShader {0x00000800ULL};
-        static constexpr RHIPipelineStageFlags Transfer      {0x00001000ULL};
-        static constexpr RHIPipelineStageFlags BottomOfPipe  {0x00002000ULL};       
-        static constexpr RHIPipelineStageFlags AllGraphics   {0x00008000ULL};
-        static constexpr RHIPipelineStageFlags AllCommands   {0x00010000ULL};
-    };
+    WORSE_DECLARE_FLAG_BIT(Unknown,        0x00000000ULL)
+    WORSE_DECLARE_FLAG_BIT(TopOfPipe,      0x00000001ULL)
+    WORSE_DECLARE_FLAG_BIT(DrawIndirect,   0x00000002ULL)
+    WORSE_DECLARE_FLAG_BIT(VertexInput,    0x00000004ULL)
+    WORSE_DECLARE_FLAG_BIT(VertexShader,   0x00000008ULL)
+    WORSE_DECLARE_FLAG_BIT(FragmentShader, 0x00000080ULL)
+    WORSE_DECLARE_FLAG_BIT(ComputeShader,  0x00000800ULL)
+    WORSE_DECLARE_FLAG_BIT(Transfer,       0x00001000ULL)
+    WORSE_DECLARE_FLAG_BIT(BottomOfPipe,   0x00002000ULL)       
+    WORSE_DECLARE_FLAG_BIT(AllGraphics,    0x00008000ULL)
+    WORSE_DECLARE_FLAG_BIT(AllCommands,    0x00010000ULL)
     // clang-format on
+    WORSE_END_DECLARE_BIT_FLAG(RHIPipelineStage)
 
     constexpr std::string vulkanResultToString(VkResult const result)
     {
         switch (result)
         {
             // clang-format off
-        case VK_SUCCESS:                          return "VK_SUCCESS";
-        case VK_NOT_READY:                        return "VK_NOT_READY";
-        case VK_TIMEOUT:                          return "VK_TIMEOUT";
-        case VK_EVENT_SET:                        return "VK_EVENT_SET";
-        case VK_EVENT_RESET:                      return "VK_EVENT_RESET";
-        case VK_INCOMPLETE:                       return "VK_INCOMPLETE";
-        case VK_ERROR_OUT_OF_HOST_MEMORY:         return "VK_ERROR_OUT_OF_HOST_MEMORY";
-        case VK_ERROR_OUT_OF_DEVICE_MEMORY:       return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
-        case VK_ERROR_INITIALIZATION_FAILED:      return "VK_ERROR_INITIALIZATION_FAILED";
-        case VK_ERROR_DEVICE_LOST:                return "VK_ERROR_DEVICE_LOST";
-        case VK_ERROR_MEMORY_MAP_FAILED:          return "VK_ERROR_MEMORY_MAP_FAILED";
-        case VK_ERROR_LAYER_NOT_PRESENT:          return "VK_ERROR_LAYER_NOT_PRESENT";
-        case VK_ERROR_EXTENSION_NOT_PRESENT:      return "VK_ERROR_EXTENSION_NOT_PRESENT";
-        case VK_ERROR_FEATURE_NOT_PRESENT:        return "VK_ERROR_FEATURE_NOT_PRESENT";
-        case VK_ERROR_INCOMPATIBLE_DRIVER:        return "VK_ERROR_INCOMPATIBLE_DRIVER";
-        case VK_ERROR_TOO_MANY_OBJECTS:           return "VK_ERROR_TOO_MANY_OBJECTS";
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:       return "VK_ERROR_FORMAT_NOT_SUPPORTED";
-        default:                                   return "Unknown Vulkan Result";
+        case VK_SUCCESS:                     return "VK_SUCCESS";
+        case VK_NOT_READY:                   return "VK_NOT_READY";
+        case VK_TIMEOUT:                     return "VK_TIMEOUT";
+        case VK_EVENT_SET:                   return "VK_EVENT_SET";
+        case VK_EVENT_RESET:                 return "VK_EVENT_RESET";
+        case VK_INCOMPLETE:                  return "VK_INCOMPLETE";
+        case VK_ERROR_OUT_OF_HOST_MEMORY:    return "VK_ERROR_OUT_OF_HOST_MEMORY";
+        case VK_ERROR_OUT_OF_DEVICE_MEMORY:  return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+        case VK_ERROR_INITIALIZATION_FAILED: return "VK_ERROR_INITIALIZATION_FAILED";
+        case VK_ERROR_DEVICE_LOST:           return "VK_ERROR_DEVICE_LOST";
+        case VK_ERROR_MEMORY_MAP_FAILED:     return "VK_ERROR_MEMORY_MAP_FAILED";
+        case VK_ERROR_LAYER_NOT_PRESENT:     return "VK_ERROR_LAYER_NOT_PRESENT";
+        case VK_ERROR_EXTENSION_NOT_PRESENT: return "VK_ERROR_EXTENSION_NOT_PRESENT";
+        case VK_ERROR_FEATURE_NOT_PRESENT:   return "VK_ERROR_FEATURE_NOT_PRESENT";
+        case VK_ERROR_INCOMPATIBLE_DRIVER:   return "VK_ERROR_INCOMPATIBLE_DRIVER";
+        case VK_ERROR_TOO_MANY_OBJECTS:      return "VK_ERROR_TOO_MANY_OBJECTS";
+        case VK_ERROR_FORMAT_NOT_SUPPORTED:  return "VK_ERROR_FORMAT_NOT_SUPPORTED";
+        default:                             return "Unknown Vulkan Result";
             // clang-format on
         }
     }
@@ -736,7 +732,7 @@ namespace worse
     {
 #ifdef WS_RHI_BACKEND_VULKAN
 
-        static inline u32 version                     = VK_API_VERSION_1_3;
+        static inline UInt version                    = VK_API_VERSION_1_3;
         static inline VkInstance instance             = VK_NULL_HANDLE;
         static inline VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         static inline VkDevice device                 = VK_NULL_HANDLE;
@@ -747,22 +743,22 @@ namespace worse
 
     namespace RHIConfig
     {
-        static bool enableVSync            = true;
-        static bool enableValidationLayers = true;
+        static Bool enableVSync            = true;
+        static Bool enableValidationLayers = true;
 
-        constexpr usize MAX_RENDER_TARGET = 8;
+        constexpr Size MAX_RENDER_TARGET = 8;
         // Minimum descriptor for initial descriptor pool
-        constexpr u32 MIN_DESCRIPTORS             = 512;
-        constexpr u32 MAX_DESCRIPTORS             = 2048;
-        constexpr u32 MAX_DESCRIPTOR_SETS         = 512;
-        constexpr u32 MAX_DESCRIPTOR_SET_BINDINGS = 256;
-        constexpr usize MAX_BUFFER_UPDATE_SIZE    = 64 * 1024; // 64 KB
-        constexpr usize MAX_PUSH_CONSTANT_SIZE    = 128;       // 128 bytes
+        constexpr UInt MIN_DESCRIPTORS             = 512;
+        constexpr UInt MAX_DESCRIPTORS             = 2048;
+        constexpr UInt MAX_DESCRIPTOR_SETS         = 512;
+        constexpr UInt MAX_DESCRIPTOR_SET_BINDINGS = 256;
+        constexpr Size MAX_BUFFER_UPDATE_SIZE      = 64 * 1024; // 64 KB
+        constexpr Size MAX_PUSH_CONSTANT_SIZE      = 128;       // 128 bytes
 
-        constexpr u32 HLSL_REGISTER_SHIFT_B = 0;
-        constexpr u32 HLSL_REGISTER_SHIFT_S = 100;
-        constexpr u32 HLSL_REGISTER_SHIFT_U = 200;
-        constexpr u32 HLSL_REGISTER_SHIFT_T = 300;
+        constexpr UInt HLSL_REGISTER_SHIFT_B = 0;
+        constexpr UInt HLSL_REGISTER_SHIFT_S = 100;
+        constexpr UInt HLSL_REGISTER_SHIFT_U = 200;
+        constexpr UInt HLSL_REGISTER_SHIFT_T = 300;
     } // namespace RHIConfig
 
-} // namespace worse
+} // namespace Worse

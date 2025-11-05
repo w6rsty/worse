@@ -2,22 +2,22 @@
 #include "RHICommandList.hpp"
 #include "RHITexture.hpp"
 
-namespace worse
+namespace Worse
 {
     namespace
     {
         void uploadTexture(RHITexture& texture)
         {
             // clang-format off
-            usize size = texture.getMip(0, 0).bytes.size();
+            Size size = texture.getMip(0, 0).bytes.size();
 
             RHINativeHandle stagingBuffer = RHIDevice::memoryBufferCreate(
-                static_cast<u32>(size),
+                static_cast<UInt>(size),
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                 texture.getMip(0, 0).bytes.data(),
                 "texture_staging_buffer");
-            WS_ASSERT(stagingBuffer);
+            WORSE_ASSERT(stagingBuffer);
 
             if (RHICommandList* cmdList =
                     RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
@@ -61,7 +61,7 @@ namespace worse
                              RHITexture* texture)
         {
             VkImageViewType viewType = vulkanImageViewType(texture->getType());
-            WS_ASSERT(viewType != VK_IMAGE_VIEW_TYPE_MAX_ENUM);
+            WORSE_ASSERT(viewType != VK_IMAGE_VIEW_TYPE_MAX_ENUM);
 
             VkImageViewCreateInfo infoImageView = {};
             infoImageView.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -105,7 +105,7 @@ namespace worse
         }
     } // namespace
 
-    bool RHITexture::nativeCreate()
+    Bool RHITexture::nativeCreate()
     {
         // allocate memory
         RHIDevice::memoryTextureCreate(this);
@@ -118,15 +118,15 @@ namespace worse
         // transition layout
         {
             RHIImageLayout layout = RHIImageLayout::Max;
-            if (m_usage & RHITextureViewFlagBits::RenderTargetView)
+            if (m_usageFlags & RHITextureViewUsage::FlagBits::RenderTargetView)
             {
                 layout = RHIImageLayout::Attachment;
             }
-            if (m_usage & RHITextureViewFlagBits::UnorderedAccessView)
+            if (m_usageFlags & RHITextureViewUsage::FlagBits::UnorderedAccessView)
             {
                 layout = RHIImageLayout::General;
             }
-            if (m_usage & RHITextureViewFlagBits::ShaderReadView)
+            if (m_usageFlags & RHITextureViewUsage::FlagBits::ShaderReadView)
             {
                 layout = RHIImageLayout::ShaderRead;
             }
@@ -135,7 +135,7 @@ namespace worse
                     RHIDevice::cmdImmediateBegin(RHIQueueType::Graphics))
             {
 
-                cmdList->insertBarrier(m_image, m_format, layout, RHIPipelineStageFlagBits::TopOfPipe, RHIAccessFlagBits::MemoryRead, RHIPipelineStageFlagBits::AllCommands, RHIAccessFlagBits::MemoryWrite);
+                cmdList->insertBarrier(m_image, m_format, layout, RHIPipelineStage::FlagBits::TopOfPipe, RHIAccessUsage::FlagBits::MemoryRead, RHIPipelineStage::FlagBits::AllCommands, RHIAccessUsage::FlagBits::MemoryWrite);
 
                 RHIDevice::cmdImmediateSubmit(cmdList);
             }
@@ -147,4 +147,4 @@ namespace worse
         return true;
     }
 
-} // namespace worse
+} // namespace Worse

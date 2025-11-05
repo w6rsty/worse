@@ -1,10 +1,10 @@
 #pragma once
-#include "Math/Hash.hpp"
+#include "math/hash.hpp"
 #include "RHIDefinitions.hpp"
 
 #include <functional>
 
-namespace worse
+namespace Worse
 {
 
     class RHIRasterizerState
@@ -15,10 +15,10 @@ namespace worse
             RHIPolygonMode const polygonMode = RHIPolygonMode::Solid,
             RHICullMode const cullMode       = RHICullMode::None,
             RHIFrontFace const frontFace     = RHIFrontFace::CCW,
-            f32 const depthBias            = 0.0f,
-            f32 const depthBiasSlopeFactor = 1.0f,
-            bool const depthClampEnable      = false,
-            f32 const depthBiasClamp       = 0.0f)
+            Float const depthBias            = 0.0f,
+            Float const depthBiasSlopeFactor = 1.0f,
+            Bool const depthClampEnable      = false,
+            Float const depthBiasClamp       = 0.0f)
         {
             m_polygonMode          = polygonMode;
             m_cullMode             = cullMode;
@@ -31,12 +31,12 @@ namespace worse
             m_depthClampEnable     = depthClampEnable;
             m_depthBiasClamp       = depthBiasClamp;
 
-            std::hash<f32> hasher;
+            std::hash<Float> hasher;
 
-            m_hash = math::hashCombine(m_hash, static_cast<u64>(polygonMode));
-            m_hash = math::hashCombine(m_hash, static_cast<u64>(cullMode));
-            m_hash = math::hashCombine(m_hash, static_cast<u64>(frontFace));
-            m_hash = math::hashCombine(m_hash, static_cast<u64>(depthClampEnable));
+            m_hash = math::hashCombine(m_hash, static_cast<ULong>(polygonMode));
+            m_hash = math::hashCombine(m_hash, static_cast<ULong>(cullMode));
+            m_hash = math::hashCombine(m_hash, static_cast<ULong>(frontFace));
+            m_hash = math::hashCombine(m_hash, static_cast<ULong>(depthClampEnable));
             m_hash = math::hashCombine(m_hash, hasher(depthBias));
             m_hash = math::hashCombine(m_hash, hasher(depthBiasClamp));
             m_hash = math::hashCombine(m_hash, hasher(depthBiasSlopeFactor));
@@ -45,25 +45,25 @@ namespace worse
         RHIPolygonMode getPolygonMode() const          { return m_polygonMode; }
         RHICullMode    getCullMode() const             { return m_cullMode; }
         RHIFrontFace   getFrontFace() const            { return m_frontFace; }
-        bool           getDepthClampEnable() const     { return m_depthClampEnable; }
-        f32            getDepthBias() const            { return m_depthBias; }
-        f32            getDepthBiasClamp() const       { return m_depthBiasClamp; }
-        f32            getDepthBiasSlopeFactor() const { return m_depthBiadSlopeFactor; }
-        u64  getHash() const                 { return m_hash; }
+        Bool           getDepthClampEnable() const     { return m_depthClampEnable; }
+        Float            getDepthBias() const            { return m_depthBias; }
+        Float            getDepthBiasClamp() const       { return m_depthBiasClamp; }
+        Float            getDepthBiasSlopeFactor() const { return m_depthBiadSlopeFactor; }
+        ULong  getHash() const                 { return m_hash; }
 
-        bool operator==(RHIRasterizerState const& other) const { return m_hash == other.m_hash; }
-        bool operator!=(RHIRasterizerState const& other) const { return m_hash != other.m_hash; }
+        Bool operator==(RHIRasterizerState const& other) const { return m_hash == other.m_hash; }
+        Bool operator!=(RHIRasterizerState const& other) const { return m_hash != other.m_hash; }
         // clang-format on
 
     private:
         RHIPolygonMode m_polygonMode;
         RHICullMode m_cullMode;
         RHIFrontFace m_frontFace;
-        bool m_depthClampEnable;
-        f32 m_depthBias;
-        f32 m_depthBiasClamp;
-        f32 m_depthBiadSlopeFactor;
+        Bool m_depthClampEnable;
+        Float m_depthBias;
+        Float m_depthBiasClamp;
+        Float m_depthBiadSlopeFactor;
 
-        u64 m_hash = 0;
+        ULong m_hash = 0;
     };
-} // namespace worse
+} // namespace Worse

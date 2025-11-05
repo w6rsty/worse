@@ -1,42 +1,41 @@
-#include "Log.hpp"
+#include "common_macro.hpp"
+#include "logger/logger.hpp"
 #include "FileStream.hpp"
-#include "Definitions.hpp"
 
-namespace worse
+namespace Worse
 {
 
-    FileStream::FileStream(std::filesystem::path const& path,
-                           FileStreamUsageFlags usage)
+    FileStream::FileStream(std::filesystem::path const& path, FileStreamUsage::Flags usageFlags)
     {
-        m_isOpen = false;
-        m_usage  = usage;
+        m_isOpen     = false;
+        m_usageFlags = usageFlags;
 
         std::ios_base::openmode mode = std::ios_base::binary;
         // clang-format off
-        if (m_usage & FileStreamUsageFlagBits::Read) { mode |= std::ios_base::in; }
-        if (m_usage & FileStreamUsageFlagBits::Write) { mode |= std::ios_base::out; }
+        if (m_usageFlags & FileStreamUsage::FlagBits::Read) { mode |= std::ios_base::in; }
+        if (m_usageFlags & FileStreamUsage::FlagBits::Write) { mode |= std::ios_base::out; }
         // clang-format on
 
-        if (m_usage & FileStreamUsageFlagBits::Read)
+        if (m_usageFlags & FileStreamUsage::FlagBits::Read)
         {
             m_stream.open(path, mode);
             if (m_stream.fail())
             {
-                WS_LOG_ERROR("FileStream",
-                             "Failed to open {} for reading",
-                             path.string());
+                WORSE_LOG_ERROR("FileStream",
+                                "Failed to open {} for reading",
+                                path.string());
                 return;
             }
         }
 
-        if (m_usage & FileStreamUsageFlagBits::Write)
+        if (m_usageFlags & FileStreamUsage::FlagBits::Write)
         {
             m_stream.open(path, mode);
             if (m_stream.fail())
             {
-                WS_LOG_ERROR("FileStream",
-                             "Failed to open {} for writing",
-                             path.string());
+                WORSE_LOG_ERROR("FileStream",
+                                "Failed to open {} for writing",
+                                path.string());
                 return;
             }
         }
@@ -56,13 +55,13 @@ namespace worse
             return;
         }
 
-        if ((m_usage & FileStreamUsageFlagBits::Read))
+        if ((m_usageFlags & FileStreamUsage::FlagBits::Read))
         {
             m_stream.clear();
             m_stream.close();
         }
 
-        if ((m_usage & FileStreamUsageFlagBits::Write))
+        if ((m_usageFlags & FileStreamUsage::FlagBits::Write))
         {
             m_stream.flush();
             m_stream.close();
@@ -73,17 +72,16 @@ namespace worse
 
     std::string FileStream::read()
     {
-        WS_ASSERT(m_isOpen);
-        WS_ASSERT(m_usage & FileStreamUsageFlagBits::Read);
+        WORSE_ASSERT(m_isOpen);
+        WORSE_ASSERT(m_usageFlags & FileStreamUsage::FlagBits::Read);
 
-        std::string content((std::istreambuf_iterator<char>(m_stream)),
-                            std::istreambuf_iterator<char>());
+        std::string content((std::istreambuf_iterator<char>(m_stream)), std::istreambuf_iterator<char>());
         return content;
     }
 
     void FileStream::write()
     {
-        UNIMPLEMENTED();
+        WORSE_UNIMPLEMENTED();
     }
 
-} // namespace worse
+} // namespace Worse

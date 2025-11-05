@@ -1,10 +1,10 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
 #include <utility>
 #include <vector>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
     // Template-based type erasure using CRTP pattern
     struct ResourceBase
@@ -13,7 +13,8 @@ namespace worse::ecs
     };
 
     // Template wrapper that stores the resource directly - much simpler
-    template <typename T> class ResourceWrapper : public ResourceBase
+    template <typename T>
+    class ResourceWrapper : public ResourceBase
     {
     public:
         template <typename... Args>
@@ -25,7 +26,8 @@ namespace worse::ecs
     };
 
     // Resource handle for type-safe access
-    template <typename T> class Resource
+    template <typename T>
+    class Resource
     {
     public:
         explicit Resource(T* ptr) : m_ptr(ptr)
@@ -47,7 +49,7 @@ namespace worse::ecs
             return m_ptr;
         }
 
-        operator bool() const
+        operator Bool() const
         {
             return m_ptr != nullptr;
         }
@@ -62,30 +64,32 @@ namespace worse::ecs
     };
 
     // ResourceArrayWrapper that stores the actual data
-    template <typename T> class ResourceArrayWrapper : public ResourceArrayBase
+    template <typename T>
+    class ResourceArrayWrapper : public ResourceArrayBase
     {
     public:
         ResourceArrayWrapper() = default;
 
-        template <typename... Args> usize add(Args&&... args)
+        template <typename... Args>
+        Size add(Args&&... args)
         {
             resources.emplace_back(std::forward<Args>(args)...);
             return resources.size() - 1;
         }
 
-        usize add(T&& resource)
+        Size add(T&& resource)
         {
             resources.push_back(std::move(resource));
             return resources.size() - 1;
         }
 
-        usize add(T const& resource)
+        Size add(T const& resource)
         {
             resources.push_back(resource);
             return resources.size() - 1;
         }
 
-        bool remove(usize const index)
+        Bool remove(Size const index)
         {
             if (index >= resources.size())
             {
@@ -95,7 +99,7 @@ namespace worse::ecs
             return true;
         }
 
-        T const* get(usize const index) const
+        T const* get(Size const index) const
         {
             if (index >= resources.size())
             {
@@ -104,7 +108,7 @@ namespace worse::ecs
             return &resources[index];
         }
 
-        T* get(usize const index)
+        T* get(Size const index)
         {
             if (index >= resources.size())
             {
@@ -113,12 +117,12 @@ namespace worse::ecs
             return &resources[index];
         }
 
-        usize size() const
+        Size size() const
         {
             return resources.size();
         }
 
-        bool empty() const
+        Bool empty() const
         {
             return resources.empty();
         }
@@ -142,49 +146,51 @@ namespace worse::ecs
     };
 
     // ResourceArray handle for type-safe access (similar to Resource)
-    template <typename T> class ResourceArray
+    template <typename T>
+    class ResourceArray
     {
     public:
         explicit ResourceArray(ResourceArrayWrapper<T>* ptr) : m_ptr(ptr)
         {
         }
 
-        template <typename... Args> usize add(Args&&... args)
+        template <typename... Args>
+        Size add(Args&&... args)
         {
             return m_ptr ? m_ptr->add(std::forward<Args>(args)...) : 0;
         }
 
-        usize add(T&& resource)
+        Size add(T&& resource)
         {
             return m_ptr ? m_ptr->add(std::move(resource)) : 0;
         }
 
-        usize add(T const& resource)
+        Size add(T const& resource)
         {
             return m_ptr ? m_ptr->add(resource) : 0;
         }
 
-        bool remove(usize const index)
+        Bool remove(Size const index)
         {
             return m_ptr ? m_ptr->remove(index) : false;
         }
 
-        T const* get(usize const index) const
+        T const* get(Size const index) const
         {
             return m_ptr ? m_ptr->get(index) : nullptr;
         }
 
-        T* get(usize const index)
+        T* get(Size const index)
         {
             return m_ptr ? m_ptr->get(index) : nullptr;
         }
 
-        usize size() const
+        Size size() const
         {
             return m_ptr ? m_ptr->size() : 0;
         }
 
-        bool empty() const
+        Bool empty() const
         {
             return m_ptr ? m_ptr->empty() : true;
         }
@@ -212,7 +218,7 @@ namespace worse::ecs
             return m_ptr;
         }
 
-        operator bool() const
+        operator Bool() const
         {
             return m_ptr != nullptr;
         }
@@ -221,4 +227,4 @@ namespace worse::ecs
         ResourceArrayWrapper<T>* m_ptr;
     };
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

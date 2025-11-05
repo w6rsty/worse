@@ -12,7 +12,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace worse::ecs
+namespace Worse::ecs
 {
 
     // Event priority levels
@@ -25,7 +25,8 @@ namespace worse::ecs
     };
 
     // Event wrapper with metadata
-    template <typename T> struct Event
+    template <typename T>
+    struct Event
     {
         T data;
         EventPriority priority = EventPriority::Normal;
@@ -51,10 +52,11 @@ namespace worse::ecs
 
     // Event filter interface
     template <typename T>
-    using EventFilter = std::function<bool(Event<T> const&)>;
+    using EventFilter = std::function<Bool(Event<T> const&)>;
 
     // Enhanced EventReader with filtering and statistics
-    template <typename T> class EventReader
+    template <typename T>
+    class EventReader
     {
     public:
         EventReader(std::vector<Event<T>>* eventQueue)
@@ -72,12 +74,12 @@ namespace worse::ecs
             std::vector<Event<T>> newEvents;
             newEvents.reserve(m_eventQueue->size() - m_cursor);
 
-            for (usize i = m_cursor; i < m_eventQueue->size(); ++i)
+            for (Size i = m_cursor; i < m_eventQueue->size(); ++i)
             {
                 Event<T> const& event = (*m_eventQueue)[i];
 
                 // Apply filters
-                bool passedFilters = true;
+                Bool passedFilters = true;
                 for (EventFilter<T> const& filter : m_filters)
                 {
                     if (!filter(event))
@@ -132,19 +134,19 @@ namespace worse::ecs
         }
 
         // Get statistics
-        usize getEventsRead() const
+        Size getEventsRead() const
         {
             return m_eventsRead;
         }
-        usize getPendingEvents() const
+        Size getPendingEvents() const
         {
             return m_eventQueue ? (m_eventQueue->size() - m_cursor) : 0;
         }
 
     private:
         std::vector<Event<T>>* m_eventQueue = nullptr;
-        usize m_cursor                      = 0;
-        usize m_eventsRead                  = 0;
+        Size m_cursor                      = 0;
+        Size m_eventsRead                  = 0;
         std::vector<EventFilter<T>> m_filters;
     };
 
@@ -155,25 +157,26 @@ namespace worse::ecs
         {
             virtual ~IEventChannel()              = default;
             virtual void swapBuffer()             = 0;
-            virtual usize getPendingCount() const = 0;
-            virtual usize getTotalSent() const    = 0;
+            virtual Size getPendingCount() const = 0;
+            virtual Size getTotalSent() const    = 0;
             virtual void cleanupExpiredReaders()  = 0;
         };
 
-        template <typename T> struct EventChannel : public IEventChannel
+        template <typename T>
+        struct EventChannel : public IEventChannel
         {
             mutable std::mutex mutex;
             std::vector<Event<T>> queues[2];
             std::atomic<int> activeQueueIndex{0};
             std::vector<std::weak_ptr<EventReader<T>>> readers;
-            std::atomic<usize> totalEventsSent{0};
+            std::atomic<Size> totalEventsSent{0};
 
             // Priority queue for immediate dispatch
             // clang-format off
         std::priority_queue<
             Event<T>,
             std::vector<Event<T>>,
-            std::function<bool(Event<T> const&, Event<T> const&)>
+            std::function<Bool(Event<T> const&, Event<T> const&)>
         > immediateQueue{[](Event<T> const& a, Event<T> const& b)
                            {
                                return a.priority < b.priority; // Higher priority first
@@ -216,13 +219,13 @@ namespace worse::ecs
                 queues[newActive].clear();
             }
 
-            usize getPendingCount() const override
+            Size getPendingCount() const override
             {
                 std::lock_guard<std::mutex> lock(mutex);
                 return queues[activeQueueIndex.load()].size();
             }
 
-            usize getTotalSent() const override
+            Size getTotalSent() const override
             {
                 return totalEventsSent.load();
             }
@@ -241,7 +244,8 @@ namespace worse::ecs
             }
         };
 
-        template <typename T> EventChannel<T>& getChannel()
+        template <typename T>
+        EventChannel<T>& getChannel()
         {
             std::lock_guard<std::mutex> lock(m_mtxChannels);
             std::type_index typeId = std::type_index(typeid(T));
@@ -319,7 +323,8 @@ namespace worse::ecs
             channel.totalEventsSent.fetch_add(1);
         }
 
-        template <typename T> std::shared_ptr<EventReader<T>> getReader()
+        template <typename T>
+        std::shared_ptr<EventReader<T>> getReader()
         {
             EventChannel<T>& channel = getChannel<T>();
             std::lock_guard<std::mutex> lock(channel.mutex);
@@ -354,20 +359,22 @@ namespace worse::ecs
         // =========================================================================
         // Statistics
         // =========================================================================
-        template <typename T> usize getPendingEvents() const
+        template <typename T>
+        Size getPendingEvents() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getPendingCount();
         }
 
-        template <typename T> usize getTotalEventsSent() const
+        template <typename T>
+        Size getTotalEventsSent() const
         {
             auto& channel = const_cast<EventBus*>(this)->getChannel<T>();
             return channel.getTotalSent();
         }
 
         // get amount of registered event type
-        usize getEventTypeCount() const
+        Size getEventTypeCount() const
         {
             std::lock_guard<std::mutex> lock(m_mtxChannels);
             return m_channels.size();
@@ -383,23 +390,23 @@ namespace worse::ecs
     // Filter Macros
     // =========================================================================
 
-#define WS_EVENT_FILTER_BY_PRIORITY(minPriority)                               \
-    [](auto const& event)                                                      \
-    {                                                                          \
-        return event.priority >= minPriority;                                  \
+#define WS_EVENT_FILTER_BY_PRIORITY(minPriority) \
+    [](auto const& event)                        \
+    {                                            \
+        return event.priority >= minPriority;    \
     }
 
-#define WS_EVENT_FILTER_BY_TIME(maxAge)                                        \
-    [](auto const& event)                                                      \
-    {                                                                          \
-        auto now = std::chrono::steady_clock::now();                           \
-        return (now - event.timestamp) <= maxAge;                              \
+#define WS_EVENT_FILTER_BY_TIME(maxAge)              \
+    [](auto const& event)                            \
+    {                                                \
+        auto now = std::chrono::steady_clock::now(); \
+        return (now - event.timestamp) <= maxAge;    \
     }
 
-#define WS_EVENT_FILTER_BY_THREAD(threadId)                                    \
-    [threadId](auto const& event)                                              \
-    {                                                                          \
-        return event.sourceThread == threadId;                                 \
+#define WS_EVENT_FILTER_BY_THREAD(threadId)    \
+    [threadId](auto const& event)              \
+    {                                          \
+        return event.sourceThread == threadId; \
     }
 
-} // namespace worse::ecs
+} // namespace Worse::ecs

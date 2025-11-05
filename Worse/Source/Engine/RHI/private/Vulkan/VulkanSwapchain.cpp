@@ -1,5 +1,6 @@
+#include "math/math_includes.hpp"
 #include "Window.hpp"
-#include "Log.hpp"
+#include "logger/logger.hpp"
 #include "Event.hpp"
 #include "RHISwapchain.hpp"
 #include "RHIResource.hpp"
@@ -8,7 +9,10 @@
 
 #include "SDL3/SDL_vulkan.h"
 
-namespace worse
+#include <thread>
+#include <chrono>
+
+namespace Worse
 {
     namespace
     {
@@ -27,12 +31,12 @@ namespace worse
         VkSurfaceFormatKHR getSurfaceFormat(VkSurfaceKHR const surface)
         {
             // TODO: support HDR format
-            u32 surfaceFormatCount = 0;
+            UInt surfaceFormatCount = 0;
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice, surface, &surfaceFormatCount, nullptr));
             std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(RHIContext::physicalDevice, surface, &surfaceFormatCount, surfaceFormats.data()));
 
-            auto formatSelector = [](VkFormat format) -> u32
+            auto formatSelector = [](VkFormat format) -> UInt
             {
                 switch (format)
                 {
@@ -52,7 +56,7 @@ namespace worse
             auto bestFormat = std::ranges::max_element(
                 surfaceFormats,
                 [&](VkSurfaceFormatKHR const& lhs,
-                    VkSurfaceFormatKHR const& rhs) -> bool
+                    VkSurfaceFormatKHR const& rhs) -> Bool
                 {
                     return formatSelector(lhs.format) <
                            formatSelector(rhs.format);
@@ -96,7 +100,7 @@ namespace worse
                 defaultPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
             }
 
-            u32 presentModeCount = 0;
+            UInt presentModeCount = 0;
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(RHIContext::physicalDevice, surface, &presentModeCount, nullptr));
             std::vector<VkPresentModeKHR> presentModes(presentModeCount);
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(RHIContext::physicalDevice, surface, &presentModeCount, presentModes.data()));
@@ -109,14 +113,14 @@ namespace worse
                 }
             }
 
-            WS_LOG_WARN("Swapchain", "Requested present mode not supported, falling back to FIFO");
+            WORSE_LOG_WARN("Swapchain", "Requested present mode not supported, falling back to FIFO");
             return VK_PRESENT_MODE_FIFO_KHR;
         }
 
     } // namespace
 
-    RHISwapchain::RHISwapchain(void* sdlWindow, u32 const width,
-                               u32 const height,
+    RHISwapchain::RHISwapchain(void* sdlWindow, UInt const width,
+                               UInt const height,
                                RHIPresentMode const presentMode,
                                std::string_view name)
         : RHIResource(name)
@@ -134,12 +138,12 @@ namespace worse
 
             if (!SDL_Vulkan_CreateSurface(static_cast<SDL_Window*>(m_sdlWindow), RHIContext::instance, nullptr, &surface))
             {
-                WS_LOG_ERROR("Swapchain", "Failed to create surface: {}", SDL_GetError());
+                WORSE_LOG_ERROR("Swapchain", "Failed to create surface: {}", SDL_GetError());
             }
 
             VkBool32 presentSupport{VK_FALSE};
             WS_ASSERT_VK(vkGetPhysicalDeviceSurfaceSupportKHR(RHIContext::physicalDevice, RHIDevice::getQueueIndex(RHIQueueType::Graphics), surface, &presentSupport));
-            WS_ASSERT_MSG(presentSupport, "Surface does not support present");
+            WORSE_ASSERT_MSG(presentSupport, "Surface does not support present");
 
             m_surface = RHINativeHandle{surface, RHINativeHandleType::Surface};
         }
@@ -173,7 +177,7 @@ namespace worse
         }
     }
 
-    void RHISwapchain::resize(u32 width, u32 height)
+    void RHISwapchain::resize(UInt width, UInt height)
     {
         if (width == m_width && height == m_height)
         {
@@ -186,7 +190,7 @@ namespace worse
         // recreate swapchain
         create();
 
-        WS_LOG_INFO("Swapchain", "Resized to {}x{}", m_width, m_height);
+        WORSE_LOG_INFO("Swapchain", "Resized to {}x{}", m_width, m_height);
     }
 
     void RHISwapchain::resizeFitWindow()
@@ -202,7 +206,7 @@ namespace worse
             return;
         }
 
-        static u64 semaphoreIndex = 0;
+        static ULong semaphoreIndex = 0;
         RHISyncPrimitive* semaphoreSignal = m_imageAcquireSemaphores[semaphoreIndex].get();
 
         if (RHICommandList* cmdList = semaphoreSignal->getBelongingCmdList())
@@ -211,11 +215,11 @@ namespace worse
             {
                 cmdList->waitForExecution();
             }
-            WS_ASSERT(cmdList->getState() == RHICommandListState::Idle);
+            WORSE_ASSERT(cmdList->getState() == RHICommandListState::Idle);
         }
 
-        u32 retryCount          = 0;
-        u32 const maxRetryCount = 10;
+        UInt retryCount          = 0;
+        UInt const maxRetryCount = 10;
 
         while (retryCount < maxRetryCount)
         {
@@ -264,21 +268,21 @@ namespace worse
 
     void RHISwapchain::create()
     {
-        WS_ASSERT(m_sdlWindow != nullptr);
-        WS_ASSERT(m_surface.isValid());
+        WORSE_ASSERT(m_sdlWindow != nullptr);
+        WORSE_ASSERT(m_surface.isValid());
 
         VkSurfaceCapabilitiesKHR cap = getSurfaceCapabilities(m_surface.asValue<VkSurfaceKHR>());
 
         if ((cap.currentExtent.width == 0) || (cap.currentExtent.height == 0))
         {
-            WS_LOG_WARN("Swapchain", "Window is minimized, skipping creation");
+            WORSE_LOG_WARN("Swapchain", "Window is minimized, skipping creation");
             return;
         }
 
         surfaceFormat = getSurfaceFormat(m_surface.asValue<VkSurfaceKHR>());
 
-        m_width  = std::clamp(m_width, cap.minImageExtent.width, cap.maxImageExtent.width);
-        m_height = std::clamp(m_height, cap.minImageExtent.height, cap.maxImageExtent.height);
+        m_width  = Math::Clamp(m_width, cap.minImageExtent.width, cap.maxImageExtent.width);
+        m_height = Math::Clamp(m_height, cap.minImageExtent.height, cap.maxImageExtent.height);
 
         // swapchain creation
         {
@@ -291,8 +295,7 @@ namespace worse
             infoSwapchain.imageColorSpace          = surfaceFormat.colorSpace;
             infoSwapchain.imageExtent              = {m_width, m_height};
             infoSwapchain.imageArrayLayers         = 1;
-            infoSwapchain.imageUsage               = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                                                     VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            infoSwapchain.imageUsage               = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             infoSwapchain.imageSharingMode         = VK_SHARING_MODE_EXCLUSIVE;
             infoSwapchain.preTransform             = cap.currentTransform;
             infoSwapchain.compositeAlpha           = getCompositeAlpha(m_surface.asValue<VkSurfaceKHR>());
@@ -312,13 +315,11 @@ namespace worse
 
         // get images
         {
-            u32 imageCount = 0;
-            WS_ASSERT_VK(
-                vkGetSwapchainImagesKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), &imageCount, nullptr));
+            UInt imageCount = 0;
+            WS_ASSERT_VK(vkGetSwapchainImagesKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), &imageCount, nullptr));
             std::vector<VkImage> swapchainImages(imageCount);
-            WS_ASSERT_VK(
-                vkGetSwapchainImagesKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), &imageCount, swapchainImages.data()));
-            for (u32 i = 0; i < static_cast<u32>(swapchainImages.size()); ++i)
+            WS_ASSERT_VK(vkGetSwapchainImagesKHR(RHIContext::device, m_swapchain.asValue<VkSwapchainKHR>(), &imageCount, swapchainImages.data()));
+            for (UInt i = 0; i < static_cast<UInt>(swapchainImages.size()); ++i)
             {
                 m_rts[i] = RHINativeHandle{swapchainImages[i], RHINativeHandleType::Image};
             }
@@ -326,7 +327,7 @@ namespace worse
 
         // create image views
         {
-            for (u32 i = 0; i < s_bufferCount; ++i)
+            for (UInt i = 0; i < s_bufferCount; ++i)
             {
                 // destroy old one
                 if (m_rtvs[i])
@@ -353,21 +354,21 @@ namespace worse
             // TODO: Submit to immediate queue
         }
 
-        // create sync primtives
-        for (u32 i = 0; i < static_cast<u32>(m_imageAcquireSemaphores.size()); ++i)
+        // create sync primitives
+        for (UInt i = 0; i < static_cast<UInt>(m_imageAcquireSemaphores.size()); ++i)
         {
             m_imageAcquireSemaphores[i] = std::make_shared<RHISyncPrimitive>(RHISyncPrimitiveType::BinarySemaphore, std::format("image_acquire_{}", i).c_str());
         }
 
-        WS_LOG_INFO("Swapchain",
-                    "Created (Size: {}x{}, Format: {}, VSync: {})",
-                    m_width,
-                    m_height,
-                    rhiFormatToString(m_format),
-                    m_presentMode == RHIPresentMode::Immediate ? "off" : "on");
+        WORSE_LOG_INFO("Swapchain",
+                       "Created (Size: {}x{}, Format: {}, VSync: {})",
+                       m_width,
+                       m_height,
+                       rhiFormatToString(m_format),
+                       m_presentMode == RHIPresentMode::Immediate ? "off" : "on");
 
         // reset state
         m_imageIndex = 0;
     }
 
-} // namespace worse
+} // namespace Worse

@@ -1,9 +1,9 @@
 #pragma once
-#include "Types.hpp"
+#include "base_type.hpp"
 
 #include <chrono>
 
-namespace worse::profiling
+namespace Worse::profiling
 {
 
     class Stopwatch
@@ -21,21 +21,20 @@ namespace worse::profiling
             m_start = std::chrono::high_resolution_clock::now();
         }
 
-        f32 elapsedMs() const
+        Float elapsedMs() const
         {
             auto end = std::chrono::high_resolution_clock::now();
-            return std::chrono::duration<f32, std::milli>(end - m_start)
-                .count();
+            return std::chrono::duration<Float, std::milli>(end - m_start).count();
         }
 
-        f32 elapsedSec() const
+        Float elapsedSec() const
         {
             auto end = std::chrono::high_resolution_clock::now();
-            return std::chrono::duration<f32>(end - m_start).count();
+            return std::chrono::duration<Float>(end - m_start).count();
         }
 
     private:
         TimePoint m_start;
     };
 
-} // namespace worse::profiling
+} // namespace Worse::profiling
