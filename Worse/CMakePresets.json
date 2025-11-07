@@ -3,7 +3,6 @@
     "configurePresets": [
         {
             "name": "default",
-            "generator": "Ninja",
             "binaryDir": "${sourceDir}/Build/${presetName}",
             "cacheVariables": {
                 "SPIRV_REFLECT_EXECUTABLE": "OFF",
