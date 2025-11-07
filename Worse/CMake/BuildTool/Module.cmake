@@ -129,7 +129,7 @@ function(EndDeclareModule)
             file(RELATIVE_PATH relative_path ${CMAKE_CURRENT_SOURCE_DIR} ${file_path})
             get_filename_component(group_path ${relative_path} DIRECTORY)
 
-            if(GROUP_PATH STREQUAL "")
+            if(group_path STREQUAL "")
                 set(final_group_path "\\")
             else()
                 string(REPLACE "/" "\\" group_path ${group_path})
