@@ -123,10 +123,25 @@ function(EndDeclareModule)
     file(GLOB_RECURSE MODULE_PRIVATE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/private/*.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/private/*.cpp)
-    
-    # TODO: Group module internal folders
-    source_group("public" FILES ${MODULE_PUBLIC_SOURCES})
-    source_group("private" FILES ${MODULE_PRIVATE_SOURCES})
+
+    function(__ModuleSourceGroup)
+        foreach(file_path ${ARGN})
+            file(RELATIVE_PATH relative_path ${CMAKE_CURRENT_SOURCE_DIR} ${file_path})
+            get_filename_component(group_path ${relative_path} DIRECTORY)
+
+            if(group_path STREQUAL "")
+                set(final_group_path "\\")
+            else()
+                string(REPLACE "/" "\\" group_path ${group_path})
+                set(final_group_path "${group_path}")
+            endif()
+
+            source_group("${final_group_path}" FILES ${file_path})
+        endforeach()
+    endfunction()
+
+    __ModuleSourceGroup(${MODULE_PUBLIC_SOURCES})
+    __ModuleSourceGroup(${MODULE_PRIVATE_SOURCES})
 
     target_sources(${__CURRENT_MODULE_NAME}
         PRIVATE ${MODULE_PRIVATE_SOURCES}
