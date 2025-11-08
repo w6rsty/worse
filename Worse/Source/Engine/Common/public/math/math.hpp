@@ -60,7 +60,7 @@ namespace Worse
             return std::fabs(x);
         }
 
-        template <typename T, typename = std::enable_if_t<comparison::IsTotallyOrderedV<std::decay_t<T>>>>
+        template <typename T, typename = std::enable_if_t<Comparison::IsTotallyOrdered_V<std::decay_t<T>>>>
         WORSE_FORCE_INLINE static T Clamp(T const x, T const min, T const max)
         {
             return (x < min) ? min : (x > max) ? max

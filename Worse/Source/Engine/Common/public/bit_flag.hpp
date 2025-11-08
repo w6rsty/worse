@@ -1,13 +1,13 @@
 #pragma once
 #include "base_type.hpp"
 
-#include <type_traits>
 #include <iterator>
+#include <type_traits>
 
 namespace Worse
 {
 
-    namespace detail
+    namespace Detail
     {
 
         template <typename BaseType, typename FlagBitType>
@@ -83,7 +83,7 @@ namespace Worse
         class FlagBit
         {
         public:
-            using Iterator = detail::FlagBitIterator<BaseType, FlagBit>;
+            using Iterator = Detail::FlagBitIterator<BaseType, FlagBit>;
 
             // clang-format off
             constexpr FlagBit() : m_value{BaseType{}} {}
@@ -120,7 +120,7 @@ namespace Worse
             BaseType m_value;
         };
 
-    } // namespace detail
+    } // namespace Detail
 
     /// Usage:
     ///
@@ -158,10 +158,10 @@ namespace Worse
 
     protected:
         // Type to declare flag bit
-        using Bit = detail::FlagBit<BaseType>;
+        using Bit = Detail::FlagBit<BaseType>;
 
     public:
-        using Flags = detail::FlagBit<BaseType>;
+        using Flags = Detail::FlagBit<BaseType>;
 
         static constexpr Flags FromValue(BaseType value)
         {

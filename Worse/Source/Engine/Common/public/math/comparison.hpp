@@ -4,7 +4,6 @@
 #include "math/math_constants.hpp"
 
 #include <cmath>
-#include <limits>
 #include <cstring>
 #include <utility>
 #include <algorithm>
@@ -12,7 +11,8 @@
 
 namespace Worse
 {
-    namespace comparison
+
+    namespace Comparison
     {
 
         // T == U
@@ -25,7 +25,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        inline constexpr Bool HasEqualToV = HasEqualTo<T, U>::value;
+        constexpr Bool HasEqualTo_V = HasEqualTo<T, U>::value;
 
         // T != U
         template <typename T, typename U, typename = void>
@@ -37,7 +37,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        inline constexpr Bool HasNotEqualToV = HasNotEqualTo<T, U>::value;
+        constexpr Bool HasNotEqualTo_V = HasNotEqualTo<T, U>::value;
 
         // T < U
         template <typename T, typename U, typename = void>
@@ -49,7 +49,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        inline constexpr Bool HasLessV = HasLess<T, U>::value;
+        constexpr Bool HasLess_V = HasLess<T, U>::value;
 
         // T > U
         template <typename T, typename U, typename = void>
@@ -61,7 +61,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        inline constexpr Bool HasGreaterV = HasGreater<T, U>::value;
+        constexpr Bool HasGreater_V = HasGreater<T, U>::value;
 
         // T <= U
         template <typename T, typename U, typename = void>
@@ -73,7 +73,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        inline constexpr Bool HasLessEqualV = HasLessEuqal<T, U>::value;
+        constexpr Bool HasLessEqual_V = HasLessEuqal<T, U>::value;
 
         // T >= U
         template <typename T, typename U, typename = void>
@@ -85,7 +85,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        inline constexpr Bool HasGreaterEqualV = HasGreaterEqual<T, U>::value;
+        constexpr Bool HasGreaterEqual_V = HasGreaterEqual<T, U>::value;
 
         template <typename T>
         struct IsEqualityComparable : std::conjunction<
@@ -95,7 +95,7 @@ namespace Worse
         };
 
         template <typename T>
-        inline constexpr Bool IsEqualityComparableV = IsEqualityComparable<T>::value;
+        constexpr Bool IsEqualityComparable_V = IsEqualityComparable<T>::value;
 
         template <typename T>
         struct IsTotallyOrdered : std::conjunction<
@@ -108,7 +108,7 @@ namespace Worse
         };
 
         template <typename T>
-        inline constexpr Bool IsTotallyOrderedV = IsTotallyOrdered<T>::value;
+        constexpr Bool IsTotallyOrdered_V = IsTotallyOrdered<T>::value;
     } // namespace comparison
 
     /*
@@ -142,7 +142,7 @@ namespace Worse
         }
         else
         {
-            static_assert(comparison::IsEqualityComparableV<T>, "Type must support operator== and operator!=");
+            static_assert(Comparison::IsEqualityComparable_V<T>, "Type must support operator== and operator!=");
             // fall back to common operator==
             return lhs == rhs;
         }
@@ -196,7 +196,7 @@ namespace Worse
         }
         else
         {
-            static_assert(comparison::HasLessV<T, T>, "Type must be totally ordered");
+            static_assert(Comparison::HasLess_V<T, T>, "Type must be totally ordered");
             return lhs < rhs;
         }
     }
@@ -210,7 +210,7 @@ namespace Worse
         }
         else
         {
-            static_assert(comparison::HasGreaterV<T, T>, "Type must be totally ordered");
+            static_assert(Comparison::HasGreater_V<T, T>, "Type must be totally ordered");
             return lhs > rhs;
         }
     }
@@ -224,7 +224,7 @@ namespace Worse
         }
         else
         {
-            static_assert(comparison::HasLessEqualV<T, T>, "Type must be totally ordered");
+            static_assert(Comparison::HasLessEqual_V<T, T>, "Type must be totally ordered");
             return lhs <= rhs;
         }
     }
@@ -238,13 +238,13 @@ namespace Worse
         }
         else
         {
-            static_assert(comparison::HasGreaterEqualV<T, T>, "Type must be totally ordered");
+            static_assert(Comparison::HasGreaterEqual_V<T, T>, "Type must be totally ordered");
             return lhs >= rhs;
         }
     }
 
     template <typename T, typename... Ts,
-              typename = std::enable_if_t<(comparison::IsTotallyOrderedV<std::decay_t<T>> && ... && comparison::IsTotallyOrderedV<std::decay_t<Ts>>)>>
+              typename = std::enable_if_t<(Comparison::IsTotallyOrdered_V<std::decay_t<T>> && ... && Comparison::IsTotallyOrdered_V<std::decay_t<Ts>>)>>
     WORSE_FORCE_INLINE constexpr std::decay_t<T> Max(T&& first, Ts&&... rest)
     {
         using R  = std::decay_t<T>;
@@ -254,7 +254,7 @@ namespace Worse
     }
 
     template <typename T, typename... Ts,
-              typename = std::enable_if_t<(comparison::IsTotallyOrderedV<std::decay_t<T>> && ... && comparison::IsTotallyOrderedV<std::decay_t<Ts>>)>>
+              typename = std::enable_if_t<(Comparison::IsTotallyOrdered_V<std::decay_t<T>> && ... && Comparison::IsTotallyOrdered_V<std::decay_t<Ts>>)>>
     WORSE_FORCE_INLINE constexpr std::decay_t<T> Min(T&& first, Ts&&... rest)
     {
         using R  = std::decay_t<T>;
