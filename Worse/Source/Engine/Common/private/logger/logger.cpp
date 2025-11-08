@@ -1,5 +1,4 @@
-#include "logger/logger.hpp"
-#include "logger/logger.hpp"
+#include "common_pch.hpp"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/async.h"
