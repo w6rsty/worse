@@ -63,3 +63,8 @@ LambdaBodyIndentation: Signature
 SortIncludes: false
 # 保留头文件块的原始顺序
 IncludeBlocks: Preserve
+
+#  构造函数初始化列表风格
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakConstructorInitializers: BeforeComma
+IndentWrappedFunctionNames: false
