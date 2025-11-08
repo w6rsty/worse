@@ -1,23 +1,27 @@
 #pragma once
-#include "base_type.hpp"    // IWYU pragma: keep
-#include "common_macro.hpp" // IWYU pragma: keep
-#include "bit_flag.hpp"     // IWYU pragma: keep
 
-#include "logger/logger.hpp" // IWYU pragma: keep
+// IWYU pragma: begin_exports
+#include "base_type.hpp"
+#include "common_macro.hpp"
+#include "bit_flag.hpp"
 
-#include "container/enum_array.hpp" // IWYU pragma: keep
+#include "logger/logger.hpp"
 
-#include "math/math_includes.hpp" // IWYU pragma: keep
+#include "container/enum_array.hpp"
+#include "container/static_array.hpp"
+
+#include "math/math_includes.hpp"
 
 #include <cmath>
-#include <limits>
 #include <cstdint>
 #include <cstddef>
 #include <cstdlib>
-#include <array>
-#include <type_traits>
 #include <cstring>
-#include <utility>
 #include <array>
 #include <vector>
+#include <limits>
+#include <utility>
+#include <iterator>
 #include <algorithm>
+#include <type_traits>
+// IWYU pragma: end_exports

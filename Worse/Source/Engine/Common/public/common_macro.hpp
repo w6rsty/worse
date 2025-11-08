@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdlib>
 
-
 ///////////////
 // assertion //
 ///////////////
@@ -85,6 +84,20 @@
 // clang-format on
 
 #define WORSE_UNIMPLEMENTED() WORSE_ASSERT_MSG(false, "Unimplemented code")
+
+////////////////
+// attributes //
+////////////////
+// clang-format off
+#ifdef __has_cpp_attribute
+    #if __has_cpp_attribute(nodiscard)
+        #define WORSE_NODISCARD [[nodiscard]]
+    #endif
+#endif
+#ifndef WORSE_NODISCARD
+    #define WORSE_NODISCARD
+#endif
+// clang-format on
 
 //////////
 // cast //
