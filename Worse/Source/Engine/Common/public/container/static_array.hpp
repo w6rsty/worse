@@ -39,10 +39,10 @@ namespace Worse
         {
         }
 
-        constexpr TStaticArray(TStaticArray&)             = default;
-        constexpr TStaticArray(TStaticArray&&)            = default;
-        constexpr TStaticArray& operator=(TStaticArray&)  = default;
-        constexpr TStaticArray& operator=(TStaticArray&&) = default;
+        constexpr TStaticArray(TStaticArray const&)            = default;
+        constexpr TStaticArray(TStaticArray&&)                 = default;
+        constexpr TStaticArray& operator=(TStaticArray const&) = default;
+        constexpr TStaticArray& operator=(TStaticArray&&)      = default;
 
         // Accessors
         WORSE_NODISCARD WORSE_FORCE_INLINE constexpr InElementType& operator[](UInt index)
