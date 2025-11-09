@@ -1,4 +1,4 @@
-#include "math/hash.hpp"s
+#include "math/hash.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "FileSystem.hpp"
 #include "RHIDevice.hpp"
@@ -35,8 +35,8 @@ namespace Worse
         if (!fileStream.is_open())
         {
             WORSE_LOG_ERROR("Shader",
-                         "Failed to open file: {}",
-                         canonicalPath.string());
+                            "Failed to open file: {}",
+                            canonicalPath.string());
             return {};
         }
 
@@ -89,7 +89,8 @@ namespace Worse
         return recursiveParse(path);
     }
 
-    RHIShader::RHIShader(std::string_view name) : RHIResource(name)
+    RHIShader::RHIShader(std::string_view name)
+        : RHIResource(name)
     {
     }
 
