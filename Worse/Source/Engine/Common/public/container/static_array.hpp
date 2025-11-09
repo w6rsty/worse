@@ -1,6 +1,6 @@
 #pragma once
 #include "base_type.hpp"
-#include "container/container_defines.hpp"
+#include "container/container_define.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -8,7 +8,7 @@
 namespace Worse
 {
 
-    namespace Detail
+    namespace Common::Detail
     {
         template <typename InElementType, typename... ArgTypes>
         constexpr Bool CanBeConvertedToFromAll_V = (std::is_convertible_v<ArgTypes, InElementType> && ...);
@@ -16,16 +16,16 @@ namespace Worse
 
     /* Array with a static number of elements */
     template <typename InElementType, UInt NumElements, UInt Alignment = alignof(InElementType)>
-    class alignas(Alignment) StaticArray
+    class alignas(Alignment) TStaticArray
     {
     public:
         using ElementType = InElementType;
 
-        constexpr StaticArray() = default;
+        constexpr TStaticArray() = default;
 
         // Constructs each element with args
         template <typename... ArgTypes>
-        constexpr explicit StaticArray(EInPlace, ArgTypes&&... args)
+        constexpr explicit TStaticArray(EInPlace, ArgTypes&&... args)
             : m_storage(InPlace, std::make_integer_sequence<UInt, NumElements>(), std::forward<ArgTypes>(args)...)
         {
         }
@@ -33,16 +33,16 @@ namespace Worse
         // Initializes array with provided values
         template <
             typename... ArgTypes,
-            typename = std::enable_if_t<(sizeof...(ArgTypes) > 0 && sizeof...(ArgTypes) <= NumElements) && Detail::CanBeConvertedToFromAll_V<InElementType, ArgTypes...>>>
-        constexpr StaticArray(ArgTypes&&... args)
+            typename = std::enable_if_t<(sizeof...(ArgTypes) > 0 && sizeof...(ArgTypes) <= NumElements) && Common::Detail::CanBeConvertedToFromAll_V<InElementType, ArgTypes...>>>
+        constexpr TStaticArray(ArgTypes&&... args)
             : m_storage(PerElement, std::forward<ArgTypes>(args)...)
         {
         }
 
-        constexpr StaticArray(StaticArray&)             = default;
-        constexpr StaticArray(StaticArray&&)            = default;
-        constexpr StaticArray& operator=(StaticArray&)  = default;
-        constexpr StaticArray& operator=(StaticArray&&) = default;
+        constexpr TStaticArray(TStaticArray&)             = default;
+        constexpr TStaticArray(TStaticArray&&)            = default;
+        constexpr TStaticArray& operator=(TStaticArray&)  = default;
+        constexpr TStaticArray& operator=(TStaticArray&&) = default;
 
         // Accessors
         WORSE_NODISCARD WORSE_FORCE_INLINE constexpr InElementType& operator[](UInt index)
@@ -56,7 +56,7 @@ namespace Worse
         }
 
         // Comparisons
-        WORSE_NODISCARD constexpr friend Bool operator==(StaticArray const& lhs, StaticArray const& rhs)
+        WORSE_NODISCARD constexpr friend Bool operator==(TStaticArray const& lhs, TStaticArray const& rhs)
         {
             for (UInt elementIndex = 0; elementIndex < NumElements; ++elementIndex)
             {
@@ -68,7 +68,7 @@ namespace Worse
             return kTrue;
         }
 
-        WORSE_NODISCARD constexpr Bool operator!=(StaticArray const& other) const
+        WORSE_NODISCARD constexpr Bool operator!=(TStaticArray const& other) const
         {
             for (UInt elementIndex = 0; elementIndex < NumElements; ++elementIndex)
             {
@@ -92,13 +92,13 @@ namespace Worse
 
         WORSE_NODISCARD WORSE_FORCE_INLINE constexpr InElementType* GetData()
         {
-            static_assert((alignof(ElementType) % Alignment) == 0, "GetData() cannot be called on a StaticArray with no-standard alignment");
+            static_assert((alignof(ElementType) % Alignment) == 0, "GetData() cannot be called on a TStaticArray with no-standard alignment");
             return &m_storage.elements[0].element;
         }
 
         WORSE_NODISCARD WORSE_FORCE_INLINE constexpr InElementType const* GetData() const
         {
-            return c_cast<StaticArray*>(this)->GetData();
+            return c_cast<TStaticArray*>(this)->GetData();
         }
 
     private:

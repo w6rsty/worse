@@ -7,7 +7,7 @@
 namespace Worse
 {
 
-    namespace Detail
+    namespace Common::Detail
     {
 
         template <typename BaseType, typename FlagBitType>
@@ -83,7 +83,7 @@ namespace Worse
         class FlagBit
         {
         public:
-            using Iterator = Detail::FlagBitIterator<BaseType, FlagBit>;
+            using Iterator = Common::Detail::FlagBitIterator<BaseType, FlagBit>;
 
             // clang-format off
             constexpr FlagBit() : m_value{BaseType{}} {}
@@ -120,7 +120,7 @@ namespace Worse
             BaseType m_value;
         };
 
-    } // namespace Detail
+    } // namespace Common::Detail
 
     /// Usage:
     ///
@@ -158,10 +158,10 @@ namespace Worse
 
     protected:
         // Type to declare flag bit
-        using Bit = Detail::FlagBit<BaseType>;
+        using Bit = Common::Detail::FlagBit<BaseType>;
 
     public:
-        using Flags = Detail::FlagBit<BaseType>;
+        using Flags = Common::Detail::FlagBit<BaseType>;
 
         static constexpr Flags FromValue(BaseType value)
         {
