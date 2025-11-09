@@ -9,7 +9,7 @@ namespace Worse
 
     namespace
     {
-        EnumArray<RHIQueueType, std::mutex> mtxes;
+        TEnumArray<RHIQueueType, std::mutex> mtxes;
 
         std::mutex const& getMutex(RHIQueueType const type)
         {

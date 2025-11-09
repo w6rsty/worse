@@ -16,14 +16,14 @@ namespace Worse
 {
     namespace
     {
-        EnumArray<RendererRasterizerState, std::unique_ptr<RHIRasterizerState>> rasterizerStates;
-        EnumArray<RendererDepthStencilState, std::unique_ptr<RHIDepthStencilState>> depthStencilStates;
-        EnumArray<RendererBlendState, std::unique_ptr<RHIBlendState>> blendStates;
-        EnumArray<RendererTarget, std::unique_ptr<RHITexture>> renderTargets;
-        EnumArray<RendererShader, std::unique_ptr<RHIShader>> shaders;
-        EnumArray<RendererTexture, std::unique_ptr<RHITexture>> textures;
-        EnumArray<RHISamplerType, std::unique_ptr<RHISampler>> samplers;
-        EnumArray<geometry::GeometryType, std::unique_ptr<Mesh>> standardMeshes;
+        TEnumArray<RendererRasterizerState, std::unique_ptr<RHIRasterizerState>> rasterizerStates;
+        TEnumArray<RendererDepthStencilState, std::unique_ptr<RHIDepthStencilState>> depthStencilStates;
+        TEnumArray<RendererBlendState, std::unique_ptr<RHIBlendState>> blendStates;
+        TEnumArray<RendererTarget, std::unique_ptr<RHITexture>> renderTargets;
+        TEnumArray<RendererShader, std::unique_ptr<RHIShader>> shaders;
+        TEnumArray<RendererTexture, std::unique_ptr<RHITexture>> textures;
+        TEnumArray<RHISamplerType, std::unique_ptr<RHISampler>> samplers;
+        TEnumArray<geometry::GeometryType, std::unique_ptr<Mesh>> standardMeshes;
 
         std::shared_ptr<RHIBuffer> materialBuffer;
     } // namespace
@@ -202,14 +202,10 @@ namespace Worse
             textures[RendererTexture::DefaultEmissive] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "DefaultEmissive");
         }
 
-        for (Size i = 0; i < textures.size(); ++i)
+        for (auto& texture : textures)
         {
-            if (auto& texture = textures[i]; !texture || !texture->isValid())
+            if (!texture || !texture->isValid())
             {
-                WORSE_LOG_WARN(
-                    "Renderer",
-                    "Texture {} load failed",
-                    renderTextureToString(static_cast<RendererTexture>(i)));
                 // prevent usage of invalid texture
                 texture = nullptr;
             }

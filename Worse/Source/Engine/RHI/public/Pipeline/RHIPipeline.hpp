@@ -19,7 +19,7 @@ namespace Worse
         ~RHIPipeline();
 
         // clang-format off
-        ULong     getDescriptorHash() const { return m_descriptorHash; }
+        ULong             getDescriptorHash() const { return m_descriptorHash; }
         RHIPipelineState* getState()                { return &m_state; }
         RHINativeHandle   getHandle() const         { return m_pipeline; }
         RHINativeHandle   getLayout() const         { return m_pipelineLayout; }

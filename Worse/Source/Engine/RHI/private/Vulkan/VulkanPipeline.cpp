@@ -46,11 +46,11 @@ namespace Worse
 
         // shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-        for (Size i = 0; i < static_cast<Size>(RHIShaderType::Max); ++i)
+        for (RHIShader* shader : m_state.shaders)
         {
-            if (m_state.shaders[i])
+            if (shader)
             {
-                shaderStages.push_back(createShaderStage(m_state.shaders[i]));
+                shaderStages.push_back(createShaderStage(shader));
             }
         }
 
@@ -138,8 +138,8 @@ namespace Worse
 
             std::vector<VkVertexInputBindingDescription> vertexInputBindings;
             std::vector<VkVertexInputAttributeDescription> vertexInputAttributes;
-            // get vertex info from verte shader
-            if (RHIShader* vertexShader = m_state.shaders[static_cast<Size>(RHIShaderType::Vertex)])
+            // get vertex info from vertex shader
+            if (RHIShader* vertexShader = m_state.shaders[RHIShaderType::Vertex])
             {
                 RHIInputLayout const& inputLayout = vertexShader->getInputLayout();
                 auto attributes = inputLayout.getAttributes();
@@ -297,15 +297,15 @@ namespace Worse
 
         // log creation detail
         std::string shaderNames;
-        for (Size i = 0; i < static_cast<Size>(RHIShaderType::Max); ++i)
+        for (RHIShader* shader : m_state.shaders)
         {
-            if (m_state.shaders[i])
+            if (shader)
             {
                 if (!shaderNames.empty())
                 {
                     shaderNames += ", ";
                 }
-                shaderNames += m_state.shaders[i]->getName();
+                shaderNames += shader->getName();
             }
         }
         WORSE_LOG_INFO("Pipeline",

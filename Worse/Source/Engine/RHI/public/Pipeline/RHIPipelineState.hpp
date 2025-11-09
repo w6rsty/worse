@@ -17,6 +17,7 @@ namespace Worse
         // making sure shaders are compiled, and states are complete,
         // and generate hash
         void finalize();
+
         RHIShader const* getShader(RHIShaderType const type) const;
         std::vector<RHIDescriptor> collectDescriptors() const;
 
@@ -33,7 +34,7 @@ namespace Worse
         RHIRasterizerState* rasterizerState                  = nullptr;
         RHIDepthStencilState* depthStencilState              = nullptr;
         RHIBlendState* blendState                            = nullptr;
-        EnumArray<RHIShaderType, RHIShader*> shaders= {};
+        TEnumArray<RHIShaderType, RHIShader*> shaders = {};
         std::array<RHITexture*, RHIConfig::MAX_RENDER_TARGET> renderTargetColorTextures = {nullptr};
         RHITexture* renderTargetDepthTexture = nullptr;
         // clang-format on

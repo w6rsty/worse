@@ -199,13 +199,13 @@ namespace Worse
         UInt indexCompute  = std::numeric_limits<UInt>::max();
         UInt indexTransfer = std::numeric_limits<UInt>::max();
 
-        EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> regular;
+        TEnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> regular;
 
         std::mutex mtxImmediateCmd;
         Bool isImmediateCmdActive = false;
         std::binary_semaphore semImmediateCmd{1};
         RHIQueue* activeQueue = nullptr;
-        EnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
+        TEnumArray<RHIQueueType, std::shared_ptr<RHIQueue>> immediate;
 
         /**
          * @brief 从队列族属性中获取符合条件的队列族索引
@@ -287,8 +287,14 @@ namespace Worse
 
         void destroy()
         {
-            regular.fill(nullptr);
-            immediate.fill(nullptr);
+            for (auto& queue : regular)
+            {
+                queue = nullptr;
+            }
+            for (auto& queue : immediate)
+            {
+                queue = nullptr;
+            }
         }
     } // namespace queues
 

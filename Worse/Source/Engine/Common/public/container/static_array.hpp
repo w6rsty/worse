@@ -1,5 +1,6 @@
 #pragma once
 #include "base_type.hpp"
+#include "common_macro.hpp"
 #include "container/container_define.hpp"
 
 #include <utility>

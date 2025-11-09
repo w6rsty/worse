@@ -211,12 +211,12 @@ namespace Worse
         m_frameConstantBufferInfo.offset = 0;
         m_frameConstantBufferInfo.range  = buffer->getSize();
 
-        EnumArray<RHISamplerType, RHISampler*> samplers = RHIDevice::getResourceProvider()->getSamplers();
+        TEnumArray<RHISamplerType, RHISampler*> samplers = RHIDevice::getResourceProvider()->getSamplers();
 
         m_samplerInfos[RHISamplerType::CompareDepth].sampler        = samplers[RHISamplerType::CompareDepth]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::PointClampEdge].sampler      = samplers[RHISamplerType::PointClampEdge]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::PointClampBorder].sampler    = samplers[RHISamplerType::PointClampBorder]->getHandle().asValue<VkSampler>();
-        m_samplerInfos[RHISamplerType::PointWrap].sampler                = samplers[RHISamplerType::PointWrap]->getHandle().asValue<VkSampler>();
+        m_samplerInfos[RHISamplerType::PointWrap].sampler           = samplers[RHISamplerType::PointWrap]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::BilinearClampEdge].sampler   = samplers[RHISamplerType::BilinearClampEdge]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::BilinearClampBorder].sampler = samplers[RHISamplerType::BilinearClampBorder]->getHandle().asValue<VkSampler>();
         m_samplerInfos[RHISamplerType::BilinearWrap].sampler        = samplers[RHISamplerType::BilinearWrap]->getHandle().asValue<VkSampler>();
@@ -241,7 +241,7 @@ namespace Worse
         m_staticWrites[2].dstBinding      = RHIConfig::HLSL_REGISTER_SHIFT_S + 1; // s1
         m_staticWrites[2].descriptorCount = 8;
         m_staticWrites[2].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
-        m_staticWrites[2].pImageInfo      = &m_samplerInfos[1];
+        m_staticWrites[2].pImageInfo      = &m_samplerInfos[RHISamplerType::PointClampEdge];
         // clang-format on
     }
 

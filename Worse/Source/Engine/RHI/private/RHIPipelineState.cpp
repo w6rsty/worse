@@ -230,7 +230,7 @@ namespace Worse
 
     RHIPipelineStateBuilder& RHIPipelineStateBuilder::addShader(RHIShader* shader)
     {
-        m_pso.shaders[static_cast<Size>(shader->getShaderType())] = shader;
+        m_pso.shaders[shader->getShaderType()] = shader;
         return *this;
     }
 
@@ -274,7 +274,7 @@ namespace Worse
     {
         m_pso.finalize();
 
-        return std::move(m_pso);
+        return m_pso;
     }
 
 } // namespace Worse

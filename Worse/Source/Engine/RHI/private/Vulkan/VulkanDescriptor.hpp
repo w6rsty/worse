@@ -40,7 +40,7 @@ namespace Worse
 
         // clang-format off
         VkDescriptorBufferInfo m_frameConstantBufferInfo = {};
-        EnumArray<RHISamplerType, VkDescriptorImageInfo> m_samplerInfos = {};
+        TEnumArray<RHISamplerType, VkDescriptorImageInfo> m_samplerInfos = {};
         std::array<VkWriteDescriptorSet, 3> m_staticWrites = {};
         // clang-format on
     };

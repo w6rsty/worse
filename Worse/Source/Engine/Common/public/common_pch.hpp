@@ -7,6 +7,9 @@
 
 #include "logger/logger.hpp"
 
+#include "container/container_define.hpp"
+#include "container/container_fwd.hpp"
+#include "container/container_allocation.hpp"
 #include "container/enum_array.hpp"
 #include "container/static_array.hpp"
 

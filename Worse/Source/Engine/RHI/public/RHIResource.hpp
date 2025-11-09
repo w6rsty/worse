@@ -86,7 +86,8 @@ namespace Worse
     class RHIResource
     {
     public:
-        RHIResource(std::string_view name = "") : m_name(name)
+        RHIResource(std::string_view name = "")
+            : m_name(name)
         {
         }
 
@@ -99,7 +100,7 @@ namespace Worse
         std::string m_name;
     };
 
-    // Renderer use this inteface claas to provide basic RHI resources
+    // Renderer use this interface class to provide basic RHI resources
     class RHIResourceProvider
     {
     public:
@@ -109,7 +110,7 @@ namespace Worse
         virtual std::pair<RHIShader*, RHIShader*> getPlaceholderShader() const = 0;
         virtual RHITexture* getPlaceholderTexture() const = 0;
         virtual RHIBuffer* getFrameConstantBuffer() const = 0;
-        virtual EnumArray<RHISamplerType, RHISampler*> getSamplers() const = 0;
+        virtual TEnumArray<RHISamplerType, RHISampler*> getSamplers() const = 0;
         // clang-format on
 
         // make sure all resources are ready

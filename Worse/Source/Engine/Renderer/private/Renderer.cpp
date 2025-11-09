@@ -51,9 +51,9 @@ namespace Worse
                 return frameConstantBuffer.get();
             }
 
-            EnumArray<RHISamplerType, RHISampler*> getSamplers() const override
+            TEnumArray<RHISamplerType, RHISampler*> getSamplers() const override
             {
-                EnumArray<RHISamplerType, RHISampler*> samplers;
+                TEnumArray<RHISamplerType, RHISampler*> samplers(InPlace, nullptr);
                 samplers[RHISamplerType::CompareDepth]        = Renderer::getSampler(RHISamplerType::CompareDepth);
                 samplers[RHISamplerType::PointClampBorder]    = Renderer::getSampler(RHISamplerType::PointClampBorder);
                 samplers[RHISamplerType::PointClampEdge]      = Renderer::getSampler(RHISamplerType::PointClampEdge);
