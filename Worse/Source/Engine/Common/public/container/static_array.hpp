@@ -190,9 +190,9 @@ namespace Worse
 
         // clang-format off
         RangedForIteratorType             constexpr begin()        { return RangedForIteratorType(m_storage.elements); }
-        RangedForConstReverseIteratorType constexpr begin()  const { return RangedForConstIteratorType(m_storage.elements); }
+        RangedForConstIteratorType        constexpr begin()  const { return RangedForConstIteratorType(m_storage.elements); }
         RangedForIteratorType             constexpr end()          { return RangedForIteratorType(m_storage.elements + NumElements); }
-        RangedForConstReverseIteratorType constexpr end()    const { return RangedForConstIteratorType(m_storage.elements + NumElements); }
+        RangedForConstIteratorType        constexpr end()    const { return RangedForConstIteratorType(m_storage.elements + NumElements); }
         RangedForReverseIteratorType      constexpr rbegin()       { return RangedForReverseIteratorType(m_storage.elements + NumElements); }
         RangedForConstReverseIteratorType constexpr rbegin() const { return RangedForConstReverseIteratorType(m_storage.elements + NumElements); }
         RangedForReverseIteratorType      constexpr rend()         { return RangedForReverseIteratorType(m_storage.elements); }
