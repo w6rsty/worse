@@ -1,4 +1,6 @@
 #pragma once
+#include "base_type.hpp"
+
 #include <filesystem>
 
 namespace Worse

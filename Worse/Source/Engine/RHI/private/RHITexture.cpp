@@ -1,3 +1,4 @@
+#include "logger/logger.hpp"
 #include "TextureImporter.hpp"
 #include "RHIDevice.hpp"
 #include "RHICommandList.hpp"

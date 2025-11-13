@@ -1,4 +1,5 @@
 #pragma once
+#include "logger/logger.hpp"
 #include "Prefab.hpp"
 #include "ECS/Commands.hpp"
 #include "ECS/Resource.hpp"

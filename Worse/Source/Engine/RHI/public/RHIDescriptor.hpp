@@ -2,7 +2,9 @@
 #include "base_type.hpp"
 #include "RHIDefinitions.hpp"
 
+#include <array>
 #include <string>
+#include <vector>
 
 namespace Worse
 {

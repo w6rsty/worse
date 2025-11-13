@@ -1,3 +1,4 @@
+#include "logger/logger.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
 #include "RHIVertex.hpp"

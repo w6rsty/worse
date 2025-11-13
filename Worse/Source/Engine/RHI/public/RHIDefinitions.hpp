@@ -31,6 +31,8 @@
 
 #endif
 
+#include <string>
+
 namespace Worse
 {
 

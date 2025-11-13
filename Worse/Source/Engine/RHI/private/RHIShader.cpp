@@ -1,4 +1,5 @@
 #include "math/hash.hpp"
+#include "logger/logger.hpp"
 #include "Profiling/Stopwatch.hpp"
 #include "FileSystem.hpp"
 #include "RHIDevice.hpp"

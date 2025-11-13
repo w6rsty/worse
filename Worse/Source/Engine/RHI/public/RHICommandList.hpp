@@ -8,6 +8,7 @@
 
 #include <span>
 #include <atomic>
+#include <memory>
 
 namespace Worse
 {

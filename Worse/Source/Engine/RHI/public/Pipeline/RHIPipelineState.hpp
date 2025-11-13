@@ -5,6 +5,9 @@
 #include "RHIDefinitions.hpp"
 #include "RHIViewport.hpp"
 
+#include <array>
+#include <vector>
+
 namespace Worse
 {
 

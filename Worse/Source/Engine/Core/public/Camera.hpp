@@ -1,5 +1,5 @@
 #pragma once
-#include "math/math.hpp"
+#include "math/math_includes.hpp"
 
 namespace Worse
 {

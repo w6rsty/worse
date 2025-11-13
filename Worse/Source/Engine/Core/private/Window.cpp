@@ -1,5 +1,6 @@
-#include "Window.hpp"
+#include "common_macro.hpp"
 #include "logger/logger.hpp"
+#include "Window.hpp"
 #include "Event.hpp"
 
 #include "SDL3/SDL_events.h"
