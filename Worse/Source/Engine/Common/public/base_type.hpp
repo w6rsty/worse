@@ -22,6 +22,7 @@ namespace Worse
     using Size    = std::size_t;
     using PtrDiff = std::ptrdiff_t;
     using PtrInt  = std::intptr_t;
+    using UPtrInt = std::uintptr_t;
 
     using Float  = float;
     using Double = double;
