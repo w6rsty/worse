@@ -1,5 +1,5 @@
 #include "math/hash.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "Platform.hpp"
 #include "AssetServer.hpp"
 

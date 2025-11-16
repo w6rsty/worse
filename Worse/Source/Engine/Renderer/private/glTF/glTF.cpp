@@ -2,7 +2,7 @@
 #include "math/transform.hpp"
 #include "glTF/glTF.hpp"
 #include "AssetServer.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "RHITypes.hpp"
 
 #include "MathElementTraits.hpp" // IWYU pragma: keep

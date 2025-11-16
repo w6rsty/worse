@@ -1,6 +1,6 @@
 #include "Mesh.hpp"
 #include "RHIBuffer.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 
 namespace Worse
 {

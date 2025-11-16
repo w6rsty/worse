@@ -1,6 +1,5 @@
 #include "logger/logger.hpp"
-#include "common_macro.hpp"
-#include "logger/logger.hpp"
+#include "macro/common_macro.hpp"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/async.h"

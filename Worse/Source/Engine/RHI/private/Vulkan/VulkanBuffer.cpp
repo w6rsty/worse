@@ -1,4 +1,4 @@
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "RHIDevice.hpp"
 #include "RHICommandList.hpp"
 #include "RHIBuffer.hpp"
@@ -31,7 +31,7 @@ namespace Worse
                 if (m_mappable)
                 {
                     WORSE_ASSERT_MSG(data != nullptr,
-                                  "Uniform buffer must have data if mappable");
+                                     "Uniform buffer must have data if mappable");
                 }
             }
 
@@ -39,13 +39,13 @@ namespace Worse
             if (m_usageFlags & VII_BIT)
             {
                 WORSE_ASSERT_MSG(std::popcount(static_cast<UByte>(m_usageFlags & VII_MASK)) == 1,
-                              "RHIBuffer usage must specify exactly one of: Vertex, Index, or Instance");
+                                 "RHIBuffer usage must specify exactly one of: Vertex, Index, or Instance");
 
                 // vertex/index/instance only (check if no storage flag)
                 if ((m_usageFlags & RHIBufferUsage::FlagBits::Storage) == 0)
                 {
                     WORSE_ASSERT_MSG(data != nullptr,
-                                  "Vertex/Index/Instance buffer must have data");
+                                     "Vertex/Index/Instance buffer must have data");
                     isVIIOnly = true;
                 }
                 else
@@ -185,7 +185,7 @@ namespace Worse
         if (!cmdList)
         {
             WORSE_LOG_ERROR("RHIBuffer",
-                         "Failed to update buffer, cmdList is null");
+                            "Failed to update buffer, cmdList is null");
             return;
         }
         WORSE_ASSERT_MSG(m_mappable, "Cannot update unmappable buffer");

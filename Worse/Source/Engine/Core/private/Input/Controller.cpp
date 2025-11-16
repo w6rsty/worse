@@ -1,6 +1,6 @@
 #include "math/math_includes.hpp"
 #include "Input/Controller.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 
 #include "SDL3/SDL_gamepad.h"
 

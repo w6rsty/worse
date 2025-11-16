@@ -1,4 +1,4 @@
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"
 #include "RHIVertex.hpp"
@@ -310,12 +310,12 @@ namespace Worse
             }
         }
         WORSE_LOG_INFO("Pipeline",
-                    "Created `{}` (Type: {}, Topology {}, Shaders: [{}])",
-                    m_state.name,
-                    m_state.type == RHIPipelineType::Graphics ? "graphics"
-                                                              : "compute",
-                    rhiPrimitiveTopologyToString(m_state.primitiveTopology),
-                    shaderNames);
+                       "Created `{}` (Type: {}, Topology {}, Shaders: [{}])",
+                       m_state.name,
+                       m_state.type == RHIPipelineType::Graphics ? "graphics"
+                                                                 : "compute",
+                       rhiPrimitiveTopologyToString(m_state.primitiveTopology),
+                       shaderNames);
     }
 
 } // namespace Worse

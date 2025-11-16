@@ -1,33 +1,33 @@
 #pragma once
 #include "base_type.hpp"
 #include "bit_flag.hpp"
-#include "common_macro.hpp"
+#include "macro/common_macro.hpp"
 #include "RHITypes.hpp"
 
 #define WS_RHI_BACKEND_VULKAN
 
 #ifdef WS_RHI_BACKEND_VULKAN
-#include "volk.h"
+    #include "volk.h"
 
-#ifdef DEBUG
-#define WS_ASSERT_VK(result)                                                          \
-    do                                                                                \
-    {                                                                                 \
-        VkResult vkResult = (result);                                                 \
-        if (vkResult != VK_SUCCESS)                                                   \
-        {                                                                             \
-            WORSE_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
-            WORSE_ASSERT(vkResult);                                                      \
-        }                                                                             \
-    } while (false)
-#else
-#define WS_ASSERT_VK(result)          \
-    do                                \
-    {                                 \
-        VkResult vkResult = (result); \
-        (void)vkResult;               \
-    } while (false)
-#endif
+    #ifdef DEBUG
+        #define WS_ASSERT_VK(result)                                                             \
+            do                                                                                   \
+            {                                                                                    \
+                VkResult vkResult = (result);                                                    \
+                if (vkResult != VK_SUCCESS)                                                      \
+                {                                                                                \
+                    WORSE_LOG_ERROR("RHI", "Vulkan error:<{}>", vulkanResultToString(vkResult)); \
+                    WORSE_ASSERT(vkResult);                                                      \
+                }                                                                                \
+            } while (false)
+    #else
+        #define WS_ASSERT_VK(result)          \
+            do                                \
+            {                                 \
+                VkResult vkResult = (result); \
+                (void)vkResult;               \
+            } while (false)
+    #endif
 
 #endif
 

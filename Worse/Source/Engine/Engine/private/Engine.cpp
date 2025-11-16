@@ -1,4 +1,4 @@
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "Engine.hpp"
 #include "Window.hpp"
 #include "Input/Input.hpp"

@@ -1,5 +1,5 @@
 #pragma once
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "Prefab.hpp"
 #include "ECS/Commands.hpp"
 #include "ECS/Resource.hpp"
@@ -31,8 +31,8 @@ namespace Worse
             m_prevState = m_currState;
             m_nextState = newState;
             WORSE_LOG_INFO("Page",
-                        "Transfer to state: {}",
-                        static_cast<int>(m_nextState));
+                           "Transfer to state: {}",
+                           static_cast<int>(m_nextState));
         }
 
         void back()
@@ -41,8 +41,8 @@ namespace Worse
             {
                 m_nextState = m_prevState;
                 WORSE_LOG_INFO("Page",
-                            "Back to state: {}",
-                            static_cast<int>(m_nextState));
+                               "Back to state: {}",
+                               static_cast<int>(m_nextState));
             }
             else
             {

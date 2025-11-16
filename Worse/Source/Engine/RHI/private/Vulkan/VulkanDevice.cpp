@@ -1,5 +1,5 @@
 #include "DXCompiler.hpp" // Do not move
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "Platform.hpp"
 #include "RHIQueue.hpp"
 #include "RHIDevice.hpp"

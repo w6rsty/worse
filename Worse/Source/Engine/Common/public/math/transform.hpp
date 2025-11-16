@@ -1,5 +1,5 @@
 #pragma once
-#include "common_macro.hpp"
+#include "macro/common_macro.hpp"
 #include "math/math.hpp"
 #include "math/vector.hpp"
 #include "math/matrix.hpp"

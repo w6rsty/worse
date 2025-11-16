@@ -1,5 +1,5 @@
 #include "Input/Input.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "Window.hpp"
 
 #include "SDL3/SDL_mouse.h"

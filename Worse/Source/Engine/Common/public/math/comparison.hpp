@@ -1,6 +1,6 @@
 #pragma once
 #include "base_type.hpp"
-#include "common_macro.hpp"
+#include "macro/common_macro.hpp"
 #include "math/math_constants.hpp"
 
 #include <cmath>
@@ -109,7 +109,7 @@ namespace Worse
 
         template <typename T>
         constexpr Bool IsTotallyOrdered_V = IsTotallyOrdered<T>::value;
-    } // namespace comparison
+    } // namespace Comparison
 
     /*
      * Comparison policies for float pointer

@@ -5,7 +5,7 @@
 
 #pragma once
 #include "base_type.hpp"
-#include "common_macro.hpp"
+#include "macro/common_macro.hpp"
 #include "math/math_includes.hpp"
 #include "RHITypes.hpp"
 

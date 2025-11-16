@@ -1,6 +1,6 @@
 #include "math/math_includes.hpp"
 #include "Window.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "Event.hpp"
 #include "RHISwapchain.hpp"
 #include "RHIResource.hpp"

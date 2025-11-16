@@ -1,4 +1,4 @@
-#include "logger/logger.hpp"
+#include "logger/logger_macro.hpp"
 #include "DXCompiler.hpp"
 #include "RHIDevice.hpp"
 #include "RHIShader.hpp"

@@ -1,5 +1,5 @@
-#include "common_macro.hpp"
-#include "logger/logger.hpp"
+#include "macro/common_macro.hpp"
+#include "logger/logger_macro.hpp"
 #include "Window.hpp"
 #include "Event.hpp"
 

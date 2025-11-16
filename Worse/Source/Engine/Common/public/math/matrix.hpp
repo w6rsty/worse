@@ -1,6 +1,6 @@
 #pragma once
 #include "base_type.hpp"
-#include "common_macro.hpp"
+#include "macro/common_macro.hpp"
 #include "math/math.hpp"
 #include "math/vector.hpp"
 
@@ -499,10 +499,7 @@ namespace Worse
         }
 
         Matrix4(Matrix3 const& mat3)
-            : m00{mat3.m00}, m10{mat3.m10}, m20{mat3.m20}, m30{0.0f},
-              m01{mat3.m01}, m11{mat3.m11}, m21{mat3.m21}, m31{0.0f},
-              m02{mat3.m02}, m12{mat3.m12}, m22{mat3.m22}, m32{0.0f},
-              m03{0.0f}, m13{0.0f}, m23{0.0f}, m33{1.0f}
+            : m00{mat3.m00}, m10{mat3.m10}, m20{mat3.m20}, m30{0.0f}, m01{mat3.m01}, m11{mat3.m11}, m21{mat3.m21}, m31{0.0f}, m02{mat3.m02}, m12{mat3.m12}, m22{mat3.m22}, m32{0.0f}, m03{0.0f}, m13{0.0f}, m23{0.0f}, m33{1.0f}
         {
         }
 
