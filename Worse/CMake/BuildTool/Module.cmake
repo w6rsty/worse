@@ -58,6 +58,14 @@ macro(ModuleCppStandard STANDARD)
 endmacro()
 
 
+# Mark a module as deprecated
+macro(Deprecated)
+    __OutOfModuleEarlyReturn()
+
+    set(__${__CURRENT_MODULE_NAME}_IS_DEPRECATED TRUE)
+endmacro()
+
+
 function(__CollectConfigs)
     __OutOfModuleEarlyReturn()
 
@@ -85,6 +93,11 @@ function(__CollectConfigs)
         set(__${__CURRENT_MODULE_NAME}_PRIVATE_PCH "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}" PARENT_SCOPE)
     endif()
 
+    if (NOT DEFINED __${__CURRENT_MODULE_NAME}_IS_DEPRECATED)
+        set(__${__CURRENT_MODULE_NAME}_IS_DEPRECATED FALSE PARENT_SCOPE)
+    endif()
+        
+
     # Register properties
 
     set_target_properties(${__CURRENT_MODULE_NAME} PROPERTIES
@@ -101,7 +114,9 @@ function(__CollectConfigs)
         PRIVATE_PRECOMPILE_HEADER
             "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}"
         CXX_STANDARD
-            "${__${__CURRENT_MODULE_NAME}_CPP_STANDARD}")
+            "${__${__CURRENT_MODULE_NAME}_CPP_STANDARD}"
+        IS_DEPRECATED
+            "${__${__CURRENT_MODULE_NAME}_IS_DEPRECATED}")
 endfunction()
 
 function(DeclareModule MODULE_NAME)

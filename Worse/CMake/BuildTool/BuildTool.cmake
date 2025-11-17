@@ -36,15 +36,21 @@ function(CollectEngineModules OUT_VAR)
     set(ENGINE_MODULE_TARGETS "")
     
     set(ENGINE_ROOT_DIR ${WORSE_ROOT_DIR}/Source/Engine)
-    CollectAllSourceDirectories(${ENGINE_ROOT_DIR} ENGINE_MODULE_DIRS)
+    CollectSubSourceDirectories(${ENGINE_ROOT_DIR} ENGINE_MODULE_DIRS)
     foreach(module_dir ${ENGINE_MODULE_DIRS})
         add_subdirectory(${module_dir})
 
         # Each engine module has only one target
         get_property(module_name DIRECTORY ${module_dir} PROPERTY BUILDSYSTEM_TARGETS)
-        list(APPEND ENGINE_MODULE_TARGETS ${module_name})
-
         ClassifyTargets("Engine/Source/Runtime" ${module_name})
+
+        # Let deprecated modules be included in file system, but not use it
+        get_target_property(is_deprecated ${module_name} IS_DEPRECATED)
+        if(is_deprecated)
+            message(STATUS "Excluding deprecated module: ${module_name}")
+        else()
+            list(APPEND ENGINE_MODULE_TARGETS ${module_name})
+        endif()
     endforeach()
 
     foreach(engine_module ${ENGINE_MODULE_TARGETS})
