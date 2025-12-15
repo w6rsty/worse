@@ -3,12 +3,12 @@
 #include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_scancode.h"
 
-namespace Worse
+namespace worse
 {
     void Input::pollKeyboard()
     {
         int numKeys{0};
-        Bool const* keyStates = SDL_GetKeyboardState(&numKeys);
+        bool const* keyStates = SDL_GetKeyboardState(&numKeys);
 
         WORSE_ASSERT_MSG(keyStates != nullptr, "Failed to get keyboard state");
 
@@ -84,4 +84,4 @@ namespace Worse
         // clang-format on
     }
 
-} // namespace Worse
+} // namespace worse

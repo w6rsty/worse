@@ -1,8 +1,8 @@
 #pragma once
 
-#include "base_type.hpp"
+#include "BaseTypes.hpp"
 
-namespace Worse
+namespace worse
 {
 
     enum class ERHIObjectType
@@ -29,11 +29,11 @@ namespace Worse
     {
         union
         {
-            UPtrInt integer;
+            UPtr integer;
             void* pointer;
         };
 
-        FRHIObject(UPtrInt i)
+        FRHIObject(UPtr i)
             : integer(i)
         {
         }
@@ -56,9 +56,9 @@ namespace Worse
         virtual ~IRHIResource() = default;
 
     public:
-        virtual UInt IncreaseReference() = 0;
-        virtual UInt DecreaseReference() = 0;
-        virtual UInt GetReferenceCount() = 0;
+        virtual U32 IncreaseReference() = 0;
+        virtual U32 DecreaseReference() = 0;
+        virtual U32 GetReferenceCount() = 0;
 
         virtual FRHIObject GetNativeObject(ERHIObjectType objectType)
         {
@@ -72,4 +72,4 @@ namespace Worse
         IRHIResource& operator=(IRHIResource&&)      = delete;
     };
 
-} // namespace Worse
+} // namespace worse

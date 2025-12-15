@@ -1,10 +1,10 @@
-#include "macro/common_macro.hpp"
-#include "math/math.hpp"
-#include "memory/memory.hpp"
+#include "Macro/Common.hpp"
+#include "Math/Comparison.hpp"
+#include "Memory/Memory.hpp"
 
 #include <cstring>
 
-namespace Worse
+namespace worse
 {
 
     namespace Common::Detail
@@ -23,11 +23,11 @@ namespace Worse
         struct HeapAllocationHeader
         {
             Size size;
-            UInt alignment;
+            U32 alignment;
             void* raw;
         };
 
-        static void* Malloc(Size count, UInt alignment)
+        static void* Malloc(Size count, U32 alignment)
         {
             if (count == 0) return nullptr;
 
@@ -38,9 +38,9 @@ namespace Worse
 
             void* raw = ::operator new(totalSize, std::align_val_t(alignof(std::max_align_t)));
 
-            UPtrInt rawAddr      = r_cast<UPtrInt>(raw);
-            UPtrInt minHeaderPos = rawAddr + headerSize;
-            UPtrInt alignedUser  = AlignUp(minHeaderPos, alignment);
+            UPtr rawAddr      = r_cast<UPtr>(raw);
+            UPtr minHeaderPos = rawAddr + headerSize;
+            UPtr alignedUser  = AlignUp(minHeaderPos, alignment);
 
             HeapAllocationHeader* header = r_cast<HeapAllocationHeader*>(alignedUser - headerSize);
 
@@ -51,7 +51,7 @@ namespace Worse
             return r_cast<void*>(alignedUser);
         }
 
-        static void* Realloc(void* original, Size count, UInt alignment)
+        static void* Realloc(void* original, Size count, U32 alignment)
         {
             if (!original) return Malloc(count, alignment);
             if (count == 0)
@@ -60,10 +60,10 @@ namespace Worse
                 return nullptr;
             }
 
-            HeapAllocationHeader* oldHeader = r_cast<HeapAllocationHeader*>(r_cast<UByte*>(original) - sizeof(HeapAllocationHeader));
+            HeapAllocationHeader* oldHeader = r_cast<HeapAllocationHeader*>(r_cast<U8*>(original) - sizeof(HeapAllocationHeader));
 
-            Size oldSize  = oldHeader->size;
-            UInt oldAlign = oldHeader->alignment;
+            Size oldSize = oldHeader->size;
+            U32 oldAlign = oldHeader->alignment;
 
             if (alignment == 0) alignment = oldAlign;
 
@@ -80,14 +80,14 @@ namespace Worse
         {
             if (!userPtr) return;
 
-            auto header = r_cast<HeapAllocationHeader*>(r_cast<UByte*>(userPtr) - sizeof(HeapAllocationHeader));
+            auto header = r_cast<HeapAllocationHeader*>(r_cast<U8*>(userPtr) - sizeof(HeapAllocationHeader));
 
             void* raw = header->raw;
             ::operator delete(raw, std::align_val_t(alignof(std::max_align_t)));
         }
 
     private:
-        static WORSE_FORCE_INLINE UPtrInt AlignUp(UPtrInt ptrInt, UPtrInt alignment)
+        static WORSE_FORCE_INLINE UPtr AlignUp(UPtr ptrInt, UPtr alignment)
         {
             return (ptrInt + alignment - 1) & ~(alignment - 1);
         }
@@ -96,8 +96,8 @@ namespace Worse
     /* Memory operation interface */
     struct MallocFunction
     {
-        void* (*Malloc)(Size count, UInt alignment);
-        void* (*Realloc)(void* orignal, Size count, UInt aligment);
+        void* (*Malloc)(Size count, U32 alignment);
+        void* (*Realloc)(void* orignal, Size count, U32 aligment);
         void (*Free)(void* original);
     };
 
@@ -108,12 +108,12 @@ namespace Worse
         &StdMalloc::Free,
     };
 
-    void* Memory::Malloc(Size count, UInt alignment)
+    void* Memory::Malloc(Size count, U32 alignment)
     {
         return gMallocFunction.Malloc(count, alignment);
     }
 
-    void* Memory::Realloc(void* original, Size count, UInt alignment)
+    void* Memory::Realloc(void* original, Size count, U32 alignment)
     {
         return gMallocFunction.Realloc(original, count, alignment);
     }
@@ -123,4 +123,4 @@ namespace Worse
         gMallocFunction.Free(original);
     }
 
-} // namespace Worse
+} // namespace worse

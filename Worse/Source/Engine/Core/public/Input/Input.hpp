@@ -1,11 +1,11 @@
 #pragma once
-#include "base_type.hpp"
-#include "math/vector.hpp"
+#include "BaseTypes.hpp"
+#include "Math/Vector.hpp"
 #include "Event.hpp"
 
 #include <array>
 
-namespace Worse
+namespace worse
 {
     class Controller;
 
@@ -54,7 +54,7 @@ namespace Worse
         static void onEventMouse(void* event);
         static void onEventGamepad(void* event);
 
-        using KeyMap = std::array<Bool, k_keyCodeCount>;
+        using KeyMap = std::array<bool, k_keyCodeCount>;
         static KeyMap& GetKeyMap();
 
     public:
@@ -63,15 +63,15 @@ namespace Worse
 
         // Keyboard
         // up, down, pressed
-        static Bool isKey(KeyCode const key);
+        static bool isKey(KeyCode const key);
         // down edge
-        static Bool isKeyDown(KeyCode const key);
+        static bool isKeyDown(KeyCode const key);
         // up edge
-        static Bool isKeyUp(KeyCode const key);
+        static bool isKeyUp(KeyCode const key);
 
         // Mouse
-        static void setMouseVisible(Bool const visible);
-        static Bool getMouseVisible();
+        static void setMouseVisible(bool const visible);
+        static bool getMouseVisible();
         static Vector2 const& getMouseDelta();
         static Vector2 const& getMouseWheelDelta();
         // System position
@@ -81,14 +81,14 @@ namespace Worse
         static Vector2 getMousePositionRelativeToViewport();
 
         // Gamepad
-        static Bool isGamepadConnected();
+        static bool isGamepadConnected();
         // safe to call even if no controller is connected
         static Vector2 const& getThumbStickLeft();
         static Vector2 const& getThumbStickRight();
-        static Float getThumbStickLeftDistance();
-        static Float getThumbStickRightDistance();
-        static Float getTriggerLeft();
-        static Float getTriggerRight();
+        static F32 getThumbStickLeftDistance();
+        static F32 getThumbStickRightDistance();
+        static F32 getTriggerLeft();
+        static F32 getTriggerRight();
         // must validate that a controller is connected before dereferencing
         static Controller* getConnectedController();
 
@@ -97,4 +97,4 @@ namespace Worse
         static inline Input::KeyMap s_keymapLastFrame{};
     };
 
-} // namespace Worse
+} // namespace worse

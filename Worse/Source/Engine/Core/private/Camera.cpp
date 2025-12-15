@@ -1,7 +1,7 @@
 #include "Camera.hpp"
-#include "math/math_includes.hpp"
+#include "Math/MathIncludes.hpp"
 
-namespace Worse
+namespace worse
 {
 
     Camera::Camera()
@@ -16,10 +16,10 @@ namespace Worse
         return *this;
     }
 
-    Camera& Camera::setPerspectiveParams(Float fovY, Float aspect, Float nearZ, Float farZ)
+    Camera& Camera::setPerspectiveParams(F32 fovY, F32 aspect, F32 nearZ, F32 farZ)
     {
         // Validate parameters
-        if (fovY <= 0.0f || fovY >= kPi || aspect <= 0.0f || nearZ <= 0.0f || farZ <= nearZ)
+        if (fovY <= 0.0f || fovY >= FMath::kPi || aspect <= 0.0f || nearZ <= 0.0f || farZ <= nearZ)
         {
             return *this;
         }
@@ -35,7 +35,7 @@ namespace Worse
         return *this;
     }
 
-    Camera& Camera::setOrthoParams(Float left, Float right, Float bottom, Float top, Float nearZ, Float farZ)
+    Camera& Camera::setOrthoParams(F32 left, F32 right, F32 bottom, F32 top, F32 nearZ, F32 farZ)
     {
         // Validate parameters
         if (right <= left || top <= bottom || farZ <= nearZ)
@@ -112,4 +112,4 @@ namespace Worse
         return result.vector();
     }
 
-} // namespace Worse
+} // namespace worse

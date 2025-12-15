@@ -1,22 +1,23 @@
 #pragma once
-#include "base_type.hpp"
 
-namespace Worse
+#include "BaseTypes.hpp"
+
+namespace worse
 {
 
-    template <Int IndexSize>
+    template <I32 IndexSize>
     struct BitsToSizeType
     {
     };
 
     // clang-format off
-    template <> struct BitsToSizeType<8>  { using Type = Byte; };
-    template <> struct BitsToSizeType<16> { using Type = Short; };
-    template <> struct BitsToSizeType<32> { using Type = Int; };
-    template <> struct BitsToSizeType<64> { using Type = Long; };
+    template <> struct BitsToSizeType<8>  { using Type = I8; };
+    template <> struct BitsToSizeType<16> { using Type = I16; };
+    template <> struct BitsToSizeType<32> { using Type = I32; };
+    template <> struct BitsToSizeType<64> { using Type = I64; };
     // clang-format on
 
-    template <Int IndexSize>
+    template <I32 IndexSize>
     class SizedHeapAllocator
     {
     public:
@@ -24,7 +25,7 @@ namespace Worse
 
         enum
         {
-            NeedsElementType = kFalse
+            NeedsElementType = false
         };
 
         class ForAnyElementType
@@ -43,4 +44,4 @@ namespace Worse
         };
     };
 
-} // namespace Worse
+} // namespace worse

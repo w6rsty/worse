@@ -1,5 +1,5 @@
-#include "logger/logger.hpp"
-#include "macro/common_macro.hpp"
+#include "Logger/Logger.hpp"
+#include "Macro/Common.hpp"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/async.h"
@@ -8,7 +8,7 @@
 
 #include <array>
 
-namespace Worse
+namespace worse
 {
 
     Logger& Logger::Instance()
@@ -59,4 +59,4 @@ namespace Worse
         logger->log(levelMap[s_cast<Size>(level)], "[{}] {}", target, formatted);
     }
 
-} // namespace Worse
+} // namespace worse

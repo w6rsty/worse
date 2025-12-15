@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Worse
+namespace worse
 {
 
     // Static tags for container construction
@@ -21,4 +21,4 @@ namespace Worse
         PerElement
     };
 
-} // namespace Worse
+} // namespace worse

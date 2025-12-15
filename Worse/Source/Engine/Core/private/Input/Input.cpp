@@ -3,12 +3,12 @@
 
 #include "SDL3/SDL_events.h"
 
-namespace Worse
+namespace worse
 {
     void Input::initialize()
     {
         WORSE_ASSERT_MSG(Window::getHandleSDL() != nullptr,
-                      "Input system requires SDL to be initialized.");
+                         "Input system requires SDL to be initialized.");
 
         s_keymap.fill(false);
         s_keymapLastFrame.fill(false);
@@ -38,19 +38,19 @@ namespace Worse
         onEventGamepad(event);
     }
 
-    Bool Input::isKey(KeyCode const key)
+    bool Input::isKey(KeyCode const key)
     {
         return s_keymap[static_cast<Size>(key)];
     }
 
-    Bool Input::isKeyDown(KeyCode const key)
+    bool Input::isKeyDown(KeyCode const key)
     {
         return isKey(key) && !s_keymapLastFrame[static_cast<Size>(key)];
     }
 
-    Bool Input::isKeyUp(KeyCode const key)
+    bool Input::isKeyUp(KeyCode const key)
     {
         return !isKey(key) && s_keymapLastFrame[static_cast<Size>(key)];
     }
 
-} // namespace Worse
+} // namespace worse

@@ -6,15 +6,15 @@
 #include <cstdlib>
 #include <memory>
 
-namespace Worse
+namespace worse
 {
     namespace
     {
         std::shared_ptr<Controller> s_controller = nullptr;
         Vector2 s_thumbStickLeft{0.0f, 0.0f};
         Vector2 s_thumbStickRight{0.0f, 0.0f};
-        Float s_triggerLeft{0.0f};
-        Float s_triggerRight{0.0f};
+        F32 s_triggerLeft{0.0f};
+        F32 s_triggerRight{0.0f};
 
         std::vector<ControllerDescriptor> fetchInfos()
         {
@@ -94,12 +94,12 @@ namespace Worse
         }
 
         // TODO: Support individual dead zones for each axis
-        Float analogValue(SDL_Gamepad* gamepad, SDL_GamepadAxis const axis)
+        F32 analogValue(SDL_Gamepad* gamepad, SDL_GamepadAxis const axis)
         {
-            Float normalized = 0.0f;
+            F32 normalized = 0.0f;
 
-            static const Short k_defaultThumbStickDeadZone = 8000;
-            static const Short k_defaultTriggerDeadZone    = 0;
+            static const I16 k_defaultThumbStickDeadZone = 8000;
+            static const I16 k_defaultTriggerDeadZone    = 0;
 
             // For thumbsticks, value ranging from -32768 (up/left) to
             // 32767 (down/right). Triggers range from 0 when released
@@ -113,7 +113,7 @@ namespace Worse
             case SDL_GAMEPAD_AXIS_RIGHTX:
             case SDL_GAMEPAD_AXIS_RIGHTY:
             {
-                Short value = SDL_GetGamepadAxis(gamepad, axis);
+                I16 value = SDL_GetGamepadAxis(gamepad, axis);
                 if (std::abs(value) < k_defaultThumbStickDeadZone)
                 {
                     value = 0.0f;
@@ -124,17 +124,17 @@ namespace Worse
                                          : -k_defaultThumbStickDeadZone;
                 }
 
-                Float const range_negative = 32768.0f;
-                Float const range_positive = 32767.0f;
-                Float const range          = (value < 0) ? range_negative : range_positive;
-                normalized                 = static_cast<Float>(value) /
+                F32 const range_negative = 32768.0f;
+                F32 const range_positive = 32767.0f;
+                F32 const range          = (value < 0) ? range_negative : range_positive;
+                normalized                 = static_cast<F32>(value) /
                              (range - k_defaultThumbStickDeadZone);
                 break;
             }
             case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
             case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
             {
-                Short value = SDL_GetGamepadAxis(gamepad, axis);
+                I16 value = SDL_GetGamepadAxis(gamepad, axis);
                 if (value < k_defaultTriggerDeadZone)
                 {
                     value = 0.0f;
@@ -143,8 +143,8 @@ namespace Worse
                 {
                     value -= k_defaultTriggerDeadZone;
                 }
-                Float const range = 32767.0f - k_defaultTriggerDeadZone;
-                normalized        = static_cast<Float>(value) / range;
+                F32 const range = 32767.0f - k_defaultTriggerDeadZone;
+                normalized        = static_cast<F32>(value) / range;
                 break;
             }
             default:
@@ -240,7 +240,7 @@ namespace Worse
         }
     }
 
-    Bool Input::isGamepadConnected()
+    bool Input::isGamepadConnected()
     {
         return (s_controller != nullptr) && s_controller->isConnected();
     }
@@ -255,22 +255,22 @@ namespace Worse
         return s_thumbStickRight;
     }
 
-    Float Input::getThumbStickLeftDistance()
+    F32 Input::getThumbStickLeftDistance()
     {
         return s_thumbStickLeft.Length();
     }
 
-    Float Input::getThumbStickRightDistance()
+    F32 Input::getThumbStickRightDistance()
     {
         return s_thumbStickRight.Length();
     }
 
-    Float Input::getTriggerLeft()
+    F32 Input::getTriggerLeft()
     {
         return s_triggerLeft;
     }
 
-    Float Input::getTriggerRight()
+    F32 Input::getTriggerRight()
     {
         return s_triggerRight;
     }
@@ -280,4 +280,4 @@ namespace Worse
         return s_controller.get();
     }
 
-} // namespace Worse
+} // namespace worse

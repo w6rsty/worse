@@ -1,15 +1,14 @@
 #pragma once
-#include "base_type.hpp"
-#include "macro/common_macro.hpp"
-#include "math/math_constants.hpp"
 
-#include <cmath>
+#include "Macro/Common.hpp"
+#include "Math/Math.hpp"
+
 #include <cstring>
 #include <utility>
 #include <algorithm>
 #include <type_traits>
 
-namespace Worse
+namespace worse
 {
 
     namespace Comparison
@@ -25,7 +24,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        constexpr Bool HasEqualTo_V = HasEqualTo<T, U>::value;
+        constexpr bool HasEqualTo_V = HasEqualTo<T, U>::value;
 
         // T != U
         template <typename T, typename U, typename = void>
@@ -37,7 +36,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        constexpr Bool HasNotEqualTo_V = HasNotEqualTo<T, U>::value;
+        constexpr bool HasNotEqualTo_V = HasNotEqualTo<T, U>::value;
 
         // T < U
         template <typename T, typename U, typename = void>
@@ -49,7 +48,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        constexpr Bool HasLess_V = HasLess<T, U>::value;
+        constexpr bool HasLess_V = HasLess<T, U>::value;
 
         // T > U
         template <typename T, typename U, typename = void>
@@ -61,7 +60,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        constexpr Bool HasGreater_V = HasGreater<T, U>::value;
+        constexpr bool HasGreater_V = HasGreater<T, U>::value;
 
         // T <= U
         template <typename T, typename U, typename = void>
@@ -73,7 +72,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        constexpr Bool HasLessEqual_V = HasLessEuqal<T, U>::value;
+        constexpr bool HasLessEqual_V = HasLessEuqal<T, U>::value;
 
         // T >= U
         template <typename T, typename U, typename = void>
@@ -85,7 +84,7 @@ namespace Worse
         {
         };
         template <typename T, typename U>
-        constexpr Bool HasGreaterEqual_V = HasGreaterEqual<T, U>::value;
+        constexpr bool HasGreaterEqual_V = HasGreaterEqual<T, U>::value;
 
         template <typename T>
         struct IsEqualityComparable : std::conjunction<
@@ -95,7 +94,7 @@ namespace Worse
         };
 
         template <typename T>
-        constexpr Bool IsEqualityComparable_V = IsEqualityComparable<T>::value;
+        constexpr bool IsEqualityComparable_V = IsEqualityComparable<T>::value;
 
         template <typename T>
         struct IsTotallyOrdered : std::conjunction<
@@ -108,7 +107,7 @@ namespace Worse
         };
 
         template <typename T>
-        constexpr Bool IsTotallyOrdered_V = IsTotallyOrdered<T>::value;
+        constexpr bool IsTotallyOrdered_V = IsTotallyOrdered<T>::value;
     } // namespace Comparison
 
     /*
@@ -121,20 +120,20 @@ namespace Worse
 
     struct FloatCmpAbsoluteEps
     {
-        Float const epsilon = kFloatEpsilon;
+        F32 const epsilon = FMath::kFloatEpsilon;
     };
 
     struct FloatCmpRelativeEps
     {
-        Float const epsilon = kFloatEpsilon;
+        F32 const epsilon = FMath::kFloatEpsilon;
     };
 
-    Bool Eq(Float lhs, Float rhs, FloatCmpRawBitwise);
-    Bool Eq(Float lhs, Float rhs, FloatCmpAbsoluteEps policy);
-    Bool Eq(Float lhs, Float rhs, FloatCmpRelativeEps policy);
+    bool Eq(F32 lhs, F32 rhs, FloatCmpRawBitwise);
+    bool Eq(F32 lhs, F32 rhs, FloatCmpAbsoluteEps policy);
+    bool Eq(F32 lhs, F32 rhs, FloatCmpRelativeEps policy);
 
     template <typename T>
-    WORSE_FORCE_INLINE Bool Eq(T const& lhs, T const& rhs)
+    WORSE_FORCE_INLINE bool Eq(T const& lhs, T const& rhs)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
@@ -149,13 +148,13 @@ namespace Worse
     }
 
     template <typename T>
-    WORSE_FORCE_INLINE Bool Neq(T const& lhs, T const& rhs)
+    WORSE_FORCE_INLINE bool Neq(T const& lhs, T const& rhs)
     {
         return !Eq(lhs, rhs);
     }
 
     template <typename T, typename Policy>
-    WORSE_FORCE_INLINE Bool Neq(T const& lhs, T const& rhs, Policy policy)
+    WORSE_FORCE_INLINE bool Neq(T const& lhs, T const& rhs, Policy policy)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
@@ -168,31 +167,31 @@ namespace Worse
         }
     }
 
-    WORSE_FORCE_INLINE Bool Eq(Float lhs, Float rhs, FloatCmpRawBitwise)
+    WORSE_FORCE_INLINE bool Eq(F32 lhs, F32 rhs, FloatCmpRawBitwise)
     {
-        return std::memcmp(&lhs, &rhs, sizeof(Float)) == 0;
+        return std::memcmp(&lhs, &rhs, sizeof(F32)) == 0;
     }
 
-    WORSE_FORCE_INLINE Bool Eq(Float lhs, Float rhs, FloatCmpAbsoluteEps policy)
+    WORSE_FORCE_INLINE bool Eq(F32 lhs, F32 rhs, FloatCmpAbsoluteEps policy)
     {
         return std::abs(lhs - rhs) <= policy.epsilon;
     }
 
-    WORSE_FORCE_INLINE Bool Eq(Float lhs, Float rhs, FloatCmpRelativeEps policy)
+    WORSE_FORCE_INLINE bool Eq(F32 lhs, F32 rhs, FloatCmpRelativeEps policy)
     {
         if (Eq(lhs, rhs, FloatCmpAbsoluteEps{}))
         {
-            return kTrue;
+            return true;
         }
         return std::abs(lhs - rhs) <= policy.epsilon * std::max(std::abs(lhs), std::abs(rhs));
     }
 
     template <typename T>
-    WORSE_FORCE_INLINE Bool Less(T const& lhs, T const& rhs)
+    WORSE_FORCE_INLINE bool Less(T const& lhs, T const& rhs)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
-            return (rhs - lhs) > kFloatEpsilon;
+            return (rhs - lhs) > FMath::kFloatEpsilon;
         }
         else
         {
@@ -202,11 +201,11 @@ namespace Worse
     }
 
     template <typename T>
-    WORSE_FORCE_INLINE Bool Greater(T const& lhs, T const& rhs)
+    WORSE_FORCE_INLINE bool Greater(T const& lhs, T const& rhs)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
-            return (lhs - rhs) > kFloatEpsilon;
+            return (lhs - rhs) > FMath::kFloatEpsilon;
         }
         else
         {
@@ -216,7 +215,7 @@ namespace Worse
     }
 
     template <typename T>
-    WORSE_FORCE_INLINE Bool LessEq(T const& lhs, T const& rhs)
+    WORSE_FORCE_INLINE bool LessEq(T const& lhs, T const& rhs)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
@@ -230,7 +229,7 @@ namespace Worse
     }
 
     template <typename T>
-    WORSE_FORCE_INLINE Bool GreaterEq(T const& lhs, T const& rhs)
+    WORSE_FORCE_INLINE bool GreaterEq(T const& lhs, T const& rhs)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
@@ -263,4 +262,4 @@ namespace Worse
         return result;
     }
 
-} // namespace Worse
+} // namespace worse

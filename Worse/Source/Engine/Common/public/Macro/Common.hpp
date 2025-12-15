@@ -1,6 +1,7 @@
 #pragma once
-#include "macro/build.hpp"
-#include "macro/attribute.hpp"
+
+#include "Macro/Configs.hpp"
+#include "Macro/Attributes.hpp"
 
 #include <cstdlib>
 

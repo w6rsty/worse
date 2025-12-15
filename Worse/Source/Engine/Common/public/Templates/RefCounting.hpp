@@ -1,12 +1,12 @@
 #pragma once
 
-#include "base_type.hpp"
-#include "macro/common_macro.hpp"
+#include "BaseTypes.hpp"
+#include "Macro/Common.hpp"
 
 #include <atomic>
 #include <type_traits>
 
-namespace Worse
+namespace worse
 {
 
     /**
@@ -16,17 +16,17 @@ namespace Worse
     class TRefCounter : public T
     {
     private:
-        std::atomic<UInt> m_referenceCount = 0;
+        std::atomic<U32> m_ReferenceCount = 0;
 
     public:
-        virtual UInt IncreaseReference() override
+        virtual U32 IncreaseReference() override
         {
-            return ++m_referenceCount;
+            return ++m_ReferenceCount;
         }
 
-        virtual UInt DecreaseReference() override
+        virtual U32 DecreaseReference() override
         {
-            UInt result = --m_referenceCount;
+            U32 result = --m_ReferenceCount;
             if (result == 0)
             {
                 delete this;
@@ -34,9 +34,9 @@ namespace Worse
             return result;
         }
 
-        virtual UInt GetReferenceCount() override
+        virtual U32 GetReferenceCount() override
         {
-            return m_referenceCount.load();
+            return m_ReferenceCount.load();
         }
     };
 
@@ -50,27 +50,27 @@ namespace Worse
         using InterfaceType = T;
 
     protected:
-        T* m_ptr;
+        T* m_Ptr;
 
         template <typename U>
         friend class TRefCountPtr;
 
         void InternalIncreaseReference()
         {
-            if (m_ptr != nullptr)
+            if (m_Ptr != nullptr)
             {
-                m_ptr->IncreaseReference();
+                m_Ptr->IncreaseReference();
             }
         }
 
-        UInt InternalDecreaseReference()
+        U32 InternalDecreaseReference()
         {
-            UInt referenceCount = 0;
-            T* ptr              = m_ptr;
+            U32 referenceCount = 0;
+            T* ptr             = m_Ptr;
 
             if (ptr)
             {
-                m_ptr          = nullptr;
+                m_Ptr          = nullptr;
                 referenceCount = ptr->DecreaseReference();
             }
 
@@ -79,37 +79,37 @@ namespace Worse
 
     public:
         TRefCountPtr() noexcept
-            : m_ptr(nullptr)
+            : m_Ptr(nullptr)
         {
         }
 
         TRefCountPtr(std::nullptr_t) noexcept
-            : m_ptr(nullptr)
+            : m_Ptr(nullptr)
         {
         }
 
         template <typename U>
         TRefCountPtr(U* other) noexcept
-            : m_ptr(other)
+            : m_Ptr(other)
         {
             InternalIncreaseReference();
         }
 
         TRefCountPtr(TRefCountPtr const& other) noexcept
-            : m_ptr(other.m_ptr)
+            : m_Ptr(other.m_Ptr)
         {
             InternalIncreaseReference();
         }
 
         template <typename U, typename = std::enable_if_t<std::is_convertible_v<T*, U*>>>
         TRefCountPtr(TRefCountPtr<U> const& other) noexcept
-            : m_ptr(static_cast<U*>(other.m_ptr))
+            : m_Ptr(static_cast<U*>(other.m_ptr))
         {
             InternalIncreaseReference();
         }
 
         TRefCountPtr(TRefCountPtr&& other) noexcept
-            : m_ptr(nullptr)
+            : m_Ptr(nullptr)
         {
             if (this != reinterpret_cast<TRefCountPtr*>(&other))
             {
@@ -119,7 +119,7 @@ namespace Worse
 
         template <typename U, typename = std::enable_if_t<std::is_convertible_v<T*, U*>>>
         TRefCountPtr(TRefCountPtr<U>&& other) noexcept
-            : m_ptr(other.m_ptr)
+            : m_Ptr(other.m_ptr)
         {
             other.m_ptr = nullptr;
         }
@@ -137,7 +137,7 @@ namespace Worse
 
         TRefCountPtr& operator=(T* other) noexcept
         {
-            if (m_ptr != other)
+            if (m_Ptr != other)
             {
                 TRefCountPtr(other).Swap(*this);
             }
@@ -153,7 +153,7 @@ namespace Worse
 
         TRefCountPtr& operator=(TRefCountPtr const& other) noexcept
         {
-            if (m_ptr != other.m_ptr)
+            if (m_Ptr != other.m_Ptr)
             {
                 TRefCountPtr(other).Swap(*this);
             }
@@ -182,63 +182,63 @@ namespace Worse
 
         void Swap(TRefCountPtr& other) noexcept
         {
-            T* tmp      = m_ptr;
-            m_ptr       = other.m_ptr;
-            other.m_ptr = tmp;
+            T* tmp      = m_Ptr;
+            m_Ptr       = other.m_Ptr;
+            other.m_Ptr = tmp;
         }
 
         void Swap(TRefCountPtr&& other) noexcept
         {
-            T* tmp      = m_ptr;
-            m_ptr       = other.m_ptr;
-            other.m_ptr = tmp;
+            T* tmp      = m_Ptr;
+            m_Ptr       = other.m_Ptr;
+            other.m_Ptr = tmp;
         }
 
         WORSE_NODISCARD T* Get() const noexcept
         {
-            return m_ptr;
+            return m_Ptr;
         }
 
         operator T*() const
         {
-            return m_ptr;
+            return m_Ptr;
         }
 
         T* operator->() const noexcept
         {
-            return m_ptr;
+            return m_Ptr;
         }
 
         T** operator&()
         {
-            return &m_ptr;
+            return &m_Ptr;
         }
 
         WORSE_NODISCARD T* const* GetAddressOf() const noexcept
         {
-            return &m_ptr;
+            return &m_Ptr;
         }
 
         WORSE_NODISCARD T** GetAddressOf() noexcept
         {
-            return &m_ptr;
+            return &m_Ptr;
         }
 
         T* Detach() noexcept
         {
-            T* ptr = m_ptr;
-            m_ptr  = nullptr;
+            T* ptr = m_Ptr;
+            m_Ptr  = nullptr;
             return ptr;
         }
 
         void Attach(T* other)
         {
-            if (m_ptr != nullptr)
+            if (m_Ptr != nullptr)
             {
-                UInt referenceCount = m_ptr->DecreaseReference();
-                WORSE_ASSERT(referenceCount != 0 || m_ptr == other);
+                U32 referenceCount = m_Ptr->DecreaseReference();
+                WORSE_ASSERT(referenceCount != 0 || m_Ptr == other);
             }
-            m_ptr = other;
+            m_Ptr = other;
         }
 
         static TRefCountPtr<T> Create(T* other)
@@ -248,20 +248,20 @@ namespace Worse
             return ptr;
         }
 
-        UInt Reset()
+        U32 Reset()
         {
             return InternalDecreaseReference();
         }
 
-        UInt DbgGetReferenceCount() const noexcept
+        U32 DbgGetReferenceCount() const noexcept
         {
-            UInt referenceCount = 0;
-            if (m_ptr)
+            U32 referenceCount = 0;
+            if (m_Ptr)
             {
-                referenceCount = m_ptr->GetReferenceCount();
+                referenceCount = m_Ptr->GetReferenceCount();
             }
             return referenceCount;
         }
     };
 
-} // namespace Worse
+} // namespace worse

@@ -1,10 +1,10 @@
 #pragma once
-#include "base_type.hpp"
+#include "BaseTypes.hpp"
 
 #include <variant>
 #include <functional>
 
-namespace Worse
+namespace worse
 {
     enum class EventType
     {
@@ -23,4 +23,4 @@ namespace Worse
         static void subscribe(EventType const type, EventSubscribeFn&& fn);
         static void fire(EventType const type, Event const& payload = std::monostate{});
     };
-} // namespace Worse
+} // namespace worse

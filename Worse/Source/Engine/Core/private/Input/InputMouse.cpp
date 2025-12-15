@@ -1,5 +1,5 @@
 #include "Input/Input.hpp"
-#include "logger/logger_macro.hpp"
+#include "Logger/LogMacro.hpp"
 #include "Window.hpp"
 
 #include "SDL3/SDL_mouse.h"
@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-namespace Worse
+namespace worse
 {
 
     namespace
@@ -19,7 +19,7 @@ namespace Worse
 
     void Input::pollMouse()
     {
-        Float x{0.0f}, y{0.0f};
+        F32 x{0.0f}, y{0.0f};
         SDL_MouseButtonFlags mouseStates = SDL_GetGlobalMouseState(&x, &y);
         Vector2 position{x, y};
 
@@ -37,7 +37,7 @@ namespace Worse
     void Input::onEventMouse(void* event)
     {
         SDL_Event* sdlEvent = static_cast<SDL_Event*>(event);
-        UInt eventType      = sdlEvent->type;
+        U32 eventType      = sdlEvent->type;
 
         if (eventType == SDL_EVENT_MOUSE_WHEEL)
         {
@@ -50,7 +50,7 @@ namespace Worse
         }
     }
 
-    void Input::setMouseVisible(Bool const visible)
+    void Input::setMouseVisible(bool const visible)
     {
         if (visible)
         {
@@ -62,7 +62,7 @@ namespace Worse
         }
     }
 
-    Bool Input::getMouseVisible()
+    bool Input::getMouseVisible()
     {
         return SDL_CursorVisible();
     }
@@ -71,7 +71,7 @@ namespace Worse
     {
         if (!SDL_WarpMouseGlobal(position.x, position.y))
         {
-            WORSE_LOG_ERROR("Input", "Failed to set mouse position");
+            LOG_ERROR("Input", "Failed to set mouse position");
             return;
         }
         s_mousePosition = position;
@@ -95,8 +95,8 @@ namespace Worse
     Vector2 Input::getMousePositionRelativeToWindow()
     {
         auto [windowX, windowY] = Window::getPosition();
-        return Vector2{static_cast<Float>(s_mousePosition.x - windowX),
-                       static_cast<Float>(s_mousePosition.y - windowY)};
+        return Vector2{static_cast<F32>(s_mousePosition.x - windowX),
+                       static_cast<F32>(s_mousePosition.y - windowY)};
     }
 
     Vector2 Input::getMousePositionRelativeToViewport()
@@ -105,4 +105,4 @@ namespace Worse
         return Input::getMousePositionRelativeToWindow();
     }
 
-} // namespace Worse
+} // namespace worse

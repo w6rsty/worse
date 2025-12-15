@@ -1,10 +1,10 @@
 #pragma once
-#include "base_type.hpp"
+#include "BaseTypes.hpp"
 
 #include <format>
 #include <string_view>
 
-namespace Worse
+namespace worse
 {
 
     enum class LogLevel
@@ -22,7 +22,7 @@ namespace Worse
     public:
         static Logger& Instance();
 
-        void Initialize(Size queueSize = MaxQueueSize, Size maxFileSize = MaxLogFileSize);
+        void Initialize(Size queueSize = kMaxQueueSize, Size maxFileSize = kMaxLogFileSize);
 
         void LogImpl(LogLevel level, std::string_view target, std::string_view formatted);
 
@@ -34,8 +34,8 @@ namespace Worse
         }
 
     public:
-        inline static constexpr Size MaxQueueSize   = 4096;
-        inline static constexpr Size MaxLogFileSize = 5 * 1024 * 1024;
+        inline static constexpr Size kMaxQueueSize   = 4096;
+        inline static constexpr Size kMaxLogFileSize = 5 * 1024 * 1024;
     };
 
-} // namespace Worse
+} // namespace worse

@@ -1,6 +1,6 @@
-#include "math/vector.hpp"
+#include "Math/Vector.hpp"
 
-namespace Worse
+namespace worse
 {
 
     Vector2 const Vector2::ZERO{0.0f, 0.0f};
@@ -30,4 +30,4 @@ namespace Worse
     Vector4 const Vector4::NEGATIVE_UNIT_Z{0.0f, 0.0f, -1.0f, 0.0f};
     Vector4 const Vector4::NEGATIVE_UNIT_W{0.0f, 0.0f, 0.0f, -1.0f};
 
-} // namespace Worse
+} // namespace worse

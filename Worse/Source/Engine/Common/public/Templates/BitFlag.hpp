@@ -1,10 +1,10 @@
 #pragma once
 
-#include "macro/common_macro.hpp"
+#include "Macro/Common.hpp"
 
 #include <type_traits>
 
-namespace Worse
+namespace worse
 {
 
     template <typename BaseType, typename = std::enable_if_t<std::is_unsigned_v<BaseType>>>
@@ -12,50 +12,50 @@ namespace Worse
     {
     public:
         constexpr TFlagBit()
-            : m_value(BaseType())
+            : m_Value(BaseType())
         {
         }
 
         constexpr TFlagBit(BaseType value)
-            : m_value(value)
+            : m_Value(value)
         {
         }
 
         WORSE_FORCE_INLINE constexpr TFlagBit& operator|=(TFlagBit const& rhs)
         {
-            m_value |= rhs.m_value;
+            m_Value |= rhs.m_Value;
             return *this;
         }
         WORSE_FORCE_INLINE constexpr TFlagBit& operator&=(TFlagBit const& rhs)
         {
-            m_value &= rhs.m_value;
+            m_Value &= rhs.m_Value;
             return *this;
         }
         WORSE_FORCE_INLINE constexpr TFlagBit& operator^=(TFlagBit const& rhs)
         {
-            m_value ^= rhs.m_value;
+            m_Value ^= rhs.m_Value;
             return *this;
         }
 
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator~() const { return TFlagBit{static_cast<BaseType>(~m_value)}; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator|(TFlagBit const& rhs) const { return TFlagBit{static_cast<BaseType>(m_value | rhs.m_value)}; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator&(TFlagBit const& rhs) const { return TFlagBit{static_cast<BaseType>(m_value & rhs.m_value)}; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator^(TFlagBit const& rhs) const { return TFlagBit{static_cast<BaseType>(m_value ^ rhs.m_value)}; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator~() const { return TFlagBit{static_cast<BaseType>(~m_Value)}; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator|(TFlagBit const& rhs) const { return TFlagBit{static_cast<BaseType>(m_Value | rhs.m_Value)}; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator&(TFlagBit const& rhs) const { return TFlagBit{static_cast<BaseType>(m_Value & rhs.m_Value)}; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr TFlagBit operator^(TFlagBit const& rhs) const { return TFlagBit{static_cast<BaseType>(m_Value ^ rhs.m_Value)}; }
 
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator==(TFlagBit const& rhs) const { return m_value == rhs.m_value; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator!=(TFlagBit const& rhs) const { return m_value != rhs.m_value; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator<(TFlagBit const& rhs) const { return m_value < rhs.m_value; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator<=(TFlagBit const& rhs) const { return m_value <= rhs.m_value; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator>(TFlagBit const& rhs) const { return m_value > rhs.m_value; }
-        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator>=(TFlagBit const& rhs) const { return m_value >= rhs.m_value; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator==(TFlagBit const& rhs) const { return m_Value == rhs.m_Value; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator!=(TFlagBit const& rhs) const { return m_Value != rhs.m_Value; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator<(TFlagBit const& rhs) const { return m_Value < rhs.m_Value; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator<=(TFlagBit const& rhs) const { return m_Value <= rhs.m_Value; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator>(TFlagBit const& rhs) const { return m_Value > rhs.m_Value; }
+        WORSE_NODISCARD WORSE_FORCE_INLINE constexpr bool operator>=(TFlagBit const& rhs) const { return m_Value >= rhs.m_Value; }
 
-        WORSE_NODISCARD operator bool() const { return m_value != 0; }
-        WORSE_NODISCARD operator BaseType() const { return m_value; }
+        WORSE_NODISCARD operator bool() const { return m_Value != 0; }
+        WORSE_NODISCARD operator BaseType() const { return m_Value; }
 
-        WORSE_NODISCARD constexpr BaseType GetValue() const { return m_value; }
+        WORSE_NODISCARD constexpr BaseType GetValue() const { return m_Value; }
 
     private:
-        BaseType m_value;
+        BaseType m_Value;
 
     public:
         /**
@@ -65,14 +65,14 @@ namespace Worse
         {
         public:
             constexpr explicit BitIterator(BaseType bits)
-                : m_bits(bits), m_current(0), m_isValid(false)
+                : m_Bits(bits), m_Current(0), m_IsValid(false)
             {
                 Advance();
             }
 
             WORSE_NODISCARD constexpr BaseType operator*() const
             {
-                return m_current;
+                return m_Current;
             }
 
             constexpr BitIterator& operator++()
@@ -83,23 +83,23 @@ namespace Worse
 
             WORSE_NODISCARD constexpr bool operator!=(BitIterator const& rhs) const
             {
-                return m_isValid;
+                return m_IsValid;
             }
 
         private:
             WORSE_FORCE_INLINE constexpr void Advance()
             {
-                if (m_bits == 0)
+                if (m_Bits == 0)
                 {
-                    m_isValid = false;
+                    m_IsValid = false;
                     return;
                 }
 
-                m_isValid = true;
+                m_IsValid = true;
 
-                m_current = LeastSignificantBit(m_bits);
+                m_Current = LeastSignificantBit(m_Bits);
 
-                m_bits &= ~m_current;
+                m_Bits &= ~m_Current;
             }
 
             WORSE_NODISCARD WORSE_FORCE_INLINE static constexpr BaseType LeastSignificantBit(BaseType value)
@@ -108,20 +108,20 @@ namespace Worse
             }
 
         private:
-            BaseType m_bits;
-            BaseType m_current;
-            bool m_isValid;
+            BaseType m_Bits;
+            BaseType m_Current;
+            bool m_IsValid;
         };
 
         using RangedForIteratorType = BitIterator;
 
-        RangedForIteratorType constexpr begin() { return RangedForIteratorType(m_value); }
+        RangedForIteratorType constexpr begin() { return RangedForIteratorType(m_Value); }
         RangedForIteratorType constexpr end() { return RangedForIteratorType(0); }
     };
 
     /**
      * @brief Bit flag type.
-     * 
+     *
      * @tparam BaseType Underlying value type
      */
     template <typename BaseType>
@@ -137,4 +137,4 @@ namespace Worse
         }
     };
 
-} // namespace Worse
+} // namespace worse

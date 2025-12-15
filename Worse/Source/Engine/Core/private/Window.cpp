@@ -1,5 +1,5 @@
-#include "macro/common_macro.hpp"
-#include "logger/logger_macro.hpp"
+#include "Macro/Common.hpp"
+#include "Logger/LogMacro.hpp"
 #include "Window.hpp"
 #include "Event.hpp"
 
@@ -7,7 +7,7 @@
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_video.h"
 
-namespace Worse
+namespace worse
 {
 
     namespace
@@ -19,9 +19,9 @@ namespace Worse
     {
         if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
         {
-            WORSE_LOG_ERROR("Window",
-                            "Failed to initialize SDL: {}",
-                            SDL_GetError());
+            LOG_ERROR("Window",
+                      "Failed to initialize SDL: {}",
+                      SDL_GetError());
         }
 
         SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
@@ -32,9 +32,9 @@ namespace Worse
 
         if (!s_window)
         {
-            WORSE_LOG_ERROR("Window",
-                            "Failed to create window: {}",
-                            SDL_GetError());
+            LOG_ERROR("Window",
+                      "Failed to create window: {}",
+                      SDL_GetError());
         }
     }
 
@@ -60,8 +60,8 @@ namespace Worse
                 break;
             case SDL_EVENT_WINDOW_RESIZED:
             {
-                s_width  = static_cast<UInt>(event.window.data1);
-                s_height = static_cast<UInt>(event.window.data2);
+                s_width  = static_cast<U32>(event.window.data1);
+                s_height = static_cast<U32>(event.window.data2);
 
                 EventBus::fire(EventType::WindowResized);
                 break;
@@ -94,12 +94,12 @@ namespace Worse
         s_shouldClose = true;
     }
 
-    Bool Window::shouldClose()
+    bool Window::shouldClose()
     {
         return s_shouldClose;
     }
 
-    Bool Window::isMinimized()
+    bool Window::isMinimized()
     {
         return SDL_GetWindowFlags(s_window) & SDL_WINDOW_MINIMIZED;
     }
@@ -134,7 +134,7 @@ namespace Worse
         return s_mode;
     }
 
-    void Window::setSize(UInt const w, UInt const h)
+    void Window::setSize(U32 const w, U32 const h)
     {
         WORSE_ASSERT(s_window);
         SDL_SetWindowSize(s_window, static_cast<int>(w), static_cast<int>(h));
@@ -142,18 +142,18 @@ namespace Worse
         s_height = h;
     }
 
-    void Window::setPosition(Int const x, Int const y)
+    void Window::setPosition(I32 const x, I32 const y)
     {
         SDL_SetWindowPosition(s_window,
-                              static_cast<Int>(x),
-                              static_cast<Int>(y));
+                              static_cast<I32>(x),
+                              static_cast<I32>(y));
     }
 
-    std::pair<Int, Int> Window::getPosition()
+    std::pair<I32, I32> Window::getPosition()
     {
         WORSE_ASSERT(s_window);
-        Int x = 0;
-        Int y = 0;
+        I32 x = 0;
+        I32 y = 0;
         SDL_GetWindowPosition(s_window, &x, &y);
         return {x, y};
     }
@@ -179,4 +179,4 @@ namespace Worse
         return nullptr;
     }
 
-} // namespace Worse
+} // namespace worse
