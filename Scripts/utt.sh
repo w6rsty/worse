@@ -16,15 +16,18 @@ setup_path() {
     cd "$ROOT_DIR" || exit 1
 }
 
+DEFAULT_PRESET="test"
+
 generate_project() {
     PRESET="$1"
     if [ -z "$PRESET" ]; then
-        echo "Error: missing build preset name"
-        exit 1
+        echo "[Build] Using default preset."
+        cmake -S ./Worse --preset="$DEFAULT_PRESET"
+    else
+        echo "[Build] Using preset: $PRESET"
+        cmake -S ./Worse --preset="$PRESET"
     fi
 
-    echo "[Build] Using preset: $PRESET"
-    cmake -S ./Worse --preset="$PRESET"
 }
 
 clean_project() {
