@@ -2,6 +2,8 @@ include(${CMAKE_SOURCE_DIR}/CMake/BuildTool/BuildTool.cmake)
 
 DeclareModule(Common)
 
-    PrivateDependencyModuleAdd(spdlog)
+    PrivateDependencyModuleAdd(Core)
+
+    PrivateDependencyModuleAdd(SDL)
 
 EndDeclareModule()
