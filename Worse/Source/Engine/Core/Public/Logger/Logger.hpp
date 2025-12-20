@@ -1,13 +1,15 @@
 #pragma once
+
 #include "BaseTypes.hpp"
 
 #include <format>
 #include <string_view>
+#include <filesystem>
 
 namespace worse
 {
 
-    enum class LogLevel
+    enum class ELogLevel
     {
         Trace,
         Debug,
@@ -17,25 +19,34 @@ namespace worse
         Max,
     };
 
+    struct LoggerDesc
+    {
+        Size maxQueueSize             = 4096;
+        Size maxLogFileSize           = 5 * 1024 * 1024;
+        Size maxFileCount             = 3;
+        std::filesystem::path logPath = "worse-engine.log";
+    };
+
     class Logger
     {
     public:
-        static Logger& Instance();
+        Logger(LoggerDesc const& desc);
+        ~Logger();
 
-        void Initialize(Size queueSize = kMaxQueueSize, Size maxFileSize = kMaxLogFileSize);
-
-        void LogImpl(LogLevel level, std::string_view target, std::string_view formatted);
+        void LogImpl(ELogLevel level, std::string_view target, std::string_view formatted);
 
         template <typename... Args>
-        void Log(LogLevel level, std::string_view target, std::format_string<Args...> fmt, Args&&... args)
+        void Log(ELogLevel level, std::string_view target, std::format_string<Args...> fmt, Args&&... args)
         {
             auto formatted = std::format(fmt, std::forward<Args>(args)...);
             LogImpl(level, target, formatted);
         }
 
-    public:
-        inline static constexpr Size kMaxQueueSize   = 4096;
-        inline static constexpr Size kMaxLogFileSize = 5 * 1024 * 1024;
+        void Flush();
     };
+
+    void CreateLogger(LoggerDesc const& desc);
+    void DestroyLogger();
+    Logger* GetLoggerInstance();
 
 } // namespace worse
