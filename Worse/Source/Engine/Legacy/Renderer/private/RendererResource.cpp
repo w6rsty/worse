@@ -1,0 +1,379 @@
+#include "logger/logger_macro.hpp"
+#include "Platform.hpp"
+#include "RHIBuffer.hpp"
+#include "RHIShader.hpp"
+#include "RHIVertex.hpp"
+#include "RHITexture.hpp"
+#include "RHISampler.hpp"
+#include "Pipeline/RHIBlendState.hpp"
+#include "Pipeline/RHIRasterizerState.hpp"
+#include "Pipeline/RHIDepthStencilState.hpp"
+#include "Renderer.hpp"
+
+#include <filesystem>
+#include <memory>
+
+namespace Worse
+{
+    namespace
+    {
+        TEnumArray<RendererRasterizerState, std::unique_ptr<RHIRasterizerState>> rasterizerStates;
+        TEnumArray<RendererDepthStencilState, std::unique_ptr<RHIDepthStencilState>> depthStencilStates;
+        TEnumArray<RendererBlendState, std::unique_ptr<RHIBlendState>> blendStates;
+        TEnumArray<RendererTarget, std::unique_ptr<RHITexture>> renderTargets;
+        TEnumArray<RendererShader, std::unique_ptr<RHIShader>> shaders;
+        TEnumArray<RendererTexture, std::unique_ptr<RHITexture>> textures;
+        TEnumArray<RHISamplerType, std::unique_ptr<RHISampler>> samplers;
+        TEnumArray<geometry::GeometryType, std::unique_ptr<Mesh>> standardMeshes;
+
+        std::shared_ptr<RHIBuffer> materialBuffer;
+    } // namespace
+
+    void Renderer::createRasterizerStates()
+    {
+        rasterizerStates[RendererRasterizerState::DepthPrepass]  = std::make_unique<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::Back);
+        rasterizerStates[RendererRasterizerState::SolidCullBack] = std::make_unique<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::Back, RHIFrontFace::CCW, 1e-6f);
+        rasterizerStates[RendererRasterizerState::SolidCullNone] = std::make_unique<RHIRasterizerState>(RHIPolygonMode::Solid, RHICullMode::None, RHIFrontFace::CCW, 1e-6f);
+        rasterizerStates[RendererRasterizerState::Wireframe]     = std::make_unique<RHIRasterizerState>(RHIPolygonMode::Wirefame, RHICullMode::None);
+    }
+
+    void Renderer::createDepthStencilStates()
+    {
+        depthStencilStates[RendererDepthStencilState::Off]              = std::make_unique<RHIDepthStencilState>(false, false, RHICompareOperation::Never);
+        depthStencilStates[RendererDepthStencilState::ReadWrite]        = std::make_unique<RHIDepthStencilState>(true, true, RHICompareOperation::GreaterEqual);
+        depthStencilStates[RendererDepthStencilState::ReadEqual]        = std::make_unique<RHIDepthStencilState>(true, false, RHICompareOperation::Equal);
+        depthStencilStates[RendererDepthStencilState::ReadGreaterEqual] = std::make_unique<RHIDepthStencilState>(true, false, RHICompareOperation::GreaterEqual);
+        depthStencilStates[RendererDepthStencilState::ReadLessEqual]    = std::make_unique<RHIDepthStencilState>(true, false, RHICompareOperation::LessEqual);
+    }
+
+    void Renderer::createBlendStates()
+    {
+        blendStates[RendererBlendState::Off] = std::make_unique<RHIBlendState>(false, RHIBlendFactor::SrcAlpha, RHIBlendFactor::OneMinusSrcAlpha, RHIBlendOperation::Add, RHIBlendFactor::One, RHIBlendFactor::One, RHIBlendOperation::Add, 1.0f);
+    }
+
+    void Renderer::createRendererTarget()
+    {
+        Vector2 resolution = getResolutionRender();
+        UInt width         = static_cast<UInt>(resolution.x);
+        UInt height        = static_cast<UInt>(resolution.y);
+
+        std::vector<RHITextureSlice> dummy;
+
+        renderTargets[RendererTarget::SceneHDR]  = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "scene_hdr");
+        renderTargets[RendererTarget::ScreenHDR] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "screen_hdr");
+
+        // GBuffer
+        renderTargets[RendererTarget::GBufferPosition] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "gbuffer_position");
+        renderTargets[RendererTarget::GBufferAlbedo]   = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "gbuffer_albedo");
+        renderTargets[RendererTarget::GBufferNormal]   = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "gbuffer_normal");
+        renderTargets[RendererTarget::GBufferMaterial] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "gbuffer_material");
+
+        // bloom
+        renderTargets[RendererTarget::BloomInitial]          = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "bloom_initial");
+        renderTargets[RendererTarget::BloomDownSampleStage0] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 2, height / 2, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "bloom_downsample_stage0");
+        renderTargets[RendererTarget::BloomDownSampleStage1] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 4, height / 4, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "bloom_downsample_stage1");
+        renderTargets[RendererTarget::BloomDownSampleStage2] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 8, height / 8, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "bloom_downsample_stage2");
+        renderTargets[RendererTarget::BloomDownSampleStage3] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width / 16, height / 16, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "bloom_downsample_stage3");
+        renderTargets[RendererTarget::BloomFinal]            = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R16G16B16A16Float, RHITextureViewUsage::FlagBits::RenderTargetView | RHITextureViewUsage::FlagBits::UnorderedAccessView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "bloom_final");
+
+        renderTargets[RendererTarget::DepthGBuffer] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::D32Float, RHITextureViewUsage::FlagBits::DepthStencilView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "depth_gbuffer");
+
+        renderTargets[RendererTarget::DepthLight] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::D32Float, RHITextureViewUsage::FlagBits::DepthStencilView | RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, dummy, "light_shadow");
+    }
+
+    void Renderer::createShaders()
+    {
+        std::filesystem::path shaderDir = std::filesystem::path{Worse::EngineDirectory} / "Shaders";
+        WORSE_LOG_INFO("Renderer", "Shader directory: {}", shaderDir.string());
+
+#define MAKE_SHADER_GRAPHICS(shaderName, vertexType)                                                                     \
+    shaders[RendererShader::shaderName##V] = std::make_unique<RHIShader>(#shaderName "V");                               \
+    shaders[RendererShader::shaderName##V]->compile(shaderDir / #shaderName ".hlsl", RHIShaderType::Vertex, vertexType); \
+    shaders[RendererShader::shaderName##P] = std::make_unique<RHIShader>(#shaderName "P");                               \
+    shaders[RendererShader::shaderName##P]->compile(shaderDir / #shaderName ".hlsl", RHIShaderType::Pixel);
+
+        MAKE_SHADER_GRAPHICS(Placeholder, RHIVertexType::PosUvNrmTan);
+        MAKE_SHADER_GRAPHICS(DepthPrepass, RHIVertexType::PosUvNrmTan);
+        MAKE_SHADER_GRAPHICS(DepthLight, RHIVertexType::PosUvNrmTan);
+        MAKE_SHADER_GRAPHICS(Line, RHIVertexType::PosUvNrmTan);
+        MAKE_SHADER_GRAPHICS(Point, RHIVertexType::PosUvNrmTan);
+        MAKE_SHADER_GRAPHICS(GBuffer, RHIVertexType::PosUvNrmTan);
+
+#undef MAKE_SHADER_GRAPHICS
+
+#define MAKE_SHADER_COMPUTE(shaderName)                                                    \
+    shaders[RendererShader::shaderName##C] = std::make_unique<RHIShader>(#shaderName "C"); \
+    shaders[RendererShader::shaderName##C]->compile(shaderDir / #shaderName ".hlsl", RHIShaderType::Compute);
+
+        MAKE_SHADER_COMPUTE(Light);
+        MAKE_SHADER_COMPUTE(PostFX);
+        MAKE_SHADER_COMPUTE(BloomLuminance);
+        MAKE_SHADER_COMPUTE(BloomUpscale);
+
+#undef MAKE_SHADER_COMPUTE
+    }
+
+    void Renderer::createTextures()
+    {
+        {
+            UInt const width  = 4;
+            UInt const height = 4;
+            UInt const white  = 0xFFFFFFFF;
+            UInt const grey   = 0xFF808080;
+            UInt pixels[static_cast<Size>(width * height)];
+            for (Size i = 0; i < static_cast<Size>(width * height); ++i)
+            {
+                Size x    = i % width;
+                Size y    = i / width;
+                pixels[i] = ((x + y) % 2 == 0) ? white : grey;
+            }
+            RHITextureMip mip;
+            mip.bytes.resize(sizeof(UInt) * static_cast<Size>(width * height));
+            std::memcpy(mip.bytes.data(), pixels, sizeof(UInt) * static_cast<Size>(width * height));
+            RHITextureSlice slice;
+            slice.mips.push_back(mip);
+            std::vector<RHITextureSlice> data;
+            data.push_back(slice);
+
+            textures[RendererTexture::Placeholder] = std::make_unique<RHITexture>(RHITextureType::Texture2D, width, height, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "Placeholder");
+        }
+        // Default Albedo Map: (1.0, 1.0, 1.0, 1.0) = (255, 255, 255, 255) in RGBA8
+        {
+            UInt albedo = 0xFFFFFFFF; // ABGR format: A=255, B=255, G=255, R=255
+            RHITextureMip mip;
+            mip.bytes.resize(4);
+            std::memcpy(mip.bytes.data(), &albedo, 4);
+            RHITextureSlice slice;
+            slice.mips.push_back(mip);
+            std::vector<RHITextureSlice> data;
+            data.push_back(slice);
+
+            textures[RendererTexture::DefaultAlbedo] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "DefaultAlbedo");
+        }
+        // Default Normal Map: (0.5, 0.5, 1.0, 1.0) in tangent space = (128, 128, 255, 255) in RGBA8
+        {
+            UInt normal = 0xFFFF8080; // ABGR format: A=255, B=128, G=128, R=255
+            RHITextureMip mip;
+            mip.bytes.resize(4);
+            std::memcpy(mip.bytes.data(), &normal, 4);
+            RHITextureSlice slice;
+            slice.mips.push_back(mip);
+            std::vector<RHITextureSlice> data;
+            data.push_back(slice);
+
+            textures[RendererTexture::DefaultNormal] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "DefaultNormal");
+        }
+        // Default Metallic Roughness: 1.0
+        {
+            UInt metallic = 0xFF000000; // ABGR format: A=255, B=0, G=0, R=0
+            RHITextureMip mip;
+            mip.bytes.resize(4);
+            std::memcpy(mip.bytes.data(), &metallic, 4);
+            RHITextureSlice slice;
+            slice.mips.push_back(mip);
+            std::vector<RHITextureSlice> data;
+            data.push_back(slice);
+
+            textures[RendererTexture::DefaultMetallicRoughness] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "DefaultMetallic");
+        }
+        // Default Ambient Occlusion: 1.0 (no occlusion) = (255, 255, 255, 255) in RGBA8
+        {
+            UInt ambientOcclusion = 0xFFFFFFFF; // ABGR format: A=255, B=255, G=255, R=255
+            RHITextureMip mip;
+            mip.bytes.resize(4);
+            std::memcpy(mip.bytes.data(), &ambientOcclusion, 4);
+            RHITextureSlice slice;
+            slice.mips.push_back(mip);
+            std::vector<RHITextureSlice> data;
+            data.push_back(slice);
+
+            textures[RendererTexture::DefaultAmbientOcclusion] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "DefaultAmbientOcclusion");
+        }
+        // Default Emissive factor: (1.0, 1.0, 1.0)
+        {
+            UInt emissive = 0xFFFFFFFF; // ABGR format: A=255, B=0, G=0, R=0
+            RHITextureMip mip;
+            mip.bytes.resize(4);
+            std::memcpy(mip.bytes.data(), &emissive, 4);
+            RHITextureSlice slice;
+            slice.mips.push_back(mip);
+            std::vector<RHITextureSlice> data;
+            data.push_back(slice);
+
+            textures[RendererTexture::DefaultEmissive] = std::make_unique<RHITexture>(RHITextureType::Texture2D, 1, 1, 1, 1, RHIFormat::R8G8B8A8Unorm, RHITextureViewUsage::FlagBits::ShaderReadView | RHITextureViewUsage::FlagBits::ClearOrBlit, data, "DefaultEmissive");
+        }
+
+        for (auto& texture : textures)
+        {
+            if (!texture || !texture->isValid())
+            {
+                // prevent usage of invalid texture
+                texture = nullptr;
+            }
+        }
+    }
+
+    void Renderer::createSamplers()
+    {
+        samplers[RHISamplerType::CompareDepth] = std::make_unique<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder, RHICompareOperation::Greater, true, 0.0f, 0.0f);
+
+        // 邻近
+        samplers[RHISamplerType::PointClampEdge]   = std::make_unique<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::PointClampBorder] = std::make_unique<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
+        samplers[RHISamplerType::PointWrap]        = std::make_unique<RHISampler>(RHIFilter::Nearest, RHIFilter::Nearest, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
+        // 双线性
+        samplers[RHISamplerType::BilinearClampEdge]   = std::make_unique<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::BilinearClampBorder] = std::make_unique<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::ClampToBorder);
+        samplers[RHISamplerType::BilinearWrap]        = std::make_unique<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Nearest, RHISamplerAddressMode::Wrap);
+        // 三线性
+        samplers[RHISamplerType::TrilinearClamp]   = std::make_unique<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
+        samplers[RHISamplerType::AnisotropicClamp] = std::make_unique<RHISampler>(RHIFilter::Linear, RHIFilter::Linear, RHIFilter::Linear, RHISamplerAddressMode::ClampToEdge);
+    }
+
+    void Renderer::createStandardMeshes()
+    {
+        std::vector<RHIVertexPosUvNrmTan> vertices;
+        std::vector<UInt> indices;
+
+        // clang-format off
+        geometry::generateQuad3D(vertices, indices);
+        standardMeshes[geometry::GeometryType::Quad3D] = std::make_unique<Mesh>();
+        standardMeshes[geometry::GeometryType::Quad3D]->addGeometry(vertices,indices);
+        standardMeshes[geometry::GeometryType::Quad3D]->createGPUBuffers();
+
+        vertices.clear();
+        indices.clear();
+
+        geometry::generateCube(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cube] = std::make_unique<Mesh>();
+        standardMeshes[geometry::GeometryType::Cube]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cube]->createGPUBuffers();
+
+        vertices.clear();
+        indices.clear();
+
+        geometry::generateSphere(vertices, indices);
+        standardMeshes[geometry::GeometryType::Sphere] = std::make_unique<Mesh>();
+        standardMeshes[geometry::GeometryType::Sphere]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Sphere]->createGPUBuffers();
+
+        vertices.clear();
+        indices.clear();
+
+        geometry::generateCylinder(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cylinder] = std::make_unique<Mesh>();
+        standardMeshes[geometry::GeometryType::Cylinder]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Cylinder]->createGPUBuffers();
+
+        vertices.clear();
+        indices.clear();
+
+        geometry::generateCapsule(vertices, indices);
+        standardMeshes[geometry::GeometryType::Capsule] = std::make_unique<Mesh>();
+        standardMeshes[geometry::GeometryType::Capsule]->addGeometry(vertices, indices);
+        standardMeshes[geometry::GeometryType::Capsule]->createGPUBuffers();
+        // clang-format on
+    }
+
+    void Renderer::createMaterialBuffers(std::span<StandardMaterialGPU> materials)
+    {
+        materialBuffer = std::make_shared<RHIBuffer>(RHIBufferUsage::FlagBits::Storage,
+                                                     sizeof(StandardMaterialGPU),
+                                                     materials.size(),
+                                                     materials.data(),
+                                                     false,
+                                                     "MaterialBuffer");
+    }
+
+    void Renderer::destroyResources()
+    {
+        for (std::unique_ptr<Worse::RHIRasterizerState>& rasterizerState : rasterizerStates)
+        {
+            rasterizerState.reset();
+        }
+        for (std::unique_ptr<Worse::RHIDepthStencilState>& depthStencilState : depthStencilStates)
+        {
+            depthStencilState.reset();
+        }
+
+        for (std::unique_ptr<Worse::RHIBlendState>& blendState : blendStates)
+        {
+            blendState.reset();
+        }
+
+        for (std::unique_ptr<Worse::RHITexture>& renderTarget : renderTargets)
+        {
+            renderTarget.reset();
+        }
+
+        for (std::unique_ptr<Worse::RHIShader>& shader : shaders)
+        {
+            shader.reset();
+        }
+
+        for (std::unique_ptr<RHITexture>& texture : textures)
+        {
+            texture.reset();
+        }
+
+        for (std::unique_ptr<RHISampler>& sampler : samplers)
+        {
+            sampler.reset();
+        }
+
+        for (std::unique_ptr<Mesh>& mesh : standardMeshes)
+        {
+            mesh.reset();
+        }
+
+        materialBuffer.reset();
+    }
+
+    RHIRasterizerState*
+    Renderer::getRasterizerState(RendererRasterizerState const state)
+    {
+        return rasterizerStates[state].get();
+    }
+
+    RHIDepthStencilState*
+    Renderer::getDepthStencilState(RendererDepthStencilState const state)
+    {
+        return depthStencilStates[state].get();
+    }
+
+    RHIBlendState* Renderer::getBlendState(RendererBlendState const state)
+    {
+        return blendStates[state].get();
+    }
+
+    RHITexture* Renderer::getRenderTarget(RendererTarget const target)
+    {
+        return renderTargets[target].get();
+    }
+
+    RHIShader* Renderer::getShader(RendererShader const shader)
+    {
+        return shaders[shader].get();
+    }
+
+    RHITexture* Renderer::getTexture(RendererTexture const texture)
+    {
+        return textures[texture].get();
+    }
+
+    RHISampler* Renderer::getSampler(RHISamplerType const sampler)
+    {
+        return samplers[sampler].get();
+    }
+
+    Mesh* Renderer::getStandardMesh(geometry::GeometryType const type)
+    {
+        return standardMeshes[type].get();
+    }
+
+    RHIBuffer* Renderer::getMaterialBuffer()
+    {
+        return materialBuffer.get();
+    }
+
+} // namespace Worse

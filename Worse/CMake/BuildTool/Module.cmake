@@ -58,6 +58,14 @@ macro(ModuleCppStandard STANDARD)
 endmacro()
 
 
+# Mark a module as deprecated
+macro(Deprecated)
+    __OutOfModuleEarlyReturn()
+
+    set(__${__CURRENT_MODULE_NAME}_IS_DEPRECATED TRUE)
+endmacro()
+
+
 function(__CollectConfigs)
     __OutOfModuleEarlyReturn()
 
@@ -85,6 +93,11 @@ function(__CollectConfigs)
         set(__${__CURRENT_MODULE_NAME}_PRIVATE_PCH "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}" PARENT_SCOPE)
     endif()
 
+    if (NOT DEFINED __${__CURRENT_MODULE_NAME}_IS_DEPRECATED)
+        set(__${__CURRENT_MODULE_NAME}_IS_DEPRECATED FALSE PARENT_SCOPE)
+    endif()
+        
+
     # Register properties
 
     set_target_properties(${__CURRENT_MODULE_NAME} PROPERTIES
@@ -101,7 +114,9 @@ function(__CollectConfigs)
         PRIVATE_PRECOMPILE_HEADER
             "${__${__CURRENT_MODULE_NAME}_PRIVATE_PCH}"
         CXX_STANDARD
-            "${__${__CURRENT_MODULE_NAME}_CPP_STANDARD}")
+            "${__${__CURRENT_MODULE_NAME}_CPP_STANDARD}"
+        IS_DEPRECATED
+            "${__${__CURRENT_MODULE_NAME}_IS_DEPRECATED}")
 endfunction()
 
 function(DeclareModule MODULE_NAME)
@@ -119,10 +134,10 @@ function(EndDeclareModule)
         CXX_STANDARD "${__${__CURRENT_MODULE_NAME}_CPP_STANDARD}")
 
     file(GLOB_RECURSE MODULE_PUBLIC_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/public/*.hpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public/*.hpp)
     file(GLOB_RECURSE MODULE_PRIVATE_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/*.hpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/private/*.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/Private/*.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/Private/*.cpp)
 
     function(__ModuleSourceGroup)
         foreach(file_path ${ARGN})
@@ -148,10 +163,8 @@ function(EndDeclareModule)
         PUBLIC ${MODULE_PUBLIC_SOURCES})
 
     target_include_directories(${__CURRENT_MODULE_NAME}
-        PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
-        PRIVATE 
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Public"
+        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Private")
 
     if (__${__CURRENT_MODULE_NAME}_PUBLIC_PCH)
         target_precompile_headers(${__CURRENT_MODULE_NAME} PUBLIC "${__${__CURRENT_MODULE_NAME}_PUBLIC_PCH}")
