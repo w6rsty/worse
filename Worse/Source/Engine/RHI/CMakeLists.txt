@@ -1,9 +1,10 @@
 include(${CMAKE_SOURCE_DIR}/CMake/BuildTool/BuildTool.cmake)
 
-DeclareModule(Common)
+DeclareModule(RHI)
 
+    PrivateDependencyModuleAdd(Common)
     PrivateDependencyModuleAdd(Core)
 
-    PrivateDependencyModuleAdd(SDL3::SDL3)
+    PrivateDependencyModuleAdd(Vulkan::Headers)
 
 EndDeclareModule()
